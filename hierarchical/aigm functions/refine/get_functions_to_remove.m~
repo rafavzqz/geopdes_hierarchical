@@ -1,0 +1,98 @@
+% function [I, indA] = get_functions_to_remove(E, A, R, M, degree, nelem_lev, flagM)
+function I = get_functions_to_remove(E, A, R, M, degree, nelem_lev, flagM)
+%
+% function [I, indA] = get_functions_to_remove(E, A, R, M, degree, nelem_lev, flagM)
+%
+% Computation of active functions to be removed in a fixed level lev.
+%
+% Input:    E: (matrix) global indices of active cells of level lev (one row per
+% cell)
+%           A: (matrix) global indices of active functions of level lev (one row per
+% function)
+%           R: (matrix) global indices of removed functions of level lev (one row per
+% function)
+%           M: (matrix) global indices of marked functions of level lev
+%           degree: array containing the polynomial degree in each coordinate direction
+%           nelem_lev: array containing the total number of elements in the cartesian
+% grid in this level in each coordinate direction
+%           flagM: 'functions' or 'elements', default: 'functions'. flagM
+%           indicates if M is a set of functions or elements.
+%
+% Output:   I: global indices of active functions to be refined
+%           indA: indices array such that I = A(indA,:)
+%
+%
+% This function uses:   get_neighbors
+%                       get_cells
+%                       get_basis_functions
+%
+if nargin == 6
+    flagM = 'functions';
+end
+nmarked = size(M,1);
+switch flagM,
+    case 'functions',
+        % Computation of functions which possibly have to be removed
+        %%%%%%%%%%%%%%%%%%%%%%
+        % Mejorar el siguiente bloque
+        %%%%%%%%%%%%%%%%%%%%%%
+        I = [];
+        for i = 1: nmarked
+            aux = get_neighbors(M(i,:), degree, nelem_lev);
+            I = [I; aux];
+        end
+        I = unique(I,'rows');
+        %%%%%%%%%%%%%%%%%%%%%%
+        % Remove from I the nonactive functions and the active functions already
+        % selected for refinement
+        if ~isempty(M)
+            I = setdiff(intersect(I, A, 'rows'), M, 'rows');
+        else
+            I = intersect(I, A, 'rows');
+        end
+    case 'elements',
+        % Computation of functions which possibly have to be removed
+        %%%%%%%%%%%%%%%%%%%%%%
+        % Mejorar el siguiente bloque
+        %%%%%%%%%%%%%%%%%%%%%%
+        I = [];
+        for i = 1:nmarked
+            aux = get_basis_functions(M(i,:), degree, nelem_lev);
+            I = [I; aux];
+        end
+        I = unique(I,'rows');
+        %%%%%%%%%%%%%%%%%%%%%%
+        % Remove from I the nonactive functions
+        I = intersect(I, A, 'rows');
+end
+
+% Computation of functions which in fact have to be removed
+nfunctions = size(I,1);
+flag = zeros(1,nfunctions);
+for i = 1: nfunctions
+    flag(i) = isempty(intersect(get_cells(I(i,:), degree, nelem_lev), E, 'rows'));
+end
+I = I(flag==1,:);
+
+switch flagM,
+    case 'functions',
+        I = [M; I];
+    case 'elements',
+        I = I;
+end
+
+
+
+% switch flagM,
+%     case 'functions',
+%         I = [M; I; intersect(R, A, 'rows')];
+%     case 'elements',
+%         I = [I; intersect(R, A, 'rows')];
+% end
+%
+% I = unique(I, 'rows');
+% 
+% [uno,indA] = ismember(I, A,'rows');
+% if any(uno~=1)
+%     disp('ERROR: get_functions_to_remove: Some nonactive functions were selected');
+% end

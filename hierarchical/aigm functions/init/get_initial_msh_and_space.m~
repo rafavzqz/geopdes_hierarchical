@@ -1,0 +1,26 @@
+function [msh, space] = get_initial_msh_and_space(dim, p, initial_num_el)
+%
+% function [msh, space] = get_initial_msh_and_space(dim, p, initial_num_el)
+%
+% Completar descripcion
+%
+
+switch dim
+    case 1, geometry = geo_load (nrbline ([0 0], [1 0]));
+    case 2, geometry = geo_load ('geo_square.txt');%geometry=geo_load ('geo_ring.txt'); 
+    case 3, geometry = geo_load ('geo_cube.txt');
+end
+% knots = geometry.nurbs.knots;
+degree = p*ones(1,dim);
+%degree = [2 3];
+nelem =  initial_num_el*ones(1,dim);
+break_points = cell(1,dim);
+open_knot_vector = cell(1,dim);
+nbreaks = nelem+1;
+for idir = 1:dim
+    break_points{idir} = linspace(0,1,nbreaks(idir));
+    open_knot_vector{idir} = [ zeros(1, degree(idir)) linspace(0,1,nbreaks(idir)) ones(1, degree(idir))];
+end
+[qn, qw] = msh_set_quad_nodes (break_points, msh_gauss_nodes(degree+1));
+msh = msh_cartesian (break_points, qn, qw, geometry);
+space = sp_bspline(open_knot_vector, degree, msh);

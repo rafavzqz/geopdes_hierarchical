@@ -1,0 +1,29 @@
+function [E, Q] = prepare_to_refine_mesh(hmsh)
+%
+% function [E, Q] = prepare_to_refine_mesh(hmsh)
+%
+
+Ne = cumsum([0; hmsh.nel_per_level(:)]);
+
+E = cell(hmsh.nlevels+1,1);
+Q = cell(hmsh.nlevels+1,1);
+
+% El siguiente loop seguramente se puede evitar usando mat2cell
+for lev = 1:hmsh.nlevels
+    if (hmsh.msh_lev{lev}.nel ~= 0)
+        ind_e = (Ne(lev)+1):Ne(lev+1);
+        E{lev} = hmsh.globnum_active(ind_e, 2:end);
+        Q{lev}.N = hmsh.msh_lev{lev}.geo_map; % hmsh.quad_nodes(:,:,ind_e);
+        Q{lev}.W = hmsh.msh_lev{lev}.quad_weights; % hmsh.quad_weights(:,ind_e);
+        Q{lev}.JD = hmsh.msh_lev{lev}.jacdet; % hmsh.jacdet(:,ind_e);
+    else
+        E{lev} = zeros(0,hmsh.ndi
+        Q{lev}.N = zeros(hmsh.ndim,hmsh.nqn,0);
+        Q{lev}.W = [];
+        Q{lev}.JD = [];
+    end
+end
+
+Q{end}.N = [];
+Q{end}.W = [];
+Q{end}.JD = [];
