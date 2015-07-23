@@ -2,7 +2,10 @@ function [M, ind] = compute_cells_to_refine(hmsh, M, degree)
 %
 % function [M, ind] = compute_cells_to_refine(hmsh, M, degree)
 %
-% Computation of active cells to be refined from a set of marked functions
+% This function computes the indices of cells that have to be splitted when
+% marking for refinement the functions in M.
+% ATENCION: Voy a modificar y limpiar este codigo cuando tenga la version
+% general de get_cells
 %
 % Input:    hmsh:
 %           M: (1 x msh.nlevels cell array), where M{lev} is a matrix whose rows are the tensor-product indices
@@ -49,8 +52,6 @@ for lev = 1:hmsh.nlevels
         %%%%%%%%%%%%%%%%%%%%%%
         % Remove the nonactive cells from I
         [M{lev}, basura, ind{lev}] = intersect(I, E{lev}, 'rows'); % M{lev} = E{lev}(ind{lev},:)
-        % Esta funcion podria devolver tambien 
         % Now, I contains the cells that have to be splitted
     end
 end
-

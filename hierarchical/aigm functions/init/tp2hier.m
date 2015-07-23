@@ -1,6 +1,6 @@
-function [hmsh, hspace] = tp2hier (msh, space, geometry, boundary)
+function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 %
-% function [hmsh, hspace] = tp2hier (msh, space, geometry, boundary)
+% function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 %
 % This function initializes the structures hmsh and hpsace from the
 % tensor-product mesh and space. For the initialization of the mesh, the
@@ -10,7 +10,9 @@ function [hmsh, hspace] = tp2hier (msh, space, geometry, boundary)
 %           msh: the coarsest mesh (level 1)
 %           space: the spline space for the coarsest space (level 1)
 %           geometry: 
-%           boundary: true or false, default: true. (Fill the information for the boundaries).
+%           space_type: 0 (simplified basis), 1 (full basis)
+%           boundary: true or false, default: true. (Fill the information
+%           for the boundaries).
 %
 % OUTPUT
 %                       struct hmsh (Hierarchical mesh)
@@ -51,11 +53,11 @@ function [hmsh, hspace] = tp2hier (msh, space, geometry, boundary)
 % sp_lev        (hmsh.nlevels x 1 cell-array) sp_lev{ilev} is a structure
 %
 
-if nargin == 3
+if nargin == 4
     boundary = true;
 end
 
 hmsh = tp2hier_msh (msh, geometry, boundary);
 
-hspace = tp2hier_space (hmsh, space, boundary);
+hspace = tp2hier_space (hmsh, space, space_type, boundary);
 

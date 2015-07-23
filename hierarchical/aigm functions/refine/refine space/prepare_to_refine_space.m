@@ -5,8 +5,8 @@ function [A, W, R] = prepare_to_refine_space(space)
 
 Nf = cumsum([0 space.ndof_per_level]); 
 
-A = cell(space.nlevels+1,1); 
-W = cell(space.nlevels+1,1);
+A = cell(space.nlevels,1); 
+W = cell(space.nlevels,1);
 
 % El siguiente loop seguramente se puede evitar usando mat2cell
 for lev = 1:space.nlevels
@@ -17,7 +17,3 @@ for lev = 1:space.nlevels
 end
 
 R = space.removed;
-
-A{space.nlevels+1} = zeros(0,space.ndim);
-W{space.nlevels+1} = zeros(0,1);
-R{space.nlevels+1} = zeros(0,space.ndim);

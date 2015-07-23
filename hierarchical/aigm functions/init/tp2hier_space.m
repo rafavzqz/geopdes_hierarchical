@@ -1,6 +1,6 @@
-function hspace = tp2hier_space (hmsh, space, boundary)
+function hspace = tp2hier_space (hmsh, space, space_type, boundary)
 %
-% function hspace = tp2hier_space (hmsh, space, boundary)
+% function hspace = tp2hier_space (hmsh, space, space_type, boundary)
 %
 % This function initializes a struct hspace from the tensor product space
 % and the hierarchical mesh hmsh already initializated with tp2hier_msh
@@ -8,7 +8,10 @@ function hspace = tp2hier_space (hmsh, space, boundary)
 % INPUT
 %                       hmsh: see tp2hier_msh
 %                       space: the spline space for the coarsest space (level 1)
-%                       boundary: true or false, default: true. (Fill the information for the boundaries of the mesh).
+%                       space_type: 0 (simplified basis), 1 (full basis)
+%                       boundary: true or false. (Fill the information for
+%                       the boundaries of the mesh).
+%
 % OUPUT
 %                       struct hmsh (Hierarchical mesh)
 % 
@@ -31,6 +34,7 @@ function hspace = tp2hier_space (hmsh, space, boundary)
 hspace.ndim = hmsh.ndim;
 hspace.degree = space.degree;
 hspace.ncomp = space.ncomp;
+hspace.type = space_type;
 
 hspace.nlevels = 1;
 hspace.ndof = space.ndof;
@@ -59,7 +63,7 @@ if (boundary && hmsh.ndim > 1)
         else
             boundary_ind = hspace.space_of_level(1).ndof_dir(i);
         end
-        bound = tp2hier_space (hmsh.boundary(iside), space.boundary(iside), false);
+        bound = tp2hier_space (hmsh.boundary(iside), space.boundary(iside), space_type, false);
         % Now, we fill hspace.boundary(iside).dofs
         globnum_active_boundary = [bound.globnum_active(:,1:i) boundary_ind*ones(bound.ndof,1) ...
             bound.globnum_active(:,(i+1):end)];    

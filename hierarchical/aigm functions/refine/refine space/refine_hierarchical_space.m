@@ -1,12 +1,17 @@
-function hspace = refine_hierarchical_space(hmsh, hspace, M, new_cells, flag_whole_basis, boundary)
+function hspace = refine_hierarchical_space(hmsh, hspace, M, flag, new_cells, boundary)
 %
-% function hspace = refine_hierarchical_space(hmsh, hspace, M, new_cells, flag_whole_basis, boundary)
+% function hspace = refine_hierarchical_space(hmsh, hspace, M, flag, new_cells, boundary)
 %
-% This function updates the information in hspace.
+% This function updates the information in hspace. The variable hmsh has
+% already been updated by refine_hierarchical_mesh
+% ATENCION: Voy a limpiar y acomodar esta funcion
 %
-% Input:    M:  (1 x msh.nlevels cell array),
-%               where M{lev} is a matrix whose rows are the tensor-product indices
-%               of marked functions of level lev, for lev = 1:msh.nlevels
+%
+% Input:        M:  (1 x msh.nlevels cell array),
+%                   where marked{lev} is a matrix whose rows are the tensor-product indices
+%                   of marked functions or elements of level lev, for lev =
+%                   1:hmsh.nlevels
+%               flag: 'functions' or 'elements'
 %
 %
 % Output:   hspace updated
@@ -16,14 +21,13 @@ function hspace = refine_hierarchical_space(hmsh, hspace, M, new_cells, flag_who
 %                        update_active_functions
 %
 
-if nargin == 5
+if nargin == 4
     boundary = true;
 end
 
 % Computation of indices of functions of level lev that will become
-% nonactive when removing the functions in M{lev}
-M = compute_functions_to_remove(hmsh, hspace, M, 'functions');
-
+% nonactive when removing the functions or elements in M{lev}
+M = compute_functions_to_remove(hmsh, hspace, M, flag);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Enlarging space_of_level and Proj, if it is needed
@@ -112,11 +116,6 @@ tic
 disp('Updating active dofs:')
 
 aux_ind_fun = [];
-if hspace.nlevels == hmsh.nlevels
-    max_lev = hspace.nlevels - 1;
-else
-    max_lev = hspace.nlevels;
-end
 
 if (boundary && hmsh.ndim > 1)
     new_elem = new_cells.interior;
@@ -124,37 +123,22 @@ else
     new_elem = new_cells;
 end
 
-for lev = 1:max_lev
-    I_R = M{lev}; 
-    % n1 = size(A{lev+1},1); % initial number of active (and in AA\cap RR) functions of level lev + 1
-    % Deactivation of functions which have to be removed and activation of the new ones
-    [A{lev}, W{lev}, R{lev}, A{lev+1}, W{lev+1}, R{lev+1}] = ...
-        update_active_functions(lev, A{lev}, W{lev}, R{lev}, E{lev+1}, hmsh.removed{lev+1},new_elem{lev+1}, A{lev+1}, W{lev+1}, R{lev+1}, I_R, ... 
-    degree, hmsh.mesh_of_level(lev).nel_dir, ...
-        hspace.Proj(lev,:), hspace.space_of_level(lev).ndof_dir,hspace.space_of_level(lev+1).ndof_dir,flag_whole_basis);
-    % n2 = size(A{lev+1},1); % final number of active (and in AA\cap RR) functions of level lev + 1
-    % New active functions (and in AA\cap RR) : A{lev+1}((n1+1):n2,:)
-    W{lev} = W{lev}(:); % Esto es necesario por si queda vacio al usar luego cell2mat
-    ndof_per_level(lev) = size(A{lev},1);
-    aux_ind_fun = vertcat(aux_ind_fun, lev*ones(ndof_per_level(lev),1));
-end % for lev = 1:max_lev
-
-if hspace.nlevels == hmsh.nlevels
-    lev = hspace.nlevels;
-    W{lev} = W{lev}(:); % Esto es necesario por si queda vacio al usar luego cell2mat
-    ndof_per_level(lev) = size(A{lev},1);
-    aux_ind_fun = vertcat(aux_ind_fun, lev*ones(ndof_per_level(lev),1));
+nel_dir = cell(hmsh.nlevels,1);
+ndof_dir = cell(hmsh.nlevels,1);
+for i = 1: hmsh.nlevels
+    nel_dir{i} = hmsh.mesh_of_level(i).nel_dir;
+    ndof_dir{i} = hspace.space_of_level(i).ndof_dir;
 end
 
-if ~isempty(A{hspace.nlevels+1}) %(M{nlevels}) 
-    hspace.nlevels = hspace.nlevels + 1;
-    ndof_per_level(hspace.nlevels) = size(A{hspace.nlevels},1);
-    aux_ind_fun = vertcat(aux_ind_fun, hspace.nlevels*ones(ndof_per_level(hspace.nlevels),1));
-else
-    % No level was added
-    A(end) = [];
-    W(end) = [];
-    R(end) = [];
+% Deactivation of functions which have to be removed and activation of the
+% new ones
+[A, W, R] = update_active_functions(A, W, R, E, hmsh.removed, new_elem, M, degree, nel_dir, hspace.Proj, ndof_dir, hspace.type);
+
+hspace.nlevels = numel(A);
+
+for lev = 1:hspace.nlevels
+ndof_per_level(lev) = size(A{lev},1);
+    aux_ind_fun = vertcat(aux_ind_fun, lev*ones(ndof_per_level(lev),1));
 end
 
 hspace.ndof_per_level = ndof_per_level;
@@ -230,7 +214,7 @@ if (boundary && hmsh.ndim > 1)
             M_boundary{lev} = M{lev}(M{lev}(:,i) == boundary_ind(lev),ind);
         end
         hspace.boundary(iside) = refine_hierarchical_space(hmsh.boundary(iside), hspace.boundary(iside), ...
-            M_boundary, new_cells.boundary{iside}, flag_whole_basis, false);
+            M_boundary, 'functions', new_cells.boundary{iside}, false);
         % Now, we fill hspace.boundary(iside).dofs
         globnum_active_boundary = [hspace.boundary(iside).globnum_active(:,1:i) boundary_ind(hspace.boundary(iside).globnum_active(:,1)) ...
             hspace.boundary(iside).globnum_active(:,(i+1):end)];          

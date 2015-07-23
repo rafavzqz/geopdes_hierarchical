@@ -10,13 +10,13 @@ add_my_paths
 
 if 1
     problem = 6; 
-    est_type = 1;
+    est_type = 3;
     mark_param = .5;
     p = 3; % polynomial degree
     flag_whole_basis = 0;
 end
 
-ver = 1;
+ver = 0;
 plot_discrete_solution = ver;
 plot_hierarchical_mesh = ver;
 print_graphics = 0;
@@ -26,7 +26,7 @@ pausas = 0;
 mark_strategy = 'MS';
 max_level = 10;
 max_ndof = 5000;
-num_max_iter = 10;
+num_max_iter = 15;
 max_nel = 5000;
 % dim = 2; % Esto segun el problema
 initial_num_el = 2;
@@ -56,7 +56,7 @@ graduex = exact_solution.graduex;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 [tp_msh, tp_space] = get_initial_msh_and_space(dim, p, initial_num_el, problem_data.geo_name);
-[hmsh, hspace] = tp2hier (tp_msh, tp_space, problem_data.geo_name);
+[hmsh, hspace] = tp2hier (tp_msh, tp_space, problem_data.geo_name, flag_whole_basis);
 
 clear tp_msh tp_space
 
@@ -219,7 +219,7 @@ while 1
     %% REFINE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [hmsh, hspace] = refine (hmsh, hspace, marked, flag, flag_whole_basis);
+    [hmsh, hspace] = refine (hmsh, hspace, marked, flag);
     
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');

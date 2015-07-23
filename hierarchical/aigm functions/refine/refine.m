@@ -1,6 +1,6 @@
-function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, flag_full_basis, boundary)
+function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, boundary)
 %
-% function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, flag_whole_basis, boundary)
+% function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, boundary)
 %
 % This function updates the structures hmsh and hspace
 % when enlarging the underlying subdomains with some marked functions or elements.
@@ -12,7 +12,6 @@ function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, flag_full_basis, b
 %                   of marked functions or elements of level lev, for lev =
 %                   1:hmsh.nlevels
 %               flag: 'functions' or 'elements'
-%               flag_full_basis: true or false
 %               boundary: true or false, default: true. (Fill the
 %                   information for the boundaries of the mesh and space).
 %
@@ -21,7 +20,7 @@ function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, flag_full_basis, b
 %
 %
 
-if nargin == 5
+if nargin == 4
     boundary = true;
 end
 
@@ -48,12 +47,6 @@ fprintf('refine: Number of current active cells: %d (%f seconds)\n', hmsh.nel, t
 
 refine_space_time = tic;
 disp('Updating space:')
-switch flag
-    case 'functions',
-        functions_to_remove = marked;
-    case 'elements',
-        functions_to_remove = compute_functions_to_remove(hmsh, hspace, marked, flag);
-end
-hspace = refine_hierarchical_space(hmsh, hspace, functions_to_remove, new_cells, flag_full_basis, boundary);
+hspace = refine_hierarchical_space(hmsh, hspace, marked, flag, new_cells, boundary);
 tempo = toc(refine_space_time);
 fprintf('Number of current dofs: %d (%f seconds)\n', hspace.ndof, tempo);

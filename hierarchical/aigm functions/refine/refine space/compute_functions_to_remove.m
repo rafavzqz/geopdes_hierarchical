@@ -3,6 +3,7 @@ function I = compute_functions_to_remove(hmsh, hspace, marked, flag)
 % function I = compute_functions_to_remove(hmsh, hspace, marked, flag)
 %
 % Computation of active functions to be removed in each level.
+% ATENCION: Voy a limpiar y editar esta funcion
 %
 % Input:
 %           hmsh:

@@ -4,6 +4,7 @@ function [hmsh, new_elements] = refine_hierarchical_mesh(hmsh, M, indices, bound
 %
 % This function computes the information for updating a hierarchical mesh
 % when enlarging the underlying subdomains with some marked elements.
+% ATENCION: Luego voy a limpiar este codigo
 %
 % Input:        hmsh: struct for current the hierarchical mesh
 %               M:  (1 x msh.nlevels cell array),
@@ -55,7 +56,7 @@ end
 
 % We fill E with the information of active cells
 Ne = cumsum([0; hmsh.nel_per_level(:)]);
-E = cell(hmsh.nlevels+1,1);
+E = cell(hmsh.nlevels,1);
 % El siguiente loop se puede evitar usando mat2cell
 for lev = 1:hmsh.nlevels
         ind_e = (Ne(lev)+1):Ne(lev+1);
@@ -68,41 +69,15 @@ end
 
 tic
 disp('Updating cells:')
-new_cells = cell(nlevels,1);
-new_cells{1} = zeros(0,hmsh.ndim);
+[E, hmsh.removed,new_cells] = update_active_cells(E, hmsh.removed, M, indices);
+
+hmsh.nlevels = nlevels;
 aux_ind_el = [];
 for lev = 1:hmsh.nlevels
-    if ~isempty(M{lev})
-        if isempty(indices)
-            [unos, ind_cells_to_refine] = ismember(M{lev},E{lev},'rows'); % M{lev} = E{lev}(ind_cells_to_refine,:)
-            if any(unos~=1)
-                disp('Warning: refine_hierarchical_mesh: Some nonactive cells were selected');
-            end
-        else
-            ind_cells_to_refine = indices{lev};
-        end
-        hmsh.removed{lev} = union(hmsh.removed{lev}, M{lev},'rows');
-        % Refinement of the mesh (Remove cells from E{lev} and add cells to E{lev+1})
-        [E{lev}, E{lev+1},new_cells{lev+1}] = update_active_cells(E{lev},E{lev+1},...
-            M{lev}, ind_cells_to_refine);
-    else
-        new_cells{lev+1} = zeros(0,hmsh.ndim);
-    end
     nel_per_level(lev) = size(E{lev},1);
     aux_ind_el = vertcat(aux_ind_el, lev*ones(nel_per_level(lev),1));
 end % for lev = 1:nlevels
 
-if ~isempty(M{hmsh.nlevels}) % If a new level was activated
-    nel_per_level(nlevels) = size(E{nlevels},1);
-    aux_ind_el = vertcat(aux_ind_el, nlevels*ones(nel_per_level(nlevels),1));
-    hmsh.removed{nlevels} = zeros(0,hmsh.ndim);
-    hmsh.nlevels = nlevels;
-else
-    % No level was added
-    E{end} = [];
-    %  Q{end} = [];
-    new_cells{hmsh.nlevels+1} = [];
-end
 
 if (boundary && hmsh.ndim > 1)
     new_elements.interior = new_cells;
@@ -163,9 +138,9 @@ if (boundary && hmsh.ndim > 1)
         end
         M_boundary = cell(size(M));
         for lev = 1:numel(M)
-            if ~isempty(M{lev})
+           % if ~isempty(M{lev})
                 M_boundary{lev} = M{lev}(M{lev}(:,i) == boundary_ind(lev),ind);
-            end
+            %end
         end
         [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh(hmsh.boundary(iside), M_boundary, [], false);
     end
