@@ -1,0 +1,773 @@
+\documentclass[12pt,a4paper]{article}
+
+%\usepackage[notref,notcite]{showkeys}
+%\usepackage{latexsym,amsfonts,amssymb,amsthm,amsmath,amscd,eufrak,makeidx}
+\usepackage{fullpage}
+\usepackage[dvips]{graphicx}
+\usepackage{psfrag}
+\usepackage{amsmath}
+\usepackage{fancybox}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{comment}
+\usepackage{cancel}
+\usepackage[]{algorithm2e}
+\usepackage[]{algorithmicx}
+
+\usepackage[normalem]{ulem} % to be able to use \sout
+
+\usepackage{enumerate}
+%\usepackage{pdfsync}
+
+ \theoremstyle{plain}
+    \newtheorem{theorem}{Theorem}[section]
+    \newtheorem{corollary}[theorem]{Corollary}
+    \newtheorem{lemma}[theorem]{Lemma}
+    \newtheorem{proposition}[theorem]{Proposition}
+    \newtheorem{assumption}[theorem]{Assumption}
+ \theoremstyle{definition}
+    \newtheorem{definition}[theorem]{Definition}
+    \newtheorem{remark}[theorem]{Remark}
+ \theoremstyle{remark}
+  %  \newtheorem{notation}[theorem]{Notation}
+    \newtheorem{example}[theorem]{Example}
+ 
+% \newcommand{\Proof}{\noindent\emph{Proof.}\xspace}
+
+
+% Para el \fint %%%%%%%
+ \usepackage[english]{babel}
+%\usepackage{txfonts}
+%\newcommand{\fint}{\int}
+%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%% Paquetes adicionales (sacar despues) %%%%%%%%%%%%%%%
+% hyperref
+%----------------------------------------------
+\usepackage[%
+%   pdftex=true,  % si se usa pdftex
+%   pdfpagemode=UseNone,
+%   pdfstartpage=3,   % para empezar en pag. 3
+   bookmarks=true,
+%   bookmarksopen=true,
+%   bookmarksnumbered=true,
+%   plainpages=false, % cuando existe p\'agina i y p\'agina 1
+%   pdfstartview=XYZ,
+%   pdfpagelabels=true, % ii en preambulo
+   pagebackref=false, % referencias a citas
+   colorlinks,
+   linkcolor=blue,
+%   linktocpage, % link en el n\'umero de pagina en toc
+   anchorcolor=blue,
+   citecolor=blue,
+   filecolor=blue,
+   %pagecolor=blue,
+   urlcolor=blue
+   ]{hyperref}
+
+% definicion de \algoritmo
+\newcounter{contadoralgoritmo}
+\setcounter{contadoralgoritmo}{0}
+\newcommand{\algoritmo}[2]{
+\medskip
+\begin{center}
+\doublebox{ % otras opciones: doublebox, ovalbox, Ovalbox
+\begin{minipage}{.95\textwidth}
+\refstepcounter{contadoralgoritmo}
+\noindent\textbf{ALGORITHM \arabic{contadoralgoritmo}: #1 }
+\tt
+
+#2
+\end{minipage}
+}
+\end{center}
+
+}
+   
+
+% %%%%%%%% DEFINITION OF MACROS
+\newcommand{\note}[1]{{\noindent\centerline{\fbox{\parbox{.9\textwidth}{\textbf{
+#1}}}}}}
+\newcommand{\bluenote}[1]{{\color{blue}\noindent\centerline{\fbox{\parbox{.9\textwidth}{\textbf{
+#1}}}}}}
+
+% %\newcommand{\note}[1]{}
+ \newcommand{\snote}[1]{\fbox{\textbf{#1}}}
+ %\newcommand{\snote}[1]{}
+
+ \DeclareMathOperator*{\infimum}{inf\phantom{p}\!\!\!}
+ \newcommand{\infsup}[2]{\infimum_{#1}\sup_{#2}}
+
+\usepackage{bm}
+\usepackage{xspace}
+
+\newcommand{\step}[1]{\noindent\raisebox{1.5pt}[10pt][0pt]{\tiny\framebox{$#1$}}
+\xspace}
+\newcommand{\D}{\displaystyle}
+
+
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\Span}{span}
+\DeclareMathOperator{\diam}{diam}
+\DeclareMathOperator{\Div}{div}
+\DeclareMathOperator{\id}{id}
+\DeclareMathOperator{\loc}{loc}
+
+\newcommand{\bnew}[1]{{\color{blue}{#1}}}
+%\newcommand{\bnew}[1]{#1}
+\newcommand{\rdel}[1]{{\color{red}{\sout{#1}}}}
+%\newcommand{\rdel}[1]{}
+
+\DeclareMathOperator\mesh{\texttt{MESH}}
+\DeclareMathOperator\basis{\texttt{SPACE}}
+\DeclareMathOperator\removed{\tt R}
+\DeclareMathOperator\marked{\tt MARKED}
+\DeclareMathOperator\newcells{\tt NE}
+\DeclareMathOperator\markedelements{\tt ME}
+\DeclareMathOperator\functionstoremove{\tt MF}
+\newcommand\qih{\Pi}
+\newcommand\qihh{\breve{\Pi}}
+\newcommand\NN{\mathbb N}
+%\newcommand\UU{\mathcal U}
+\newcommand\AAA{\mathcal A}
+\newcommand\BB{\mathcal B}
+
+\newcommand\MM{\mathcal M}
+\newcommand\Tau{\mathcal T}
+\newcommand\PP{\mathbb P}
+\newcommand\QQ{\mathcal Q}
+\newcommand\HH{\mathcal H}
+%\newcommand\TT{\mathbb T}
+\newcommand\VV{\mathcal S}
+\newcommand\WW{\mathbb W}
+\newcommand\EE{\mathcal E}
+\newcommand\RRR{\mathcal R}
+\newcommand\SSS{\mathbb S}
+\newcommand\CC{\mathcal C}
+\newcommand\NNN{\mathcal N}
+\newcommand\PPP{\mathcal P}
+\newcommand{\JJ}{\mathcal J}
+\newcommand{\RR}{\mathbb R}
+%\newcommand{\nref}{n}
+\newcommand{\h}{h}
+
+\newcommand{\NT}{{\mathcal N}_\Tau}
+
+\newcommand{\etal}{et.~al.}
+\usepackage{authblk}
+\newcommand{\norm}[1]{{\left\vert\kern-0.25ex\left\vert\kern-0.25ex\left\vert #1 
+    \right\vert\kern-0.25ex\right\vert\kern-0.25ex\right\vert}}
+
+\begin{document}
+
+\title{Algorithms for local refinement \\ in hierarchical spline spaces}
+
+
+\author[1,2,3]{Eduardo M. Garau}%\thanks{Corresponding author}}
+\author[1]{Rafael V\'azquez}
+\affil[1]{\small Istituto di Matematica Applicata e Tecnologie Informatiche 
+`E. Magenes' (CNR), Italy}
+\affil[2]{\small Instituto de Matem\'atica Aplicada del Litoral (CONICET-UNL), Argentina}
+\affil[3]{\small Facultad de Ingenier\'ia Qu\'imica (UNL), Argentina}
+
+\maketitle
+% 
+% \begin{abstract}
+%  
+% \end{abstract}
+% 
+% \begin{quote}\small
+% \textbf{Keywords:} % adaptivity in isogemetric analysis, hierarchical B-splines, \snote{...}
+% \end{quote}
+% 
+% \begin{quote}\small
+%  \textbf{Mathematics Subject Classification (2000):}
+% 35J15,  % Second-order elliptic equations
+% 65N12, % Stability and convergence of numerical methods
+% 65N15, % Error bounds
+% 65N30, % Finite elements, Rayleigh-Ritz and Galerkin methods, finite methods
+% 65N50, % Mesh generation and refinement
+% 65Y20  % Complexity and performance of numerical algorithms 
+% \end{quote}
+
+
+\section{Setting}
+
+Let $d\ge 1$. We are going to consider tensor-product $d$-variate spline function spaces on $\Omega:=[0,1]^d\subset \RR^d$, where ${\bf p}:=(p_1,p_2,\dots,p_d)$ denotes the vector of polynomial degrees of the splines with respect to each coordinate direction.
+
+\subsection{Underlying sequence of tensor-product spline spaces}
+
+We consider a given sequence $\{\VV_\ell\}_{n\in\NN_0}$ of tensor-product $d$-variate spline spaces such that
+\begin{equation}\label{E:tensor-product spaces}
+ \VV_0\subset \VV_1\subset \VV_2\subset\VV_3\subset\dots,
+\end{equation}
+with the corresponding tensor-product B-spline bases denoted by
+\begin{equation}\label{E:tensor-product basis}
+ \BB_0,  \BB_1,  \BB_2, \BB_3,\dots,
+\end{equation}
+respectively. %In order to guarantee~\eqref{E:tensor-product spaces}, we assume that if $\xi$ is a knot in $\Xi_{p_i,n_i^\ell}$ with multiplicity $m$, then $\xi$ is also a knot in $\Xi_{p_i,n_i^{\ell+1}}$ with multiplicity at least $m$, for $i=1,\dots,d$ and $\ell\in\NN_0$. 
+Furthermore, for $\ell\in\NN_0$, we denote by $\QQ_\ell$ the tensor-product mesh associated to $\BB_\ell$ and we say that $Q\in\QQ_\ell$ is a \emph{cell of level $\ell$}. We now state some well-known properties of the B-spline basis functions~\cite{deBoor,Schumaker}:
+\begin{itemize}
+\item \emph{Local linear independence.} For any nonempty open set $O\subset\Omega$, the functions in $\BB_\ell$ that do not vanish identically on $O$, are linearly independent on $O$.
+\item \emph{Positive partition of unity.} The B-spline basis functions of level $\ell$ form a partition of the unity 
+on $\Omega$, i.e.,
+ \begin{equation}\label{E:partition of unity in B_0}
+  \sum_{\beta\in\BB_\ell} \beta \equiv 1,\qquad\text{on }\Omega.
+ \end{equation}
+\item \emph{Two-scale relation between consecutive levels.} The B-splines of level $\ell$ can be written as a linear combination of B-splines of level $\ell+1$. More precisely, 
+\begin{equation}\label{E:two scale relation}
+ \beta_\ell = \sum_{\beta_{\ell+1}\in\CC(\beta_{\ell})} 
+c_{\beta_{\ell+1}}(\beta_\ell)\beta_{\ell+1}, 
+\qquad \forall\,\beta_\ell\in\BB_\ell,
+\end{equation}
+where the coefficients $c_{\beta_{\ell+1}}(\beta_\ell)$ are strictly positive, and $\CC(\beta_\ell)\subset\BB_{\ell+1}$ is the set of children of $\beta_\ell$ as defined in~\cite{BG15}. 
+\end{itemize}
+
+\begin{remark}
+Notice that if we define $c_{\beta_{\ell+1}}(\beta_\ell):=0$ when $\beta_{\ell+1}$ is not a child of $\beta_\ell$, then equation~\eqref{E:two scale relation} can be written as
+\begin{equation}\label{E:two scale relation 2}
+ \beta_\ell = \sum_{\beta_{\ell+1}\in\BB_{\ell+1}} 
+c_{\beta_{\ell+1}}(\beta_\ell)\beta_{\ell+1}, 
+\qquad \forall\,\beta_\ell\in\BB_\ell.
+\end{equation}
+
+In particular, we remark that
+\begin{equation}\label{E:set of children}
+\CC(\beta_\ell)=\{\beta_{\ell+1}\in\BB_{\ell+1}\,|\,c_{\beta_{\ell+1}}(\beta_\ell)>0\}\subset\{\beta_{\ell+1}\in\BB_{\ell+1}\,|\,\supp\beta_{\ell+1}\subset\supp\beta_\ell\}.
+\end{equation}
+
+\end{remark}
+
+\subsection{Hierarchical B-spline basis and hierarchical spline space}
+
+\begin{definition} 
+If $n\in\NN$, 
+we say that ${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$ is a 
+\emph{hierarchy of subdomains of $\Omega$ of depth $n$} if
+\begin{enumerate}
+ \item[(i)] $\Omega_\ell$ is the union of cells of level 
+$\ell-1$, for $\ell = 1,2,\dots,n$.
+ \item[(ii)]$\Omega = \Omega_0 \supset \Omega_1 \supset \dots \supset 
+\Omega_{n-1}\supset \Omega_n = \emptyset$.
+\end{enumerate} 
+\end{definition}
+
+We now define the hierarchical B-spline basis ${\HH}= {\HH}({\bf\Omega}_n)$ by 
+% in the following recursive way
+% \begin{equation}\label{E:definition of Hltilde}
+% \begin{cases}\HH_0:=\BB_0,\\
+%  {\HH}_{\ell+1}:=\{\beta\in\HH_{\ell}\,|\,\supp\beta\not\subset\Omega_{\ell+1}\}\cup\{\beta\in\BB_{\ell+1}\,|\, \supp\beta\subset\Omega_{\ell+1}\},\qquad\ell=0,\dots,n-2.\\
+%  \HH:=\HH_{n-1}.\end{cases}
+% \end{equation}
+% If $\RRR_\ell:=\HH_\ell\setminus\HH_{\ell+1}$, then
+% $$\RRR_\ell=\{\beta\in\HH_{\ell}\,|\,\supp\beta\subset\Omega_{\ell+1}\}=\{\beta\in\BB_{\ell}\,|\,\supp\beta\subset\Omega_{\ell+1}\}.$$
+% Notice that in order to get $\HH_{\ell+1}$ from $\HH_{\ell}$ we replace the set $\RRR_\ell$ by
+% $$\{\beta\in\BB_{\ell+1}\,|\, \supp\beta\subset\Omega_{\ell+1}\}.$$
+% Moreover, it is easy to check that
+\begin{equation}\label{E:Hierarchical basis}
+{\HH}= \bigcup_{\ell = 0}^{n-1} \{\beta \in \BB_\ell \mid \supp \beta 
+\subset \Omega_\ell \wedge  \supp \beta \not\subset \Omega_{\ell+1}\}.
+\end{equation} 
+We say that $\beta$ is \emph{active} if $\beta\in\HH$. The 
+corresponding underlying mesh $\QQ = \QQ({\bf\Omega}_n)$ is given 
+by
+\begin{equation}\label{E:hierarchical mesh}
+\QQ:= \bigcup_{\ell = 0}^{n-1} \{ Q\in\QQ_\ell\,\mid\, Q\subset \Omega_\ell 
+\,\wedge\, Q\not\subset \Omega_{\ell+1}\}, 
+\end{equation}
+and we say that $Q$ is an \emph{active cell} is $Q\in\QQ$, or that $Q$ is an 
+\emph{active cell of level $\ell$} if $Q\in\QQ\cap \QQ_\ell$.
+
+
+Unlike the B-spline bases $\BB_\ell$ for tensor-product spline spaces, the hierarchical B-spline basis $\HH$ does not constitute a partition of the unity. Instead, in view of the linear independence of functions in $\HH$ and taking into account that $\VV_0=\Span\BB_0\subset\Span\HH$, we have that there exists a set $\{a_\beta\}_{\beta\in\HH}\subset \RR$, uniquely determined, such that
+ \begin{equation}\label{E:partition of the unity in the hierarchical space}
+\sum_{\beta\in {\HH}} a_\beta \beta \equiv 1, \qquad\text{on } \Omega. 
+\end{equation}
+ It can be proved that $a_\beta\ge 0$, for all $\beta\in\HH$. On the other hand, we remark that these coefficients depend on the hierarchy of subdomains~${\bf\Omega}_n$.
+
+
+
+\section{Refinement of hierarchical spline spaces}\label{S:refinement}
+
+In this section, we present a precise technique to refine locally a given hierarchical spline space $\Span\HH$.
+
+
+\begin{definition}
+ Let ${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$ and ${\bf\Omega}_{n+1}^*:= \{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ be hierarchies of subdomains of $\Omega$ of depth (at most) $n$ and $n+1$, respectively. We say that ${\bf\Omega}_{n+1}^*$ is an \emph{enlargement} of ${\bf\Omega}_n$ if
+ $$\Omega_\ell\subset\Omega_\ell^*,\qquad \ell=1,2,\dots,n.$$ 
+ \end{definition}
+
+ Let $\HH$ and $\QQ$ be the hierarchical B-spline basis and the hierarchical mesh associated to the hierarchy of 
+subdomains of depth $n$,
+${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$.
+ 
+Let ${\bf\Omega}_{n+1}^*$ be an enlargement of ${\bf\Omega}_n$. Now, the corresponding hierarchical B-spline basis ${\HH}^*$ and 
+\emph{refined} 
+mesh $\QQ^*$ are given by 
+\begin{equation}
+{\HH}^*:= \bigcup_{\ell = 0}^{n} \{\beta \in \BB_\ell \mid \supp \beta 
+\subset \Omega_\ell^* \wedge  \supp \beta \not\subset \Omega_{\ell+1}^*\},
+\end{equation}
+and
+$$\QQ^*:= \bigcup_{\ell = 0}^{n} \{ Q\in\QQ_\ell \,\mid\, Q\subset \Omega_\ell^* 
+\,\wedge\, Q\not\subset \Omega_{\ell+1}^*\}.$$
+
+
+
+Let $\{a_\beta^*\}_{\beta\in{\HH}^*}$ denote the sequence of coefficients (with respect to the hierarchy ${\bf\Omega}_{n+1}^*$) such that $$\sum_{\beta\in{\HH}^*} a_\beta^*\beta \equiv 1,\qquad\text{ on }\Omega.$$ 
+
+
+
+In~\cite{GJS14} has been proved that any enlargement of ${\bf\Omega}_n$ gives rise to a new enriched hierarchical B-spline basis $\HH^*$, in the sense that
+$$\Span\HH\subset\Span\HH^*.$$
+In order to enlarge the given subdomains ${\bf\Omega}_n = \{\Omega_0,\Omega_1,\dots,\Omega_n\}$ we have to select the areas in $\Omega$ where more ability of approximation is required. Such a choice can be done by selecting to \emph{refine} some active basis functions or some active cells. More precisely, we consider the two following ways of enlarging the hierarchy ${\bf\Omega}_n$:
+\begin{itemize}
+ \item {\bf Marking basis functions:} We consider a subset $\MM$ of active B-spline basis functions, i.e., $\MM\subset\HH$. Let $\MM_\ell:=\MM\cap\BB_\ell$, for $\ell = 0,1,\dots,n-1$. Now, we define the hierarchy of domains ${\bf\Omega}^*_{n+1} := 
+\{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ of depth (at most) 
+$n+1$, by
+\begin{align}\label{E:marking basis functions}
+\begin{cases}\Omega_0^* &:=\Omega_0,\\
+\Omega_{\ell}^* &:=\Omega_{\ell}\cup \D\bigcup_{\beta\in\MM_{\ell-1}}\supp 
+\beta,\qquad \ell = 1,2,\dots,n,\\
+\Omega_{n+1}^*&:= \emptyset.
+\end{cases}
+\end{align}
+Let $\HH^*$ be the hierarchical B-spline basis associated to ${\bf\Omega}^*_{n+1}$. Notice that $\MM\subset\HH\setminus\HH^*$, i.e., at least the functions in $\MM$ have been removed (or deactivated) from the hierarchical basis $\HH$. 
+\item {\bf Marking active cells:} We consider a subset $\MM$ of active cells, i.e., $\MM\subset\QQ$. Let $\MM_\ell:=\MM\cap\QQ_\ell$, for $\ell = 0,1,\dots,n-1$. Now, we define the hierarchy of domains ${\bf\Omega}^*_{n+1} := 
+\{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ of depth (at most) 
+$n+1$, by
+\begin{align}\label{E:marking active cells}
+\begin{cases}\Omega_0^* &:=\Omega_0,\\
+\Omega_{\ell}^* &:=\Omega_{\ell}\cup \D\bigcup_{Q\in\MM_{\ell-1}}Q,\qquad \ell = 1,2,\dots,n,\\
+\Omega_{n+1}^*&:= \emptyset.
+\end{cases}
+\end{align}
+Let $\HH^*$ be the hierarchical B-spline basis associated to ${\bf\Omega}^*_{n+1}$ and $\QQ^*$ be the corresponding hierarchical mesh. In this case, $\MM\subset\QQ\setminus\QQ^*$, i.e., all cells in $\MM$ have been refined. 
+\end{itemize}
+
+
+% In the case of hierarchy of subdomains satisfying the support condition, we can 
+% \emph{easily} compute the active functions $\beta$ in the finer space having nonzero weight, i.e. 
+% $\beta\in\HH^*$, from the knowledge of active functions in the coarse basis $\HH$, provided we have a global numbering for all the basis functions 
+% in $\BB_\ell$, for $\ell \in\NN_0$.
+
+\section{Algorithms for initialization and refinement of a hierarchical B-spline basis}
+
+
+Here we describe an algorithm to compute the active B-splines in the finer basis taking advantage of the knowledge of the active B-splines in the current coarse basis.
+
+We consider a global numbering for all the basis functions in $\BB_\ell$, for each $\ell \in\NN_0$, and assume that we have available the following basic routines related with the underlying tensor-product spline spaces:
+\begin{enumerate}
+ \item[(1)] Basic routines in each tensor-product space $\VV_\ell$:
+\begin{itemize}
+ \item $I = \verb+get_cells+ (i_\beta,\ell)$, where $i_\beta$ is the global 
+index of a function $\beta\in\BB_\ell$, and $I$ contains the global indices 
+of the cells in $\QQ_{\ell}$ which are subsets of $\supp\beta$.
+\item $I = \verb+get_neighbors+ (i_\beta,\ell)$, where $i_\beta$ is the global 
+index of a function $\beta\in\BB_\ell$, and $I$ contains the global indices 
+of functions in $\BB_{\ell}$ whose supports have at least one cell of level $\ell$ within $\supp\beta$.
+\item $I = \verb+get_basis_functions+ (i_Q,\ell)$, where $i_Q$ is the global index of a cell $Q\in\QQ_\ell$ and $I$ contains the global indices 
+of functions in $\BB_{\ell}$ that do not vanish on $Q$.
+\end{itemize}
+\item[(2)] Basic routines linking two consecutive levels of the tensor-product spaces ($\VV_\ell$ and $\VV_{\ell+1}$):
+\begin{itemize}
+\item $I = \verb+split_cell+ (i_Q,\ell)$, where $i_Q$ is the global index of a cell $Q\in\QQ_\ell$ and $I$ contains the global indices 
+of the cells in $\QQ_{\ell+1}$ which are inside of $Q$.
+\item $[I,c] = \verb+split_fun+ (i_\beta,\ell)$, where $i_\beta$ is the global 
+index of a function $\beta\in\BB_\ell$, $I$ contains the global indices of all children of $\beta$, and $c$ 
+is an array with the corresponding coefficients given by~\eqref{E:two scale relation}. 
+\end{itemize}
+\end{enumerate}
+\begin{remark}\label{R:two-scale relation}
+The routines listed above are in fact elementary. The \emph{hardest} thing in the previous routines is the computation of the coefficients for the two-scale relation~\eqref{E:two scale relation} in the function \texttt{split\_fun}. Nevertheless, by virtue of the tensor-product structure of B-splines, this task can be done by computing the corresponding coefficients in the two-scale relation for univariate B-splines and Kronecker products. On the other hand, it is important to remark that the coefficients in the univariate case can be computed using knot insertion formulae. 
+It is important to mention that these coefficients will be used in our algorithms below to compute the coefficients of the hierarchical basis functions for the partition of the unity~(cf.~\eqref{E:partition of the unity in the hierarchical space}). We remark that some a posteriori error estimators may require this information~\cite{BuGa15}.
+
+Finally, we remark that if we do not need the explicit knowledge of the coefficients in~\eqref{E:partition of the unity in the hierarchical space}, we can consider a simple version of the function $\texttt{split\_fun}$ given by 
+ $$I = \texttt{split\_fun} (i_\beta,\ell),$$ where $i_\beta$ is the global 
+index of a function $\beta\in\BB_\ell$ and $I$ contains the global indices of 
+the children of $\beta$. In this case, the algorithms described below can also be considerably simplified. 
+\end{remark}
+
+
+The hierarchical mesh $\QQ$ can be defined through the variable $\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n-1}$,  where
+\begin{itemize}
+ \item $E^A_\ell$ is the array containing the global indices of active cells of level $\ell$, i.e., cells in $\QQ\cap\QQ_\ell$.
+ \item $E^D_\ell$ is the array containing the global indices of deactivated cells of level $\ell$, i.e., cells $Q\in\QQ_\ell$ such that $Q\subset\Omega_{\ell+1}$. Notice that $E^D_{n-1}=\emptyset$.
+ \end{itemize}
+ On the other hand, the hierarchical B-spline basis $\HH$ associated to $\QQ$ can be described through the variable $\basis = \{F^A_\ell,F^D_\ell, W_\ell\}_{\ell=0}^{n-1}$, where
+\begin{itemize}
+ \item $F^A_\ell$ is the array containing the global indices of active B-splines of level $\ell$, i.e., functions in $\HH\cap\BB_\ell$.
+  \item  $F^D_\ell$ is an array containing the global indices of B-splines in $\BB_\ell$ whose supports are subsets of $\Omega_{\ell+1}$, i.e.,
+$$F^D_\ell:= \{i_\beta\,|\,\beta\in\BB_\ell\quad\wedge\quad \supp\beta\subset\Omega_{\ell+1}\}.$$
+Notice that $F^D_{n-1}=\emptyset$. 
+ \item $W_\ell$ is an array containing the values of the coefficients $a_\beta$ for the partition of the unity~\eqref{E:partition of the unity in the hierarchical space} corresponding to the active B-splines $\beta$ of level $\ell$, i.e., to the functions in $F^A_\ell$.
+\end{itemize}
+
+
+
+\subsection{Getting the new active basis functions from the current ones}
+ 
+
+Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\ell\subset E^A_\ell$) is the set of global indices of \emph{marked} functions (or elements) of level $\ell$, i.e., functions (or elements) in $\MM_\ell$. Now, we present an algorithm for updating the information in $\mesh$ and $\basis$ when enlarging the hierarchy of subdomains ${\bf \Omega}_n$ with the marked functions or elements as explained in the previous section, cf.~\eqref{E:marking basis functions} and~\eqref{E:marking active cells}.
+
+
+\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\basis] = \texttt{refine}(\mesh,\basis,\marked)$} 
+\caption{$\texttt{refine}$ (REFINE THE HIERARCHICAL MESH AND SPACE)}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+\medskip
+
+\% This function updates $\mesh$ and $\basis$ when enlarging the current subdomains with the marked functions (or elements) given in $\marked$
+
+
+\KwData{(Data for $\QQ$, $\HH$ and $\MM$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\\ \marked=\{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+ \KwResult{(Data for $\QQ^*$ and $\HH^*$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n).$}
+
+\medskip
+
+\begin{enumerate}
+ \item[] \% REFINE MESH\;
+  \item[] \Switch{marked functions or elements}{
+  \begin{enumerate}
+   \item[1.]\lCase{functions,}{$\markedelements = \texttt{compute\_cells\_to\_refine}(\{E^A_\ell\}_{\ell=0}^{n-1}, \marked)$}
+\item[2.]\lCase{elements,}{$\markedelements = \marked$}
+\end{enumerate}
+}
+\item[]\%   $\markedelements$ contains the cells that have to be refined\;
+  
+%$[\mesh, \newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$\;
+\item[3.]$[\mesh, \newcells] = \texttt{update\_active\_cells}(\mesh, \markedelements)$\;
+ \item[]\% $\newcells$ contains the new cells\;
+ \item[]\% REFINE SPACE\;
+\item[4.] $\basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$\;
+\end{enumerate}
+ \medskip 
+\end{minipage}
+}
+\end{algorithm}
+
+
+\subsubsection{Routines for the mesh}
+
+% \begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$} 
+% \caption{$\texttt{refine\_hierarchical\_mesh}$}
+% \bigskip
+% \doublebox{
+% \begin{minipage}{.95\textwidth}
+% \medskip
+% \KwData{(Data for $\QQ$ and $\markedelements$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\  \markedelements = \{\markedelements_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+%  \KwResult{(Data for $\QQ^*$ and $\newcells$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \newcells = \{\newcells_\ell\}_\ell\end{cases}\,\, (\ell=0,1,\dots,n).$}
+% \medskip
+% 
+% $[\mesh,\newcells] = \texttt{update\_active\_cells}(\mesh,\markedelements)$\;
+% 
+%  \end{minipage}
+% }
+% \end{algorithm}
+
+
+\begin{algorithm}[H]{$\texttt{function}\quad \markedelements = \texttt{compute\_cells\_to\_refine}(\{E^A_\ell\}_{\ell=0}^{n-1}, \marked)$} 
+\caption{$\texttt{compute\_cells\_to\_refine}$}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+\medskip
+\% This function computes the indices of cells that have to be splitted when marking for refinement the functions in $\marked$\,
+\medskip
+
+ \KwData{$\begin{cases} \{E^A_\ell\}_\ell \text{ (indices of active cells)}\\  \marked = \{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+ \KwResult{$\markedelements = \{\markedelements_\ell\}_{\ell=0}^{n-1}$ (Indices of cells that have to be refined)}
+\medskip
+
+ \ForEach{$\ell=0,1,\dots,n-1$}{
+ \begin{enumerate}
+  \item[1.] Use \texttt{get\_cells} to compute the set of indices $\markedelements_\ell$ of the cells of level $\ell$ that are included in the support of functions in $M_\ell$\;
+  \item[2.] $\markedelements_\ell \leftarrow \markedelements_\ell\cap E^A_\ell$ \% Remove the nonactive cells from $\markedelements_\ell$\;
+ \end{enumerate}
+  }
+\medskip 
+\end{minipage}
+}
+\end{algorithm}
+
+\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{update\_active\_cells}(\mesh,\markedelements)$} 
+\caption{\texttt{update\_active\_cells}}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+\medskip
+
+\% This function updates the active and deactive cells in each level when refining the cells in $\markedelements$
+
+\KwData{(Data for $\QQ$ and $\markedelements$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\  \markedelements = \{\markedelements_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+ \KwResult{(Data for $\QQ^*$ and $\newcells$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \newcells = \{\newcells_\ell\}_\ell\end{cases}\,\, (\ell=0,1,\dots,n).$}
+\medskip
+
+\begin{enumerate}
+\item[1.] \lIf{$\markedelements_{n-1}\neq \emptyset$,} {$E^A_{n} = E^D_n = \emptyset$}
+
+\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+\begin{enumerate}
+ \item[2.]$E^A_\ell \leftarrow E^A_\ell \setminus \markedelements_\ell$ \% Update $E^A_\ell$ by removing the cells to be refined\;
+ \item[3.] Use \texttt{split\_cell} to get the set of indices $\newcells_{\ell+1}$ of cells of level $\ell+1$ which are inside of the cells in $\markedelements_\ell$\;
+ \item[4.]$E^A_{\ell+1} \leftarrow E^A_{\ell+1}\cup \newcells_{\ell+1}$ \% Update $E^A_{\ell+1}$ by adding the new active cells of level $\ell+1$; 
+ \item[5.]$E^D_\ell \leftarrow E^D_\ell \cup \markedelements_\ell$ \% Update $E^D_\ell$ by adding the cells that were deactivated\;
+\end{enumerate}
+}
+\end{enumerate}
+\end{minipage}
+}
+\end{algorithm}
+
+\subsubsection{Routines for the space}
+
+For the routines in this section notice that the variable $\mesh$ is already updated, i.e., it contains the information about $\QQ^*$.
+
+
+\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$} 
+\caption{$\texttt{refine\_hierarchical\_space}$}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+{\footnotesize
+\medskip
+
+\KwData{(Data for $\QQ^*$, $\HH$, $\MM$, and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\\ \marked=\{M_\ell\}_\ell\\  \newcells = \{\newcells_\ell\}_\ell \end{cases}(\ell=0,\dots,n-1).$}
+ \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\quad (\ell=0,1,\dots,n).$}
+\medskip
+ 
+ \begin{enumerate}
+  \item [1.]$\functionstoremove = \texttt{compute\_functions\_to\_deactivate}(\mesh, \basis, \marked)$\;
+  \item[]\% $\functionstoremove$ contains all B-splines that have to be deactivated\;
+\item[2.]$\basis=\texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;
+ \end{enumerate}
+ }
+ \end{minipage}
+}
+\end{algorithm}
+
+
+\begin{algorithm}[H]{$\texttt{function}\quad \functionstoremove = \texttt{compute\_functions\_to\_deactivate}(\{E^A_\ell\}_{\ell=0}^{n}, \{F^A_\ell\}_{\ell=0}^{n-1},\marked)$} 
+\caption{\texttt{compute\_functions\_to\_deactivate}}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+{\footnotesize
+\medskip
+\% This function computes the indices of the functions that have to be deactivated when marking for refinement the functions (or elements) in $\marked$\,
+\medskip
+
+ \KwData{$\begin{cases} \{E^A_\ell\}_{\ell=0}^n \text{ (indices of active cells)}\\ \{F^A_\ell\}_\ell\text{ (indices of active basis functions)}\\ \marked = \{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+ \KwResult{$\functionstoremove = \{\functionstoremove_\ell\}_{\ell=0}^{n-1}$ (Indices of basis functions that have to be deactivated)}
+\medskip
+
+ \ForEach{$\ell=0,1,\dots,n-1$}{
+ \begin{enumerate}
+  \item[] \% Computation of functions which \emph{possibly} have to be removed\;
+ \item[]\Switch{marked functions or elements}{
+\Case{functions,}{
+\begin{enumerate}
+ \item[1.] Use \texttt{get\_neighbors} to compute the set of indices $\functionstoremove_\ell$ of functions of level $\ell$ whose supports intersect the support of a function in $M_\ell$\;
+ \item[2.] $\functionstoremove_\ell \leftarrow (\functionstoremove_\ell\cap F^A_\ell)\setminus M_\ell$ \% Remove from $\functionstoremove_\ell$ the nonactive functions and the active functions already selected for deactivation\; 
+\end{enumerate}
+}
+ \Case{elements,}{
+ \begin{enumerate}
+  \item[3.] Use \texttt{get\_basis\_functions} to compute the set of indices $\functionstoremove_\ell$ of functions of level $\ell$ whose supports intersect at least one cell in $M_\ell$\;
+  \item[4.] $\functionstoremove_\ell \leftarrow (\functionstoremove_\ell\cap F^A_\ell)$ \% Remove from $\functionstoremove_\ell$ the nonactive functions\;
+ \end{enumerate}
+}
+}
+\item[] \% Computation of functions which \emph{in fact} have to be removed\;
+\item[5.] Update $\functionstoremove_\ell$ by removing the functions that have al least one active cell of level $\ell$ within their supports. Use \texttt{get\_cells}\;
+ \item[6.] \lIf{marking functions,}{$\functionstoremove_\ell =  \functionstoremove_\ell\cup M_\ell $}
+ \end{enumerate}
+ }
+\medskip
+}
+\end{minipage}
+}
+\end{algorithm}
+
+\bigskip
+
+\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
+\caption{\texttt{update\_active\_functions}}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+%\begin{center}
+\medskip
+{\footnotesize
+\% This function updates the active and deactive B-spline basis functions. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
+
+\KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
+ \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell, W_\ell\}_{\ell=0}^n$}
+\medskip
+
+\begin{enumerate}
+ \item[1.] \lIf{ $\functionstoremove_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=W_n=\emptyset$}
+\item[]\% Update of $\{F^A_\ell,F^D_\ell,W_\ell\}_\ell$\;
+\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+\begin{enumerate}
+ \item[2.] $\functionstoremove_\ell \leftarrow \functionstoremove_\ell \cup (F^A_\ell\cap F^D_\ell)$ \% This line is important for $\ell\ge 1$\;
+\item[3.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
+\item[4.]Save in \texttt{W} the values of $W_\ell$ corresponding to functions in $\functionstoremove_\ell$ and update $W_\ell$ by removing these values\;
+ \item[5.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
+\item[]\ForEach{$\beta$ in $\functionstoremove_\ell$}{
+\begin{enumerate}
+  \item [6.] Compute the set of indices $I_\beta$ of the B-splines of level $\ell+1$ and the corresponding coefficients $c$ of the two-scale relation~\eqref{E:two scale relation} when writing $\beta$ as a linear combination of functions in $\BB_{\ell+1}$ 
+ \item[7.] Use \texttt{get\_cells} to update $F^D_{\ell+1}$ by adding the functions in $(I_\beta\setminus F^A_{\ell+1})\setminus F^D_{\ell+1}$ that have no active cell of level $\ell+1$ within its support.
+ \item[8.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I_\beta$ \% Enlarge $F^A_{\ell+1}$ by adding the \emph{possible} new active functions\;
+ \item[9.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$.
+  \item[] \% Now, we update the values in $W_{\ell+1}$
+  \item[10.] \lForEach{ $\beta_{\ell+1}$ in $I_\beta$}{
+  $a_{\beta_{\ell+1}}\leftarrow a_{\beta_{\ell+1}}+a_\beta*c_{\beta_{\ell+1}}$, where $a_\beta$ is the value in \texttt{W} corresponding to $\beta$, and $a_{\beta_{\ell+1}}$ and $c_{\beta_{\ell+1}}$ are the values in $W_{\ell+1}$ and $c$, respectively, corresponding to $\beta_{\ell+1}$}
+ \end{enumerate}
+}
+\item[]\% Now, we activate B-splines of level $\ell+1$ that are not children of any deactivated B-spline of level $\ell$\;
+\item[11.] Use \texttt{get\_basis\_functions} to compute the indices $I$ of the B-splines of level $\ell+1$ that do not vanish in some cell of $\newcells_{\ell+1}$\;
+\item[12.] $I\leftarrow I\setminus F^A_{\ell+1}$ \% Remove from $I$ the functions which were already active\;
+\item[13.] Use \texttt{get\_cells} to update $I$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $E^A_{\ell+1}\cup E^D_{\ell+1}$\;
+\item[14.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I$\;
+\item [15.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$\;
+\end{enumerate}
+}
+\end{enumerate}
+\medskip
+}%\end{center}
+\end{minipage}
+}
+\end{algorithm}
+
+
+\newpage
+
+\subsection{Initialization of a hierarchical spline space}
+
+The function \texttt{refine} detailed in the previous section can be also used to select the active functions of a hierarchical B-spline basis $\HH$, if we know the active cells of each level~$\{E^A_\ell\}_{\ell=0}^{n-1}$. 
+
+\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\basis] = \texttt{build\_hierarchical\_space}(\{E^A_\ell\}_{\ell=0}^{n-1})$} 
+\caption{$\texttt{build\_hierarchical\_space}$}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+\medskip
+
+\KwData{$\{E^A_\ell\}_{\ell=0}^{n-1}$ (Active elements in each level)}
+ \KwResult{(Data for $\QQ$ and $\HH$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+\medskip
+
+\begin{enumerate}
+ \item[1.] Define $\hat{E}^A_0$ as the set of indices of all the cells in $\QQ_0$\;
+ \item[2.] Define $F^A_0$ as the set of indices of all the basis functions in $\BB_0$\;
+
+\item[3.] Define the corresponding array of weights $W_0$ setting all the values equal to $1$\;
+\item[4.] $\hat{E}^D_0=\emptyset$\;
+\item[5.] $F^D_0=\emptyset$\;
+\item[6.] $\mesh=\{\hat{E}^A_0,\hat{E}^D_0\}$\; 
+\item[7.] $\basis=\{F^A_0,F^D_0,W_0\}$\;
+\item[] \ForEach{$k = 0,\dots,n-2$}{
+\begin{enumerate}
+ \item[8.] Let $M_0 =\dots = M_{k-1}=\emptyset$ and $M_{k} = \hat{E}^A_k\setminus E^A_k$. Then, $\marked=\{M_\ell\}_{\ell=0}^k$\;
+ \item[9.] $[\mesh,\basis]\,=\,\texttt{refine}(\mesh,\basis,\marked)$\;
+\end{enumerate}
+ }
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+\medskip
+\end{minipage}
+}
+\end{algorithm}
+
+
+
+\begin{remark}
+ In order to make the last algorithm more understandable we have used the function $\verb+refine+$. This algorithm can be improved by adapting the code of $\verb+refine+$ instead of call it. Notice that the set of marked cells in each of the calls to $\verb+refine+$ has cells only of one level. 
+\end{remark}
+
+
+%\note{ $C_\ell$ is a connectivity matrix which cointains the global indices of active functions whose support intersect $Q$, for every $Q\in\QQ\cap\QQ_\ell$. Here, we also need to store the corresponding levels together with the global indices of active functions.}
+
+%===============================================================================
+\begin{thebibliography}{1}
+%===============================================================================
+\bibitem[BG15a]{BG15}
+A. Buffa and E.M. Garau, \emph{New refinable spaces and local approximation estimates for hierarchical splines}, submitted, 2015.
+
+\bibitem[BG15b]{BuGa15}
+A. Buffa and E.M. Garau, \emph{A posteriori error estimators for hierarchical B-spline discretizations}, in preparation, 2015.
+
+% 
+% \bibitem[BG15]{BG15}
+% A. Buffa and C.~Giannelli, \emph{Adaptive isogemetric techniques via hierarchical splines: error 
+% estimator and convergence}, submitted, 2015.
+% 
+% \bibitem[CKNS08]{CKNS08}
+% J.M. Cascon, C. Kreuzer, R.H. Nochetto and K.G. Siebert, \emph{Quasi-optimal convergence rate for an adaptive finite element method}, SIAM J. Numer. Anal. 46 (2008), no. 5, 2524--2550. 
+% 
+% \bibitem[CW96]{Chua-Wheeden}
+% S.-K. Chua and R. L. Wheeden, \emph{Estimates of best constants for weighted 
+% Poincar\'e inequalities on convex domains}, Proceedings of LMS \textbf{93} 
+% (2006), 197--226.
+
+\bibitem[dV01]{deBoor}
+C. de Boor, \emph{A practical guide to splines}, Revised edition. Applied Mathematical Sciences, 27. Springer-Verlag, New York, 2001. 
+
+\bibitem[GJS14]{GJS14}
+C. Giannelli, B. J\"uttler, and H. Speleers, \emph{Strongly stable bases for adaptively refined multilevel spline spaces}, Adv. Comput. Math. 40 (2014), no. 2, 459--490.
+
+% \bibitem[K97]{Kraft}
+% R. Kraft, \emph{Hierarchical B-splines}, Preprint of Math. Inst. A Uni.Stuttgart.
+
+\bibitem[K98]{Kraft-thesis}
+R. Kraft, \emph{Adaptive und linear unabh\"angige multilevel B-Splines und ihre Anwendungen}, Ph.D. thesis, Universit\"at Stuttgart, 1998. 
+
+% 
+% \bibitem[MSV08]{MSV-convergence}
+% P.~Morin, K.G.~Siebert and A.~Veeser, \emph{A basic convergence
+%   result for conforming adaptive finite elements}, Math. Models Methods Appl.
+%   Sci. \textbf{18} (2008), no.~5, 707--737.
+% 
+% 
+% \bibitem[NV]{Nochetto-Veeser}
+% R.H. Nochetto and A. Veeser, \emph{Primer of adaptive finite element 
+% methods}, Multiscale and Adaptivity: Modeling, Numerics and Applications, CIME 
+% Lectures, eds R. Naldi and G. Russo, Springer (to appear).
+
+\bibitem[S07]{Schumaker}
+L.L. Schumaker, \emph{Spline functions: basic theory}, Third edition, Cambridge Mathematical Library, Cambridge University Press, Cambridge, 2007.
+
+% 
+% \bibitem[S11]{S11}
+% K.G.~Siebert, \emph{A convergence proof for adaptive finite elements without lower bound}, IMA J. Numer. Anal. 31 (2011), no. 3, 947--970. 
+
+% \bibitem[SM14]{SM14}
+% H. Speleers and C. Manni, \emph{Effortless quasi-interpolation in hierarchical spaces}, Preprint, 2014.
+% 
+% \bibitem[VV09]{Veeser-Verfurth}
+% A. Veeser and R. Verf\"urth, \emph{Explicit upper bounds for dual norms of 
+% residuals}, SIAM J. Numer. Anal. 47 (2009), no. 3, 2387--2405.
+
+
+\bibitem[VGJS11]{Vuong etal}
+A.-V. Vuong, C. Giannelli, B. J\"uttler and B. Simeon, \emph{A hierarchical approach to adaptive local refinement in isogeometric analysis}, Comput. Methods Appl. Mech. Engrg. 200 (2011), no. 49-52, 3554--3567.
+
+
+\end{thebibliography}
+
+
+
+
+\end{document}
