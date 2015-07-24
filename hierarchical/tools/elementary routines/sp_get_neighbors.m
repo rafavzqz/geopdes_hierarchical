@@ -1,6 +1,6 @@
 % SP_GET_NEIGHBORS: Compute the indices of functions that share one element in the support of a given list of functions
 %
-% function neighbors_indices = sp_get_neighbors (space, msh, indices)
+% neighbors_indices = sp_get_neighbors (space, msh, indices)
 %
 % INPUT:
 %    space:   object defining the space of discrete functions (see sp_bspline)
