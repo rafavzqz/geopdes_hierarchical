@@ -12,16 +12,18 @@ function u = assemble_and_solve(hmsh, hspace, problem_data)
 tic
 disp('Assembling and solving the system:')
 
-[rhs, stiffness , mass] = assemble(hmsh, hspace, problem_data.f);
+stiffness = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
+rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
+mass = op_u_v_hier (hspace, hspace, hmsh, problem_data.c_diff);
 
-% Apply Neumann boundary conditions
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX TO BE TESTED
+% Apply Neumann boundary conditions 
 for iside = problem_data.nmnn_sides
   if (hmsh.ndim > 1)
 % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
     gside = @(varargin) problem_data.g(varargin{:},iside);
     dofs = hspace.boundary(iside).dofs;
-    rhs_side = assemble(hmsh.boundary(iside), hspace.boundary(iside), gside);
-    rhs(dofs) = rhs(dofs) + rhs_side;
+    rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
   else
     if (iside == 1)
       x = hmsh.mesh_of_level(1).breaks{1}(1);
