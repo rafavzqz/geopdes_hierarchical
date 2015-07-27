@@ -29,9 +29,8 @@ function neighbors_indices = sp_get_neighbors (space, msh, fun_indices)
 
 space = sp_precompute_param (space, msh, 'connectivity', true);
 conn_indices = arrayfun (@(x) find (space.connectivity == x), fun_indices, 'UniformOutput', false);
-conn_indices = vertcat (conn_indices{:});
-[~, cell_indices] = ind2sub ([space.nsh_max, msh.nel], conn_indices);
-cell_indices = unique (cell_indices(:));
+[~, indices_per_function] = cellfun (@(x) ind2sub ([space.nsh_max, msh.nel], x), conn_indices, 'UniformOutput', false);
+cell_indices = unique (vertcat (indices_per_function{:}));
 
 neighbors_indices = unique (space.connectivity (:,cell_indices));
 
