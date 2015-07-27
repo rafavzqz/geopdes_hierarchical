@@ -14,8 +14,8 @@
 %  u:    assigned value to the degrees of freedom
 %  dofs: global numbering of the corresponding basis functions
 %
-% Copyright (C) 2010 Carlo de Falco
 % Copyright (C) 2010, 2011, 2015 Rafael Vazquez
+% Copyright (C) 2015 Eduardo Garau
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -34,7 +34,18 @@ function [u, dofs] = hsp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 rhs  = zeros (hspace.ndof, 1);
 
 if (hmsh.ndim == 1) % The one-dimensional case has not been implemented yet
-  error ('The 1d case is not implemented yet')
+  dofs = []; u = zeros (numel(drchlt_sides), 1);
+  for ii = 1:numel(drchlt_sides)
+    iside = drchlt_sides(ii);
+    dofs = union (dofs, hspace.boundary(iside).dofs);
+    if (iside == 1)
+      u(ii) = h(msh.breaks{1}(1), iside);
+    else
+      u(ii) = h(msh.breaks{1}(end), iside); 
+    end
+  end
+  u = u(:);
+  return
 end
 
 
