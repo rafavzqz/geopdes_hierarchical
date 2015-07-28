@@ -155,7 +155,6 @@ nmnn_sides = setdiff(1:2*dim,drchlt_sides);
 
 problem_data.nmnn_sides = nmnn_sides;
 problem_data.drchlt_sides = drchlt_sides;
-%problem_data.c_diff = c_diff;
 problem_data.f = f;
 %problem_data.g = g;
 problem_data.h = h;
@@ -164,3 +163,11 @@ problem_data.dim = dim;
 problem_data.uex = uex;
 problem_data.graduex = graduex;
 
+switch problem
+  case {1, 2, 3, 4, 5, 6, 9, 11, 12}
+    problem_data.c_diff = @(x,y) ones (size(x));
+  case {7, 8}
+    problem_data.c_diff = @(x,y,z) ones (size(x));
+  case {10}
+    problem_data.c_diff = @(x) ones (size(x));
+end
