@@ -1,6 +1,6 @@
 % HIERARCHICAL_MESH: constructor of the class for hierarchical meshes.
 %
-% function hmsh = hierarchical_mesh (msh, geometry) %%%XXXX boundary)
+%    function hmsh = hierarchical_mesh (msh, geometry)
 %
 % INPUT:
 %
@@ -9,7 +9,7 @@
 %
 % OUTPUT:
 %  
-%    hmsh: hierarchical_mesh object, whcih contains the following fields and methods
+%    hmsh: hierarchical_mesh object, which contains the following fields and methods
 % 
 %    FIELD_NAME     TYPE                DESCRIPTION
 %    ndim           (scalar)            dimension of the parametric space
