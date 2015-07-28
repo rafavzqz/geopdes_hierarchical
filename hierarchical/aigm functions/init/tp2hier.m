@@ -59,7 +59,6 @@ if nargin == 4
     boundary = true;
 end
 
-hmsh = tp2hier_msh (msh, geometry, boundary);
+hmsh = hierarchical_mesh (msh, geometry);
 
 hspace = tp2hier_space (hmsh, space, space_type, boundary);
-
