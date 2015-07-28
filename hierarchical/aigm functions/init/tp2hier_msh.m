@@ -21,11 +21,14 @@ function hmsh = tp2hier_msh (msh, geometry, boundary)
 %               nel_per_level (1 x nlevels array) number of active cells on each level
 %               globnum_active (nel x (dim+1))  global tensor-product numbering of active cells and their corresponding level
 %               active        (1 x nlevels cell-array) List of active elements on each level
-%               removed       (1 x nlevels cell-array) List of removed cells on each level
+%               deactivated       (1 x nlevels cell-array) List of removed cells on each level
 %               msh_lev     (nlevels x 1 cell-array) msh_lev{ilev} is a structure
 %               geometry
 %               boundary    
 %
+% ATENCION: AQUI nsub == 2 (Dyadic refinement)  <-- modificar
+%
+
 
 % I store nsub, to understand the relation between levels
 % nsub = 2 is for dyadic refinement
@@ -45,8 +48,8 @@ hmsh.nel_per_level = [msh.nel];
 aux = cell(hmsh.ndim,1);
 [aux{:}] = ind2sub(msh.nel_dir,1:msh.nel);
 hmsh.globnum_active = [ones(msh.nel,1) cell2mat(aux)'];
-hmsh.active{1} = 1:msh.nel;
-hmsh.removed{1} = zeros(0,hmsh.ndim);
+hmsh.active{1} = (1:msh.nel)';
+hmsh.deactivated{1} = zeros(0,1);
 hmsh.msh_lev{1} = msh_evaluate_element_list(hmsh.mesh_of_level(1), hmsh.active{1});
 hmsh.geometry = geometry;
 

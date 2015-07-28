@@ -7,10 +7,10 @@ function [hmsh, hspace] = refine (hmsh, hspace, marked, flag, boundary)
 %
 % Input:        hmsh: struct for current the hierarchical mesh
 %               hspace: struct for current the hierarchical space
-%               marked:  (1 x msh.nlevels cell array),
-%                   where marked{lev} is a matrix whose rows are the tensor-product indices
+%               marked:  (cell array),
+%                   where marked{lev} is a matrix whose rows are the indices
 %                   of marked functions or elements of level lev, for lev =
-%                   1:hmsh.nlevels
+%                   1,2,...
 %               flag: 'functions' or 'elements'
 %               boundary: true or false, default: true. (Fill the
 %                   information for the boundaries of the mesh and space).
@@ -32,7 +32,7 @@ refine_mesh_time = tic;
 disp('Refining mesh:')
 switch flag
     case 'functions',
-    [marked_elements, indices] = compute_cells_to_refine(hmsh, marked, hspace.degree);
+    [marked_elements, indices] = compute_cells_to_refine(hspace, hmsh, marked);
     case 'elements',
     marked_elements = marked;
     indices = [];

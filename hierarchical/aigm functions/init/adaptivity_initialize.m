@@ -14,13 +14,14 @@
 %    - nsub:       number of subelements with respect to the geometry mesh 
 %                   (nsub=1 leaves the mesh unchanged)
 %    - nquad:      number of points for Gaussian quadrature rule
+%    - space_type: 0 (simplified basis), 1 (full basis)
 %
 % OUTPUT:
 %    hmsh:    XXXXXXXXXXXXXXXXXXXXXXXXXXXXxxXXXXXXXXXXXXXXXXXXXX
 %    hspace:  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
 %    geometry: geometry structure (see geo_load)
 %
-% Copyright (C) 2015 Eduardo Garau, Rafael Vazquez
+% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -58,6 +59,6 @@ space    = sp_bspline (knots, method_data.degree, msh);
 % Construct the hierarchical spaces of one level, from the tensor-product ones
 % XXXXXXX THIS WILL ALSO NEED TRUNCATED. Not for the computations (one
 % level) but for initialization
-[hmsh, hspace] = tp2hier (msh, space, geo_name, method_data.space_type);
+[hmsh, hspace] = tp2hier (msh, space, geometry, method_data.space_type);
 
 end

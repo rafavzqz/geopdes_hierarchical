@@ -18,13 +18,13 @@ switch flag
     otherwise, disp('MARK: Error'), return,
 end
 
-marked = zeros(size(est));
+aux_marked = zeros(size(est));
 
 switch mark_strategy
 case 'GR'
-  marked = ones(size(est));
+  aux_marked = ones(size(est));
 case 'MS'
-  marked(est > param * max_est) = 1;
+  aux_marked(est > param * max_est) = 1;
 case 'GERS'
   est_sum2 = sum(est.^2);
   est_sum2_marked = 0;
@@ -33,38 +33,59 @@ case 'GERS'
   while (est_sum2_marked < threshold)
     gamma = gamma - 0.1;
     ff = find(est > gamma * max_est);
-    marked(ff) = 1;
+    aux_marked(ff) = 1;
     est_sum2_marked = sum((est(ff)).^2);
   end
 end
 
-marked_list = find(marked);
+marked_list = find(aux_marked);
 
 nmarked = numel(marked_list);
 switch flag
     case 'elements',
         globnum_marked = hmsh.globnum_active(marked_list,:);
-        marked = cell(hmsh.nlevels,1);
+        marked_sub = cell(hmsh.nlevels,1);
         ndim = hmsh.ndim;
     case 'functions',
         globnum_marked = hspace.globnum_active(marked_list,:);
-        marked = cell(hspace.nlevels,1);
+        marked_sub = cell(hspace.nlevels,1);
         ndim = hspace.ndim;
 end
 
 % Mejorar el siguiente procedimiento %%%%%%
 for fila = 1:nmarked
     aux = globnum_marked(fila,1);
-    marked{aux} = [marked{aux}; globnum_marked(fila,2:end)];
+    marked_sub{aux} = [marked_sub{aux}; globnum_marked(fila,2:end)];
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ii = 1:numel(marked)
-    if isempty(marked{ii})
-        marked{ii} = zeros(0,ndim);
+for lev = 1:numel(marked_sub)
+    if isempty(marked_sub{lev})
+        marked_sub{lev} = zeros(0,ndim);
     end
 end
 
+%marked.sub = marked_sub;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+marked.ind = cell(size(marked_sub));
 
+for lev = 1:numel(marked_sub)
+    if isempty(marked_sub{lev})
+        marked.ind{lev} = zeros(0,1);
+    else
+        switch flag
+            case 'elements',
+                siz = hmsh.mesh_of_level(lev).nel_dir;
+            case 'functions',
+                siz = hspace.space_of_level(lev).ndof_dir;
+        end
+        switch hmsh.ndim
+            %case 1, marked_ind{lev} = marked_sub{lev}(:,1);
+            case 2, marked.ind{lev} = sub2ind(siz, marked_sub{lev}(:,1), marked_sub{lev}(:,2));
+            case 3, marked.ind{lev} = sub2ind(siz, marked_sub{lev}(:,1), marked_sub{lev}(:,2), marked_sub{lev}(:,3));
+        end
+    end
+end
+
+marked = marked.ind;

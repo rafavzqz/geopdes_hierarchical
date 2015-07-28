@@ -19,7 +19,7 @@ function C = compute_matrices_for_changing_basis(lev, ind, ndof, proj)
 %           coefficients for writing the corresponding active function as a linear combination of the basis functions of level
 %           l
 %
-% REMARK: We have to put into hspace class
+% REMARK: We have to put it into hspace class
 %
 
 

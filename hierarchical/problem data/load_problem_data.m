@@ -1,4 +1,4 @@
-function [problem_data, exact_solution] = load_problem_data(problem)
+function problem_data = load_problem_data(problem)
 
 switch problem
     case 1,
@@ -138,15 +138,21 @@ end
 % end
 h = @(x, y, ind) zeros(size(x));
 
+% switch dim
+%     case 1, geometry = geo_load (nrbline ([0 0], [1 0]));
+%     case 2, geometry = geo_load ('geo_square.txt'); %geometry=geo_load ('geo_ring.txt'); 
+%     case 3, geometry = geo_load ('geo_cube.txt');
+% end
+
 switch dim
-    case 1, geometry = geo_load (nrbline ([0 0], [1 0]));
-    case 2, geometry = geo_load ('geo_square.txt'); %geometry=geo_load ('geo_ring.txt'); 
-    case 3, geometry = geo_load ('geo_cube.txt');
+    case 1, problem_data.geo_name = nrbline ([0 0], [1 0]);
+    case 2, problem_data.geo_name = 'geo_square.txt'; 
+    case 3, problem_data.geo_name = 'geo_cube.txt';
 end
+
 
 nmnn_sides = setdiff(1:2*dim,drchlt_sides);
 
-problem_data.geo_name = geometry;
 problem_data.nmnn_sides = nmnn_sides;
 problem_data.drchlt_sides = drchlt_sides;
 %problem_data.c_diff = c_diff;
@@ -155,6 +161,6 @@ problem_data.f = f;
 problem_data.h = h;
 problem_data.dim = dim;
 
-exact_solution.uex = uex;
-exact_solution.graduex = graduex;
+problem_data.uex = uex;
+problem_data.graduex = graduex;
 

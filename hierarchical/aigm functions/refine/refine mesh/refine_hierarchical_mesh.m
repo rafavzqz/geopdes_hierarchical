@@ -4,13 +4,13 @@ function [hmsh, new_elements] = refine_hierarchical_mesh(hmsh, M, indices, bound
 %
 % This function computes the information for updating a hierarchical mesh
 % when enlarging the underlying subdomains with some marked elements.
-% ATENCION: Luego voy a limpiar este codigo
+% ATENCION: Luego voy a limpiar mas este codigo
 %
 % Input:        hmsh: struct for current the hierarchical mesh
-%               M:  (1 x msh.nlevels cell array),
-%                   where M{lev} is a matrix whose rows are the tensor-product indices
+%               M:  (cell array),
+%                   where M{lev} is a matrix whose rows are the indices
 %                   of marked elements of level lev, for lev = 1:hmsh.nlevels
-%               indices: (1 x msh.nlevels cell array),
+%               indices: (cell array),
 %                   where indices{lev} satisfies M{lev} =
 %                   hmsh.active{lev}(indices{lev}).
 %                   If indices is [], then this function computes this
@@ -19,13 +19,17 @@ function [hmsh, new_elements] = refine_hierarchical_mesh(hmsh, M, indices, bound
 %                   information for the boundaries of the mesh).
 %
 % Output:   hmsh: struct for the new hierarchical mesh after refinement
-%           new_elements: (msh.nlevels x 1 cell-array), new_elements{lev}
+%           new_elements: (cell-array), new_elements{lev}
 %               contains the global indices of the new active cells of level
 %               lev after refinement.
 %
 
 % This function uses:     update_active_cells
 %
+
+% ATENCION: Modificar nsub en Computation of mesh_of_level(nlevels+1) para
+% refinamiento no diadico
+
 
 if nargin == 3
     boundary = true;
@@ -36,48 +40,26 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~isempty(M{hmsh.nlevels}) % if a new level is activated
-    tic
-    disp('Enlarging mesh_of_level:')
-    nlevels = hmsh.nlevels + 1;
-    nel_per_level = zeros(1, nlevels);
+    %tic
+    %disp('Enlarging mesh_of_level:')
     % We will fill hmsh.mesh_of_level(nlevels+1)
     rule = msh_gauss_nodes (hmsh.mesh_of_level(1).nqn_dir);
-    nsub = 2 * ones (1, hmsh.ndim);
+    nsub = 2 * ones (1, hmsh.ndim); 
     [aaa,zeta] = kntrefine (hmsh.mesh_of_level(hmsh.nlevels).breaks, nsub-1, ones(1, hmsh.ndim), zeros (1, hmsh.ndim));
     [qn, qw] = msh_set_quad_nodes (zeta, rule);
     hmsh.mesh_of_level(hmsh.nlevels+1) = msh_cartesian (zeta, qn, qw, hmsh.geometry,'boundary', boundary);
-    tempo = toc;
-    fprintf(' %f seconds\n', tempo);
-else
-    nlevels = hmsh.nlevels;
-    nel_per_level = zeros(1, hmsh.nlevels);
+    %tempo = toc;
+    %fprintf(' %f seconds\n', tempo);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% We fill E with the information of active cells
-Ne = cumsum([0; hmsh.nel_per_level(:)]);
-E = cell(hmsh.nlevels,1);
-% El siguiente loop se puede evitar usando mat2cell
-for lev = 1:hmsh.nlevels
-        ind_e = (Ne(lev)+1):Ne(lev+1);
-        E{lev} = hmsh.globnum_active(ind_e, 2:end);
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Update of active elements
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-tic
-disp('Updating cells:')
-[E, hmsh.removed,new_cells] = update_active_cells(E, hmsh.removed, M, indices);
-
-hmsh.nlevels = nlevels;
-aux_ind_el = [];
-for lev = 1:hmsh.nlevels
-    nel_per_level(lev) = size(E{lev},1);
-    aux_ind_el = vertcat(aux_ind_el, lev*ones(nel_per_level(lev),1));
-end % for lev = 1:nlevels
-
+%tic
+%disp('Updating cells:')
+[hmsh, new_cells] = update_active_cells(hmsh, M, indices);
 
 if (boundary && hmsh.ndim > 1)
     new_elements.interior = new_cells;
@@ -85,25 +67,8 @@ else
     new_elements = new_cells;
 end
 
-hmsh.nel_per_level = nel_per_level;
-hmsh.nel = sum(hmsh.nel_per_level);
-hmsh.globnum_active = cell2mat(E);
-hmsh.globnum_active = horzcat(aux_ind_el, hmsh.globnum_active);
-
-hmsh.active = cell(hmsh.nlevels,1);
-for ilev = 1:hmsh.nlevels
-    % Mejorar lo siguiente
-    switch hmsh.ndim
-        case 1,
-            hmsh.active{ilev} = E{ilev};
-        case 2,
-            hmsh.active{ilev} = sub2ind(hmsh.mesh_of_level(ilev).nel_dir,E{ilev}(:,1),E{ilev}(:,2));
-        case 3,
-            hmsh.active{ilev} = sub2ind(hmsh.mesh_of_level(ilev).nel_dir,E{ilev}(:,1),E{ilev}(:,2),E{ilev}(:,3));
-    end
-end
-tempo = toc;
-fprintf(' %f seconds\n', tempo);
+%tempo = toc;
+%fprintf(' %f seconds\n', tempo);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -114,13 +79,17 @@ fprintf(' %f seconds\n', tempo);
 tic
 disp('Computing msh_lev:')
 hmsh.msh_lev = cell(hmsh.nlevels,1);
-% Unefficient way. This is ok for the first working version
+% Lo siguiente se puede mejorar para reducir el tiempo de calculo
 for ilev = 1 : hmsh.nlevels
-    elems = hmsh.active{ilev};
-    hmsh.msh_lev{ilev} = msh_evaluate_element_list(hmsh.mesh_of_level(ilev), elems);
+    hmsh.msh_lev{ilev} = msh_evaluate_element_list(hmsh.mesh_of_level(ilev), hmsh.active{ilev});
 end
 tempo = toc;
 fprintf(' %f seconds\n', tempo);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Fill the information for the boundaries
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if (boundary && hmsh.ndim > 1)
@@ -138,8 +107,18 @@ if (boundary && hmsh.ndim > 1)
         end
         M_boundary = cell(size(M));
         for lev = 1:numel(M)
-           % if ~isempty(M{lev})
-                M_boundary{lev} = M{lev}(M{lev}(:,i) == boundary_ind(lev),ind);
+            % if ~isempty(M{lev})
+            M_sub = cell(1,hmsh.ndim);
+            [M_sub{:}] = ind2sub(hmsh.mesh_of_level(lev).nel_dir,  M{lev}(:));
+            M_sub = cell2mat(M_sub);
+            M_boundary{lev} = M_sub(M_sub(:,i) == boundary_ind(lev),ind);
+            % Mejorar lo siguiente
+            switch hmsh.boundary(iside).ndim
+                case 2,
+                    M_boundary{lev} = sub2ind(hmsh.boundary(iside).mesh_of_level(lev).nel_dir,M_boundary{lev}(:,1),M_boundary{lev}(:,2));
+                case 3,
+                    M_boundary{lev} = sub2ind(hmsh.boundary(iside).mesh_of_level(lev).nel_dir,M_boundary{lev}(:,1),M_boundary{lev}(:,2),M_boundary{lev}(:,3));
+            end
             %end
         end
         [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh(hmsh.boundary(iside), M_boundary, [], false);
@@ -148,3 +127,4 @@ else
     hmsh.boundary = [];
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

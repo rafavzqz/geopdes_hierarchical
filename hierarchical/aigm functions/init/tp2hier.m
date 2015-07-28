@@ -2,7 +2,7 @@ function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 %
 % function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 %
-% This function initializes the structures hmsh and hpsace from the
+% This function initializes the structures hmsh and hspace from the
 % tensor-product mesh and space. For the initialization of the mesh, the
 % function tp2hier_msh is used.
 %
@@ -27,7 +27,7 @@ function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 %               nel_per_level (1 x nlevels array) number of active cells on each level
 %               globnum_active (nel x (dim+1))  global tensor-product numbering of active cells and their corresponding level
 %               active        (1 x nlevels cell-array) List of active elements on each level
-%               removed       (1 x nlevels cell-array) List of removed cells on each level
+%               deactivated       (1 x nlevels cell-array) List of deactivated cells on each level
 %               msh_lev     (nlevels x 1 cell-array) msh_lev{ilev} is a structure
 %               geometry
 %               boundary    
@@ -38,6 +38,8 @@ function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 % FIELD_NAME     SIZE                         DESCRIPTION
 % ndim           (scalar)           number of parametric directions
 % degree        (1 x ndim array)    polynomial degree in each parametric direction
+% ncomp
+% type          0 (simplified basis), 1 (full basis)
 % ndof          (scalar)           total number of active functions 
 % nlevels       (scalar)           the number of levels
 % space_of_level (1 x nlevels)                tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
@@ -48,10 +50,10 @@ function [hmsh, hspace] = tp2hier (msh, space, geometry, space_type, boundary)
 % ndof_per_level (1 x nlevels array) number of active functions on each level
 % active        (1 x nlevels cell-array) List of active functions on each level
 % coeff         (ndof x 1)         coefficientes to form the partition of the unity in the hierarchical space
-% removed       (1 x nlevels cell-array) List of removed functions on each level
+% deactivated       (1 x nlevels cell-array) List of deactivated functions on each level
 % C             (1 x hmsh.nlevels cell-array) Matrices for changing basis (see compute_matrices_for_changing_basis.m)
 % sp_lev        (hmsh.nlevels x 1 cell-array) sp_lev{ilev} is a structure
-%
+% boundary
 
 if nargin == 4
     boundary = true;

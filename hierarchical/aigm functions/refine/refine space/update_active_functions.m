@@ -1,150 +1,167 @@
-function [A, W, R] = update_active_functions(A, W, R, E, RE, new_cells, I, degree, nel_dir, proj, ndof_dir, space_type)
+function hspace = update_active_functions(hspace, hmsh, new_cells, I)
 %
-% function [A, W, R] = update_active_functions(A, W, R, E, RE, new_cells, I, degree, nel_dir, proj, ndof_dir, space_type)
+% function hspace = update_active_functions(hspace, hmsh, new_cells, I)
 %
-% Update active functions
+% This function updates the active dofs (hspace.active and hspace.globnum_active), their coefficients (hspace.coeff) and deactivated dofs (hspace.deactivated) in each level when
+% refining the functions in I. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
+% ATENCION: Voy a mejorar un poco la performance de esta funcion
 %
-% Input:    lev: (scalar) current level
-%           A: (matrix) global indices of active functions of level lev (one row per function)
-%           W: (column) coefficients for the partition-of-unity (one row per function)
-%           R: (matrix) global indices of removed functions of level lev (one row per function)
-%           EE: (matrix) global indices of active cells of level lev + 1 (one row per cell)
-%           RREE: (matrix) global indices of refined cells of level lev + 1 (one row per cell)
-%           new_cells: (matrix) global indices of the new cells of level lev + 1 after mesh refinement (one row per cell)
-%           AA: (matrix) global indices of active functions of level lev +1 (one row per function)
-%           WW: (column) coefficients for the partition-of-unity (one row per function)
-%           RR: (matrix) global indices of removed functions of level lev + 1 (one row per function)
-%           I: global indices of active functions to be refined
-%           degree: array containing the polynomial degree in each coordinate direction
-%           nelem_lev: array containing the total number of elements in the cartesian
-% grid in this level in each coordinate direction
+% Input:    hspace:
+%           hmsh:
+%           new_cells: see refine_hierarchical_mesh
+%           I{lev}: indices of active functions of level lev to be deactivated
 %
-% Output:   [A, W, R, AA, WW, RR] updated
+% Output:   hspace:
 %
 %
 % This function uses:       split_basis
-%                           get_cells
+%                           sp_get_cells
+%                           sp_get_basis_functions
 %
 
-% Atencion: Despues podriamos trabajar directamente con un indice numerico en
-% vez de indice tensorial para almacenar y modicar la info de A, R, y M
-
-if size(A{1},2)~=size(I{1},2)
+% Mejorar este chequeo
+if size(hspace.active{1},2)~=size(I{1},2)
     disp('Error: Bad call to update_active_functions');
     return,
 end
 
-dim = size(A{1},2);
-
-nlevels = numel(A);
-
-if ~isempty(I{nlevels}) % if a new level is going to be activated
-    A{nlevels+1,1} = zeros(0,dim);
-    R{nlevels+1,1} = zeros(0,dim);
-    W{nlevels+1,1} = zeros(0,1);
+Nf = cumsum([0 hspace.ndof_per_level]);
+W = cell(hspace.nlevels+1,1);
+active = cell(hspace.nlevels+1,1);
+deactivated = cell(hspace.nlevels+1,1);
+% El siguiente loop seguramente se puede evitar usando mat2cell
+for lev = 1:hspace.nlevels
+    ind_f = (Nf(lev)+1):Nf(lev+1);
+    active{lev} = hspace.active{lev};
+    deactivated{lev} = hspace.deactivated{lev};
+    W{lev} = hspace.coeff(ind_f);
+    W{lev} = W{lev}(:);
 end
 
-for lev = 1:nlevels
-    I{lev}= union(I{lev}, intersect(R{lev}, A{lev}, 'rows'),'rows');
+active{hspace.nlevels+1,1} = zeros(0,1);
+deactivated{hspace.nlevels+1,1} = zeros(0,1);
+W{hspace.nlevels+1,1} = zeros(0,1);
+
+if hspace.nlevels == hmsh.nlevels
+    max_lev = hspace.nlevels - 1;
+else
+    max_lev = hspace.nlevels;
+end
+
+for lev = 1:max_lev
+    I{lev}= union(I{lev}, intersect(deactivated{lev}, active{lev}, 'rows'),'rows');
     if ~isempty(I{lev})
-        [uno,indA] = ismember(I{lev}, A{lev},'rows');
+        [uno,indA] = ismember(I{lev}, active{lev},'rows');
         if any(uno~=1)
             disp('ERROR: update_active_functions: Some nonactive functions were selected');
         end
         
-        coefficients = split_basis(proj(lev,:));
+        coefficients = split_basis(hspace.Proj(lev,:));
         nfunctions = size(I{lev},1);
         % Remove the corresponding functions from the active functions of level lev
-        A{lev}(indA,:) = [];
+        active{lev}(indA) = [];
         w = W{lev}(indA);
         W{lev}(indA) = [];
-        R{lev} = union(R{lev}, I{lev}, 'rows'); % no funciona cuando R es vacio
-        %R{lev} = vertcat(R{lev}, I{lev});
-        %R{lev} = sortrows(R{lev});
+        deactivated{lev} = union(deactivated{lev}, I{lev}, 'rows');
+        % Vectorizar lo que se pueda en el siguiente loop, en particular
+        % para hacer un solo llamado a sp_get_cells
         for i = 1: nfunctions
-            %[Ichildren,c] = split_fun(I(i,:), lev);
-            % Mejorar lo siguiente
-            switch dim
-                case 1,ind = I{lev}(i,1);
-                case 2, ind = sub2ind(ndof_dir{lev}, I{lev}(i,1), I{lev}(i,2));
-                case 3,ind = sub2ind(ndof_dir{lev}, I{lev}(i,1), I{lev}(i,2), I{lev}(i,3));
-            end
+            ind = I{lev}(i,:);
             c = coefficients(:,ind);
             II = find(c);
-            %c = kron(proj{2}(:,I(i,2)), proj{1}(:,I(i,1)));
-            %II = find(abs(c) > 1e-10);
-            
             c = c(II);
             c = full(c);
-            % Mejorar lo siguiente
-            switch dim
-                case 1,Ichildren = ind2sub(ndof_dir{lev+1},II);
-                    Ichildren = Ichildren(:);
-                case 2, [a1,a2] = ind2sub(ndof_dir{lev+1},II);
-                    Ichildren = [a1(:) a2(:)];
-                case 3, [a1,a2,a3] = ind2sub(ndof_dir{lev+1},II);
-                    Ichildren = [a1(:) a2(:) a3(:)];
-            end
-            % Update R{lev+1}: Computation of functions to be added to R{lev+1}
-            if ~isempty(A{lev+1})
-                Ichildren_nonactive = setdiff(Ichildren,A{lev+1},'rows');
-            else
-                Ichildren_nonactive = Ichildren;
-            end
+            Ichildren = II;
+            % Update deactivated{lev+1}: Computation of functions to be
+            % added to deactivated{lev+1}
+            Ichildren_nonactive = setdiff(Ichildren,active{lev+1},'rows');
             if ~isempty(Ichildren_nonactive)
-                if ~isempty(R{lev+1})
-                    II = setdiff(Ichildren_nonactive,R{lev+1},'rows');
-                else
-                    II = Ichildren_nonactive;
-                end
+                II = setdiff(Ichildren_nonactive,deactivated{lev+1},'rows');
                 if ~isempty(II)
                     nfun = size(II,1);
                     flag = zeros(1,nfun);
+                    [dummy, cells_per_fun] = sp_get_cells(hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), II);
                     for ii = 1: nfun
-                        flag(ii) = isempty(intersect(get_cells(II(ii,:), degree, nel_dir{lev+1}), E{lev+1},'rows'));
+                        flag(ii) = isempty(intersect(cells_per_fun{ii}, hmsh.active{lev+1},'rows'));
                     end
                     II = II(flag==1,:);
-                    R{lev+1} = vertcat(R{lev+1}, II);
+                    deactivated{lev+1} = vertcat(deactivated{lev+1}, II);
                 end
                 nchildren_nonactive = size(Ichildren_nonactive,1);
-                A{lev+1} = vertcat(A{lev+1}, Ichildren_nonactive);
+                active{lev+1} = vertcat(active{lev+1}, Ichildren_nonactive);
                 W{lev+1} = vertcat(W{lev+1}, zeros(nchildren_nonactive,1));
             end
-            [unos, indices] = ismember(Ichildren, A{lev+1}, 'rows');
+            [unos, indices] = ismember(Ichildren, active{lev+1}, 'rows');
             W{lev+1}(indices) = W{lev+1}(indices) + w(i)*c;
         end % for i = 1: nfunctions
+    end
+    if (hspace.type && ~isempty(new_cells{lev+1}))
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %% Now, we activate functions of level lev+1
+        %% that are not children of any removed function of level lev
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        if space_type
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %% Now, we activate functions of level lev+1
-            %% that are not children of any removed function of level lev
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            new_possible_active_fun = zeros(0,dim);
-            number_of_new_cells = size(new_cells{lev+1},1);
-            for el = 1:number_of_new_cells
-                new_possible_active_fun = union(new_possible_active_fun,get_basis_functions(new_cells{lev+1}(el,:),degree, nel_dir{lev+1}),'rows');
+        new_possible_active_fun = sp_get_basis_functions(hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1),new_cells{lev+1});
+        new_possible_active_fun = setdiff(new_possible_active_fun,active{lev+1},'rows');
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % We activate the new functions of level lev+1
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        number_possible_new_functions = size(new_possible_active_fun,1);
+        
+        [dummy, elem] = sp_get_cells(hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1),new_possible_active_fun);
+        
+        for fun = 1:number_possible_new_functions
+            if all( ismember(elem{fun},hmsh.active{lev+1},'rows') | ismember(elem{fun},hmsh.deactivated{lev+1},'rows') )
+                active{lev+1} = vertcat(active{lev+1}, new_possible_active_fun(fun,:));
+                W{lev+1} = vertcat(W{lev+1}, 0);
             end
-            new_possible_active_fun = setdiff(new_possible_active_fun,A{lev+1},'rows');
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % We activate the new functions of level lev+1
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            number_possible_new_functions = size(new_possible_active_fun,1);
-            
-            for fun = 1:number_possible_new_functions
-                elem = get_cells(new_possible_active_fun(fun,:),degree, nel_dir{lev+1});
-                if all( ismember(elem,E{lev+1},'rows') | ismember(elem,RE{lev+1},'rows') )
-                    A{lev+1} = vertcat(A{lev+1}, new_possible_active_fun(fun,:));
-                    W{lev+1} = vertcat(W{lev+1}, 0);
-                end
-            end
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
     if isempty(W{lev})
-        A{lev} = zeros(0,dim);
+        active{lev} = zeros(0,1);
         W{lev} = zeros(0,1);
+    end
+end
+
+if ~isempty(active{hspace.nlevels + 1})
+    hspace.nlevels = hspace.nlevels + 1;
+end
+
+hspace.active = cell(hspace.nlevels,1);
+hspace.deactivated = cell(hspace.nlevels,1);
+for lev = 1: hspace.nlevels
+    hspace.active{lev} = active{lev};
+    hspace.deactivated{lev} = deactivated{lev};
+end
+
+hspace.coeff = cell2mat(W);
+
+
+% We update hspace.ndof_per_level
+ndof_per_level = zeros(1, hspace.nlevels);
+%aux_ind_fun = [];
+for lev = 1:hspace.nlevels
+    ndof_per_level(lev) = size(hspace.active{lev},1);
+    %aux_ind_fun = vertcat(aux_ind_fun, lev*ones(ndof_per_level(lev),1));
+end
+
+hspace.ndof_per_level = ndof_per_level;
+
+% We update hspace.ndof
+hspace.ndof = sum(hspace.ndof_per_level);
+
+% We update hspace.globnum_active
+hspace.globnum_active = zeros(hspace.ndof,hspace.ndim+1);
+Nf = cumsum([0; hspace.ndof_per_level(:)]);
+for lev = 1:hspace.nlevels
+    ind_f = (Nf(lev)+1):Nf(lev+1);
+    if ~isempty(ind_f)
+        hspace.globnum_active(ind_f, 1) = lev;
+        globnum = cell(1,hspace.ndim);
+        [globnum{:}] = ind2sub(hspace.space_of_level(lev).ndof_dir,hspace.active{lev}(:));
+        hspace.globnum_active(ind_f, 2:end) = cell2mat(globnum);
     end
 end

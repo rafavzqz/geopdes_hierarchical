@@ -30,7 +30,7 @@ function [cell_indices, indices_per_function] = sp_get_cells (space, msh, fun_in
 space = sp_precompute_param (space, msh, 'connectivity', true);
 
 conn_indices = arrayfun (@(x) find (space.connectivity == x), fun_indices, 'UniformOutput', false);
-[~, indices_per_function] = cellfun (@(x) ind2sub ([space.nsh_max, msh.nel], x), conn_indices, 'UniformOutput', false);
+[dummy, indices_per_function] = cellfun (@(x) ind2sub ([space.nsh_max, msh.nel], x), conn_indices, 'UniformOutput', false);
 cell_indices = unique (vertcat (indices_per_function{:}));
 
 % % Old version, to be used in case of unexpected memory problems
