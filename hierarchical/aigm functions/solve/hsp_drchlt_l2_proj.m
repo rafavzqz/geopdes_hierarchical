@@ -15,7 +15,7 @@
 %  dofs: global numbering of the corresponding basis functions
 %
 % Copyright (C) 2010, 2011, 2015 Rafael Vazquez
-% Copyright (C) 2015 Eduardo Garau
+% Copyright (C) 2015 Eduardo M. Garau
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

@@ -17,7 +17,7 @@
 %  of the same level of the active elements have to be computed. See also
 %  op_gradu_gradv_hier for more details.
 %
-% Copyright (C) 2015 Eduardo Garau, Rafael Vazquez
+% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

@@ -23,7 +23,7 @@
 %  and inactive). Then, the matrix for the hierarchical space is computed
 %  using the matrix relation between the basis functions of different levels.
 %
-% Copyright (C) 2015, Eduardo Garau, Rafael Vazquez
+% Copyright (C) 2015, Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
