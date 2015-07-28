@@ -14,8 +14,6 @@
 %    hspace: hierarchical_space object, which contains the following fields and methods
 % 
 %    FIELD_NAME     TYPE                    DESCRIPTION
-%    ndim           (scalar)                number of parametric directions
-%    degree         (1 x ndim array)        polynomial degree in each parametric direction
 %    ncomp          (scalar)                number of components of the space
 %    type           (string)                'standard' or 'simplified'
 %    ndof           (scalar)                total number of active functions 
@@ -67,8 +65,6 @@ default_values = {0, false}; % Change to 'simplified' and 'standard' for space_t
 default_values(1:numel(varargin)) = varargin;
 [space_type, truncated] = default_values{:};
 
-hspace.ndim = hmsh.ndim; % XXXXXX THIS SHOULD BE REMOVED
-hspace.degree = space.degree; % XXXXX THIS CAN BE REMOVED, I THINK
 hspace.ncomp = space.ncomp;
 hspace.type = space_type;
 hspace.truncated = truncated;
@@ -77,7 +73,7 @@ hspace.nlevels = 1;
 hspace.ndof = space.ndof;
 hspace.active{1} = (1:space.ndof)';
 
-aux = cell (hspace.ndim, 1);
+aux = cell (hmsh.ndim, 1);
 [aux{:}] = ind2sub ([space.ndof_dir, 1], 1:space.ndof); % The extra 1 makes it work in any dimension
 hspace.globnum_active = [ones(space.ndof,1) cell2mat(aux)'];
 

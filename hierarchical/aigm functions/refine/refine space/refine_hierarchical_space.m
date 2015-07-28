@@ -41,9 +41,10 @@ M = compute_functions_to_deactivate(hmsh, hspace, M, flag);
 
 if (numel(hspace.space_of_level) < hmsh.nlevels)
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  [knots,aaa] = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, hspace.degree, hspace.degree-1);
+  degree = hspace.space_of_level(hmsh.nlevels-1).degree;
+  [knots,aaa] = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, degree, degree-1);
     
-  hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, hspace.degree, msh_level);
+  hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, degree, msh_level);
     
   coarse_space = hspace.space_of_level(hmsh.nlevels-1).constructor (msh_level);
 end
@@ -137,12 +138,12 @@ if (boundary && hmsh.ndim > 1)
         M_boundary = cell(size(M));
         for lev = 1:numel(M)
             % if ~isempty(M{lev})
-            M_sub = cell(1,hspace.ndim);
+            M_sub = cell(1,hmsh.ndim);
             [M_sub{:}] = ind2sub(hspace.space_of_level(lev).ndof_dir,  M{lev}(:));
             M_sub = cell2mat(M_sub);
             M_boundary{lev} = M_sub(M_sub(:,i) == boundary_ind(lev),ind);
             % Mejorar lo siguiente
-            switch hspace.boundary(iside).ndim
+            switch hmsh.boundary(iside).ndim %XXXXXX CHECK IF THIS IS CORRECT
                 case 2,
                     M_boundary{lev} = sub2ind(hspace.boundary(iside).space_of_level(lev).ndof_dir,M_boundary{lev}(:,1),M_boundary{lev}(:,2));
                 case 3,
