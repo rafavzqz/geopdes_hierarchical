@@ -1,25 +1,37 @@
-function est = estimate (u, hmsh, hspace, problem_data, est_type)
-
+function est = estimate_laplace_param (u, hmsh, hspace, problem_data, adaptivity_data)
+%
+% function est = estimate_laplace_param (u, hmsh, hspace, problem_data, adaptivity_data)
+%
+% This function computes some local a posteriori error estimators for the
+% laplacian (problem_data.c_diff = 1), where the vector u contains the degrees of freedom of the Galerkin solution
+%
 % INPUT:
 %
 %     hspace:
 %     hmsh:
-%     u:        vector of dof weights
+%     u:        degrees of freedom
 %     problem_data.f:     function handle for the rhs function
+%     adaptivity_data.flag: 'elements' or 'functions' or 'none'
+%
+% OUTPUT:  est: array with the values of the local error estimators
+%
+% This function uses:   get_meshsize_param
+%                       hspline_eval
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Deberiamos modificar get_meshsize_param para poder calcular los
+% estimadores en un dominio fisico distinto del parametrico. 
+% Solo hay que calcular el meshsize del dominio fisico, porque las
+% evaluaciones ya se estan haciendo en los nodos de cuadratura asi que eso
+% no sera necesario cambiarlo.
+%
 
-if strcmp(est_type,'none')
+if strcmp(adaptivity_data.flag,'none')
     est = ones(1,hspace.ndof)/sqrt(hspace.ndof);
     return;
 end
 
-% pts = [];
-% for ilev = 1:hmsh.nlevels % Active levels
-%     if (hmsh.msh_lev{ilev}.nel ~= 0)
-%             pts = cat(3,pts, hmsh.msh_lev{ilev}.geo_map);
-%     end
-% end
-
-[der2num, pts] = hspline_eval(u,hmsh,hspace,0,'laplacian'); %  ones( hmsh.nqn, hmsh.nel);
+[der2num, pts] = hspline_eval(u,hmsh,hspace,0,'laplacian'); 
 
 switch hmsh.ndim
     case 1,
@@ -34,7 +46,6 @@ valf = squeeze(valf);
 
 aux = (valf + der2num).^2; % size(aux) = [hmsh.nqn, hmsh.nel], valores en los nodos de cuadratura
 
-% w = hmsh.quad_weights .* hmsh.jacdet;
 quad_weights = [];
 jacdet = [];
 for ilev = 1:hmsh.nlevels % Active levels
@@ -45,20 +56,17 @@ for ilev = 1:hmsh.nlevels % Active levels
 end
 w = quad_weights .* jacdet;
 
+[h, ms] = get_meshsize_param(hmsh);
 
-[h, ms] = get_meshsize(hmsh);
-
-switch est_type
-    case 'estandar',
+switch adaptivity_data.flag
+    case 'elements',
         est = sqrt (sum (aux.*w));
         est = h.*est(:);
-    case 'nonestandar',
-        coef = ms(hspace.globnum_active(:,1)).^2.*hspace.coeff(:);
-        H2 = hspline_eval(coef, hmsh, hspace,0);
-        est = aux.*H2;
-        est = sqrt (sum (est.*w));
-    case 'basis_functions',
+    case 'functions',
         forma = 1; % 0 o 1
+        % La version final sera con la opcion forma = 0 directamente. Ahora
+        % estoy realizando comparaciones con corridas anteriores en las que
+        % forma era igual a 1.
         if forma
             coef = ms(hspace.globnum_active(:,1)).*sqrt(hspace.coeff(:));
         else
@@ -95,30 +103,6 @@ switch est_type
             end
             est = diametro.*coef.*sqrt(est)/pi;
         end
-        
-%         est1 =  zeros(hspace.ndof,1);
-%         for i = 1:hspace.ndof
-%             uu = zeros(hspace.ndof,1);
-%             uu(i) = 1;
-%             basis_fun_val = hspline_eval(uu, hmsh, hspace);
-%             if forma
-%                 est1(i) =coef(i)*sqrt(sum(sum((aux.*basis_fun_val).*w)));
-%             else
-%                 lev = hspace.globnum_active(i,1);
-%                 cells = get_cells(hspace.globnum_active(i,2:end), hspace.degree, hmsh.mesh_of_level(lev).nel_dir);
-%                 supp_size = max(cells)-min(cells)+1;
-%                 diametro = norm(supp_size./hmsh.mesh_of_level(lev).nel_dir);
-%                 est1(i)  = diametro*coef(i)*sqrt(sum(sum((aux.*basis_fun_val).*w)))/pi;
-%             end
-%         end
-    case 'basis_functions_2'
-        [d,diametro] = distance_to_boundary(hmsh, hspace, squeeze(pts(1,:,:)), squeeze(pts(2,:,:)));
-        est = zeros(hspace.ndof,1);
-        for i = 1:hspace.ndof
-            uu = zeros(hspace.ndof,1);
-            uu(i) = 1;
-            basis_fun_val = hspline_eval(uu, hmsh, hspace,0);
-            est(i)  = diametro(i)*sqrt(hspace.coeff(i)*sum(sum((aux.*d{i}.^2.*basis_fun_val).*w)));
-        end
+       
         
 end

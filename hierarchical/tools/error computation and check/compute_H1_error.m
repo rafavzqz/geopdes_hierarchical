@@ -1,4 +1,10 @@
 function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = compute_H1_error(u, uex, graduex, hmsh, hspace)
+%
+% function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = compute_H1_error(u, uex, graduex, hmsh, hspace)
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Mejorar y documentar esta funcion
+%
 
 if hspace.ncomp ~= 1
     disp('compute_H1_error: Por ahora solo para escalares')

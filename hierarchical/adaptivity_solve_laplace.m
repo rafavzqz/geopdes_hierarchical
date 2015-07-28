@@ -1,26 +1,26 @@
-function  adaptivity_solve_laplace(problem_data, method_data, adaptivity_data)
+function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
+%
+% function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Mejorar esta funcion, decidir bien los argumentos de entrada y
+% salida
+%
+%
 
-
-[hmsh, hspace] = init_hierarchical_mesh_and_space(problem_data,method_data);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Definition of the hierarchical mesh and space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[tp_msh, tp_space] = get_initial_msh_and_space(dim, p, initial_num_el, problem_data.geo_name);
-[hmsh, hspace] = tp2hier (tp_msh, tp_space, problem_data.geo_name, flag_whole_basis);
-
-clear tp_msh tp_space
-
+[hmsh, hspace] = adaptivity_initialize (problem_data, method_data);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ADAPTIVE LOOP
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fprintf('%s\n',outputfile);
-% indices = [];
 iter = 0;
 
-if num_max_iter <= 0
+if adaptivity_data.num_max_iter <= 0
     return
 end
 
@@ -29,25 +29,15 @@ while 1
     iter = iter + 1;
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n',iter);
-    fprintf('%s\n',outputfile);
     
     if ~check_partition_of_the_unity(hmsh, hspace)
         disp('ERROR: The partition-of-the-unity property does not hold.')
         return,
     end
     
-    if (plot_hierarchical_mesh && hmsh.ndim > 1)
-        plot_msh(hmsh, iter); % In figure(1)
-        if print_graphics
-            filename = sprintf('-problem%d-degree%d-est%d-iter%03d-',problem, p,est_type,iter);
-            print('-dpng', ['meshes/mesh' filename ])
-            if geps
-                print('-depsc2', ['meshes/mesh' filename])
-            end
-        end
+    if (plot_hmesh && hmsh.ndim > 1)
+        plot_hmesh_param(hmsh, 1); % In figure(1)
     end
-    
-    
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% SOLVE
@@ -55,53 +45,50 @@ while 1
     
     u = assemble_and_solve(hmsh, hspace, problem_data);
     
-    
+    if plot_discrete_sol
+       plot_numerical_and_exact_solution(u, hmsh, hspace, problem_data.uex); 
+    end
+       
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Error computation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [err_h1, err, err_h1s, err_h1_loc, err_loc, err_h1s_loc] = compute_H1_error(u, uex, graduex, hmsh, hspace);
+    [err_h1, err, err_h1s] = compute_H1_error(u, problem_data.uex, problem_data.graduex, hmsh, hspace);
     fprintf('error_H1s = %g\n', err_h1s);
     
     clear err_h1_loc err_loc err_h1s_loc
     
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% ESTIMATE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     tic
-%     disp('Computing error estimators:')
-    est = estimate(u, hmsh, hspace, problem_data, estimator_type);
+    tic
+    disp('Computing error estimators:')
+    est = estimate_laplace_param(u, hmsh, hspace, problem_data, adaptivity_data);
     gest = norm(est);
-%     tempo = toc;
-%     fprintf('EST: %f (%f seconds)\n', gest, tempo);
+    tempo = toc;
+    fprintf('EST: %f (%f seconds)\n', gest, tempo);
     
-%     hh = get_meshsize(hmsh);
-%     hh = hh(1);
-%     
-%    
-    
-    if gest < 1e-8
+    if gest < adaptivity_data.tol
         disp('Success: The error estimation reached the desired tolerance')
         return,
     end
     
-    if iter == num_max_iter
+    if iter == adaptivity_data.num_max_iter
         disp('Warning: Maximum amount of iterations reached')
         return;
     end
     
-    if hmsh.nlevels >= max_level
+    if hmsh.nlevels >= adaptivity_data.max_level
         disp('Warning: Maximum amount of levels reached')
         return;
     end
     
-    if hspace.ndof > max_ndof
+    if hspace.ndof > adaptivity_data.max_ndof
         disp('Warning: Maximum allowed DOFs achieved')
         return;
     end
     
-    if hmsh.nel > max_nel
+    if hmsh.nel > adaptivity_data.max_nel
         disp('Warning: Maximum allowed amount of elements achieved')
         return;
     end
@@ -111,26 +98,22 @@ while 1
     %% MARK
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-   % tic
-   % disp('Marking:')
-    [marked, num_marked] = mark(est, hmsh, hspace, mark_strategy, mark_param,flag);
-%     tempo = toc;
-%     nest = numel(est);
-%     switch flag
-%         case 'elements',
-%             fprintf('%d elements marked for refinement (%f seconds)\n', num_marked, tempo);
-%         case 'functions',
-%             fprintf('%d functions marked for refinement (%f seconds)\n', num_marked, tempo);
-%     end
-%     
+    tic
+    disp('Marking:')
+    [marked, num_marked] = mark(est, hmsh, hspace, adaptivity_data);
+    tempo = toc;
+    switch adaptivity_data.flag
+        case 'elements',
+            fprintf('%d elements marked for refinement (%f seconds)\n', num_marked, tempo);
+        case 'functions',
+            fprintf('%d functions marked for refinement (%f seconds)\n', num_marked, tempo);
+    end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% REFINE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [hmsh, hspace] = refine (hmsh, hspace, marked, flag);
-    
+    [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data.flag);
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
-    
 end

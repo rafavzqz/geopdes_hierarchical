@@ -1,18 +1,24 @@
-function [marked, nmarked] = mark(est, hmsh, hspace, mark_strategy, param,flag)
+function [marked, nmarked] = mark(est, hmsh, hspace, adaptivity_data)
 %
-% function [marked, nmarked] = mark(est, hmsh, hspace, mark_strategy, param,flag)
+% function [marked, nmarked] = mark(est, hmsh, hspace, adaptivity_data)
 %
-% marks elements or basis functions for refinement according to 
-% the marking strategy mark_strategy
-% Possible strategies are
-% GR: global (uniform) refinement,  
-% MS: maximum strategy,  
-% GERS: guaranteed error reduction strategy (D\"orfler's)
+% This function marks cells or basis functions for refinement according to 
+% the marking strategy in adaptivity_data.mark_strategy. Possible strategies are
+%           GR: global (uniform) refinement,  
+%           MS: maximum strategy,  
+%           GERS: guaranteed error reduction strategy (D\"orfler's)
+%
+% OUTPUT: marked{lev}: indices of marked cells (or functions) of level lev
+%         nmarked: total number of marked cells (or functions)
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Despues describire mejor esta funcion y limpiare un poco mas el
+% codigo
+%
 
-%nest = numel(est);
 max_est = max(est);
 
-switch flag
+switch adaptivity_data.flag
     case 'elements', disp('marking elements for refinement')
     case 'functions', disp('marking basis functions for refinement')
     otherwise, disp('MARK: Error'), return,
@@ -20,15 +26,15 @@ end
 
 aux_marked = zeros(size(est));
 
-switch mark_strategy
+switch adaptivity_data.mark_strategy
 case 'GR'
   aux_marked = ones(size(est));
 case 'MS'
-  aux_marked(est > param * max_est) = 1;
+  aux_marked(est > adaptivity_data.mark_param * max_est) = 1;
 case 'GERS'
   est_sum2 = sum(est.^2);
   est_sum2_marked = 0;
-  threshold = (1 - param)^2 * est_sum2;
+  threshold = (1 - adaptivity_data.mark_param)^2 * est_sum2;
   gamma = 1;
   while (est_sum2_marked < threshold)
     gamma = gamma - 0.1;
@@ -41,7 +47,7 @@ end
 marked_list = find(aux_marked);
 
 nmarked = numel(marked_list);
-switch flag
+switch adaptivity_data.flag
     case 'elements',
         globnum_marked = hmsh.globnum_active(marked_list,:);
         marked_sub = cell(hmsh.nlevels,1);
@@ -74,7 +80,7 @@ for lev = 1:numel(marked_sub)
     if isempty(marked_sub{lev})
         marked.ind{lev} = zeros(0,1);
     else
-        switch flag
+        switch adaptivity_data.flag
             case 'elements',
                 siz = hmsh.mesh_of_level(lev).nel_dir;
             case 'functions',

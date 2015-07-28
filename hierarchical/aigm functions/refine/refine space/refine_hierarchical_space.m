@@ -46,7 +46,7 @@ if numel(hspace.space_of_level) < hmsh.nlevels
     %disp('Enlarging space_of_level:')
     
     msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-    [knots,aaa] = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, hspace.degree, hspace.degree-1);
+    knots = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, hspace.degree, hspace.degree-1);
     
     hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, hspace.degree, msh_level);
     

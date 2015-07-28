@@ -15,7 +15,7 @@ function hmsh = tp2hier_msh (msh, geometry, boundary)
 %               ndim           (scalar)          number of parametric directions
 %               rdim           (scalar)
 %               nlevels       (scalar)           the number of levels
-%               nsub          (1 x ndim array)           number of subdivisions on each level
+%               nsub          (1 x ndim array)       
 %               mesh_of_level (1 x nlevels mesh) Cartesian mesh of each level (see msh_cartesian)
 %               nel           (scalar)           total number of active cells  
 %               nel_per_level (1 x nlevels array) number of active cells on each level

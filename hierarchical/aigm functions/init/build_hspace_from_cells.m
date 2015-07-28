@@ -50,5 +50,5 @@ for ref = 1:nref
 end
 
 if graficar_malla
-plot_msh(hmsh)
+plot_hmesh_param(hmsh)
 end

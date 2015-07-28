@@ -1,4 +1,25 @@
 function [U, pts] = hspline_eval (u, hmsh, hspace, npts, varargin)
+%
+% function [U, pts] = hspline_eval (u, hmsh, hspace, npts, varargin)
+%
+% Evaluation of a hierarchical spline with degrees of freedom u
+% 
+% INPUT:    u: degrees of freedom
+%           hmsh:
+%           hspace:
+%           npts: number of points for evaluation in each coordinate direction in each
+%           cell. If npts == 0, the evaluation is performed in the
+%           quadrature knots.
+%           varargin:   'value', true or false, (Default: 'value', true)
+%                       'gradient', true or false,
+%                       'laplacian', true or false,
+%
+% OUTPUT:   U: values
+%           pts: points
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Completar la descripcion de esta funcion
+% 
 
 if (hspace.ncomp ~= 1)
     disp('hspline_eval: Por ahora solo para escalares')

@@ -1,6 +1,6 @@
 function C = compute_matrices_for_changing_basis(lev, ind, ndof, proj)
 %
-% function C = compute_matrices_for_changing_basis(lev, ind)
+% function C = compute_matrices_for_changing_basis(lev, ind, ndof, proj)
 %
 % Computes the matrices for the change of basis from the hierarchical basis
 % functions up to level lev to the tensor-product basis functions of level
@@ -19,6 +19,7 @@ function C = compute_matrices_for_changing_basis(lev, ind, ndof, proj)
 %           coefficients for writing the corresponding active function as a linear combination of the basis functions of level
 %           l
 %
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 % REMARK: We have to put it into hspace class
 %
 

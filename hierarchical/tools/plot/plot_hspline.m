@@ -1,4 +1,9 @@
 function plot_hspline(u, hmsh, hspace) 
+%
+% function plot_hspline(u, hmsh, hspace) 
+%
+% Funcion personal --- Solo 2d
+%
 
 % u degrees of freedom
 

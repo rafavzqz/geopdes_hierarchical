@@ -1,4 +1,9 @@
 function plot_cells(indices, hmsh, color)
+%
+% function plot_cells(indices, hmsh, color)
+%
+% Funcion personal --- Solo 2d
+%
 
 if nargin == 2
     color = 'b';

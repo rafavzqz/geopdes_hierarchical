@@ -1,29 +1,37 @@
-function plot_msh(hmsh, iter)
+function plot_hmesh_param(hmsh, nfig)
+%
+% function plot_hmesh_param(hmsh, nfig)
+%
+% This function plots the parametric hierarchical mesh
+%
+% INPUT:    hmsh:
+%           nfig: integer (Optional)
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Completar la descripcion de esta funcion y mejorar
+% 
+%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% WARNING: This function works only in the parametric domain
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if hmsh.ndim == 1
+    disp('Aun no esta implementado un grafico de la malla en 1d'),
+    return,
+end
 
-% if hmsh.ndim ~= 2
-%     disp('Hasta ahora, solo esta implementado el grafico de mallas en 2d')
-%     return,
-% end
+if nargin == 1
+    figure
+else
+    close(figure(nfig))
+    figure(nfig)
+end
 
-%close(figure(1))
-
-figure
 switch hmsh.ndim
     case 2, axis([0 1 0 1])
     case 3, axis([0 1 0 1 0 1])
 end
 axis square
 axis off
-if nargin == 2
-    title(sprintf('iter = %d  - %d active elements',iter, hmsh.nel),'FontSize',22)
-else
-    % title(sprintf('%d active elements', hmsh.nel))
-end
 hold on
+
 switch hmsh.ndim
     case 2,
         for i = 1:hmsh.nel

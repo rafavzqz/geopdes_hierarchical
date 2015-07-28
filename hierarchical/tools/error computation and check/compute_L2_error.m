@@ -1,4 +1,10 @@
 function [err, err_elem] = compute_L2_error(u, uex, hmsh, hspace)
+%
+% function [err, err_elem] = compute_L2_error(u, uex, hmsh, hspace)
+%
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% ATENCION: Mejorar y documentar esta funcion
+%
 
 if hmsh.ndim ~= 2
     disp('compute_L2_error: Por ahora solo para 2d')

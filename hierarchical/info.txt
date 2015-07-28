@@ -1,3 +1,5 @@
+% Puede estar desactualizada
+
 %                       struct hmsh (Hierarchical mesh)
 % 
 %               FIELD_NAME    TYPE               DESCRIPTION
