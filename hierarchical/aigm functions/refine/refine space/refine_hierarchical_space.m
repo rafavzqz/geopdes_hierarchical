@@ -39,56 +39,22 @@ M = compute_functions_to_deactivate(hmsh, hspace, M, flag);
 %% Enlarging space_of_level and Proj, if it is needed
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if numel(hspace.space_of_level) < hmsh.nlevels
-    % We fill hspace.space_of_level(hmsh.nlevels)
+if (numel(hspace.space_of_level) < hmsh.nlevels)
+  msh_level = hmsh.mesh_of_level(hmsh.nlevels);
+  [knots,aaa] = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, hspace.degree, hspace.degree-1);
     
-    %tic
-    %disp('Enlarging space_of_level:')
+  hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, hspace.degree, msh_level);
     
-    msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-    [knots,aaa] = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, hspace.degree, hspace.degree-1);
-    
-    hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, hspace.degree, msh_level);
-    
-    coarse_space = hspace.space_of_level(hmsh.nlevels-1).constructor (msh_level);
-    
-    %tempo = toc;
-    %fprintf(' %f seconds\n', tempo);
+  coarse_space = hspace.space_of_level(hmsh.nlevels-1).constructor (msh_level);
 end
 
-if size(hspace.Proj,1) < (hmsh.nlevels - 1)
-    % We fill hspace.Proj{hmsh.nlevels-1,:}
-    %tic
-    %disp('Enlarging Proj:')
-    
-    Proj = cell(1,hmsh.ndim);
-    geo_1d = geo_load (nrbline ([0 0], [1 0]));
-    msh = hmsh.mesh_of_level(hmsh.nlevels);
-    for idim = 1:hmsh.ndim
-        % Construct the 1D mesh
-        mesh_1d = msh_cartesian ({msh.breaks{idim}}, msh.qn{idim}, msh.qw{idim}, geo_1d);
-        mesh_1d = msh_precompute (mesh_1d);
-        
-        % Evaluate the coarse space in the fine mesh
-        sp_coarse = coarse_space.sp_univ(idim);
-        sp_fine = hspace.space_of_level(hmsh.nlevels).sp_univ(idim);
-        
-        Mass = op_u_v (sp_fine, sp_fine, mesh_1d, ones (mesh_1d.nqn, mesh_1d.nel));
-        Gram = op_u_v (sp_coarse, sp_fine, mesh_1d, ones (mesh_1d.nqn, mesh_1d.nel)); % Gram matrix
-        Pr = sparse (sp_fine.ndof, sp_coarse.ndof);
-        for ii = 1:sp_coarse.ndof
-            ind = find(Gram(:,ii));
-            Pr(ind,ii) = Mass(ind,ind) \ Gram(ind, ii);
-        end
-        %     P = M \ G;
-        % Provisorio:
-        Pr(abs(Pr)<1e-5) = 0; % Mejorar esta linea
-        %Proj{idim} = Pr;
-        hspace.Proj{hmsh.nlevels-1,idim} = Pr;
-    end
-    
-    %tempo = toc;
-    %fprintf(' %f seconds\n', tempo);
+if (size(hspace.Proj,1) < (hmsh.nlevels - 1))
+  for idim = 1:hmsh.ndim
+    degree = coarse_space.sp_univ(idim).degree;
+    knt_coarse = coarse_space.sp_univ(idim).knots;
+    knt_fine   = hspace.space_of_level(hmsh.nlevels).sp_univ(idim).knots;
+    hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree, knt_coarse, knt_fine);        
+  end
 end
 
 
