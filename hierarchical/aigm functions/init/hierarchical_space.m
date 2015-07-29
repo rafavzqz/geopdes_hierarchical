@@ -75,7 +75,7 @@ hspace.active{1} = (1:space.ndof)';
 
 aux = cell (hmsh.ndim, 1);
 [aux{:}] = ind2sub ([space.ndof_dir, 1], 1:space.ndof); % The extra 1 makes it work in any dimension
-hspace.globnum_active = [ones(space.ndof,1) cell2mat(aux)'];
+hspace.globnum_active = [ones(space.ndof,1) cell2mat(aux)']; % XXXXX Will this be removed?
 
 hspace.ndof_per_level = space.ndof;
 hspace.coeff = ones (space.ndof, 1);
@@ -88,29 +88,13 @@ hspace.sp_lev{1} = sp_evaluate_element_list (hspace.space_of_level(1), hmsh.msh_
 % XXXXX I have to check the boundary, and the 1D construction
 if (~isempty (hmsh.boundary) && hmsh.ndim > 1)
   for iside = 1:2*hmsh.ndim
-    %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-    ind = setdiff (1:hmsh.ndim, ceil(iside/2));
-    ii = setdiff (1:hmsh.ndim, ind);
-    if (mod (iside,2) == 1)
-      boundary_ind = 1;
-    else
-      boundary_ind = hspace.space_of_level(1).ndof_dir(ii);
-    end
-    
-    bound = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
-    % Now, we fill hspace.boundary(iside).dofs
-    globnum_active_boundary = [bound.globnum_active(:,1:ii) boundary_ind*ones(bound.ndof,1) ...
-        bound.globnum_active(:,(ii+1):end)];    
-    [unos, bound.dofs] = ismember(globnum_active_boundary,hspace.globnum_active,'rows');
-    if (any(unos~=1))
-      disp('Warning: Error when computing hspace.boundary().dofs')
-      pause
-    end
-      hspace.boundary(iside) = bound;
+    boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
+    boundary.dofs = space.boundary(iside).dofs;
+    hspace.boundary(iside) = boundary;
   end
 elseif (hmsh.ndim == 1)
-  % XXXXXXXXX
-  hspace.boundary = [];
+  hspace.boundary(1).dofs = space.boundary(1).dofs;
+  hspace.boundary(2).dofs = space.boundary(2).dofs;
 else
   hspace.boundary = [];
 end
