@@ -39,9 +39,9 @@ if (hmsh.ndim == 1) % The one-dimensional case has not been implemented yet
     iside = drchlt_sides(ii);
     dofs = union (dofs, hspace.boundary(iside).dofs);
     if (iside == 1)
-      u(ii) = h(msh.breaks{1}(1), iside);
+      u(ii) = h(hmsh.mesh_of_level(1).breaks{1}(1), iside);
     else
-      u(ii) = h(msh.breaks{1}(end), iside); 
+      u(ii) = h(hmsh.mesh_of_level(1).breaks{1}(end), iside); 
     end
   end
   u = u(:);
