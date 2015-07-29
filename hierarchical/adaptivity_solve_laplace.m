@@ -20,17 +20,16 @@ function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(prob
 
 iter = 0;
 
-if adaptivity_data.num_max_iter <= 0
-    return
+if (adaptivity_data.num_max_iter <= 0)
+  return
 end
 
 while 1
-    
     iter = iter + 1;
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n',iter);
     
-    if ~check_partition_of_the_unity(hmsh, hspace)
+    if (~check_partition_of_the_unity(hmsh, hspace))
         disp('ERROR: The partition-of-the-unity property does not hold.')
         return,
     end
@@ -43,7 +42,7 @@ while 1
     %% SOLVE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    u = assemble_and_solve(hmsh, hspace, problem_data);
+    u = adaptivity_solve (hmsh, hspace, problem_data);
     
     if plot_discrete_sol
        plot_numerical_and_exact_solution(u, hmsh, hspace, problem_data.uex); 
