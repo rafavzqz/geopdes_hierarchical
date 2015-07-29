@@ -35,7 +35,7 @@ end
 
 x = cell (hmsh.ndim, 1);
 for idim = 1:hmsh.ndim;
-  x{idim} = F(idim,:);
+  x{idim} = reshape (F(idim,:), [], hmsh.nel);
 end
 valf = problem_data.f (x{:});
 
