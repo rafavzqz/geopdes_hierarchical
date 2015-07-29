@@ -47,7 +47,8 @@ if ~isempty(M{hmsh.nlevels}) % if a new level is activated
     nsub = 2 * ones (1, hmsh.ndim); 
     [aaa,zeta] = kntrefine (hmsh.mesh_of_level(hmsh.nlevels).breaks, nsub-1, ones(1, hmsh.ndim), zeros (1, hmsh.ndim));
     [qn, qw] = msh_set_quad_nodes (zeta, rule);
-    hmsh.mesh_of_level(hmsh.nlevels+1) = msh_cartesian (zeta, qn, qw, hmsh.geometry,'boundary', boundary);
+    
+    hmsh.mesh_of_level(hmsh.nlevels+1) = msh_cartesian (zeta, qn, qw, hmsh.geometry, 'boundary', boundary);
     %tempo = toc;
     %fprintf(' %f seconds\n', tempo);
 end

@@ -51,11 +51,9 @@ switch adaptivity_data.flag
     case 'elements',
         globnum_marked = hmsh.globnum_active(marked_list,:);
         marked_sub = cell(hmsh.nlevels,1);
-        ndim = hmsh.ndim;
     case 'functions',
         globnum_marked = hspace.globnum_active(marked_list,:);
         marked_sub = cell(hspace.nlevels,1);
-        ndim = hspace.ndim;
 end
 
 % Mejorar el siguiente procedimiento %%%%%%
@@ -66,7 +64,7 @@ end
 
 for lev = 1:numel(marked_sub)
     if isempty(marked_sub{lev})
-        marked_sub{lev} = zeros(0,ndim);
+        marked_sub{lev} = zeros(0,hmsh.ndim);
     end
 end
 

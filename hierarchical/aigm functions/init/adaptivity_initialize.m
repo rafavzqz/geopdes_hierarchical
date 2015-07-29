@@ -47,7 +47,6 @@ function [hmsh, hspace, geometry] = adaptivity_initialize (problem_data, method_
 %   eval ([data_names{iopt} '= method_data.(data_names{iopt});']);
 % end
 
-% Construct the tensor product mesh and space
 geometry  = geo_load (problem_data.geo_name);
 [knots, zeta] = kntrefine (geometry.nurbs.knots, method_data.nsub-1, method_data.degree, method_data.regularity);
   
@@ -56,9 +55,8 @@ rule     = msh_gauss_nodes (method_data.nquad);
 msh      = msh_cartesian (zeta, qn, qw, geometry);
 space    = sp_bspline (knots, method_data.degree, msh);
 
-% Construct the hierarchical spaces of one level, from the tensor-product ones
-% XXXXXXX THIS WILL ALSO NEED TRUNCATED. Not for the computations (one
-% level) but for initialization
-[hmsh, hspace] = tp2hier (msh, space, geometry, method_data.space_type);
+
+hmsh     = hierarchical_mesh (msh, geometry);
+hspace   = hierarchical_space (hmsh, space, method_data.space_type);
 
 end

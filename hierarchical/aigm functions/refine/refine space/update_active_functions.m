@@ -154,13 +154,13 @@ hspace.ndof_per_level = ndof_per_level;
 hspace.ndof = sum(hspace.ndof_per_level);
 
 % We update hspace.globnum_active
-hspace.globnum_active = zeros(hspace.ndof,hspace.ndim+1);
+hspace.globnum_active = zeros(hspace.ndof,hmsh.ndim+1);
 Nf = cumsum([0; hspace.ndof_per_level(:)]);
 for lev = 1:hspace.nlevels
     ind_f = (Nf(lev)+1):Nf(lev+1);
     if ~isempty(ind_f)
         hspace.globnum_active(ind_f, 1) = lev;
-        globnum = cell(1,hspace.ndim);
+        globnum = cell(1,hmsh.ndim);
         [globnum{:}] = ind2sub(hspace.space_of_level(lev).ndof_dir,hspace.active{lev}(:));
         hspace.globnum_active(ind_f, 2:end) = cell2mat(globnum);
     end
