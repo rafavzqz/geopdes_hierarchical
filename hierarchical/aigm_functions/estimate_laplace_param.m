@@ -31,18 +31,13 @@ if strcmp(adaptivity_data.flag,'none')
     return;
 end
 
-[der2num, pts] = hspline_eval(u,hmsh,hspace,0,'laplacian'); 
+[der2num, F] = hspline_eval(u,hmsh,hspace,0,'laplacian'); 
 
-switch hmsh.ndim
-    case 1,
-        valf = feval (problem_data.f, pts);
-    case 2,
-        valf = problem_data.f (pts(1,:,:), pts(2,:,:));
-    case 3,
-        valf = problem_data.f (pts(1,:,:), pts(2,:,:), pts(3,:,:));
+x = cell (hmsh.ndim, 1);
+for idim = 1:hmsh.ndim;
+  x{idim} = F(idim,:);
 end
-
-valf = squeeze(valf);
+valf = problem_data.f (x{:});
 
 aux = (valf + der2num).^2; % size(aux) = [hmsh.nqn, hmsh.nel], valores en los nodos de cuadratura
 
