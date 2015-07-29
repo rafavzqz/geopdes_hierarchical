@@ -44,15 +44,15 @@ while 1
     
     u = adaptivity_solve (hmsh, hspace, problem_data);
     
-    if plot_discrete_sol
-       plot_numerical_and_exact_solution(u, hmsh, hspace, problem_data.uex); 
+    if (plot_discrete_sol)
+       plot_numerical_and_exact_solution (u, hmsh, hspace, problem_data.uex); 
     end
        
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Error computation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [err_h1, err, err_h1s] = compute_H1_error(u, problem_data.uex, problem_data.graduex, hmsh, hspace);
+    [err_h1, err, err_h1s] = compute_H1_error (u, problem_data.uex, problem_data.graduex, hmsh, hspace);
     fprintf('error_H1s = %g\n', err_h1s);
     
     clear err_h1_loc err_loc err_h1s_loc
@@ -62,32 +62,32 @@ while 1
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     tic
     disp('Computing error estimators:')
-    est = estimate_laplace_param(u, hmsh, hspace, problem_data, adaptivity_data);
-    gest = norm(est);
+    est = estimate_laplace_param (u, hmsh, hspace, problem_data, adaptivity_data);
+    gest = norm (est);
     tempo = toc;
     fprintf('EST: %f (%f seconds)\n', gest, tempo);
     
-    if gest < adaptivity_data.tol
+    if (gest < adaptivity_data.tol)
         disp('Success: The error estimation reached the desired tolerance')
         return,
     end
     
-    if iter == adaptivity_data.num_max_iter
+    if (iter == adaptivity_data.num_max_iter)
         disp('Warning: Maximum amount of iterations reached')
         return;
     end
     
-    if hmsh.nlevels >= adaptivity_data.max_level
+    if (hmsh.nlevels >= adaptivity_data.max_level)
         disp('Warning: Maximum amount of levels reached')
         return;
     end
     
-    if hspace.ndof > adaptivity_data.max_ndof
+    if (hspace.ndof > adaptivity_data.max_ndof)
         disp('Warning: Maximum allowed DOFs achieved')
         return;
     end
     
-    if hmsh.nel > adaptivity_data.max_nel
+    if (hmsh.nel > adaptivity_data.max_nel)
         disp('Warning: Maximum allowed amount of elements achieved')
         return;
     end
@@ -99,7 +99,7 @@ while 1
     
     tic
     disp('Marking:')
-    [marked, num_marked] = mark(est, hmsh, hspace, adaptivity_data);
+    [marked, num_marked] = mark (est, hmsh, hspace, adaptivity_data);
     tempo = toc;
     switch adaptivity_data.flag
         case 'elements',
