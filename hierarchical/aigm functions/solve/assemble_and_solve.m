@@ -11,7 +11,6 @@ function u = assemble_and_solve(hmsh, hspace, problem_data)
 
 tic
 disp('Assembling and solving the system:')
-[rhs, K, M] = assemble(hmsh, hspace, problem_data.f);
 stiffness = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 mass = op_u_v_hier (hspace, hspace, hmsh, problem_data.c_diff);
