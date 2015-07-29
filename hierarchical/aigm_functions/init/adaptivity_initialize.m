@@ -8,12 +8,13 @@
 %    - geo_name:     name of the file containing the geometry
 %
 %  method_data : a structure with discretization data. For this function, it contains the fields:
-%    - degree:     degree of the spline functions.
-%    - regularity: continuity of the spline functions.
-%    - nsub:       number of subelements with respect to the geometry mesh 
+%    - degree:      degree of the spline functions.
+%    - regularity:  continuity of the spline functions.
+%    - nsub_coarse: number of subelements with respect to the geometry mesh 
 %                   (nsub=1 leaves the mesh unchanged)
-%    - nquad:      number of points for Gaussian quadrature rule
-%    - space_type: 0 (simplified basis), 1 (full basis)
+%    - nquad:       number of points for Gaussian quadrature rule
+%    - space_type:  0 (simplified basis), 1 (full basis)
+%    - truncated:   XXXXXXXXXXXXXXXXXXXX
 %
 % OUTPUT:
 %    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh)
@@ -47,7 +48,7 @@ function [hmsh, hspace, geometry] = adaptivity_initialize (problem_data, method_
 % end
 
 geometry  = geo_load (problem_data.geo_name);
-[knots, zeta] = kntrefine (geometry.nurbs.knots, method_data.nsub-1, method_data.degree, method_data.regularity);
+[knots, zeta] = kntrefine (geometry.nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
   
 rule     = msh_gauss_nodes (method_data.nquad);
 [qn, qw] = msh_set_quad_nodes (zeta, rule);
@@ -55,7 +56,7 @@ msh      = msh_cartesian (zeta, qn, qw, geometry);
 space    = sp_bspline (knots, method_data.degree, msh);
 
 
-hmsh     = hierarchical_mesh (msh, geometry);
+hmsh     = hierarchical_mesh (msh, geometry, method_data.nsub_refine);
 hspace   = hierarchical_space (hmsh, space, method_data.space_type);
 
 end

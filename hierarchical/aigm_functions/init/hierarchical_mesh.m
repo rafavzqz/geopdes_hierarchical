@@ -45,12 +45,16 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hmsh = hierarchical_mesh (msh, geometry)
+function hmsh = hierarchical_mesh (msh, geometry, nsub)
+
+if (nargin < 3)
+  nsub = 2 * ones (1, msh.ndim);
+end
 
 hmsh.ndim = msh.ndim;
 hmsh.rdim = msh.rdim;
 hmsh.nlevels = 1;
-hmsh.nsub = 2 * ones (1, hmsh.ndim); % Provisorio XXXXXX
+hmsh.nsub = nsub;
 hmsh.mesh_of_level = msh;
 hmsh.nel = msh.nel;
 hmsh.nel_per_level = [msh.nel];

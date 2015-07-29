@@ -27,12 +27,13 @@ problem_data.graduex = @(x,y) -2*C*cat (1, ...
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree     = [3 3];       % Degree of the splines
-method_data.regularity = [2 2];       % Regularity of the splines
-method_data.nsub       = [2 2];       % Number of subdivisions
-method_data.nquad      = [4 4];       % Points for the Gaussian quadrature rule
-method_data.space_type = 0;           % 0: , 1: Full basis (B-splines)
-method_data.truncated = 0;            % 0: False, 1: True
+method_data.degree      = [3 3];       % Degree of the splines
+method_data.regularity  = [2 2];       % Regularity of the splines
+method_data.nsub_coarse = [2 2];       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_refine = [2 2];       % Number of subdivisions for each refinement
+method_data.nquad       = [4 4];       % Points for the Gaussian quadrature rule
+method_data.space_type  = 0;           % 0: , 1: Full basis (B-splines)
+method_data.truncated   = 0;           % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
