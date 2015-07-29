@@ -61,7 +61,7 @@ for lev = 1:nlevels
         end
         
         % Update hmsh.deactivated{lev} by adding the cells that were deactivated
-        hmsh.deactivated{lev} = union(hmsh.deactivated{lev}, M{lev},'rows');
+        hmsh.deactivated{lev} = union (hmsh.deactivated{lev}, M{lev});
     end
 end % for lev = 1:nlevels
 

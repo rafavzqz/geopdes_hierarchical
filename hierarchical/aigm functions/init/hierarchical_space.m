@@ -61,7 +61,7 @@
 
 function hspace = hierarchical_space (hmsh, space, varargin)
 
-default_values = {0, false}; % Change to 'simplified' and 'standard' for space_type
+default_values = {0, false}; % Change to 'simplified' and 'standard' for space_type XXXXX
 default_values(1:numel(varargin)) = varargin;
 [space_type, truncated] = default_values{:};
 
@@ -78,8 +78,8 @@ aux = cell (hmsh.ndim, 1);
 hspace.globnum_active = [ones(space.ndof,1) cell2mat(aux)'];
 
 hspace.ndof_per_level = space.ndof;
-hspace.coeff = ones (space.ndof, 1);    
-hspace.deactivated{1} = zeros (0, 1); %XXXXX This should be empty
+hspace.coeff = ones (space.ndof, 1);
+hspace.deactivated{1} = [];
 hspace.space_of_level = space;
 hspace.Proj = [];
 hspace.C{1} = speye (space.ndof);

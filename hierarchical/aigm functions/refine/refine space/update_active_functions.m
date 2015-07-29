@@ -49,7 +49,7 @@ else
 end
 
 for lev = 1:max_lev
-    I{lev}= union(I{lev}, intersect(deactivated{lev}, active{lev}, 'rows'),'rows');
+    I{lev}= union(I{lev}, intersect(deactivated{lev}, active{lev}));
     if ~isempty(I{lev})
         [uno,indA] = ismember(I{lev}, active{lev},'rows');
         if any(uno~=1)
@@ -62,7 +62,7 @@ for lev = 1:max_lev
         active{lev}(indA) = [];
         w = W{lev}(indA);
         W{lev}(indA) = [];
-        deactivated{lev} = union(deactivated{lev}, I{lev}, 'rows');
+        deactivated{lev} = union(deactivated{lev}, I{lev});
         % Vectorizar lo que se pueda en el siguiente loop, en particular
         % para hacer un solo llamado a sp_get_cells
         for i = 1: nfunctions

@@ -59,10 +59,10 @@ aux = cell (hmsh.ndim, 1);
 [aux{:}] = ind2sub ([msh.nel_dir, 1], 1:msh.nel); % The extra 1 makes it work in any dimension
 hmsh.globnum_active = [ones(msh.nel, 1), cell2mat(aux)'];
 hmsh.active{1} = (1:msh.nel)';
-hmsh.deactivated{1} = zeros (0, 1); %XXXXXXXXXXXXX
+hmsh.deactivated{1} = [];
 hmsh.msh_lev{1} = msh_evaluate_element_list (hmsh.mesh_of_level(1), hmsh.active{1});
 
-hmsh.geometry = geometry; % CAN WE AVOID THIS?
+hmsh.geometry = geometry; % CAN WE AVOID THIS? XXXXXX
 
 if (~isempty (msh.boundary) && msh.ndim > 1)
   for iside = 1:2*msh.ndim
