@@ -16,8 +16,8 @@
 %    - space_type: 0 (simplified basis), 1 (full basis)
 %
 % OUTPUT:
-%    hmsh:    XXXXXXXXXXXXXXXXXXXXXXXXXXXXxxXXXXXXXXXXXXXXXXXXXX
-%    hspace:  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
+%    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh)
+%    hspace:   object representing the space of hierarchical splines (see hierarchical_space)
 %    geometry: geometry structure (see geo_load)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez

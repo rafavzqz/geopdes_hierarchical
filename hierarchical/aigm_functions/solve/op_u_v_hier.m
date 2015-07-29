@@ -6,9 +6,9 @@
 %
 % INPUT:
 %
-%   hspu:  object representing the hierarchical space of trial functions (see XXXXXXXXX)
-%   hspv:  object representing the hierarchical space of test functions  (see XXXXXXXXX)
-%   hmsh:  object representing the hierarchical mesh (see XXXXXXXXXXXXX)
+%   hspu:  object representing the hierarchical space of trial functions (see hierarchical_space)
+%   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space)
+%   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh)
 %   coeff: function handle to compute the reaction coefficient
 %
 % OUTPUT:

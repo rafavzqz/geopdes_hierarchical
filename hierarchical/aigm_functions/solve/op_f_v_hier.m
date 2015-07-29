@@ -5,8 +5,8 @@
 %
 % INPUT:
 %     
-%   hspace: object representing the hierarchical space of trial functions (see XXXXXXXXX)
-%   hmsh:   object representing the hierarchical mesh (see XXXXXXXXXXXXX)
+%   hspace: object representing the hierarchical space of test functions (see hierarchical_space)
+%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
 %   coeff:  function handle to compute the source function
 %
 % OUTPUT:

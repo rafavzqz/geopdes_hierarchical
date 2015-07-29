@@ -4,8 +4,8 @@
 %
 % INPUT:
 %
-%  hspace: object representing the hierarchical space of trial functions (see XXXXXXXXX)
-%  hmsh:   object representing the hierarchical mesh (see XXXXXXXXXXXXX)
+%  hspace: object representing the hierarchical space of trial functions (see hierarchical_space)
+%  hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
 %  h:      function handle to compute the Dirichlet condition
 %  sides:  boundary sides on which a Dirichlet condition is imposed
 %

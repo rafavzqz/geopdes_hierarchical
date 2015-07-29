@@ -12,8 +12,8 @@
 %
 % INPUT:
 %
-%   hmsh:    XXXXXXXXXXXXXXXXXXXXXXXXXXXXxxXXXXXXXXXXXXXXXXXXXX
-%   hspace:  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
+%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
+%   hspace: object representing the space of hierarchical splines (see hierarchical_space)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
 %    - drchlt_sides: sides with Dirichlet boundary condition
@@ -23,6 +23,7 @@
 %    - h:            function for Dirichlet boundary condition
 %
 % OUTPUT:
+%
 %   u: computed degrees of freedom
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
