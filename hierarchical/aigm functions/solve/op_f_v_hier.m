@@ -35,10 +35,19 @@
 function rhs = op_f_v_hier (hspace, hmsh, f)
 
   rhs = zeros (hspace.ndof, 1);
+
+  ndof_per_level = hspace.ndof_per_level;
+  dif = hmsh.nlevels - hspace.nlevels;
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+%  CAN WE REMOVE THE WARNING (and dif)?
+  if (dif)
+    warning('Different number of levels for mesh and space. This should never happen')
+    ndof_per_level = [ndof_per_level(:); zeros(dif,1)];
+  end
   
   ndofs = 0;
   for ilev = 1:hmsh.nlevels
-    ndofs = ndofs + hspace.ndof_per_level(ilev);
+    ndofs = ndofs + ndof_per_level(ilev); %hspace.ndof_per_level(ilev);
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell (hmsh.rdim, 1);
       for idim = 1:hmsh.rdim
