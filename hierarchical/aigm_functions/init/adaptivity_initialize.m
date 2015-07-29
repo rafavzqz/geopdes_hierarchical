@@ -1,5 +1,4 @@
-% ADAPTIVITY_INITIALIZE: intialize a hierarchical mesh and a hierarchical
-%  space with one-single level.
+% ADAPTIVITY_INITIALIZE: initialize a hierarchical mesh and a hierarchical space with one-single level.
 %
 % [hmsh, hspace] = adaptivity_initialize (problem_data, method_data)
 %
