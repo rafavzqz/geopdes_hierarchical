@@ -1,4 +1,4 @@
-function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
+function  [geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
 %
 % function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
 %
@@ -12,7 +12,7 @@ function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(prob
 %% Definition of the hierarchical mesh and space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[hmsh, hspace] = adaptivity_initialize (problem_data, method_data);
+[hmsh, hspace, geometry] = adaptivity_initialize (problem_data, method_data);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ADAPTIVE LOOP
