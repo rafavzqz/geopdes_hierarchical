@@ -1,11 +1,12 @@
 % HIERARCHICAL_MESH: constructor of the class for hierarchical meshes.
 %
-%    function hmsh = hierarchical_mesh (msh, geometry)
+%    hmsh = hierarchical_mesh (msh, geometry, [nsub=2*ones(1,msh.ndim)])
 %
 % INPUT:
 %
 %    msh:      the coarsest mesh (level 1), an object of the msh_structured class (see msh_structured)
 %    geometry: an object of the geometry class (see geo_load)
+%    nsub:     number of subdivisions between two different levels (by default 2)
 %
 % OUTPUT:
 %  
@@ -27,7 +28,7 @@
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
 %
 %    METHOD NAME
-%    hmsh_plot    XXXXXXXXX
+%    hmsh_plot_cells: function to plot the hierarchical mesh (not efficient)
 %    hmsh_refine  XXXXXXXXX
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez

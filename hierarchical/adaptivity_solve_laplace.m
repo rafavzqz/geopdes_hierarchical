@@ -34,8 +34,8 @@ while 1
         return,
     end
     
-    if (plot_hmesh && hmsh.ndim > 1)
-        plot_hmesh_param(hmsh, 1); % In figure(1)
+    if (plot_hmesh)
+      hmsh_plot_cells (hmsh, 1);
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
