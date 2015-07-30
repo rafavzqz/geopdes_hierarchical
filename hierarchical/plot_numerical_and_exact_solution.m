@@ -8,7 +8,7 @@ function plot_numerical_and_exact_solution(u, hmsh, hspace, uex)
 
 switch hmsh.ndim
     case 1, %x = hmsh.quad_nodes(:);
-        [Z, x] = hspline_eval(u, hmsh, hspace, 4);
+        [Z, x] = hspline_eval_old(u, hmsh, hspace, 4);
         figure(2)
         subplot (1,2,1)
         plot (x(:), Z(:),'*')
@@ -20,7 +20,7 @@ switch hmsh.ndim
         title ('Exact solution'), axis tight
         
     case 2,
-        [Z, pts] = hspline_eval(u, hmsh, hspace, 3);        
+        [Z, pts] = hspline_eval_old(u, hmsh, hspace, 3);        
         npts = size(pts,2);
         npts_idir = round(sqrt(npts));
         figure(2)
