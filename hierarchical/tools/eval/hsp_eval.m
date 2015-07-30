@@ -1,25 +1,23 @@
-% SP_EVAL: Compute the value or the derivatives of a function, given by its degrees of freedom, at a given set of points.
+% HSP_EVAL: Compute the value or the derivatives of a hierarchical spline function, given by its degrees of freedom, at a given set of points.
 %
-%   [eu, F] = sp_eval (u, space, geometry, pts, [option]);
-%   [eu, F] = sp_eval (u, space, geometry, npts, [option]);
+%   [eu, F] = hsp_eval (u, hspace, geometry, pts, [option]);
+%   [eu, F] = hsp_eval (u, hspace, geometry, npts, [option]);
 %
 % INPUT:
 %     
 %     u:         vector of dof weights
-%     space:     object defining the discrete space (see sp_bspline)
+%     hspace:    object defining the discrete space (see hierarchical_space)
 %     geometry:  geometry structure (see geo_load)
 %     pts:       cell array with coordinates of points along each parametric direction
 %     npts:      number of points along each parametric direction
-%     option:    accepted options are 'value' (default), 'gradient',
-%                 and for vectors also 'curl', 'divergence'
+%     option:    accepted options are 'value' (default), 'gradient', 'laplacian'
 %
 % OUTPUT:
 %
 %     eu: the function evaluated at the given points 
 %     F:  grid points in the physical domain, that is, the mapped points
 % 
-% Copyright (C) 2009, 2010 Carlo de Falco
-% Copyright (C) 2011, 2012, 2014 Rafael Vazquez
+% Copyright (C) 2015 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -34,7 +32,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hspline_eval (u, hspace, geometry, npts, varargin)
+function [eu, F] = hsp_eval (u, hspace, geometry, npts, varargin)
 
   if (hspace.ncomp ~= 1)
     error ('hspline_eval: Not implemented for vector valued spaces')
