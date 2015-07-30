@@ -35,7 +35,7 @@
 function [eu, F] = hsp_eval (u, hspace, geometry, npts, varargin)
 
   if (hspace.ncomp ~= 1)
-    error ('hspline_eval: Not implemented for vector valued spaces')
+    error ('hsp_eval: Not implemented for vector valued spaces')
   end
 
   if (nargin == 4)
@@ -85,48 +85,31 @@ function [eu, F] = hsp_eval (u, hspace, geometry, npts, varargin)
   
   first_dof = cumsum ([0 hspace.ndof_per_level]) + 1;
 
-  eu = squeeze (zeros ([hspace.ncomp, npts]));
+  switch (lower (option))
+    case {'value'}
+      eu = squeeze (zeros ([hspace.ncomp, npts]));
+      eval_fun = @(U, SP) sp_eval_msh (U, SP, msh);
+    case {'gradient'}
+      eu = squeeze (zeros ([hspace.ncomp, msh.rdim, npts]));
+      eval_fun = @(U, SP) sp_eval_grad_msh (U, SP, msh);
+    case {'laplacian'}
+      eu = squeeze (zeros ([hspace.ncomp, npts]));
+      eval_fun = @(U, SP) sp_eval_lapl_msh (U, SP, msh);
+%     case {'divergence'}
+%     case {'curl'}
+    otherwise
+      error ('hsp_eval: unknown option to evaluate')
+  end
+
   
+
   for ilev = 1:hspace.nlevels
     sp_lev = hspace.space_of_level(ilev).constructor (msh);
     u_lev  = zeros (sp_lev.ndof, 1);
     u_lev(hspace.active{ilev}) = u(first_dof(ilev):first_dof(ilev+1)-1);
     
-    switch (lower (option))
-      case {'value'}
-        [eu_lev, F] = sp_eval_msh (u_lev, sp_lev, msh);
-        F  = reshape (F, [msh.rdim, npts]);
-        eu_lev = squeeze (reshape (eu_lev, [sp_lev.ncomp, npts]));
-
-%       case {'divergence'}
-%         [eu, F] = sp_eval_div_msh (u, sp, msh);
-%         F  = reshape (F, [msh.rdim, npts]);
-%         eu = reshape (eu, npts);
-% 
-%       case {'curl'}
-%         [eu, F] = sp_eval_curl_msh (u, sp, msh);
-%         F  = reshape (F, [msh.rdim, npts]);
-%         if (ndim == 2 && msh.rdim == 2)
-%           eu = reshape (eu, npts);
-%         elseif (ndim == 3 && msh.rdim == 3)
-%           eu = reshape (eu, [ndim, npts]);
-%         else
-%           error ('sp_eval: the evaluation of the curl for 3d surfaces is not implemented yet')
-%         end
-% 
-      case {'gradient'}
-        [eu_lev, F] = sp_eval_grad_msh (u, sp_lev, msh);
-        F  = reshape (F, [msh.rdim, npts]);
-        eu_lev = squeeze (reshape (eu_lev, [sp_lev.ncomp, msh.rdim, npts]));
-
-      case {'laplacian'}
-        [eu_lev, F] = sp_eval_lapl_msh (u, sp, msh);
-        F  = reshape (F, [msh.rdim, npts]);
-        eu_lev = squeeze (reshape (eu_lev, [sp_lev.ncomp, msh.rdim, npts]));
-
-      otherwise
-        error ('sp_eval: unknown option to evaluate')
-    end
-    eu = eu + eu_lev;
+    [eu_lev, F] = eval_fun (u_lev, sp_lev);
+    F  = reshape (F, [msh.rdim, npts]);
+    eu = eu + reshape (eu_lev, size(eu));
 
   end
