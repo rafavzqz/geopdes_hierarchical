@@ -11,7 +11,8 @@ if hmsh.ndim ~= 2
     return
 end
 
-[val,pts] = hspline_eval_old (u, hmsh, hspace, 0);
+% [val,pts] = hspline_eval_old (u, hmsh, hspace, 0);
+[val,pts] = hsp_eval_hmsh (u, hspace, hmsh);
 valex = uex(pts(1,:,:), pts(2,:,:));
 valex = reshape (valex, hmsh.nqn, hmsh.nel);
 %jw = hmsh.quad_weights.*hmsh.jacdet;

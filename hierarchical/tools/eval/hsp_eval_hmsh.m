@@ -13,7 +13,7 @@
 %
 % OUTPUT:
 %
-%     eu: the function evaluated at the given points 
+%     eu: the function evaluated at the points in the hierarchical mesh
 %     F:  grid points in the physical domain, that is, the mapped points
 % 
 % Copyright (C) 2015 Rafael Vazquez

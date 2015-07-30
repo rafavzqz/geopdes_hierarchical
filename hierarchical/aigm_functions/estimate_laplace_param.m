@@ -31,7 +31,8 @@ if strcmp(adaptivity_data.flag,'none')
     return;
 end
 
-[der2num, F] = hspline_eval_old (u,hmsh,hspace,0,'laplacian'); 
+% [der2num, F] = hspline_eval_old (u,hmsh,hspace,0,'laplacian'); 
+[der2num, F] = hsp_eval_hmsh (u, hspace, hmsh, 'laplacian'); 
 
 x = cell (hmsh.ndim, 1);
 for idim = 1:hmsh.ndim;

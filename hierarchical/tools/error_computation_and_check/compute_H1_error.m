@@ -11,8 +11,10 @@ if hspace.ncomp ~= 1
     return
 end
 
-[val, pts] = hspline_eval_old (u, hmsh, hspace, 0);
-valgrad = hspline_eval_old (u, hmsh, hspace, 0, 'gradient');
+% [val, pts] = hspline_eval_old (u, hmsh, hspace, 0);
+% valgrad = hspline_eval_old (u, hmsh, hspace, 0, 'gradient');
+[val, pts] = hsp_eval_hmsh (u, hspace, hmsh);
+valgrad = hsp_eval_hmsh (u, hspace, hmsh, 'gradient');
 
 switch hmsh.ndim
     case 1,
