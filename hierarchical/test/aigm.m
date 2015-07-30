@@ -15,11 +15,12 @@ problem_data = load_problem_data(problem);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree     = [3 3];       % Degree of the splines
-method_data.regularity = method_data.degree-1;       % Regularity of the splines
-method_data.nsub       = [2 2];       % Number of subdivisions
-method_data.nquad      = method_data.degree+1;       % Points for the Gaussian quadrature rule
-method_data.space_type = 0;           % 0: , 1: Full basis (B-splines)
+method_data.degree      = [3 3];       % Degree of the splines
+method_data.regularity  = method_data.degree-1;       % Regularity of the splines
+method_data.nsub_coarse = [2 2];       % Number of subdivisions
+method_data.nsub_refine = [2 2];       % Number of subdivisions
+method_data.nquad       = method_data.degree+1;       % Points for the Gaussian quadrature rule
+method_data.space_type  = 0;           % 0: , 1: Full basis (B-splines)
 
 % ADAPTIVITY PARAMETERS
 
@@ -30,7 +31,7 @@ adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 15;
 adaptivity_data.max_nel = 5000;
-adaptivity_data.tol = 1e-5;
+adaptivity_data.tol = 1e-5; 
 
 switch adaptivity_data.est_type
     case 0, estimator_type = 'none'; adaptivity_data.flag = 'functions';
@@ -90,8 +91,9 @@ while 1
         return,
     end
     
-    if (plot_hierarchical_mesh && hmsh.ndim > 1)
-        plot_hmesh_param(hmsh, 1); % In figure(1)
+    if (plot_hierarchical_mesh)
+        hmsh_plot_cells (hmsh, 1);
+%        plot_hmesh_param(hmsh, 1); % In figure(1)
         if print_graphics
             filename = sprintf('-problem%d-degree%d-est%d-iter%03d-',problem, method_data.degree(1),adaptivity_data.est_type,iter);
             print('-dpng', ['meshes/mesh' filename ])
@@ -107,7 +109,7 @@ while 1
     %% SOLVE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    u = assemble_and_solve(hmsh, hspace, problem_data);
+    u = adaptivity_solve (hmsh, hspace, problem_data);
     
     if plot_discrete_solution
        plot_numerical_and_exact_solution(u, hmsh, hspace, problem_data.uex), 
