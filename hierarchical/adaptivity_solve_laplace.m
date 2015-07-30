@@ -52,10 +52,8 @@ while 1
     % Error computation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [err_h1, err, err_h1s] = compute_H1_error (u, problem_data.uex, problem_data.graduex, hmsh, hspace);
+    [err_h1, err, err_h1s] = hsp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     fprintf('error_H1s = %g\n', err_h1s);
-    
-    clear err_h1_loc err_loc err_h1s_loc
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% ESTIMATE
