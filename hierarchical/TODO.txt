@@ -1,0 +1,12 @@
+Add the references to articles (Buffa-Garau, our preprint, THB-splines)
+
+- Not working the 1D case (boundary.dofs)
+- Not working the 3d case (WHY?)
+- Not working for nsub_refine different from 2
+- Clean refine
+- Plot using hsp_eval
+- Change name of adaptivity_solve_laplace. Make it a script, instead of a function.
+- Make the classes, hierarchical_mesh and hiearchical_space. Move the functions into the classes.
+- Implement the truncated basis.
+- Change the way to call hsp_eval (also in geopdes_base).
+- Fix the number of levels in hspace, to be as in hmsh
