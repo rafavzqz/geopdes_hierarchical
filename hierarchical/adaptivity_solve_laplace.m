@@ -99,12 +99,7 @@ while 1
     disp('Marking:')
     [marked, num_marked] = mark (est, hmsh, hspace, adaptivity_data);
     tempo = toc;
-    switch adaptivity_data.flag
-        case 'elements',
-            fprintf('%d elements marked for refinement (%f seconds)\n', num_marked, tempo);
-        case 'functions',
-            fprintf('%d functions marked for refinement (%f seconds)\n', num_marked, tempo);
-    end
+    fprintf('%d %s marked for refinement (%f seconds)\n', num_marked, adaptivity_data.flag, tempo);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% REFINE

@@ -30,6 +30,7 @@
 %    METHOD NAME
 %    hmsh_plot_cells: function to plot the hierarchical mesh (not efficient)
 %    hmsh_refine  XXXXXXXXX
+%    hmsh_get_meshsize XXXXXXXX
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
