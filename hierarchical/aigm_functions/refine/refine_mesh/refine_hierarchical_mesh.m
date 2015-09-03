@@ -84,8 +84,9 @@ if (boundary)
         M_sub = cell (1,hmsh.ndim);
         [M_sub{:}] = ind2sub (hmsh.mesh_of_level(lev).nel_dir, M{lev});
         indices = find (M_sub{ind2} == boundary_ind(lev));
-        M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(indices));
-%       M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(M_sub{ind2} == boundary_ind(lev)));
+%       M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(indices));
+        ppp = cellfun (@(x) x(indices),{M_sub{ind}},'UniformOutput', false);
+        M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], ppp{:});
       end
       [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh (hmsh.boundary(iside), M_boundary, []);
     end

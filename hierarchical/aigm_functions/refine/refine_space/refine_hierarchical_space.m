@@ -1,7 +1,5 @@
 % This function uses:    compute_functions_to_deactivate
 %                        update_active_functions
-%                        compute_matrices_for_changing_basis
-%
 
 % HSPACE_REFINE: refine the hierarchical space, updating the fields of the object.
 %
@@ -58,6 +56,11 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
     knt_fine = hspace.space_of_level(hmsh.nlevels).knots{idim};
     hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree(idim), knt_coarse, knt_fine);
   end
+  
+%   hspace.nlevels = hmsh.nlevels;
+%   hspace.active{hmsh.nlevels} = [];
+%   hspace.deactivated{hmsh.nlevels} = [];
+%   hspace.ndof_per_level(hmsh.nlevels) = 0;
 end
 
 % Update of active functions
@@ -115,7 +118,9 @@ if (boundary)% && hmsh.ndim > 1)
         M_sub = cell (1,hmsh.ndim);
         [M_sub{:}] = ind2sub (hspace.space_of_level(lev).ndof_dir, M{lev}(:));
         indices = find (M_sub{ind2} == boundary_ind(lev));
-        M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], M_sub{ind}(indices));
+%         M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], M_sub{ind}(indices));
+        ppp = cellfun (@(x) x(indices),{M_sub{ind}},'UniformOutput', false);
+        M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], ppp{:});
       end
     
       hspace.boundary(iside) = refine_hierarchical_space (hspace.boundary(iside), hmsh.boundary(iside), ...
@@ -128,12 +133,14 @@ if (boundary)% && hmsh.ndim > 1)
         disp('Warning: Error when computing hspace.boundary().dofs')
         pause
       end
+      
     elseif (hmsh.ndim == 1)
       aux = [(1:hspace.nlevels)', boundary_ind];
       [dummy, dofs] = ismember (aux, hspace.globnum_active, 'rows');
       hspace.boundary(iside).dofs = setdiff (dofs, 0);
     end
   end
+  
 else
     hspace.boundary = [];
 end
