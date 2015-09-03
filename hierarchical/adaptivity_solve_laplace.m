@@ -105,7 +105,7 @@ while 1
     %% REFINE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data.flag);
+    [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data);
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
 end
