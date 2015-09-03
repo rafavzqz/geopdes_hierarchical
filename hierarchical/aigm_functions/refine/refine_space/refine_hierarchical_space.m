@@ -1,4 +1,4 @@
-function hspace = refine_hierarchical_space(hmsh, hspace, M, flag, new_cells, boundary)
+function hspace = refine_hierarchical_space (hmsh, hspace, M, flag, new_cells)
 %
 % function hspace = refine_hierarchical_space(hmsh, hspace, M, flag, new_cells, boundary)
 %
@@ -27,9 +27,7 @@ function hspace = refine_hierarchical_space(hmsh, hspace, M, flag, new_cells, bo
 %                        compute_matrices_for_changing_basis
 %
 
-if nargin == 4
-    boundary = true;
-end
+boundary = ~isempty (hspace.boundary);
 
 % Computation of indices of functions of level lev that will become
 % nonactive when removing the functions or elements in M{lev}
@@ -150,7 +148,7 @@ if (boundary && hmsh.ndim > 1)
             %end
         end
         hspace.boundary(iside) = refine_hierarchical_space(hmsh.boundary(iside), hspace.boundary(iside), ...
-            M_boundary, 'functions', new_cells.boundary{iside}, false);
+            M_boundary, 'functions', new_cells.boundary{iside});
         % Now, we fill hspace.boundary(iside).dofs
         globnum_active_boundary = [hspace.boundary(iside).globnum_active(:,1:i) boundary_ind(hspace.boundary(iside).globnum_active(:,1)) ...
             hspace.boundary(iside).globnum_active(:,(i+1):end)];

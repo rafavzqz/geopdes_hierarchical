@@ -56,13 +56,8 @@ fprintf('refine: Number of current active cells: %d (%f seconds)\n', hmsh.nel, t
 %% REFINE SPACE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-if (nargin < 5)
-    boundary = true;
-end
-
 refine_space_time = tic;
 disp('Updating space:')
-hspace = refine_hierarchical_space (hmsh, hspace, marked, adaptivity_data.flag, new_cells, boundary);
+hspace = refine_hierarchical_space (hmsh, hspace, marked, adaptivity_data.flag, new_cells);
 tempo = toc(refine_space_time);
 fprintf('Number of current dofs: %d (%f seconds)\n', hspace.ndof, tempo);
