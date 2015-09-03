@@ -1,4 +1,4 @@
-function hspace = update_active_functions(hspace, hmsh, new_cells, I)
+function hspace = update_active_functions (hspace, hmsh, new_cells, I)
 %
 % function hspace = update_active_functions(hspace, hmsh, new_cells, I)
 %
@@ -18,24 +18,27 @@ function hspace = update_active_functions(hspace, hmsh, new_cells, I)
 %                           sp_get_cells
 %                           sp_get_basis_functions
 %
+% XXXX Change the help. Decide where to put this function (inside hspace_refine?)
 
-% Mejorar este chequeo
+% XXXX Mejorar este chequeo
 if size(hspace.active{1},2)~=size(I{1},2)
-    disp('Error: Bad call to update_active_functions');
+    disp('ERROR: Bad call to update_active_functions');
     return,
 end
 
-Nf = cumsum([0 hspace.ndof_per_level]);
-W = cell(hspace.nlevels+1,1);
-active = cell(hspace.nlevels+1,1);
-deactivated = cell(hspace.nlevels+1,1);
-% El siguiente loop seguramente se puede evitar usando mat2cell
+Nf = cumsum ([0 hspace.ndof_per_level]);
+W = cell (hspace.nlevels+1,1);
+active = cell (hspace.nlevels+1,1);
+deactivated = cell (hspace.nlevels+1,1);
+
+% El siguiente loop seguramente se puede evitar usando mat2cell XXXXX Not,
+%   if one of them (active) is empty. I would leave it like that
 for lev = 1:hspace.nlevels
-    ind_f = (Nf(lev)+1):Nf(lev+1);
-    active{lev} = hspace.active{lev};
-    deactivated{lev} = hspace.deactivated{lev};
-    W{lev} = hspace.coeff(ind_f);
-    W{lev} = W{lev}(:);
+  ind_f = (Nf(lev)+1):Nf(lev+1);
+  active{lev} = hspace.active{lev};
+  deactivated{lev} = hspace.deactivated{lev};
+  W{lev} = hspace.coeff(ind_f);
+  W{lev} = W{lev}(:);
 end
 
 active{hspace.nlevels+1,1} = zeros(0,1);
