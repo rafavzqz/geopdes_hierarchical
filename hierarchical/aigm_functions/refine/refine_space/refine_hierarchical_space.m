@@ -1,118 +1,97 @@
-function hspace = refine_hierarchical_space (hmsh, hspace, M, flag, new_cells)
-%
-% function hspace = refine_hierarchical_space(hmsh, hspace, M, flag, new_cells, boundary)
-%
-% This function updates the information in hspace. The variable hmsh has
-% already been updated by refine_hierarchical_mesh
-% ATENCION: Luego voy a limpiar mas esta funcion
-%
-%
-% Input:        hmsh:
-%               hspace:
-%               M:  (cell array),
-%                   where M{lev} contains the indices
-%                   of marked functions or elements of level lev, for lev =
-%                   1,2,...
-%               flag: 'functions' or 'elements'
-%               new_cells: see refine_hierarchical_mesh
-%               boundary: true or false, default: true. (Fill the
-%                   information for the boundaries of the space).
-%
-%
-% Output:   hspace updated
-%
-
 % This function uses:    compute_functions_to_deactivate
 %                        update_active_functions
 %                        compute_matrices_for_changing_basis
 %
 
+% HSPACE_REFINE: refine the hierarchical space, updating the fields of the object.
+%
+%   hspace = hspace_refine (hspace, hmsh, marked, flag, new_cells)
+%
+% INPUT:
+%
+%   hspace:    object representing the coarse hierarchical space (see hierarchical_space)
+%   hmsh:      object representing the refined hierarchical mesh (see hierarchical_mesh)
+%   marked:    cell array with the indices, in the tensor product setting, of the marked elements/functions for each level
+%   flag:      the refinement strategy, marking either 'elements' or 'functions'.
+%   new_cells: cell array with the global indices of the new active elements for each level
+%
+% OUTPUT:
+%
+%   hspace:    object representing the refined hierarchical space (see hierarchical_space)
+%
+% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+% XXXXXXXXXX Move the function into the class. Change the name
+
+function hspace = refine_hierarchical_space (hspace, hmsh, M, flag, new_cells)
+
 boundary = ~isempty (hspace.boundary);
 
 % Computation of indices of functions of level lev that will become
 % nonactive when removing the functions or elements in M{lev}
-M = compute_functions_to_deactivate(hmsh, hspace, M, flag);
+M = compute_functions_to_deactivate (hmsh, hspace, M, flag);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Enlarging space_of_level and Proj, if it is needed
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% Computation of a tensor product space if a new level is activated,
+%  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) < hmsh.nlevels)
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
   degree = hspace.space_of_level(hmsh.nlevels-1).degree;
   knots = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, degree, degree-1);
   hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, degree, msh_level);
   coarse_space = hspace.space_of_level(hmsh.nlevels-1).constructor (msh_level);
-end
 
-if (size(hspace.Proj,1) < (hmsh.nlevels - 1))
   for idim = 1:hmsh.ndim
-    degree = coarse_space.sp_univ(idim).degree;
-    knt_coarse = coarse_space.sp_univ(idim).knots;
-    knt_fine   = hspace.space_of_level(hmsh.nlevels).sp_univ(idim).knots;
-    hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree, knt_coarse, knt_fine);        
+    knt_coarse = coarse_space.knots{idim};
+    knt_fine = hspace.space_of_level(hmsh.nlevels).knots{idim};
+    hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree(idim), knt_coarse, knt_fine);
   end
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Update of active functions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-tic
-disp('Updating active dofs:')
-
+% Update of active functions
 if (boundary && hmsh.ndim > 1)
-    new_elem = new_cells.interior;
+  new_elem = new_cells.interior;
 else
-    new_elem = new_cells;
+  new_elem = new_cells;
 end
 
-% Deactivation of functions which have to be removed and activation of the
-% new ones
-hspace = update_active_functions(hspace, hmsh, new_elem, M);
-
-tempo = toc;
-fprintf(' %f seconds\n', tempo);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+hspace = update_active_functions (hspace, hmsh, new_elem, M);
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Updating C
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%tic
-%disp('Computing C:')
-aux_active = hspace.active;
-dif = hmsh.nlevels - hspace.nlevels;
-if dif
-    aux_active = vertcat(hspace.active,cell(dif,1));
+% Update C, the matrices for changing basis
+C = cell (hmsh.nlevels, 1);
+C{1} = speye (hspace.space_of_level(1).ndof);
+C{1} = C{1}(:,hspace.active{1});
+
+for lev = 2:hmsh.nlevels
+  I = speye (hspace.space_of_level(lev).ndof);
+  aux = 1;
+  for idim = 1:hmsh.ndim
+    aux = kron (hspace.Proj{lev-1,idim}, aux);
+  end
+  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
 end
-ndof = zeros(1,hmsh.nlevels);
-for l = 1:hmsh.nlevels
-    ndof(l) = hspace.space_of_level(l).ndof;
+hspace.C = C;
+clear C
+
+% Update of sp_lev
+% XXXX This can be improved to save computational time
+hspace.sp_lev = cell (hmsh.nlevels,1);
+for ilev = 1:hmsh.nlevels
+  hspace.sp_lev{ilev} = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'gradient', true, 'hessian', true);
 end
-hspace.C = compute_matrices_for_changing_basis(hmsh.nlevels, aux_active, ndof, hspace.Proj);
-%tempo = toc;
-%fprintf(' %f seconds\n', tempo);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Update of sp_lev
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tic
-disp('Computing sp_lev:')
-hspace.sp_lev = cell(hmsh.nlevels,1);
-for ilev = 1 : hmsh.nlevels
-    hspace.sp_lev{ilev} = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'gradient', true,'hessian', true);
-end
-tempo = toc;
-fprintf(' %f seconds\n', tempo);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fill the information for the boundaries
@@ -147,7 +126,7 @@ if (boundary && hmsh.ndim > 1)
             end
             %end
         end
-        hspace.boundary(iside) = refine_hierarchical_space(hmsh.boundary(iside), hspace.boundary(iside), ...
+        hspace.boundary(iside) = refine_hierarchical_space(hspace.boundary(iside), hmsh.boundary(iside), ...
             M_boundary, 'functions', new_cells.boundary{iside});
         % Now, we fill hspace.boundary(iside).dofs
         globnum_active_boundary = [hspace.boundary(iside).globnum_active(:,1:i) boundary_ind(hspace.boundary(iside).globnum_active(:,1)) ...

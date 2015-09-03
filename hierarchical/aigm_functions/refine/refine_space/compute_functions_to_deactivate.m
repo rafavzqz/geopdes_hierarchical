@@ -4,8 +4,8 @@
 %
 % INPUT:
 %
-%   hspace: object representing the space of hierarchical splines (see hierarchical_space)
-%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
+%   hspace: object representing the (coarse) space of hierarchical splines (see hierarchical_space)
+%   hmsh:   object representing the refined hierarchical mesh (see hierarchical_mesh)
 %   marked: cell array with the indices, in the tensor product space, of the marked 
 %             element/functions for each level
 %   flag:   the refinement strategy, marking either 'elements' or 'functions'
