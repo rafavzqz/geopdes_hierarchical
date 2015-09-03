@@ -87,7 +87,6 @@ hspace.sp_lev{1} = sp_evaluate_element_list (hspace.space_of_level(1), hmsh.msh_
 
 hspace.dofs = [];
 
-% XXXXX I have to check the boundary, and the 1D construction
 if (~isempty (hmsh.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:2*hmsh.ndim

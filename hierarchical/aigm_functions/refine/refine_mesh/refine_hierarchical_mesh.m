@@ -97,7 +97,7 @@ end
 end
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [hmsh, new_cells] = update_active_cells (hmsh, M, indices)
 %
 % function [hmsh, new_cells] = update_active_cells (hmsh, M, indices)
@@ -184,6 +184,7 @@ end
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function I = split_cells (hmsh, lev, ind)
 %
 % function I = split_cells (hmsh, lev, ind)
