@@ -85,7 +85,7 @@ for lev = 1:numel(marked_sub)
                 siz = hspace.space_of_level(lev).ndof_dir;
         end
         switch hmsh.ndim
-            %case 1, marked_ind{lev} = marked_sub{lev}(:,1);
+            case 1, marked.ind{lev} = marked_sub{lev}(:,1);
             case 2, marked.ind{lev} = sub2ind(siz, marked_sub{lev}(:,1), marked_sub{lev}(:,2));
             case 3, marked.ind{lev} = sub2ind(siz, marked_sub{lev}(:,1), marked_sub{lev}(:,2), marked_sub{lev}(:,3));
         end

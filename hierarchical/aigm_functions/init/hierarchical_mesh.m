@@ -70,9 +70,14 @@ hmsh.msh_lev{1} = msh_evaluate_element_list (hmsh.mesh_of_level(1), hmsh.active{
 
 hmsh.geometry = geometry; % CAN WE AVOID THIS? XXXXXX
 
-if (~isempty (msh.boundary) && msh.ndim > 1)
-  for iside = 1:2*msh.ndim
-    hmsh.boundary(iside) = hierarchical_mesh (msh.boundary(iside), geometry.boundary(iside));
+if (~isempty (msh.boundary))
+  if (msh.ndim > 1)
+    for iside = 1:2*msh.ndim
+      hmsh.boundary(iside) = hierarchical_mesh (msh.boundary(iside), geometry.boundary(iside));
+    end
+  elseif (msh.ndim == 1)
+    hmsh.boundary(1).ndim = 0;
+    hmsh.boundary(2).ndim = 0;
   end
 else
   hmsh.boundary = [];

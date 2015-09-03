@@ -64,29 +64,31 @@ end
 
 % Update the boundary , calling the function recursively
 if (boundary)
-  for iside = 1:2*hmsh.ndim
-    %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-    %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
-    ind2 = ceil (iside/2);
-    ind = setdiff (1:hmsh.ndim, ind2);
-    if (mod(iside,2) == 1)
-      boundary_ind = ones (hmsh.nlevels,1);
-    else
-      boundary_ind = zeros (hmsh.nlevels,1);
-      for lev = 1:hmsh.nlevels
-        boundary_ind(lev) = hmsh.mesh_of_level(lev).nel_dir(ind2);
+  if (hmsh.ndim > 1)
+    for iside = 1:2*hmsh.ndim
+      %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
+      %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
+      ind2 = ceil (iside/2);
+      ind = setdiff (1:hmsh.ndim, ind2);
+      if (mod(iside,2) == 1)
+        boundary_ind = ones (hmsh.nlevels,1);
+      else
+        boundary_ind = zeros (hmsh.nlevels,1);
+        for lev = 1:hmsh.nlevels
+          boundary_ind(lev) = hmsh.mesh_of_level(lev).nel_dir(ind2);
+        end
       end
-    end
     
-    M_boundary = cell (size (M));
-    for lev = 1:numel (M)
-      M_sub = cell (1,hmsh.ndim);
-      [M_sub{:}] = ind2sub (hmsh.mesh_of_level(lev).nel_dir,  M{lev});
-      indices = find (M_sub{ind2} == boundary_ind(lev));
-      M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(indices));
+      M_boundary = cell (size (M));
+      for lev = 1:numel (M)
+        M_sub = cell (1,hmsh.ndim);
+        [M_sub{:}] = ind2sub (hmsh.mesh_of_level(lev).nel_dir, M{lev});
+        indices = find (M_sub{ind2} == boundary_ind(lev));
+        M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(indices));
 %       M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(M_sub{ind2} == boundary_ind(lev)));
+      end
+      [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh (hmsh.boundary(iside), M_boundary, []);
     end
-    [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh (hmsh.boundary(iside), M_boundary, []);
   end
 else
   hmsh.boundary = [];

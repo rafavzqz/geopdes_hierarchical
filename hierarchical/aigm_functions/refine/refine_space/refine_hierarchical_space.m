@@ -93,50 +93,47 @@ for ilev = 1:hmsh.nlevels
   hspace.sp_lev{ilev} = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'gradient', true, 'hessian', true);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Fill the information for the boundaries
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if (boundary && hmsh.ndim > 1)
-    for iside = 1:2*hmsh.ndim
-        %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-        ind = setdiff (1:hmsh.ndim, ceil(iside/2));
-        i = setdiff (1:hmsh.ndim, ind);
-        if mod(iside,2) == 1
-            boundary_ind = ones(hspace.nlevels,1);
-        else
-            boundary_ind = zeros(hspace.nlevels,1);
-            for lev = 1:hspace.nlevels
-                boundary_ind(lev) = hspace.space_of_level(lev).ndof_dir(i);
-            end
-        end
-        M_boundary = cell(size(M));
-        for lev = 1:numel(M)
-            % if ~isempty(M{lev})
-            M_sub = cell(1,hmsh.ndim);
-            [M_sub{:}] = ind2sub(hspace.space_of_level(lev).ndof_dir,  M{lev}(:));
-            M_sub = cell2mat(M_sub);
-            M_boundary{lev} = M_sub(M_sub(:,i) == boundary_ind(lev),ind);
-            % Mejorar lo siguiente
-            switch hmsh.boundary(iside).ndim %XXXXXX CHECK IF THIS IS CORRECT
-                case 2,
-                    M_boundary{lev} = sub2ind(hspace.boundary(iside).space_of_level(lev).ndof_dir,M_boundary{lev}(:,1),M_boundary{lev}(:,2));
-                case 3,
-                    M_boundary{lev} = sub2ind(hspace.boundary(iside).space_of_level(lev).ndof_dir,M_boundary{lev}(:,1),M_boundary{lev}(:,2),M_boundary{lev}(:,3));
-            end
-            %end
-        end
-        hspace.boundary(iside) = refine_hierarchical_space(hspace.boundary(iside), hmsh.boundary(iside), ...
-            M_boundary, 'functions', new_cells.boundary{iside});
-        % Now, we fill hspace.boundary(iside).dofs
-        globnum_active_boundary = [hspace.boundary(iside).globnum_active(:,1:i) boundary_ind(hspace.boundary(iside).globnum_active(:,1)) ...
-            hspace.boundary(iside).globnum_active(:,(i+1):end)];
-        [unos, hspace.boundary(iside).dofs] = ismember(globnum_active_boundary,hspace.globnum_active,'rows');
-        if any(unos~=1)
-            disp('Warning: Error when computing hspace.boundary().dofs')
-            pause
-        end
+% Fill the information for the boundaries
+if (boundary)% && hmsh.ndim > 1)
+  for iside = 1:2*hmsh.ndim
+    %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
+    %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
+    ind2 = ceil (iside/2);
+    ind = setdiff (1:hmsh.ndim, ind2);
+    if (mod(iside,2) == 1)
+      boundary_ind = ones (hspace.nlevels,1);
+    else
+      boundary_ind = zeros (hspace.nlevels,1);
+      for lev = 1:hspace.nlevels
+        boundary_ind(lev) = hspace.space_of_level(lev).ndof_dir(ind2);
+      end
     end
+
+    if (hmsh.ndim > 1)
+      M_boundary = cell (size (M));
+      for lev = 1:numel (M)
+        M_sub = cell (1,hmsh.ndim);
+        [M_sub{:}] = ind2sub (hspace.space_of_level(lev).ndof_dir, M{lev}(:));
+        indices = find (M_sub{ind2} == boundary_ind(lev));
+        M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], M_sub{ind}(indices));
+      end
+    
+      hspace.boundary(iside) = refine_hierarchical_space (hspace.boundary(iside), hmsh.boundary(iside), ...
+          M_boundary, 'functions', new_cells.boundary{iside});
+      % Now, we fill hspace.boundary(iside).dofs
+      bnd_active = hspace.boundary(iside).globnum_active;
+      globnum_active_boundary = [bnd_active(:,1:ind2), boundary_ind(bnd_active(:,1)), bnd_active(:,(ind2+1):end)];
+      [unos, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
+      if (~all(unos))
+        disp('Warning: Error when computing hspace.boundary().dofs')
+        pause
+      end
+    elseif (hmsh.ndim == 1)
+      aux = [(1:hspace.nlevels)', boundary_ind];
+      [dummy, dofs] = ismember (aux, hspace.globnum_active, 'rows');
+      hspace.boundary(iside).dofs = setdiff (dofs, 0);
+    end
+  end
 else
     hspace.boundary = [];
 end

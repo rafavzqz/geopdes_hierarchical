@@ -85,16 +85,20 @@ hspace.Proj = [];
 hspace.C{1} = speye (space.ndof);
 hspace.sp_lev{1} = sp_evaluate_element_list (hspace.space_of_level(1), hmsh.msh_lev{1}, 'gradient', true,'hessian', true);
 
+hspace.dofs = [];
+
 % XXXXX I have to check the boundary, and the 1D construction
 if (~isempty (hmsh.boundary))
-  for iside = 1:2*hmsh.ndim
-    boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
-    boundary.dofs = space.boundary(iside).dofs;
-    hspace.boundary(iside) = boundary;
+  if (hmsh.ndim > 1)
+    for iside = 1:2*hmsh.ndim
+      boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
+      boundary.dofs = space.boundary(iside).dofs;
+      hspace.boundary(iside) = boundary;
+    end
+  elseif (hmsh.ndim == 1)
+    hspace.boundary(1).dofs = space.boundary(1).dofs;
+    hspace.boundary(2).dofs = space.boundary(2).dofs;
   end
-elseif (hmsh.ndim == 1)
-  hspace.boundary(1).dofs = space.boundary(1).dofs;
-  hspace.boundary(2).dofs = space.boundary(2).dofs;
 else
   hspace.boundary = [];
 end
