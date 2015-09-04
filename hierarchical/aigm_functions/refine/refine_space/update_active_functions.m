@@ -28,24 +28,22 @@ end
 
 Nf = cumsum ([0; hspace.ndof_per_level(:)]);
 W = cell (hspace.nlevels+1,1);
-active = cell (hspace.nlevels+1,1);
-deactivated = cell (hspace.nlevels+1,1);
 
-% El siguiente loop seguramente se puede evitar usando mat2cell XXXXX Not,
-%   if one of them (active) is empty. I would leave it like that
+active = hspace.active;
+deactivated = hspace.deactivated;
+
+% El siguiente loop seguramente se puede evitar usando mat2cell
 for lev = 1:hspace.nlevels
   ind_f = (Nf(lev)+1):Nf(lev+1);
-  active{lev} = hspace.active{lev};
-  deactivated{lev} = hspace.deactivated{lev};
   W{lev} = hspace.coeff(ind_f);
   W{lev} = W{lev}(:);
 end
 
-active{hspace.nlevels+1,1} = zeros(0,1);
-deactivated{hspace.nlevels+1,1} = zeros(0,1);
-W{hspace.nlevels+1,1} = zeros(0,1);
+active{hspace.nlevels+1,1} = zeros (0,1);
+deactivated{hspace.nlevels+1,1} = zeros (0,1);
+W{hspace.nlevels+1,1} = zeros (0,1);
 
-if hspace.nlevels == hmsh.nlevels
+if (hspace.nlevels == hmsh.nlevels)
     max_lev = hspace.nlevels - 1;
 else
     max_lev = hspace.nlevels;
@@ -63,19 +61,18 @@ for lev = 1:max_lev
     for idim = 1:hmsh.ndim
       coefficients = kron (hspace.Proj{lev,idim}, coefficients);
     end
-    nfunctions = numel (I{lev});
     
     % Remove the corresponding functions from the active functions of level lev
     active{lev}(indA) = [];
     w = W{lev}(indA);
     W{lev}(indA) = [];
-%   warning ('This union does not work with two scalars')
     deactivated{lev} = union (deactivated{lev}, I{lev});
+    deactivated{lev} = deactivated{lev}(:);
     
     % Vectorizar lo que se pueda en el siguiente loop, en particular
     % para hacer un solo llamado a sp_get_cells
-    for i = 1: nfunctions
-      ind = I{lev}(i,:);
+    for ifun = 1:numel (I{lev})
+      ind = I{lev}(ifun,:);
       c = coefficients(:,ind);
       II = find(c);
       c = c(II);
@@ -101,8 +98,8 @@ for lev = 1:max_lev
         W{lev+1} = vertcat(W{lev+1}, zeros(nchildren_nonactive,1));
       end
       [unos, indices] = ismember(Ichildren, active{lev+1}, 'rows');
-      W{lev+1}(indices) = W{lev+1}(indices) + w(i)*c;
-    end % for i = 1: nfunctions
+      W{lev+1}(indices) = W{lev+1}(indices) + w(ifun)*c;
+    end % for i = 1:numel(I{lev})
   end
   
 % For the classical hierarchical space, we activate functions of level lev+1, 
@@ -120,10 +117,8 @@ for lev = 1:max_lev
     new_functions = cellfun (@(x) all (ismember (x, union (hmsh.active{lev+1}, hmsh.deactivated{lev+1}))), elem);
     active{lev+1} = vertcat (active{lev+1}, new_possible_active_fun(new_functions));
     W{lev+1} = vertcat (W{lev+1}, zeros (sum (new_functions), 1));
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   end
+  
   if (isempty (W{lev}))
     active{lev} = zeros(0,1);
     W{lev} = zeros(0,1);
