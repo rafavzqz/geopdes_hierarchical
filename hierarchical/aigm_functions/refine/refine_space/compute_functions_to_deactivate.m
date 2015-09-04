@@ -54,7 +54,7 @@ for lev = 1:hspace.nlevels
     % Computation of functions that in fact have to be deactivated
     [dummy, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), I{lev});
     flag_ell = cellfun (@(x) isempty (intersect (x, hmsh.active{lev})), cells_per_fun);
-    I{lev} = I{lev} (flag_ell == 1);
+    I{lev} = I{lev}(flag_ell == 1);
         
     if strcmpi (flag,'functions')
       I{lev} = union (I{lev}, M{lev});

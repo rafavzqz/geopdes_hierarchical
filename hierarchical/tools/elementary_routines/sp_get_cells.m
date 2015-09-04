@@ -1,6 +1,6 @@
 % SP_GET_CELLS: Compute the indices of the cells within the support of a list of tensor-product B-spline function.
 %
-% cell_indices = sp_get_basis_cells (space, msh, indices)
+% [cell_indices, indices_per_function] = sp_get_cells (space, msh, indices)
 %
 % INPUT:
 %    space:   object defining the space of discrete functions (see sp_bspline)
@@ -9,6 +9,7 @@
 %
 % OUTPUT:
 %    cell_indices: indices of the cells within the support of the basis functions.
+%    indices_per_function: indices of the cells within the support of each basis function.
 %
 % Copyright (C) 2015 Rafael Vazquez
 %

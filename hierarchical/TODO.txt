@@ -9,4 +9,4 @@ Add the references to articles (Buffa-Garau, our preprint, THB-splines)
 - Make the classes, hierarchical_mesh and hiearchical_space. Move the functions into the classes.
 - Implement the truncated basis.
 - Change the way to call hsp_eval (also in geopdes_base).
-- Fix the number of levels in hspace, to be as in hmsh
+- Fix the number of levels in hspace, to be as in hmsh. Change the way the operators use the number of levels (see op_f_v_hier)

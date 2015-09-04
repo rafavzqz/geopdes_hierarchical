@@ -84,8 +84,7 @@ if (boundary)
         M_sub = cell (1,hmsh.ndim);
         [M_sub{:}] = ind2sub (hmsh.mesh_of_level(lev).nel_dir, M{lev});
         indices = find (M_sub{ind2} == boundary_ind(lev));
-%       M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], M_sub{ind}(indices));
-        ppp = cellfun (@(x) x(indices),{M_sub{ind}},'UniformOutput', false);
+        ppp = cellfun (@(x) x(indices), {M_sub{ind}}, 'UniformOutput', false);
         M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], ppp{:});
       end
       [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh (hmsh.boundary(iside), M_boundary, []);
@@ -134,7 +133,7 @@ for lev = 1:nlevels
     if (isempty(indices))
       [unos, indE] = ismember (M{lev}, hmsh.active{lev});
       if (~all (unos))
-        disp('Warning: update_active_cells: Some nonactive cells were selected');
+        warning('update_active_cells: Some nonactive cells were selected');
       end
     else
       indE = indices{lev};
