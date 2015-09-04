@@ -58,8 +58,8 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
   end
   
 %   hspace.nlevels = hmsh.nlevels;
-%   hspace.active{hmsh.nlevels} = [];
-%   hspace.deactivated{hmsh.nlevels} = [];
+%   hspace.active{hmsh.nlevels} = zeros (0,1);%[];
+%   hspace.deactivated{hmsh.nlevels} = zeros (0,1);%[];
 %   hspace.ndof_per_level(hmsh.nlevels) = 0;
 end
 
@@ -118,8 +118,7 @@ if (boundary)% && hmsh.ndim > 1)
         M_sub = cell (1,hmsh.ndim);
         [M_sub{:}] = ind2sub (hspace.space_of_level(lev).ndof_dir, M{lev}(:));
         indices = find (M_sub{ind2} == boundary_ind(lev));
-%         M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], M_sub{ind}(indices));
-        ppp = cellfun (@(x) x(indices),{M_sub{ind}},'UniformOutput', false);
+        ppp = cellfun (@(x) x(indices), {M_sub{ind}}, 'UniformOutput', false);
         M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], ppp{:});
       end
     
