@@ -43,13 +43,6 @@ function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff)
   K = spalloc (hspv.ndof, hspu.ndof, 3*hspu.ndof);
 
   ndof_per_level = hspu.ndof_per_level;
-  dif = hmsh.nlevels - hspu.nlevels;
-% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-%  CAN WE REMOVE THE WARNING (and dif)?
-  if (dif)
-   % warning('Different number of levels for mesh and space. This should never happen')
-    ndof_per_level = [ndof_per_level(:); zeros(dif,1)];
-  end
 
   ndofs_u = 0;
   ndofs_v = 0;

@@ -33,17 +33,7 @@ for lev = 1:hspace.nlevels
   W{lev} = W{lev}(:);
 end
 
-active{hspace.nlevels+1,1} = [];
-deactivated{hspace.nlevels+1,1} = [];
-W{hspace.nlevels+1,1} = [];
-
-if (hspace.nlevels == hmsh.nlevels)
-    max_lev = hspace.nlevels - 1;
-else
-    max_lev = hspace.nlevels;
-end
-
-for lev = 1:max_lev
+for lev = 1:hspace.nlevels-1
   I{lev} = union (I{lev}, intersect (deactivated{lev}, active{lev}));
   if (~isempty(I{lev}))
     [dummy,indA] = ismember (I{lev}, active{lev});
@@ -105,15 +95,11 @@ for lev = 1:max_lev
   end
   
   if (isempty (W{lev}))
+    W{lev} = [];
     active{lev} = [];
   end
 end % for lev
 
-
-% Update all the fields in hspace
-if (~isempty(active{hspace.nlevels + 1}))
-  hspace.nlevels = hspace.nlevels + 1;
-end
 
 hspace.active = active(1:hspace.nlevels);
 hspace.deactivated = deactivated(1:hspace.nlevels);

@@ -56,11 +56,11 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
     knt_fine = hspace.space_of_level(hmsh.nlevels).knots{idim};
     hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree(idim), knt_coarse, knt_fine);
   end
-  
-%   hspace.nlevels = hmsh.nlevels;
-%   hspace.active{hmsh.nlevels} = zeros (0,1);%[];
-%   hspace.deactivated{hmsh.nlevels} = zeros (0,1);%[];
-%   hspace.ndof_per_level(hmsh.nlevels) = 0;
+
+  hspace.nlevels = hmsh.nlevels;
+  hspace.active{hmsh.nlevels} = [];%zeros (0,1);
+  hspace.deactivated{hmsh.nlevels} = [];%zeros (0,1);;
+  hspace.ndof_per_level(hmsh.nlevels) = 0;
 end
 
 % Update of active functions
