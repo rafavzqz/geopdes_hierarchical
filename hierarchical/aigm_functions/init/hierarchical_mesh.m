@@ -73,7 +73,9 @@ hmsh.geometry = geometry; % CAN WE AVOID THIS? XXXXXX
 if (~isempty (msh.boundary))
   if (msh.ndim > 1)
     for iside = 1:2*msh.ndim
-      hmsh.boundary(iside) = hierarchical_mesh (msh.boundary(iside), geometry.boundary(iside));
+      %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
+      ind = setdiff (1:hmsh.ndim, ceil (iside/2));
+      hmsh.boundary(iside) = hierarchical_mesh (msh.boundary(iside), geometry.boundary(iside), nsub(ind));
     end
   elseif (msh.ndim == 1)
     hmsh.boundary(1).ndim = 0;

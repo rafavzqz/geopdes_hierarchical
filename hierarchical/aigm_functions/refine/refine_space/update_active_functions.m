@@ -21,10 +21,10 @@ function hspace = update_active_functions (hspace, hmsh, new_cells, I)
 % XXXX Change the help. Decide where to put this function (inside hspace_refine?)
 
 % XXXX Mejorar este chequeo
-if size(hspace.active{1},2)~=size(I{1},2)
-    disp('ERROR: Bad call to update_active_functions');
-    return,
-end
+% if size(hspace.active{1},2)~=size(I{1},2)
+%     disp('ERROR: Bad call to update_active_functions');
+%     return,
+% end
 
 Nf = cumsum ([0; hspace.ndof_per_level(:)]);
 W = cell (hspace.nlevels+1,1);
@@ -111,8 +111,9 @@ for lev = 1:max_lev
   end
   
   if (isempty (W{lev}))
-    active{lev} = zeros(0,1);
-    W{lev} = zeros(0,1);
+%     active{lev} = zeros(0,1);
+%     W{lev} = zeros(0,1);
+    active{lev} = [];
   end
 end % for lev
 
