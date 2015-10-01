@@ -1,24 +1,31 @@
-function hspace = update_active_functions (hspace, hmsh, new_cells, I)
-%
-% function hspace = update_active_functions(hspace, hmsh, new_cells, I)
+% function hspace = update_active_functions(hspace, hmsh, new_cells, marked_fun)
 %
 % This function updates the active dofs (hspace.active and hspace.globnum_active), their coefficients (hspace.coeff) and deactivated dofs (hspace.deactivated) in each level when
-% refining the functions in I. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
-% ATENCION: Voy a mejorar un poco la performance de esta funcion
+% refining the functions in marked_fun. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
 %
-% Input:    hspace:
-%           hmsh:
-%           new_cells: see refine_hierarchical_mesh
-%           I{lev}: indices of active functions of level lev to be deactivated
+% Input:    hspace:    the coarse mesh, an object of the class hierarchical_space
+%           hmsh:      an object of the class hierarchical_mesh, already refined
+%           new_cells: cells added to the refined mesh, see hmsh_refine
+%           marked_fun{lev}: indices of active functions of level lev to be deactivated
 %
-% Output:   hspace:
+% Output:   hspace:    the refined mesh, an object of the class hierarchical_space
 %
+% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
-% This function uses:       split_basis
-%                           sp_get_cells
-%                           sp_get_basis_functions
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
 %
-% XXXX Change the help. Decide where to put this function (inside hspace_refine?)
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+function hspace = update_active_functions (hspace, hmsh, new_cells, marked_fun)
 
 Nf = cumsum ([0; hspace.ndof_per_level(:)]);
 W = cell (hspace.nlevels+1,1);
@@ -34,9 +41,9 @@ for lev = 1:hspace.nlevels
 end
 
 for lev = 1:hspace.nlevels-1
-  I{lev} = union (I{lev}, intersect (deactivated{lev}, active{lev}));
-  if (~isempty(I{lev}))
-    [dummy,indA] = ismember (I{lev}, active{lev});
+  marked_fun{lev} = union (marked_fun{lev}, intersect (deactivated{lev}, active{lev}));
+  if (~isempty(marked_fun{lev}))
+    [dummy,indA] = ismember (marked_fun{lev}, active{lev});
 %     if (~all (dummy))
 %       disp('ERROR: update_active_functions: Some nonactive functions were selected');
 %     end
@@ -50,16 +57,16 @@ for lev = 1:hspace.nlevels-1
     active{lev}(indA) = [];
     w = W{lev}(indA);
     W{lev}(indA) = [];
-    deactivated{lev} = union (deactivated{lev}, I{lev});
+    deactivated{lev} = union (deactivated{lev}, marked_fun{lev});
     deactivated{lev} = deactivated{lev}(:);
 
-    [ii,jj] = find (coefficients(:,I{lev}));
-    children = arrayfun (@(x) ii(jj==x), 1:numel(I{lev}), 'UniformOutput', false);
+    [ii,jj] = find (coefficients(:,marked_fun{lev}));
+    children = arrayfun (@(x) ii(jj==x), 1:numel(marked_fun{lev}), 'UniformOutput', false);
 
 % Add the children to the active functions, and compute the coefficients for the partition of unity
-    for ifun = 1:numel (I{lev})
+    for ifun = 1:numel (marked_fun{lev})
       Ichildren = children{ifun};
-      c = coefficients(Ichildren, I{lev}(ifun));
+      c = coefficients(Ichildren, marked_fun{lev}(ifun));
 
       Ichildren_nonactive = setdiff (Ichildren, active{lev+1});
       if (~isempty (Ichildren_nonactive))
@@ -72,7 +79,7 @@ for lev = 1:hspace.nlevels-1
 %         disp('ERROR: update_active_functions: Some nonactive functions were selected');
 %       end
       W{lev+1}(indices) = W{lev+1}(indices) + w(ifun)*c;
-    end % for ifun = 1:numel(I{lev})
+    end % for ifun = 1:numel(marked_fun{lev})
   end %if
   
 % For the classical hierarchical space, we activate functions of level lev+1, 

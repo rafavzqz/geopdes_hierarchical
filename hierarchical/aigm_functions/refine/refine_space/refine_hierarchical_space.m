@@ -110,19 +110,17 @@ if (boundary)% && hmsh.ndim > 1)
       for lev = 1:numel (M)
         M_boundary{lev} = get_boundary_indices (iside, hspace.space_of_level(lev).ndof_dir, M{lev});
       end
+      
       new_cells_boundary = cell (size (new_cells));
       for lev = 1:numel (new_cells)
         new_cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, new_cells{lev});
       end
       hspace.boundary(iside) = refine_hierarchical_space (hspace.boundary(iside), hmsh.boundary(iside), ...
           M_boundary, 'functions', new_cells_boundary);
-      % Now, we fill hspace.boundary(iside).dofs
+
       bnd_active = hspace.boundary(iside).globnum_active;
       globnum_active_boundary = [bnd_active(:,1:ind2), boundary_ind(bnd_active(:,1)), bnd_active(:,(ind2+1):end)];
       [dummy, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
-%       if (~all(dummy))
-%         disp('Warning: Error when computing hspace.boundary().dofs')
-%       end
       
     elseif (hmsh.ndim == 1)
       aux = [(1:hspace.nlevels)', boundary_ind];
