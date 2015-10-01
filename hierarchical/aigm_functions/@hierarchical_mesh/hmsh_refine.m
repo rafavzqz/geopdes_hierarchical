@@ -29,10 +29,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% XXXXXXXXXX Move the function into the class. Change the name
-
-
-function [hmsh, new_elements] = refine_hierarchical_mesh (hmsh, M, indices)
+function [hmsh, new_elements] = hmsh_refine (hmsh, M, indices)
 
 boundary = ~isempty (hmsh.boundary);
 
@@ -87,7 +84,7 @@ if (boundary)
         ppp = cellfun (@(x) x(indices), {M_sub{ind}}, 'UniformOutput', false);
         M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], ppp{:});
       end
-      [hmsh.boundary(iside), new_elements.boundary{iside}] = refine_hierarchical_mesh (hmsh.boundary(iside), M_boundary, []);
+      [hmsh.boundary(iside), new_elements.boundary{iside}] = hmsh_refine (hmsh.boundary(iside), M_boundary, []);
     end
   end
 else

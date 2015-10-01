@@ -44,6 +44,6 @@ switch (adaptivity_data.flag)
     indices = [];
 end
 
-[hmsh, new_cells] = refine_hierarchical_mesh (hmsh, marked_elements, indices);
+[hmsh, new_cells] = hmsh_refine (hmsh, marked_elements, indices);
 
 hspace = refine_hierarchical_space (hspace, hmsh, marked, adaptivity_data.flag, new_cells);

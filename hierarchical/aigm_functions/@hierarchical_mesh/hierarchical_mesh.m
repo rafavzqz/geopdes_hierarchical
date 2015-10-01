@@ -85,4 +85,6 @@ else
   hmsh.boundary = [];
 end
 
+hmsh = class (hmsh, 'hierarchical_mesh');
+
 end
