@@ -60,8 +60,14 @@ pausas = 0;
 %% Printing the results
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if (strcmpi (method_data.space_type, 'simplified'))
+  space_type = 0;
+else
+  space_type = 1;
+end
+
 outputfile = sprintf('output_files/aigmdata_problem%d_degree%d_est%d_mark%2d_basis%d.txt',problem,method_data.degree(1),...
-    adaptivity_data.est_type,adaptivity_data.mark_param*100,method_data.space_type);
+    adaptivity_data.est_type,adaptivity_data.mark_param*100,space_type);
 file = fopen(outputfile,'w');
 fprintf(file,'%% DOFs   elem   H1-err   EST     EST/H1-err    NBF    NoL    h_max \n');
 fclose(file);
@@ -181,7 +187,7 @@ while 1
     
     tic
     disp('Marking:')
-    [marked, num_marked] = mark(est, hmsh, hspace, adaptivity_data);
+    [marked, num_marked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data);
     tempo = toc;
     nest = numel(est);
     switch adaptivity_data.flag
@@ -196,7 +202,7 @@ while 1
     %% REFINE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data);
+    [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
