@@ -67,7 +67,7 @@ end
 
 % Apply Dirichlet boundary conditions
 u = zeros (hspace.ndof, 1);
-[u_dirichlet, dirichlet_dofs] = hsp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
+[u_dirichlet, dirichlet_dofs] = hspace_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
 u(dirichlet_dofs) = u_dirichlet;
 
 int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);

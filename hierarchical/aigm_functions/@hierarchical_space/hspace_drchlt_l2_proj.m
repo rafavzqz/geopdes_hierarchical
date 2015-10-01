@@ -1,6 +1,6 @@
-% HSP_DRCHLT_L2_PROJ: assign the degrees of freedom of Dirichlet boundaries through an L2 projection.
+% HSPACE_DRCHLT_L2_PROJ: assign the degrees of freedom of Dirichlet boundaries through an L2 projection.
 %
-%   [u, dofs] = hsp_drchlt_l2_proj (hspace, hmsh, h, sides)
+%   [u, dofs] = hspace_drchlt_l2_proj (hspace, hmsh, h, sides)
 %
 % INPUT:
 %
@@ -29,7 +29,7 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-function [u, dofs] = hsp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
+function [u, dofs] = hspace_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
 rhs  = zeros (hspace.ndof, 1);
 
