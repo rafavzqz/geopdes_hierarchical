@@ -29,35 +29,30 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function I = compute_functions_to_deactivate (hmsh, hspace, M, flag)
+function fun_indices = compute_functions_to_deactivate (hmsh, hspace, M, flag)
 
-I = cell (hspace.nlevels,1);
-
-for i = 1:hspace.nlevels
-  I{i} = zeros(0,1);
-end
+fun_indices = cell (hspace.nlevels,1);
 
 for lev = 1:hspace.nlevels
   if (~isempty(M{lev}))
-  % Computation of candidate functions to be deactivated
-    switch flag,
-      case 'functions',
-        I{lev} = sp_get_neighbors (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), M{lev});
-        % Remove from I{lev} the nonactive functions and the active functions already selected for refinement
-        I{lev} = setdiff (intersect (I{lev}, hspace.active{lev}), M{lev});
-      case 'elements',
-        I{lev} = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), M{lev});
-        % Remove from I{lev} the nonactive functions
-        I{lev} = intersect (I{lev}, hspace.active{lev});
+  % Computation of candidate functions to be deactivated. Only active
+  %  functions which are not already marked are considered
+    switch (flag)
+      case ('functions')
+        fun_indices{lev} = sp_get_neighbors (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), M{lev});
+        fun_indices{lev} = setdiff (intersect (fun_indices{lev}, hspace.active{lev}), M{lev});
+      case ('elements')
+        fun_indices{lev} = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), M{lev});
+        fun_indices{lev} = intersect (fun_indices{lev}, hspace.active{lev});
     end
-    
-    % Computation of functions that in fact have to be deactivated
-    [dummy, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), I{lev});
+
+  % Computation of functions that in fact have to be deactivated
+    [dummy, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), fun_indices{lev});
     flag_ell = cellfun (@(x) isempty (intersect (x, hmsh.active{lev})), cells_per_fun);
-    I{lev} = I{lev}(flag_ell == 1);
+    fun_indices{lev} = fun_indices{lev}(flag_ell == 1);
         
-    if strcmpi (flag,'functions')
-      I{lev} = union (I{lev}, M{lev});
+    if (strcmpi (flag,'functions'))
+      fun_indices{lev} = union (fun_indices{lev}, M{lev});
     end
   end
 end

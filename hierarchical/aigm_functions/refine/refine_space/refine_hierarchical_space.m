@@ -58,19 +58,13 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
   end
 
   hspace.nlevels = hmsh.nlevels;
-  hspace.active{hmsh.nlevels} = [];%zeros (0,1);
-  hspace.deactivated{hmsh.nlevels} = [];%zeros (0,1);;
+  hspace.active{hmsh.nlevels} = [];
+  hspace.deactivated{hmsh.nlevels} = [];
   hspace.ndof_per_level(hmsh.nlevels) = 0;
 end
 
 % Update of active functions
-if (boundary && hmsh.ndim > 1)
-  new_elem = new_cells.interior;
-else
-  new_elem = new_cells;
-end
-
-hspace = update_active_functions (hspace, hmsh, new_elem, M);
+hspace = update_active_functions (hspace, hmsh, new_cells, M);
 
 
 % Update C, the matrices for changing basis
@@ -102,7 +96,6 @@ if (boundary)% && hmsh.ndim > 1)
     %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
     %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
     ind2 = ceil (iside/2);
-    ind = setdiff (1:hmsh.ndim, ind2);
     if (mod(iside,2) == 1)
       boundary_ind = ones (hspace.nlevels,1);
     else
@@ -115,23 +108,21 @@ if (boundary)% && hmsh.ndim > 1)
     if (hmsh.ndim > 1)
       M_boundary = cell (size (M));
       for lev = 1:numel (M)
-        M_sub = cell (1,hmsh.ndim);
-        [M_sub{:}] = ind2sub (hspace.space_of_level(lev).ndof_dir, M{lev}(:));
-        indices = find (M_sub{ind2} == boundary_ind(lev));
-        ppp = cellfun (@(x) x(indices), {M_sub{ind}}, 'UniformOutput', false);
-        M_boundary{lev} = sub2ind ([hspace.space_of_level(lev).boundary(iside).ndof_dir, 1], ppp{:});
+        M_boundary{lev} = get_boundary_indices (iside, hspace.space_of_level(lev).ndof_dir, M{lev});
       end
-    
+      new_cells_boundary = cell (size (new_cells));
+      for lev = 1:numel (new_cells)
+        new_cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, new_cells{lev});
+      end
       hspace.boundary(iside) = refine_hierarchical_space (hspace.boundary(iside), hmsh.boundary(iside), ...
-          M_boundary, 'functions', new_cells.boundary{iside});
+          M_boundary, 'functions', new_cells_boundary);
       % Now, we fill hspace.boundary(iside).dofs
       bnd_active = hspace.boundary(iside).globnum_active;
       globnum_active_boundary = [bnd_active(:,1:ind2), boundary_ind(bnd_active(:,1)), bnd_active(:,(ind2+1):end)];
-      [unos, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
-      if (~all(unos))
-        disp('Warning: Error when computing hspace.boundary().dofs')
-        pause
-      end
+      [dummy, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
+%       if (~all(dummy))
+%         disp('Warning: Error when computing hspace.boundary().dofs')
+%       end
       
     elseif (hmsh.ndim == 1)
       aux = [(1:hspace.nlevels)', boundary_ind];

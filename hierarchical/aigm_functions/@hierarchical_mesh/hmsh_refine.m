@@ -43,12 +43,7 @@ if (~isempty(M{hmsh.nlevels}))
 end
 
 % Update the set of active elements
-[hmsh, new_cells] = update_active_cells (hmsh, M, indices);
-if (boundary)
-  new_elements.interior = new_cells;
-else
-  new_elements = new_cells;
-end
+[hmsh, new_elements] = update_active_cells (hmsh, M, indices);
 
 % Update msh_lev
 % XXXX This can be improved to save computational time, avoiding to
@@ -63,28 +58,11 @@ end
 if (boundary)
   if (hmsh.ndim > 1)
     for iside = 1:2*hmsh.ndim
-      %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-      %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
-      ind2 = ceil (iside/2);
-      ind = setdiff (1:hmsh.ndim, ind2);
-      if (mod(iside,2) == 1)
-        boundary_ind = ones (hmsh.nlevels,1);
-      else
-        boundary_ind = zeros (hmsh.nlevels,1);
-        for lev = 1:hmsh.nlevels
-          boundary_ind(lev) = hmsh.mesh_of_level(lev).nel_dir(ind2);
-        end
-      end
-    
       M_boundary = cell (size (M));
       for lev = 1:numel (M)
-        M_sub = cell (1,hmsh.ndim);
-        [M_sub{:}] = ind2sub (hmsh.mesh_of_level(lev).nel_dir, M{lev});
-        indices = find (M_sub{ind2} == boundary_ind(lev));
-        ppp = cellfun (@(x) x(indices), {M_sub{ind}}, 'UniformOutput', false);
-        M_boundary{lev} = sub2ind ([hmsh.mesh_of_level(lev).boundary(iside).nel_dir, 1], ppp{:});
+        M_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, M{lev});
       end
-      [hmsh.boundary(iside), new_elements.boundary{iside}] = hmsh_refine (hmsh.boundary(iside), M_boundary, []);
+      hmsh.boundary(iside) = hmsh_refine (hmsh.boundary(iside), M_boundary, []);
     end
   end
 else
