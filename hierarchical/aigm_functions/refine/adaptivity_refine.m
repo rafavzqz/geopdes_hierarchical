@@ -33,31 +33,17 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% REFINE MESH
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-refine_mesh_time = tic;
-disp('Refining mesh:')
-switch adaptivity_data.flag
-  case 'functions',
+% REFINE MESH
+switch (adaptivity_data.flag)
+  case 'functions'
     [marked_elements, indices] = compute_cells_to_refine (hspace, hmsh, marked);
-  case 'elements',
+  case 'elements'
     marked_elements = marked;
     indices = [];
 end
+
 [hmsh, new_cells] = refine_hierarchical_mesh (hmsh, marked_elements, indices);
-tempo = toc(refine_mesh_time);
-fprintf('refine: Number of current active cells: %d (%f seconds)\n', hmsh.nel, tempo);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% REFINE SPACE
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-refine_space_time = tic;
-disp('Updating space:')
 hspace = refine_hierarchical_space (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
-tempo = toc(refine_space_time);
-fprintf('Number of current dofs: %d (%f seconds)\n', hspace.ndof, tempo);

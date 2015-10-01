@@ -90,6 +90,6 @@ while (iter < adaptivity_data.num_max_iter)
   %% REFINE
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   disp('REFINE:')
-  [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data);
+  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
   fprintf('\n');
 end
