@@ -27,7 +27,7 @@
 %    globnum_active (ndof x (ndim+1))       global tensor-product numbering of active functions and their corresponding level
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
-%    coeff         (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
+%    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
 %    deactivated   (1 x nlevels cell-array) List of deactivated functions on each level
 %    C             (1 x hmsh.nlevels cell-array) Matrices for changing basis (see compute_matrices_for_changing_basis.m)
 %    sp_lev        (hmsh.nlevels x 1 cell-array) sp_lev{ilev} is a structure
@@ -71,16 +71,16 @@ hspace.truncated = truncated;
 
 hspace.nlevels = 1;
 hspace.ndof = space.ndof;
-hspace.active{1} = (1:space.ndof)';
+hspace.ndof_per_level = space.ndof;
+hspace.space_of_level = space;
 
 aux = cell (hmsh.ndim, 1);
 [aux{:}] = ind2sub ([space.ndof_dir, 1], 1:space.ndof); % The extra 1 makes it work in any dimension
 hspace.globnum_active = [ones(space.ndof,1) cell2mat(aux)']; % XXXXX Will this be removed?
-
-hspace.ndof_per_level = space.ndof;
-hspace.coeff = ones (space.ndof, 1);
+hspace.active{1} = (1:space.ndof)';
 hspace.deactivated{1} = [];
-hspace.space_of_level = space;
+
+hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = [];
 hspace.C{1} = speye (space.ndof);
 hspace.sp_lev{1} = sp_evaluate_element_list (hspace.space_of_level(1), hmsh.msh_lev{1}, 'gradient', true,'hessian', true);

@@ -29,7 +29,7 @@ deactivated = hspace.deactivated;
 % El siguiente loop seguramente se puede evitar usando mat2cell
 for lev = 1:hspace.nlevels
   ind_f = (Nf(lev)+1):Nf(lev+1);
-  W{lev} = hspace.coeff(ind_f);
+  W{lev} = hspace.coeff_pou(ind_f);
   W{lev} = W{lev}(:);
 end
 
@@ -103,7 +103,7 @@ end % for lev
 
 hspace.active = active(1:hspace.nlevels);
 hspace.deactivated = deactivated(1:hspace.nlevels);
-hspace.coeff = cell2mat(W);
+hspace.coeff_pou = cell2mat(W);
 hspace.ndof_per_level = cellfun (@numel, hspace.active);
 hspace.ndof = sum(hspace.ndof_per_level);
 

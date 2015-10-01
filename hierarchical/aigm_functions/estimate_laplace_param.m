@@ -64,7 +64,7 @@ switch adaptivity_data.flag
         % estoy realizando comparaciones con corridas anteriores en las que
         % forma era igual a 1.
         if forma
-            coef = ms(hspace.globnum_active(:,1)).*sqrt(hspace.coeff(:));
+            coef = ms(hspace.globnum_active(:,1)).*sqrt(hspace.coeff_pou(:));
         else
             coef = sqrt(hspace.coeff(:));
         end

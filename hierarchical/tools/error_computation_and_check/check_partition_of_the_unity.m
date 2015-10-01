@@ -8,6 +8,6 @@ function value = check_partition_of_the_unity(hmsh, hspace)
 %
 
 % Z = hspline_eval_old (hspace.coeff, hmsh, hspace, 0);
-Z = hsp_eval_hmsh (hspace.coeff, hspace, hmsh);
+Z = hsp_eval_hmsh (hspace.coeff_pou, hspace, hmsh);
 
 value = (max(abs(Z(:)-1)) < 1e-7);
