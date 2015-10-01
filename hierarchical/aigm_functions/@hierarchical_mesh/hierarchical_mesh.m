@@ -28,9 +28,9 @@
 %    geometry                           a copy of the geometry object (not so nice)
 %
 %    METHOD NAME
-%    hmsh_plot_cells: plot the hierarchical mesh (not efficient)
-%    hmsh_refine:     refine the hierarchical mesh, given the set of cells to refine
-%    hmsh_get_meshsize XXXXXXXX
+%    hmsh_plot_cells:       plot the hierarchical mesh (not efficient)
+%    hmsh_refine:           refine the hierarchical mesh, given the set of cells to refine
+%    hmsh_get_element_size: compute the size of the elements
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %

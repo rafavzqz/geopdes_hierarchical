@@ -35,7 +35,6 @@
 
 function [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
-% REFINE MESH
 switch (adaptivity_data.flag)
   case 'functions'
     [marked_elements, indices] = compute_cells_to_refine (hspace, hmsh, marked);
