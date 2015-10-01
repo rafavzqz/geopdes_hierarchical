@@ -79,8 +79,7 @@ for lev = 1:hspace.nlevels-1
   
 % For the classical hierarchical space, we activate functions of level lev+1, 
 %  that are not children of any removed function of level lev
-% XXXX Change the way to use hspace.type
-  if (hspace.type && ~isempty (new_cells{lev+1}))
+  if (strcmpi (hspace.type, 'standard') && ~isempty (new_cells{lev+1}))
         
     new_possible_active_fun = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_cells{lev+1});
 %     new_possible_active_fun = setdiff (new_possible_active_fun, active{lev+1}, 'rows');

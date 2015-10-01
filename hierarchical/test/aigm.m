@@ -2,7 +2,7 @@
 
 clear hmsh hspace u est
 % close all
-add_my_paths
+% add_my_paths
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Initial parameters
@@ -20,11 +20,11 @@ method_data.regularity  = method_data.degree-1;       % Regularity of the spline
 method_data.nsub_coarse = [2 2];       % Number of subdivisions
 method_data.nsub_refine = [2 2];       % Number of subdivisions
 method_data.nquad       = method_data.degree+1;       % Points for the Gaussian quadrature rule
-method_data.space_type  = 0;           % 0: , 1: Full basis (B-splines)
+method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'classical' (full basis)
 
 % ADAPTIVITY PARAMETERS
 
-adaptivity_data.est_type = 1;
+adaptivity_data.est_type = 3;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
@@ -196,7 +196,7 @@ while 1
     %% REFINE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data.flag);
+    [hmsh, hspace] = refine (hmsh, hspace, marked, adaptivity_data);
     
     
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');

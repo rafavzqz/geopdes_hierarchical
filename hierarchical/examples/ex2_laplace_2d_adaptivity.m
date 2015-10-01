@@ -32,7 +32,7 @@ method_data.regularity  = [2 2];       % Regularity of the splines
 method_data.nsub_coarse = [2 2];       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];       % Number of subdivisions for each refinement
 method_data.nquad       = [4 4];       % Points for the Gaussian quadrature rule
-method_data.space_type  = 0;           % 0: , 1: Full basis (B-splines)
+method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;           % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
@@ -43,12 +43,12 @@ adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 5000;
-adaptivity_data.num_max_iter = 15;
+adaptivity_data.num_max_iter = 11;
 adaptivity_data.max_nel = 5000;
 adaptivity_data.tol = 1e-5;
 
 % GRAPHICS
-plot_hmesh = true;
-plot_discrete_sol = true;
+plot_hmesh = false;
+plot_discrete_sol = false;
 
 [geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
