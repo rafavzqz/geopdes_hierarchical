@@ -32,9 +32,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% XXXXXXXXXX Move the function into the class. Change the name
-
-function hspace = refine_hierarchical_space (hspace, hmsh, M, flag, new_cells)
+function hspace = hspace_refine (hspace, hmsh, M, flag, new_cells)
 
 boundary = ~isempty (hspace.boundary);
 
@@ -115,7 +113,7 @@ if (boundary)% && hmsh.ndim > 1)
       for lev = 1:numel (new_cells)
         new_cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, new_cells{lev});
       end
-      hspace.boundary(iside) = refine_hierarchical_space (hspace.boundary(iside), hmsh.boundary(iside), ...
+      hspace.boundary(iside) = hspace_refine (hspace.boundary(iside), hmsh.boundary(iside), ...
           M_boundary, 'functions', new_cells_boundary);
 
       bnd_active = hspace.boundary(iside).globnum_active;

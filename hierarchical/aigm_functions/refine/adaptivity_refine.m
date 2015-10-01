@@ -45,4 +45,4 @@ end
 
 [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements, indices);
 
-hspace = refine_hierarchical_space (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+hspace = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);

@@ -105,3 +105,5 @@ if (~isempty (hmsh.boundary))
 else
   hspace.boundary = [];
 end
+
+hspace = class (hspace, 'hierarchical_space');
