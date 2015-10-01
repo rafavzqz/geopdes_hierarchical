@@ -10,11 +10,11 @@
 %  method_data : a structure with discretization data. For this function, it contains the fields:
 %    - degree:      degree of the spline functions.
 %    - regularity:  continuity of the spline functions.
-%    - nsub_coarse: number of subelements with respect to the geometry mesh 
-%                   (nsub=1 leaves the mesh unchanged)
+%    - nsub_coarse: number of subelements with respect to the geometry mesh (1 leaves the mesh unchanged)
+%    - nsub_refine: number of subelements to be added at each refinement step (2 for dyadic)
 %    - nquad:       number of points for Gaussian quadrature rule
-%    - space_type:  0 (simplified basis), 1 (full basis)
-%    - truncated:   XXXXXXXXXXXXXXXXXXXX
+%    - space_type:  'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
+%    - truncated:   false (classical basis) or true (truncated basis)
 %
 % OUTPUT:
 %    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh)
@@ -37,15 +37,6 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function [hmsh, hspace, geometry] = adaptivity_initialize (problem_data, method_data)
-
-% data_names = fieldnames (problem_data);
-% for iopt  = 1:numel (data_names)
-%   eval ([data_names{iopt} '= problem_data.(data_names{iopt});']);
-% end
-% data_names = fieldnames (method_data);
-% for iopt  = 1:numel (data_names)
-%   eval ([data_names{iopt} '= method_data.(data_names{iopt});']);
-% end
 
 geometry  = geo_load (problem_data.geo_name);
 [knots, zeta] = kntrefine (geometry.nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);

@@ -53,8 +53,6 @@ for lev = 1:hspace.nlevels-1
     deactivated{lev} = union (deactivated{lev}, I{lev});
     deactivated{lev} = deactivated{lev}(:);
 
-    % XXXX Vectorizar lo que se pueda en el siguiente loop, en particular
-    % para hacer un solo llamado a sp_get_cells
     [ii,jj] = find (coefficients(:,I{lev}));
     children = arrayfun (@(x) ii(jj==x), 1:numel(I{lev}), 'UniformOutput', false);
 

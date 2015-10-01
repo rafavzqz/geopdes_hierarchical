@@ -24,8 +24,8 @@
 %    active         (1 x nlevels cell-array) List of active elements on each level
 %    deactivated    (1 x nlevels cell-array) List of removed cells on each level
 %    msh_lev        (nlevels x 1 cell-array) msh_lev{ilev} is a structure
-%    geometry XXXXXXXXXXx
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
+%    geometry                           a copy of the geometry object (not so nice)
 %
 %    METHOD NAME
 %    hmsh_plot_cells: function to plot the hierarchical mesh (not efficient)

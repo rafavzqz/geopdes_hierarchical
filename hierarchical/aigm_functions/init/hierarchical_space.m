@@ -7,7 +7,7 @@
 %    space:      the coarsest space, an object of the class sp_bspline (see sp_bpline)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space
-%                - 'simplified', the hierarchical space XXXXXXXXXXXXXX
+%                - 'simplified', a simplified basis, were only children of removed functions are activated\
 %    truncated:  decide whether the basis will be truncated or not
 %
 % OUTPUT:
@@ -43,6 +43,10 @@
 %    plot?
 %    split_basis
 %    hsp_drchlt_l2_proj?
+%
+% For an explanation of the 'standard' and the 'simplified' basis for hierarchical splines, read:
+%  A. Buffa, E.M. Garau, New refinable spaces and local approximation estimates for hierarchical splines
+%  arxiv:1507.06534v1
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %

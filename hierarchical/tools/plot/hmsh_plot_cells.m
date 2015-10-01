@@ -1,4 +1,4 @@
-% HMSH_PLOT_CELLS: plot the cells of the hierarchical mesh
+% HMSH_PLOT_CELLS: plot the cells of the hierarchical mesh.
 %
 %   hmsh_plot_cells (hmsh, [fig_number])
 %
