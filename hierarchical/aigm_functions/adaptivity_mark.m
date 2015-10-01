@@ -1,6 +1,6 @@
-function [marked, nmarked] = mark(est, hmsh, hspace, adaptivity_data)
+function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
 %
-% function [marked, nmarked] = mark(est, hmsh, hspace, adaptivity_data)
+% function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
 %
 % This function marks cells or basis functions for refinement according to 
 % the marking strategy in adaptivity_data.mark_strategy. Possible strategies are

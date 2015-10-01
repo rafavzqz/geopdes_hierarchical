@@ -83,7 +83,7 @@ while (iter < adaptivity_data.num_max_iter)
   %% MARK
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   disp('MARK:')
-  [marked, num_marked] = mark (est, hmsh, hspace, adaptivity_data);
+  [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
