@@ -12,6 +12,7 @@
 \usepackage{amssymb}
 \usepackage{comment}
 \usepackage{cancel}
+\usepackage{color}
 \usepackage[]{algorithm2e}
 \usepackage[]{algorithmicx}
 
@@ -84,7 +85,8 @@
 \end{center}
 
 }
-   
+
+\newcommand{\Rd}{\color{red}}   
 
 % %%%%%%%% DEFINITION OF MACROS
 \newcommand{\note}[1]{{\noindent\centerline{\fbox{\parbox{.9\textwidth}{\textbf{
@@ -620,7 +622,7 @@ For the routines in this section notice that the variable $\mesh$ is already upd
 \item[]\ForEach{$\beta$ in $\functionstoremove_\ell$}{
 \begin{enumerate}
   \item [6.] Compute the set of indices $I_\beta$ of the B-splines of level $\ell+1$ and the corresponding coefficients $c$ of the two-scale relation~\eqref{E:two scale relation} when writing $\beta$ as a linear combination of functions in $\BB_{\ell+1}$ 
- \item[7.] Use \texttt{get\_cells} to update $F^D_{\ell+1}$ by adding the functions in $(I_\beta\setminus F^A_{\ell+1})\setminus F^D_{\ell+1}$ that have no active cell of level $\ell+1$ within its support.
+ \item[7.] {\Rd Use \texttt{get\_cells} to update $F^D_{\ell+1}$ by adding the functions in $(I_\beta\setminus F^A_{\ell+1})\setminus F^D_{\ell+1}$ that have no active cell of level $\ell+1$ within its support. REMOVED}
  \item[8.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I_\beta$ \% Enlarge $F^A_{\ell+1}$ by adding the \emph{possible} new active functions\;
  \item[9.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$.
   \item[] \% Now, we update the values in $W_{\ell+1}$
