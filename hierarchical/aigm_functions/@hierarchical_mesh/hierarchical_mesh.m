@@ -28,8 +28,8 @@
 %    geometry                           a copy of the geometry object (not so nice)
 %
 %    METHOD NAME
-%    hmsh_plot_cells: function to plot the hierarchical mesh (not efficient)
-%    hmsh_refine  XXXXXXXXX
+%    hmsh_plot_cells: plot the hierarchical mesh (not efficient)
+%    hmsh_refine:     refine the hierarchical mesh, given the set of cells to refine
 %    hmsh_get_meshsize XXXXXXXX
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
