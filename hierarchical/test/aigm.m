@@ -146,7 +146,7 @@ while 1
     tempo = toc;
     fprintf('EST: %f (%f seconds)\n', gest, tempo);
     
-    hh = get_meshsize_param(hmsh);
+    hh = hmsh_get_element_size (hmsh);
     hh = hh(1);
     
     file = fopen(outputfile,'a');

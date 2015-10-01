@@ -52,7 +52,7 @@ for ilev = 1:hmsh.nlevels % Active levels
 end
 w = quad_weights .* jacdet;
 
-[h, ms] = get_meshsize_param(hmsh);
+[h, ms] = hmsh_get_element_size (hmsh);
 
 switch adaptivity_data.flag
     case 'elements',
