@@ -43,16 +43,15 @@ if (~isempty(M{hmsh.nlevels}))
 end
 
 % Update the set of active elements
+old_elements = hmsh.active;
 [hmsh, new_elements] = update_active_cells (hmsh, M, indices);
 
 % Update msh_lev
-% XXXX This can be improved to save computational time, avoiding to
-% recompute the elements that did not change
-hmsh.msh_lev = cell (hmsh.nlevels,1);
-for ilev = 1 : hmsh.nlevels
-  hmsh.msh_lev{ilev} = msh_evaluate_element_list (hmsh.mesh_of_level(ilev), hmsh.active{ilev});
-end
-
+hmsh.msh_lev = update_msh_lev (hmsh, old_elements, new_elements);
+% hmsh.msh_lev = cell (hmsh.nlevels,1);
+% for ilev = 1 : hmsh.nlevels
+%   hmsh.msh_lev{ilev} = msh_evaluate_element_list (hmsh.mesh_of_level(ilev), hmsh.active{ilev});
+% end
 
 % Update the boundary , calling the function recursively
 if (boundary)
@@ -181,6 +180,59 @@ for ii = 1:numel(cells_sub{1})
   end
   [z{1:hmsh.ndim}] = ndgrid (aux{:});
   children = union (children, sub2ind ([hmsh.mesh_of_level(lev+1).nel_dir, 1], z{:}));
+end
+
+end
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function msh_lev = update_msh_lev (hmsh, old_elements, new_elements)
+%
+% function msh_lev = update_msh_lev (hmsh, old_elements, new_elements)
+%
+% This function updates the information in msh_lev, computing only the elements that have been added to the mesh
+%
+% INPUT
+%     hmsh: object representing the fine hierarchical mesh (see hierarchical_mesh)
+%     old_elements{lev}: active elements in the previous coarse mesh
+%     new_elements{lev}: elements that have been added after refinement
+%
+% OUTPUT
+%     msh_lev: the structures with the msh information for each level
+%
+
+msh_lev = cell (hmsh.nlevels, 1);
+
+for lev = 1:hmsh.nlevels
+  if (hmsh.nel_per_level(lev) == 0 || lev > numel (old_elements))
+    msh_lev{lev} = msh_evaluate_element_list (hmsh.mesh_of_level(lev), hmsh.active{lev});
+  else
+    [~, iold, iold_act] = intersect (old_elements{lev}, hmsh.active{lev});
+    msh_lev{lev}.ndim = hmsh.ndim;
+    msh_lev{lev}.rdim = hmsh.rdim;
+    msh_lev{lev}.nel = hmsh.nel_per_level(lev);
+    msh_lev{lev}.elem_list = hmsh.active{lev}(:)';
+    msh_lev{lev}.nel_dir = hmsh.mesh_of_level(lev).nel_dir;
+    msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).nqn_dir;
+    msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).nqn;
+
+    if (isempty (new_elements{lev}))
+      indices = iold_act;
+      msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], 'jacdet', [], 'element_size', []);
+    else
+      msh_new = msh_evaluate_element_list (hmsh.mesh_of_level(lev), new_elements{lev});
+      [~, ~, inew_act] = intersect (new_elements{lev}, hmsh.active{lev});
+      indices = [iold_act(:); inew_act(:)];
+    end
+    msh_lev{lev}.quad_weights(:,indices) = [hmsh.msh_lev{lev}.quad_weights(:,iold), msh_new.quad_weights];
+    msh_lev{lev}.geo_map(:,:,indices) = cat (3, hmsh.msh_lev{lev}.geo_map(:,:,iold), msh_new.geo_map);
+    msh_lev{lev}.geo_map_jac(:,:,:,indices) = cat (4, hmsh.msh_lev{lev}.geo_map_jac(:,:,:,iold), msh_new.geo_map_jac);
+    msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
+    msh_lev{lev}.jacdet = [hmsh.msh_lev{lev}.jacdet(:,iold), msh_new.jacdet];
+    msh_lev{lev}.element_size = [hmsh.msh_lev{lev}.element_size(:,iold), msh_new.element_size];
+  end
 end
 
 end
