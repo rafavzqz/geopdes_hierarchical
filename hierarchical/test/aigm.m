@@ -92,7 +92,7 @@ while 1
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n',iter);
     fprintf('%s\n',outputfile);
     
-    if ~check_partition_of_the_unity(hmsh, hspace)
+    if ~hspace_check_partition_of_unity(hspace, hmsh)
         disp('ERROR: The partition-of-the-unity property does not hold.')
         return,
     end
