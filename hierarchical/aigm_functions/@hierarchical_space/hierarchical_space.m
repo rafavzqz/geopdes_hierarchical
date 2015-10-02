@@ -34,19 +34,22 @@
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
 %    METHOD NAME
-%    hsp_eval       XXXXXXXXX
+%    hspace_eval:           evaluate the solution in a Cartesian grid of points
+%    hspace_eval_hmsh:      evaluate the solution in the quadrature points of a hierarchical mesh
+%    hspace_l2_error:       compute the error in L2 norm
+%    hspace_h1_error:       compute the error in H1 norm
+%    hspace_refine:         refine the hierarchical space
+%    hspace_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
+%    hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 
+%    op_gradu_gradv_hier:   assemble the stiffness matrix
+%    op_u_v_hier:           assemble the mass matrix
+%    op_f_v_hier:           assemble the right-hand side
 %    hsp_to_vtk     XXXXXXXXX
-%    hsp_l2_error   XXXXXXXXX
-%    hsp_h1_error   XXXXXXXXX
-%    hspace_refine  XXXXXXXXX
-%    operators      XXXXXXXXX
 %    plot?
-%    split_basis
-%    hsp_drchlt_l2_proj?
 %
 % For an explanation of the 'standard' and the 'simplified' basis for hierarchical splines, read:
-%  A. Buffa, E.M. Garau, New refinable spaces and local approximation estimates for hierarchical splines
-%  arxiv:1507.06534v1
+%  A. Buffa, E.M. Garau, New refinable spaces and local approximation
+%    estimates for hierarchical splines (2015), arxiv:1507.06534v1
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
