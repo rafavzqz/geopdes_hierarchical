@@ -126,12 +126,12 @@ while 1
     % Error computation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    [err_h1, err, err_h1s, err_h1_loc, err_loc, err_h1s_loc] = compute_H1_error(u, problem_data.uex, problem_data.graduex, hmsh, hspace);
+    [err_h1, err, err_h1s] = hspace_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     fprintf('error_H1s = %g\n', err_h1s);
     
     clear err_h1_loc err_loc err_h1s_loc
     
-    [aaa, aaa, seminorma_h1s, aaa, aaa, aaa] = compute_H1_error(zeros(hspace.ndof,1), problem_data.uex, problem_data.graduex, hmsh, hspace);
+    [~, ~, seminorma_h1s] = hspace_h1_error (hspace, hmsh, zeros (size(u)), problem_data.uex, problem_data.graduex);
     fprintf('seminorma_H1s = %g\n', seminorma_h1s);
     clear aaa
     
