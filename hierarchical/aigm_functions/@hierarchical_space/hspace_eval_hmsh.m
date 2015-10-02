@@ -1,8 +1,8 @@
-% HSP_EVAL_HMSH: Compute the value or the derivatives of a hierarchical spline function, 
+% HSPACE_EVAL_HMSH: Compute the value or the derivatives of a hierarchical spline function, 
 %  given by its degrees of freedom, at the points of the corresponding hierarchical mesh.
 %
-%   [eu, F] = hsp_eval_hmsh (u, hspace, hmsh, [option]);
-%   [eu, F] = hsp_eval_hmsh (u, hspace, hmsh, [option]);
+%   [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, [option]);
+%   [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, [option]);
 %
 % INPUT:
 %     
@@ -31,10 +31,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hsp_eval_hmsh (u, hspace, hmsh, varargin)
+function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, varargin)
 
   if (hspace.ncomp ~= 1)
-    error ('hsp_eval_hmsh: Not implemented for vector valued spaces')
+    error ('hspace_eval_hmsh: Not implemented for vector valued spaces')
   end
 
   if (nargin == 3)
@@ -56,7 +56,7 @@ function [eu, F] = hsp_eval_hmsh (u, hspace, hmsh, varargin)
 %     case {'divergence'}
 %     case {'curl'}
     otherwise
-      error ('hsp_eval_hmsh: unknown option to evaluate')
+      error ('hspace_eval_hmsh: unknown option to evaluate')
   end
 
   F = []; eu = [];

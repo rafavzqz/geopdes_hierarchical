@@ -1,7 +1,7 @@
-% HSP_EVAL: Compute the value or the derivatives of a hierarchical spline function, given by its degrees of freedom, at a given set of points.
+% HSPACE_EVAL: Compute the value or the derivatives of a hierarchical spline function, given by its degrees of freedom, at a given set of points.
 %
-%   [eu, F] = hsp_eval (u, hspace, geometry, pts, [option]);
-%   [eu, F] = hsp_eval (u, hspace, geometry, npts, [option]);
+%   [eu, F] = hspace_eval (u, hspace, geometry, pts, [option]);
+%   [eu, F] = hspace_eval (u, hspace, geometry, npts, [option]);
 %
 % INPUT:
 %     
@@ -32,10 +32,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hsp_eval (u, hspace, geometry, npts, varargin)
+function [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin)
 
   if (hspace.ncomp ~= 1)
-    error ('hsp_eval: Not implemented for vector valued spaces')
+    error ('hspace_eval: Not implemented for vector valued spaces')
   end
 
   if (nargin == 4)
@@ -98,10 +98,8 @@ function [eu, F] = hsp_eval (u, hspace, geometry, npts, varargin)
 %     case {'divergence'}
 %     case {'curl'}
     otherwise
-      error ('hsp_eval: unknown option to evaluate')
+      error ('hspace_eval: unknown option to evaluate')
   end
-
-  
 
   for ilev = 1:hspace.nlevels
     sp_lev = hspace.space_of_level(ilev).constructor (msh);
@@ -109,7 +107,6 @@ function [eu, F] = hsp_eval (u, hspace, geometry, npts, varargin)
     u_lev(hspace.active{ilev}) = u(first_dof(ilev):first_dof(ilev+1)-1);
     
     [eu_lev, F] = eval_fun (u_lev, sp_lev);
-    F  = reshape (F, [msh.rdim, npts]);
     eu = eu + reshape (eu_lev, size(eu));
-
   end
+  F  = reshape (F, [msh.rdim, npts]);

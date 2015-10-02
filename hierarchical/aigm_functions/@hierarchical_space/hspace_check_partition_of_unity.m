@@ -36,6 +36,6 @@ if (nargin < 3)
   tol = 1e-14;
 end
 
-Z = hsp_eval_hmsh (hspace.coeff_pou, hspace, hmsh);
+Z = hspace_eval_hmsh (hspace.coeff_pou, hspace, hmsh);
 
 value = (max(abs(Z(:)-1)) < tol);
