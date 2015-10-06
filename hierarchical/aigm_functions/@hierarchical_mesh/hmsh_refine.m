@@ -180,7 +180,8 @@ for ii = 1:numel(cells_sub{1})
     aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
   end
   [z{1:hmsh.ndim}] = ndgrid (aux{:});
-  children = union (children, sub2ind ([hmsh.mesh_of_level(lev+1).nel_dir, 1], z{:}));
+  auxI = sub2ind ([hmsh.mesh_of_level(lev+1).nel_dir, 1], z{:});
+  children = union (children, auxI(:));
 end
 
 end
