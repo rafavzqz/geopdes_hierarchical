@@ -42,17 +42,15 @@ function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff)
 
   K = spalloc (hspv.ndof, hspu.ndof, 3*hspu.ndof);
 
-  ndof_per_level = hspu.ndof_per_level;
-
   ndofs_u = 0;
   ndofs_v = 0;
   for ilev = 1:hmsh.nlevels
-    ndofs_u = ndofs_u + ndof_per_level(ilev);%hspu.ndof_per_level(ilev);
-    ndofs_v = ndofs_v + ndof_per_level(ilev);%hspv.ndof_per_level(ilev);
+    ndofs_u = ndofs_u + hspu.ndof_per_level(ilev);
+    ndofs_v = ndofs_v + hspv.ndof_per_level(ilev);
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell (hmsh.rdim,1);
       for idim = 1:hmsh.rdim
-        x{idim} = hmsh.msh_lev{ilev}.geo_map(idim,:,:);
+        x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel);
       end
       K_lev = op_gradu_gradv (hspu.sp_lev{ilev}, hspv.sp_lev{ilev}, hmsh.msh_lev{ilev}, coeff (x{:}));
 
