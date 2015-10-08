@@ -42,7 +42,7 @@ adaptivity_data.mark_param = .015;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 5000;
-adaptivity_data.num_max_iter = 15;
+adaptivity_data.num_max_iter = 5;
 adaptivity_data.max_nel = 5000;
 adaptivity_data.tol = 1e-5;
 
