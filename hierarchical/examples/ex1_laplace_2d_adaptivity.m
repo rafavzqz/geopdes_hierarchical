@@ -2,6 +2,7 @@
 clear problem_data  
 % Physical domain, defined as NURBS map given in a text file
 problem_data.geo_name = 'geo_square.txt';
+problem_data.geo_name = 'geo_ring.txt';
 
 % Type of boundary conditions for each side of the domain
 problem_data.nmnn_sides   = [];
@@ -44,7 +45,7 @@ adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 1e-10;
 
 % GRAPHICS
-plot_hmesh = false;
-plot_discrete_sol = false;
+plot_hmesh = true;
+plot_discrete_sol = true;
 
 [geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
