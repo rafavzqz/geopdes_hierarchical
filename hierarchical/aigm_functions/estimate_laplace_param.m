@@ -54,6 +54,10 @@ w = quad_weights .* jacdet;
 
 [h, ms] = hmsh_get_element_size (hmsh);
 
+% Computation of the diameter of the elements (only for hypercubes). 
+h = sqrt(hmsh.rdim)*h.^(1/hmsh.rdim);
+ms = sqrt(hmsh.rdim)*ms.^(1/hmsh.rdim);
+
 switch adaptivity_data.flag
     case 'elements',
         est = sqrt (sum (aux.*w));

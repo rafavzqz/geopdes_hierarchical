@@ -20,7 +20,7 @@ method_data.regularity  = method_data.degree-1;       % Regularity of the spline
 method_data.nsub_coarse = [2 2];       % Number of subdivisions
 method_data.nsub_refine = [2 2];       % Number of subdivisions
 method_data.nquad       = method_data.degree+1;       % Points for the Gaussian quadrature rule
-method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'classical' (full basis)
+method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 
 % ADAPTIVITY PARAMETERS
 
