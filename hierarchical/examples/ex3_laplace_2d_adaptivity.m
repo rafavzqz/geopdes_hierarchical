@@ -52,4 +52,5 @@ adaptivity_data.tol = 1e-5;
 plot_hmesh = false;
 plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
+[geometry, hmsh, hspace, u, gest, err_h1s, iter] = ...
+    adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
