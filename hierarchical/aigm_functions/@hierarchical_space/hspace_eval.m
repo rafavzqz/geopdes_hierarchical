@@ -32,17 +32,22 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin)
+function [eu, F] = hspace_eval (u, hspace, geometry, npts, options, lambda_lame, mu_lame)
 
   if (hspace.ncomp ~= 1)
     error ('hspace_eval: Not implemented for vector valued spaces')
   end
 
-  if (nargin == 4)
-    option = 'value';
-  else
-    option = varargin{1};
+  if (nargin < 5)
+    options = {'value'};
+    lambda_lame = []; mu_lame = [];
+  elseif (nargin < 7)
+    lambda_lame = []; mu_lame = [];
   end
+  if (~iscell (options))
+    options = {options};
+  end
+  nopts = numel (options);
 
   ndim = numel (npts);
   
@@ -55,7 +60,7 @@ function [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin)
     for idim=1:ndim
       knt{idim} = sp_coarse.knots{idim}(sp_coarse.degree(idim)+1:end-sp_coarse.degree(idim));
     end
-%   elseif (isfield (struct(space), 'scalar_spaces'))
+%   elseif (isfield (struct(sp_coarse), 'scalar_spaces'))
 %     for idim=1:ndim
 %       knt{idim} = sp_coarse.scalar_spaces{1}.knots{idim}(sp_coarse.scalar_spaces{1}.degree(idim)+1:end-sp_coarse.scalar_spaces{1}.degree(idim));
 %     end
@@ -85,28 +90,34 @@ function [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin)
   
   first_dof = cumsum ([0 hspace.ndof_per_level]) + 1;
 
-  switch (lower (option))
-    case {'value'}
-      eu = squeeze (zeros ([hspace.ncomp, npts]));
-      eval_fun = @(U, SP) sp_eval_msh (U, SP, msh);
-    case {'gradient'}
-      eu = squeeze (zeros ([hspace.ncomp, msh.rdim, npts]));
-      eval_fun = @(U, SP) sp_eval_grad_msh (U, SP, msh);
-    case {'laplacian'}
-      eu = squeeze (zeros ([hspace.ncomp, npts]));
-      eval_fun = @(U, SP) sp_eval_lapl_msh (U, SP, msh);
+  eu = cell (nopts, 1);
+  for iopt = 1:nopts
+    switch (lower (options{iopt}))
+      case {'value', 'laplacian'}
+        eu{iopt} = squeeze (zeros ([hspace.ncomp, npts]));
+      case {'gradient'}
+        eu{iopt} = squeeze (zeros ([hspace.ncomp, msh.rdim, npts]));
 %     case {'divergence'}
 %     case {'curl'}
-    otherwise
-      error ('hspace_eval: unknown option to evaluate')
+%     case {'stress'}
+    end
   end
-
+  
   for ilev = 1:hspace.nlevels
     sp_lev = hspace.space_of_level(ilev).constructor (msh);
     u_lev  = zeros (sp_lev.ndof, 1);
     u_lev(hspace.active{ilev}) = u(first_dof(ilev):first_dof(ilev+1)-1);
     
-    [eu_lev, F] = eval_fun (u_lev, sp_lev);
-    eu = eu + reshape (eu_lev, size(eu));
+    [eu_lev, F] = sp_eval_msh (u_lev, sp_lev, msh, options, lambda_lame, mu_lame);
+
+    for iopt = 1:nopts
+          eu{iopt} = eu{iopt} + reshape (eu_lev{iopt}, size(eu{iopt}));
+    end
   end
   F  = reshape (F, [msh.rdim, npts]);
+
+  if (nopts == 1)
+    eu = eu{1};
+  end
+
+end
