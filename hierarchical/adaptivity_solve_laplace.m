@@ -39,7 +39,9 @@ while (iter < adaptivity_data.num_max_iter)
   fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
     
   if (plot_discrete_sol)
-    plot_numerical_and_exact_solution (u, hmsh, hspace, problem_data.uex); 
+    figure(2)
+    npts = 51 * ones (1, hmsh.ndim);
+    plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex); 
   end
        
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -118,7 +118,9 @@ while 1
     u = adaptivity_solve (hmsh, hspace, problem_data);
     
     if plot_discrete_solution
-       plot_numerical_and_exact_solution(u, hmsh, hspace, problem_data.uex), 
+      figure(2)
+      npts = 51 * ones (1, hmsh.ndim);
+      plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex); 
     end
     
     
