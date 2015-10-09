@@ -6,7 +6,7 @@
 %    hmsh:       an object of the class hierarchical_mesh (see hierarchical_mesh)
 %    space:      the coarsest space, an object of the class sp_bspline (see sp_bpline)
 %    space_type: select which kind of hierarchical space to construct. The options are
-%                - 'standard',   the usual hierachical splines space
+%                - 'standard',   the usual hierachical splines space (default value)
 %                - 'simplified', a simplified basis, were only children of removed functions are activated\
 %    truncated:  decide whether the basis will be truncated or not
 %
@@ -34,6 +34,7 @@
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
 %    METHOD NAME
+%    hspace_to_vtk:         export the solution to a VTK file, in a structured grid of points
 %    hspace_eval:           evaluate the solution in a Cartesian grid of points
 %    hspace_eval_hmsh:      evaluate the solution in the quadrature points of a hierarchical mesh
 %    hspace_l2_error:       compute the error in L2 norm
@@ -44,8 +45,6 @@
 %    op_gradu_gradv_hier:   assemble the stiffness matrix
 %    op_u_v_hier:           assemble the mass matrix
 %    op_f_v_hier:           assemble the right-hand side
-%    hsp_to_vtk     XXXXXXXXX
-%    plot?
 %
 % For an explanation of the 'standard' and the 'simplified' basis for hierarchical splines, read:
 %  A. Buffa, E.M. Garau, New refinable spaces and local approximation
@@ -68,7 +67,7 @@
 
 function hspace = hierarchical_space (hmsh, space, varargin)
 
-default_values = {0, false}; % Change to 'simplified' and 'standard' for space_type XXXXX
+default_values = {'standard', false};
 default_values(1:numel(varargin)) = varargin;
 [space_type, truncated] = default_values{:};
 
