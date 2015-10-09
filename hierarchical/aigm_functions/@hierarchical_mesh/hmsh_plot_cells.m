@@ -1,12 +1,15 @@
 % HMSH_PLOT_CELLS: plot the cells of the hierarchical mesh.
 %
-%   hmsh_plot_cells (hmsh, [fig_number])
+%   hmsh_plot_cells (hmsh, [npts, fig_number])
 %
 % INPUT:
 %
 %    hmsh:       object representing the hierarchical mesh (see hierarchical_mesh)
+%    npts:       number of points to use on each edge of the cell
 %    fig_number: figure number where to plot (if not given, a new figure is open)
 %
+% To plot the cells of the mesh, the function plots its edges using plot3.
+%  A relative big number of points is needed for curved geometries.
 % The function is still unefficient, but it can be useful
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
@@ -24,18 +27,21 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hmsh_plot_cells (hmsh, nfig)
+function hmsh_plot_cells (hmsh, npts, nfig)
 
-if (nargin == 1)
+if (nargin < 3)
   figure
   hold_flag = 0;
-else
+elseif (nargin == 3)
   figure(nfig)
   hold_flag = ishold;
 end
-hold on
 
-npts = 2;
+if (isempty (npts))
+  npts = 20;
+end
+
+
 for ilev = 1:hmsh.nlevels
   if (hmsh.nel_per_level(ilev) > 0)
     rule = cell(hmsh.ndim,1);
@@ -56,19 +62,30 @@ for ilev = 1:hmsh.nlevels
     
     if (hmsh.ndim == 1)
       plot3 (x{1}, x{2}, x{3}, 'k', 'Marker', 'x');
+      hold on
     elseif (hmsh.ndim == 2)
       for iel = 1:msh_level.nel
-        surf (x{1}(:,:,iel), x{2}(:,:,iel), x{3}(:,:,iel));
+        plot3 (x{1}(1,:,iel), x{2}(1,:,iel), x{3}(1,:,iel), 'k');
+        hold on
+        plot3 (x{1}(end,:,iel), x{2}(end,:,iel), x{3}(end,:,iel), 'k');
+        plot3 (x{1}(:,1,iel), x{2}(:,1,iel), x{3}(:,1,iel), 'k');
+        plot3 (x{1}(:,end,iel), x{2}(:,end,iel), x{3}(:,end,iel), 'k');
       end
     elseif (hmsh.ndim == 3)
       for iel = 1:msh_level.nel
-        siz = [2 2];
-        surf (reshape (x{1}(1,:,:,iel), siz), reshape (x{2}(1,:,:,iel), siz), reshape (x{3}(1,:,:,iel), siz), 'FaceAlpha', 0);
-        surf (reshape (x{1}(:,1,:,iel), siz), reshape (x{2}(:,1,:,iel), siz), reshape (x{3}(:,1,:,iel), siz), 'FaceAlpha', 0);
-        surf (reshape (x{1}(:,:,1,iel), siz), reshape (x{2}(:,:,1,iel), siz), reshape (x{3}(:,:,1,iel), siz), 'FaceAlpha', 0);
-        surf (reshape (x{1}(end,:,:,iel), siz), reshape (x{2}(end,:,:,iel), siz), reshape (x{3}(end,:,:,iel), siz), 'FaceAlpha', 0);
-        surf (reshape (x{1}(:,end,:,iel), siz), reshape (x{2}(:,end,:,iel), siz), reshape (x{3}(:,end,:,iel), siz), 'FaceAlpha', 0);
-        surf (reshape (x{1}(:,:,end,iel), siz), reshape (x{2}(:,:,end,iel), siz), reshape (x{3}(:,:,end,iel), siz), 'FaceAlpha', 0);
+        plot3 (x{1}(1,1,:,iel), x{2}(1,1,:,iel), x{3}(1,1,:,iel), 'k');
+        hold on
+        plot3 (x{1}(end,1,:,iel), x{2}(end,1,:,iel), x{3}(end,1,:,iel), 'k');
+        plot3 (x{1}(1,end,:,iel), x{2}(1,end,:,iel), x{3}(1,end,:,iel), 'k');
+        plot3 (x{1}(end,end,:,iel), x{2}(end,end,:,iel), x{3}(end,end,:,iel), 'k');
+        plot3 (x{1}(1,:,1,iel), x{2}(1,:,1,iel), x{3}(1,:,1,iel), 'k');
+        plot3 (x{1}(end,:,1,iel), x{2}(end,:,1,iel), x{3}(end,:,1,iel), 'k');
+        plot3 (x{1}(1,:,end,iel), x{2}(1,:,end,iel), x{3}(1,:,end,iel), 'k');
+        plot3 (x{1}(end,:,end,iel), x{2}(end,:,end,iel), x{3}(end,:,end,iel), 'k');
+        plot3 (x{1}(:,1,1,iel), x{2}(:,1,1,iel), x{3}(:,1,1,iel), 'k');
+        plot3 (x{1}(:,end,1,iel), x{2}(:,end,1,iel), x{3}(:,end,1,iel), 'k');
+        plot3 (x{1}(:,1,end,iel), x{2}(:,1,end,iel), x{3}(:,1,end,iel), 'k');
+        plot3 (x{1}(:,end,end,iel), x{2}(:,end,end,iel), x{3}(:,end,end,iel), 'k');
       end
     end
   end

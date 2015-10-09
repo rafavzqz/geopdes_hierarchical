@@ -28,7 +28,7 @@ while (iter < adaptivity_data.num_max_iter)
   end
     
   if (plot_hmesh)
-    hmsh_plot_cells (hmsh, 1);
+    hmsh_plot_cells (hmsh, 10, 1);
   end
     
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

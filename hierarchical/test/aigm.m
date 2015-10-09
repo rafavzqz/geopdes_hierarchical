@@ -98,7 +98,7 @@ while 1
     end
     
     if (plot_hierarchical_mesh)
-        hmsh_plot_cells (hmsh, 1);
+        hmsh_plot_cells (hmsh, 10, 1);
 %        plot_hmesh_param(hmsh, 1); % In figure(1)
         if print_graphics
             filename = sprintf('-problem%d-degree%d-est%d-iter%03d-',problem, method_data.degree(1),adaptivity_data.est_type,iter);
