@@ -88,34 +88,28 @@ function [eu, F] = hspace_eval (u, hspace, geometry, npts, options, lambda_lame,
 
   msh = msh_cartesian (brk, pts, [], geometry, 'boundary', false);
   
-  first_dof = cumsum ([0 hspace.ndof_per_level]) + 1;
-
-  eu = cell (nopts, 1);
+  eusize = cell (nopts, 1);
   for iopt = 1:nopts
     switch (lower (options{iopt}))
       case {'value', 'laplacian'}
-        eu{iopt} = squeeze (zeros ([hspace.ncomp, npts]));
+        eusize{iopt} = size (squeeze (zeros ([hspace.ncomp, npts])));
       case {'gradient'}
-        eu{iopt} = squeeze (zeros ([hspace.ncomp, msh.rdim, npts]));
+        eusize{iopt} = size (squeeze (zeros ([hspace.ncomp, msh.rdim, npts])));
 %     case {'divergence'}
 %     case {'curl'}
 %     case {'stress'}
     end
   end
   
-  for ilev = 1:hspace.nlevels
-    sp_lev = hspace.space_of_level(ilev).constructor (msh);
-    u_lev  = zeros (sp_lev.ndof, 1);
-    u_lev(hspace.active{ilev}) = u(first_dof(ilev):first_dof(ilev+1)-1);
-    
-    [eu_lev, F] = sp_eval_msh (u_lev, sp_lev, msh, options, lambda_lame, mu_lame);
+  sp_lev = hspace.space_of_level(hspace.nlevels).constructor (msh);
+  u_lev = hspace.C{hspace.nlevels} * u;
+  [eu, F] = sp_eval_msh (u_lev, sp_lev, msh, options, lambda_lame, mu_lame);
 
-    for iopt = 1:nopts
-          eu{iopt} = eu{iopt} + reshape (eu_lev{iopt}, size(eu{iopt}));
-    end
-  end
   F  = reshape (F, [msh.rdim, npts]);
-
+  for iopt = 1:nopts
+    eu{iopt} = reshape (eu{iopt}, eusize{iopt});
+  end
+  
   if (nopts == 1)
     eu = eu{1};
   end
