@@ -37,7 +37,7 @@ elseif (nargin == 3)
   hold_flag = ishold;
 end
 
-if (isempty (npts))
+if (nargin < 2 || isempty (npts))
   npts = 20;
 end
 

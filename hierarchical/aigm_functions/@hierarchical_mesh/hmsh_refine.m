@@ -40,6 +40,7 @@ if (~isempty(M{hmsh.nlevels}))
   [qn, qw] = msh_set_quad_nodes (zeta, rule);
     
   hmsh.mesh_of_level(hmsh.nlevels+1) = msh_cartesian (zeta, qn, qw, hmsh.geometry, 'boundary', boundary);
+  hmsh.mesh_of_level(hmsh.nlevels+1).boundary = []; % Remove redundant information
 end
 
 % Update the set of active elements
@@ -207,7 +208,7 @@ function msh_lev = update_msh_lev (hmsh, old_elements, new_elements)
 msh_lev = cell (hmsh.nlevels, 1);
 
 for lev = 1:hmsh.nlevels
-  if (hmsh.nel_per_level(lev) == 0 || lev > numel (old_elements))
+  if (lev > numel (old_elements) || numel (old_elements{lev}) == 0)
     msh_lev{lev} = msh_evaluate_element_list (hmsh.mesh_of_level(lev), hmsh.active{lev});
   else
     [~, iold, iold_act] = intersect (old_elements{lev}, hmsh.active{lev});

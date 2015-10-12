@@ -85,6 +85,9 @@ else
   hmsh.boundary = [];
 end
 
+% Remove redundant information
+hmsh.mesh_of_level(1).boundary = [];
+
 hmsh = class (hmsh, 'hierarchical_mesh');
 
 end
