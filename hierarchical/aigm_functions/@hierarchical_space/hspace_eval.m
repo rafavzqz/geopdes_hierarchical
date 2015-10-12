@@ -32,86 +32,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hspace_eval (u, hspace, geometry, npts, options, lambda_lame, mu_lame)
+function [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin)
 
-  if (hspace.ncomp ~= 1)
-    error ('hspace_eval: Not implemented for vector valued spaces')
-  end
-
-  if (nargin < 5)
-    options = {'value'};
-    lambda_lame = []; mu_lame = [];
-  elseif (nargin < 7)
-    lambda_lame = []; mu_lame = [];
-  end
-  if (~iscell (options))
-    options = {options};
-  end
-  nopts = numel (options);
-
-  ndim = numel (npts);
-  
-% Temporary solution, to be fixed using "isprop" after defining the
-%  classes with classdef
-  sp_coarse = hspace.space_of_level(1);
-  
-  knt = cell (ndim, 1);
-  if (isfield (struct(sp_coarse), 'knots'))
-    for idim=1:ndim
-      knt{idim} = sp_coarse.knots{idim}(sp_coarse.degree(idim)+1:end-sp_coarse.degree(idim));
-    end
-%   elseif (isfield (struct(sp_coarse), 'scalar_spaces'))
-%     for idim=1:ndim
-%       knt{idim} = sp_coarse.scalar_spaces{1}.knots{idim}(sp_coarse.scalar_spaces{1}.degree(idim)+1:end-sp_coarse.scalar_spaces{1}.degree(idim));
-%     end
-  else
-    for idim=1:ndim; knt{idim} = [0 1]; end
-  end
-  
-  if (iscell (npts))
-    pts = npts;
-    npts = cellfun (@numel, pts);
-  elseif (isvector (npts))
-    for idim = 1:ndim
-      pts{idim} = linspace (knt{idim}(1), knt{idim}(end), npts(idim));
-    end
-  end
-
-  for jj = 1:ndim
-    pts{jj} = pts{jj}(:)';
-    if (numel (pts{jj}) > 1)
-      brk{jj} = [knt{jj}(1), pts{jj}(1:end-1) + diff(pts{jj})/2, knt{jj}(end)];
-    else
-      brk{jj} = [knt{jj}(1) knt{jj}(end)];
-    end
-  end
-
-  msh = msh_cartesian (brk, pts, [], geometry, 'boundary', false);
-  
-  eusize = cell (nopts, 1);
-  for iopt = 1:nopts
-    switch (lower (options{iopt}))
-      case {'value', 'laplacian'}
-        eusize{iopt} = size (squeeze (zeros ([hspace.ncomp, npts])));
-      case {'gradient'}
-        eusize{iopt} = size (squeeze (zeros ([hspace.ncomp, msh.rdim, npts])));
-%     case {'divergence'}
-%     case {'curl'}
-%     case {'stress'}
-    end
-  end
-  
-  sp_lev = hspace.space_of_level(hspace.nlevels).constructor (msh);
+  sp_lev = hspace.space_of_level(hspace.nlevels);
   u_lev = hspace.C{hspace.nlevels} * u;
-  [eu, F] = sp_eval_msh (u_lev, sp_lev, msh, options, lambda_lame, mu_lame);
-
-  F  = reshape (F, [msh.rdim, npts]);
-  for iopt = 1:nopts
-    eu{iopt} = reshape (eu{iopt}, eusize{iopt});
-  end
-  
-  if (nopts == 1)
-    eu = eu{1};
-  end
+  [eu, F] = sp_eval (u_lev, sp_lev, geometry, npts, varargin{:});
 
 end
