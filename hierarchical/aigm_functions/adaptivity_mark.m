@@ -45,51 +45,25 @@ case 'GERS'
 end
 
 marked_list = find(aux_marked);
+nmarked = numel (marked_list);
 
-nmarked = numel(marked_list);
-switch adaptivity_data.flag
-    case 'elements',
-        globnum_marked = hmsh.globnum_active(marked_list,:);
-        marked_sub = cell(hmsh.nlevels,1);
-    case 'functions',
-        globnum_marked = hspace.globnum_active(marked_list,:);
-        marked_sub = cell(hspace.nlevels,1);
-end
+marked = cell (hmsh.nlevels, 1);
 
-% Mejorar el siguiente procedimiento %%%%%%
-for fila = 1:nmarked
-    aux = globnum_marked(fila,1);
-    marked_sub{aux} = [marked_sub{aux}; globnum_marked(fila,2:end)];
-end
-
-for lev = 1:numel(marked_sub)
-    if isempty(marked_sub{lev})
-        marked_sub{lev} = zeros(0,hmsh.ndim);
+switch (lower (adaptivity_data.flag))
+  case 'elements'
+    aux = cumsum ([0, hmsh.nel_per_level]);
+    for lev = 1:hmsh.nlevels
+      elems = aux(lev)+1:aux(lev+1);
+      [~,ind,~] = intersect (elems, marked_list);
+      marked{lev} = hmsh.active{lev}(ind);
+    end
+  case 'functions'
+    aux = cumsum ([0, hspace.ndof_per_level]);
+    for lev = 1:hmsh.nlevels
+      funs = aux(lev)+1:aux(lev+1);
+      [~,ind,~] = intersect (funs, marked_list);
+      marked{lev} = hspace.active{lev}(ind);
     end
 end
 
-%marked.sub = marked_sub;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-marked.ind = cell(size(marked_sub));
-
-for lev = 1:numel(marked_sub)
-    if isempty(marked_sub{lev})
-        marked.ind{lev} = zeros(0,1);
-    else
-        switch adaptivity_data.flag
-            case 'elements',
-                siz = hmsh.mesh_of_level(lev).nel_dir;
-            case 'functions',
-                siz = hspace.space_of_level(lev).ndof_dir;
-        end
-        switch hmsh.ndim
-            case 1, marked.ind{lev} = marked_sub{lev}(:,1);
-            case 2, marked.ind{lev} = sub2ind(siz, marked_sub{lev}(:,1), marked_sub{lev}(:,2));
-            case 3, marked.ind{lev} = sub2ind(siz, marked_sub{lev}(:,1), marked_sub{lev}(:,2), marked_sub{lev}(:,3));
-        end
-    end
 end
-
-marked = marked.ind;
