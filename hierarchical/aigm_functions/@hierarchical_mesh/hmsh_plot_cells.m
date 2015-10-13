@@ -29,17 +29,14 @@
 
 function hmsh_plot_cells (hmsh, npts, nfig)
 
-if (nargin < 3)
-  figure
-  hold_flag = 0;
-elseif (nargin == 3)
+if (nargin == 3)
   figure(nfig)
-  hold_flag = ishold;
 end
 
 if (nargin < 2 || isempty (npts))
   npts = 20;
 end
+hold_flag = ishold;
 
 
 for ilev = 1:hmsh.nlevels
