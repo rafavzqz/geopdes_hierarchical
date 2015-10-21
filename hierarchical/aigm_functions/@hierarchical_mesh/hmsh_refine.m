@@ -1,13 +1,11 @@
 % HMSH_REFINE: refine the hierarchical mesh, updating the fields of the object.
 %
-%   [hmsh, new_elements] = hmsh_refine (hmsh, marked, indices)
+%   [hmsh, new_elements] = hmsh_refine (hmsh, marked)
 %
 % INPUT:
 %
 %   hmsh:    object representing the coarse hierarchical mesh (see hierarchical_mesh)
 %   marked:  cell array with the indices, in the Cartesian grid, of the marked elements for each level
-%   indices: relative position of the marked elements in the numbering of the hierarchical mesh
-%         within the level, that is, in hmsh.active{lev}
 %
 % OUTPUT:
 %
@@ -29,7 +27,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, new_elements] = hmsh_refine (hmsh, M, indices)
+function [hmsh, new_elements] = hmsh_refine (hmsh, M)
 
 boundary = ~isempty (hmsh.boundary);
 
@@ -45,7 +43,7 @@ end
 
 % Update the set of active elements
 old_elements = hmsh.active;
-[hmsh, new_elements] = update_active_cells (hmsh, M, indices);
+[hmsh, new_elements] = update_active_cells (hmsh, M);
 
 % Update msh_lev
 hmsh.msh_lev = update_msh_lev (hmsh, old_elements, new_elements);
@@ -62,7 +60,7 @@ if (boundary)
       for lev = 1:numel (M)
         M_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, M{lev});
       end
-      hmsh.boundary(iside) = hmsh_refine (hmsh.boundary(iside), M_boundary, []);
+      hmsh.boundary(iside) = hmsh_refine (hmsh.boundary(iside), M_boundary);
     end
   end
 else
@@ -73,9 +71,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [hmsh, new_cells] = update_active_cells (hmsh, M, indices)
+function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %
-% function [hmsh, new_cells] = update_active_cells (hmsh, M, indices)
+% function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %
 % This function updates the active cells (hmsh.active and hmsh.globnum_active) and deactivated cells (hmsh.deactivated) in each level when
 % refining the cells in M. This function also updates hmsh.nlevels, hmsh.nel and hmsh.nel_per_level
@@ -83,8 +81,6 @@ function [hmsh, new_cells] = update_active_cells (hmsh, M, indices)
 % INPUT
 %     hmsh: object representing the coarse hierarchical mesh (see hierarchical_mesh)
 %     M{lev}: global indices of marked cells of level lev (one row per cell)
-%     indices{lev}: array such that M{lev} =
-%           hmsh.active{lev}(indices{lev}). If indices is [], then this function computes this information.
 %
 % OUTPUT
 %     hmsh: object representing the refined hierarchical mesh (see hierarchical_mesh)
@@ -109,24 +105,14 @@ end
 % Deactivate the cells to be refined, and compute their children
 for lev = 1:nlevels
   if (~isempty(M{lev}))
-    if (isempty(indices))
-      [dummy, indE] = ismember (M{lev}, hmsh.active{lev});
+    [dummy, indE] = ismember (M{lev}, hmsh.active{lev});
 %       if (~all (dummy))
 %         warning('update_active_cells: Some nonactive cells were selected');
 %       end
-    else
-      indE = indices{lev};
-    end
     hmsh.active{lev}(indE) = [];
+    hmsh.deactivated{lev} = union (hmsh.deactivated{lev}, M{lev});
       
     new_cells{lev+1} = split_cells_of_level (hmsh, lev, M{lev});
-    hmsh.deactivated{lev} = union (hmsh.deactivated{lev}, M{lev});
-  end
-end
-
-% Update the active cells, by adding the children of the refined cells
-for lev = 1:nlevels
-  if (~isempty(M{lev}))
     hmsh.active{lev+1} = union (hmsh.active{lev+1}, new_cells{lev+1});
   end
 end

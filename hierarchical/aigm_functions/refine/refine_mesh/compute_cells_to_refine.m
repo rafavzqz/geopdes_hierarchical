@@ -1,7 +1,7 @@
 % COMPUTE_CELLS_TO_REFINE: compute the indices of the cells that have to be refined, when 
 %  the refinement strategy is based on marking functions.
 %
-%   [hmsh, hspace] = compute_cells_to_refine (hspace, hmsh, marked)
+%   [marked_elem, indices] = compute_cells_to_refine (hspace, hmsh, marked)
 %
 % INPUT:
 %
@@ -14,8 +14,8 @@
 %
 %   marked_elem: cell array with the indices, in the tensor Cartesian grid, of the elements
 %                 to be refined for each level
-%   ind: relative position of the marked elements in the numbering of the hierarchical mesh
-%         within the level, that is, in hmsh.active{lev}
+%   indices:     relative position of the marked elements in the numbering of the hierarchical mesh
+%                 within the level, that is, in hmsh.active{lev}
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %

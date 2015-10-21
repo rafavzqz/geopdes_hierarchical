@@ -37,12 +37,12 @@ function [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_da
 
 switch (adaptivity_data.flag)
   case 'functions'
-    [marked_elements, indices] = compute_cells_to_refine (hspace, hmsh, marked);
+    marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
   case 'elements'
     marked_elements = marked;
     indices = [];
 end
 
-[hmsh, new_cells] = hmsh_refine (hmsh, marked_elements, indices);
+[hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
 hspace = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
