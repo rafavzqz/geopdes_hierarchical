@@ -1,4 +1,4 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[12pt,a4paper,pdftex]{article}
 
 %\usepackage[notref,notcite]{showkeys}
 %\usepackage{latexsym,amsfonts,amssymb,amsthm,amsmath,amscd,eufrak,makeidx}
@@ -440,8 +440,8 @@ Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\
 }
 \item[]\%   $\markedelements$ contains the cells that have to be refined\;
   
-%$[\mesh, \newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$\;
-\item[3.]$[\mesh, \newcells] = \texttt{update\_active\_cells}(\mesh, \markedelements)$\;
+\item[3.]$[\mesh, \newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$\;
+%\item[3.]$[\mesh, \newcells] = \texttt{update\_active\_cells}(\mesh, \markedelements)$\;
  \item[]\% $\newcells$ contains the new cells\;
  \item[]\% REFINE SPACE\;
 \item[4.] $\basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$\;
@@ -495,7 +495,7 @@ Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\
 }
 \end{algorithm}
 
-\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{update\_active\_cells}(\mesh,\markedelements)$} 
+\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh,\markedelements)$} 
 \caption{\texttt{update\_active\_cells}}
 \bigskip
 \doublebox{
@@ -514,9 +514,9 @@ Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\
 \item[]\ForEach{$\ell=0,1,\dots,n-1$}{
 \begin{enumerate}
  \item[2.]$E^A_\ell \leftarrow E^A_\ell \setminus \markedelements_\ell$ \% Update $E^A_\ell$ by removing the cells to be refined\;
- \item[3.] Use \texttt{split\_cell} to get the set of indices $\newcells_{\ell+1}$ of cells of level $\ell+1$ which are inside of the cells in $\markedelements_\ell$\;
- \item[4.]$E^A_{\ell+1} \leftarrow E^A_{\ell+1}\cup \newcells_{\ell+1}$ \% Update $E^A_{\ell+1}$ by adding the new active cells of level $\ell+1$; 
- \item[5.]$E^D_\ell \leftarrow E^D_\ell \cup \markedelements_\ell$ \% Update $E^D_\ell$ by adding the cells that were deactivated\;
+ \item[3.]$E^D_\ell \leftarrow E^D_\ell \cup \markedelements_\ell$ \% Update $E^D_\ell$ by adding the cells that were deactivated\;
+ \item[4.] Use \texttt{split\_cell} to get the set of indices $\newcells_{\ell+1}$ of cells of level $\ell+1$ which are inside of the cells in $\markedelements_\ell$\;
+ \item[5.]$E^A_{\ell+1} \leftarrow E^A_{\ell+1}\cup \newcells_{\ell+1}$ \% Update $E^A_{\ell+1}$ by adding the new active cells of level $\ell+1$; 
 \end{enumerate}
 }
 \end{enumerate}

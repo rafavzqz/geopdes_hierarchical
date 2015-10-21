@@ -110,3 +110,5 @@ else
 end
 
 hspace = class (hspace, 'hierarchical_space');
+
+end
