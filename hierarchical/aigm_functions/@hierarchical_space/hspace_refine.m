@@ -205,6 +205,17 @@ for lev = 1:hspace.nlevels-1
 
       Ichildren_nonactive = setdiff (Ichildren, active{lev+1});
       if (~isempty (Ichildren_nonactive))
+        II = setdiff (Ichildren_nonactive,deactivated{lev+1});
+        if (~isempty(II))
+          nfun = size(II,1);
+          flag = zeros(1,nfun);
+          [dummy, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), II);
+          for ii = 1: nfun
+            flag(ii) = isempty (intersect (cells_per_fun{ii}, hmsh.active{lev+1}));
+          end
+          II = II(flag==1,:);
+          deactivated{lev+1} = vertcat (deactivated{lev+1}, II);
+        end
         nchildren_nonactive = numel (Ichildren_nonactive);
         active{lev+1} = vertcat (active{lev+1}, Ichildren_nonactive);
         W{lev+1} = vertcat (W{lev+1}, zeros(nchildren_nonactive,1));
