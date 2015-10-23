@@ -15,37 +15,16 @@
 \usepackage{color}
 \usepackage[]{algorithm2e}
 \usepackage[]{algorithmicx}
+\usepackage{bm}
+\usepackage{xspace}
+\usepackage[english]{babel}
+\usepackage{authblk}
 
 \usepackage[normalem]{ulem} % to be able to use \sout
 
 \usepackage{enumerate}
 %\usepackage{pdfsync}
 
- \theoremstyle{plain}
-    \newtheorem{theorem}{Theorem}[section]
-    \newtheorem{corollary}[theorem]{Corollary}
-    \newtheorem{lemma}[theorem]{Lemma}
-    \newtheorem{proposition}[theorem]{Proposition}
-    \newtheorem{assumption}[theorem]{Assumption}
- \theoremstyle{definition}
-    \newtheorem{definition}[theorem]{Definition}
-    \newtheorem{remark}[theorem]{Remark}
- \theoremstyle{remark}
-  %  \newtheorem{notation}[theorem]{Notation}
-    \newtheorem{example}[theorem]{Example}
- 
-% \newcommand{\Proof}{\noindent\emph{Proof.}\xspace}
-
-
-% Para el \fint %%%%%%%
- \usepackage[english]{babel}
-%\usepackage{txfonts}
-%\newcommand{\fint}{\int}
-%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%% Paquetes adicionales (sacar despues) %%%%%%%%%%%%%%%
-% hyperref
-%----------------------------------------------
 \usepackage[%
 %   pdftex=true,  % si se usa pdftex
 %   pdfpagemode=UseNone,
@@ -66,6 +45,33 @@
    %pagecolor=blue,
    urlcolor=blue
    ]{hyperref}
+
+
+
+ \theoremstyle{plain}
+    \newtheorem{theorem}{Theorem}[section]
+    \newtheorem{corollary}[theorem]{Corollary}
+    \newtheorem{lemma}[theorem]{Lemma}
+    \newtheorem{proposition}[theorem]{Proposition}
+    \newtheorem{assumption}[theorem]{Assumption}
+ \theoremstyle{definition}
+    \newtheorem{definition}[theorem]{Definition}
+    \newtheorem{remark}[theorem]{Remark}
+ \theoremstyle{remark}
+  %  \newtheorem{notation}[theorem]{Notation}
+    \newtheorem{example}[theorem]{Example}
+ 
+% \newcommand{\Proof}{\noindent\emph{Proof.}\xspace}
+
+
+% Para el \fint %%%%%%%
+%\usepackage{txfonts}
+%\newcommand{\fint}{\int}
+%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%% Paquetes adicionales (sacar despues) %%%%%%%%%%%%%%%
+% hyperref
+%----------------------------------------------
 
 % definicion de \algoritmo
 \newcounter{contadoralgoritmo}
@@ -101,8 +107,6 @@
  \DeclareMathOperator*{\infimum}{inf\phantom{p}\!\!\!}
  \newcommand{\infsup}[2]{\infimum_{#1}\sup_{#2}}
 
-\usepackage{bm}
-\usepackage{xspace}
 
 \newcommand{\step}[1]{\noindent\raisebox{1.5pt}[10pt][0pt]{\tiny\framebox{$#1$}}
 \xspace}
@@ -158,9 +162,10 @@
 \newcommand{\NT}{{\mathcal N}_\Tau}
 
 \newcommand{\etal}{et.~al.}
-\usepackage{authblk}
-\newcommand{\norm}[1]{{\left\vert\kern-0.25ex\left\vert\kern-0.25ex\left\vert #1 
-    \right\vert\kern-0.25ex\right\vert\kern-0.25ex\right\vert}}
+
+\newcommand{\norm}[1]{{\left\vert\kern-0.25ex\left\vert\kern-0.25ex\left\vert #1  \right\vert\kern-0.25ex\right\vert\kern-0.25ex\right\vert}}
+
+\newcommand{\bx}{{\bf x}}
 
 \begin{document}
 
@@ -702,6 +707,69 @@ The function \texttt{refine} detailed in the previous section can be also used t
 
 %\note{ $C_\ell$ is a connectivity matrix which cointains the global indices of active functions whose support intersect $Q$, for every $Q\in\QQ\cap\QQ_\ell$. Here, we also need to store the corresponding levels together with the global indices of active functions.}
 
+\section{Assembly of the matrix}
+{\Rd SOME NOTATION, to be changed after discussion:
+\begin{itemize}
+\item $N_\ell$: number of basis functions in $\BB_\ell$.
+\item $A_\ell$: number of active functions of level $\ell$. Give a name to the sets in \eqref{E:Hierarchical basis}.
+\item $\tilde A_\ell := \sum_{k=0}^\ell A_\ell$, number of active functions up to level $\ell$.
+\item $\beta^A_{j,\ell}$ active functions. Probably we can avoid these.
+\end{itemize}
+}
+
+One of the issues when implementing IGA with hierarchical splines is the assembly of the matrices. In order to compute the matrices of the discrete problem it is necessary to evaluate integrals that involve basis functions from different levels, and possibly in a level that does not correspond to the level of the functions. For instance, to compute one entry of the mass matrix, one must compute
+\begin{equation*}
+\int_\Omega \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx = \sum_{Q \in \QQ} \int_Q \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx = \sum_{\ell = \max\{\ell_i, \ell_j\}}^n \sum_{Q_\ell \in \QQ_\ell} \int_{Q_\ell} \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx.
+\end{equation*}
+
+In order to compute the integrals, we take advantage of the two-scale relation \eqref{E:two scale relation}: {\Rd I AM CHANGING THE NOTATION}
+\begin{equation*}
+ \beta_{i,\ell} = \sum_{k=1}^{N_{\ell+1}}
+c_{k,\ell+1}(\beta_{i,\ell})\beta_{k,\ell+1}, 
+\qquad \forall\,\beta_{i,\ell} \in\BB_\ell,
+\end{equation*}
+and computing the coefficients for each basis function, we obtain an operator $C_\ell^{\ell+1}: \VV_\ell \longrightarrow \VV_{\ell+1}$, which can be written in matrix form.
+
+Succesively applying the two-scale relation, we obtain the general version
+\begin{equation*}
+ \beta_{i,\ell} = \sum_{k=1}^{N_{\ell+m}}
+c_{k,\ell+m}(\beta_{i,\ell})\beta_{k,\ell+m}, 
+\qquad \forall\,\beta_{i,\ell} \in\BB_\ell,
+\end{equation*}
+and the matrix operator $C_\ell^{\ell+m} = C_{\ell+m-1}^{\ell+m} \ldots C_{\ell+1}^{\ell+2} C_\ell^{\ell+1}$.
+
+Plugging this expression into our integral, and after reordering, we obtain that 
+\begin{align*}
+\int_\Omega \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx = \sum_{\ell = \max\{\ell_i, \ell_j\}}^n \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell} \left(\sum_{k_i=1}^{N_\ell} c_{k_i,\ell}(\beta_{i,\ell_i}) \beta_{k_i,\ell}\right) \left(\sum_{k_j=1}^{N_\ell} c_{k_j,\ell}(\beta_{j,\ell_j}) \beta_{k_j,\ell}\right) \, d\bx = \\
+\sum_{\ell = \max\{\ell_i, \ell_j\}}^n \sum_{k_i=1}^{N_\ell} \sum_{k_j=1}^{N_\ell} c_{k_i,\ell}(\beta_{i,\ell_i}) c_{k_j,\ell}(\beta_{j,\ell_j}) \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell}  \beta_{k_i,\ell}  \beta_{k_j,\ell} \, d\bx.
+\end{align*}
+
+After the arrangements, we see that it is only needed to compute, in the active elements of level $\ell$, the integrals involving the tensor product functions of that level, both active and inactive. The computation of these integrals is easily available in any software for IGA. 
+
+The only missing part is the computation of the coefficients in an efficient way. This can be done rewriting the equations in matrix form. Let us denote by $M_\ell$ the matrix obtained from function of level $\ell$, that is
+\begin{equation*}
+(M_\ell)_{k_i k_j} = \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell}  \beta_{k_i,\ell}  \beta_{k_j,\ell} \, d\bx,
+\end{equation*}
+and let us also denote by $\tilde I_\ell \in {\cal M}_{N_\ell, A_\ell}$ the rectangular matrix such that 
+$$
+(\tilde I_\ell)_{ij} = \left \{ 
+\begin{array}{l}
+1, \text{ if }  \beta_{i,\ell} = \beta^A_{j,\ell} (active)\\
+0, \text{ otherwise. }
+\end{array}
+\right.$$
+
+We define the matrices for basis change $C_\ell \in {\cal M}_{N_\ell, \tilde A_\ell}$ by the recursive algorithm
+\begin{enumerate}
+\item $C^0 = \tilde I_0$.
+\item $C_\ell = [C_{\ell-1}^\ell C_{\ell-1}, \tilde I_\ell]$.
+\end{enumerate}
+
+By doing so, the global mass matrix is written as
+\begin{equation*}
+M = \sum_{\ell = 0}^n C_\ell M_\ell C_\ell^T.
+\end{equation*}
+
 %===============================================================================
 \begin{thebibliography}{1}
 %===============================================================================
@@ -724,7 +792,7 @@ A. Buffa and E.M. Garau, \emph{A posteriori error estimators for hierarchical B-
 % Poincar\'e inequalities on convex domains}, Proceedings of LMS \textbf{93} 
 % (2006), 197--226.
 
-\bibitem[dV01]{deBoor}
+\bibitem[dB01]{deBoor}
 C. de Boor, \emph{A practical guide to splines}, Revised edition. Applied Mathematical Sciences, 27. Springer-Verlag, New York, 2001. 
 
 \bibitem[GJS14]{GJS14}
