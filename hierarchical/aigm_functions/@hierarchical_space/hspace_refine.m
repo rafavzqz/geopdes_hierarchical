@@ -222,9 +222,7 @@ for lev = 1:hspace.nlevels-1
   if (strcmpi (hspace.type, 'standard') && ~isempty (new_cells{lev+1}))
         
     new_possible_active_fun = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_cells{lev+1});
-%     new_possible_active_fun = setdiff (new_possible_active_fun, active{lev+1}, 'rows');
-% XXXXXX I THINK THIS CHANGE (the union) WAS NECESSARY. ASK EDUARDO IF IT IS OK
-    new_possible_active_fun = setdiff (new_possible_active_fun, union (active{lev+1}, deactivated{lev+1}));
+    new_possible_active_fun = setdiff (new_possible_active_fun, active{lev+1});
 
     [dummy, elem] = sp_get_cells (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_possible_active_fun);
 
