@@ -45,4 +45,4 @@ end
 
 [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
-hspace = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+[hspace,Cref] = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);

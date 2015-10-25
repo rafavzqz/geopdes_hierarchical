@@ -32,7 +32,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = hspace_refine (hspace, hmsh, M, flag, new_cells)
+function [hspace,Cref] = hspace_refine (hspace, hmsh, M, flag, new_cells)
 
 boundary = ~isempty (hspace.boundary);
 
@@ -59,11 +59,14 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
   hspace.active{hmsh.nlevels} = [];
   hspace.deactivated{hmsh.nlevels} = [];
   hspace.ndof_per_level(hmsh.nlevels) = 0;
+  
+  M{hmsh.nlevels} = [];
 end
 
 % Update of active functions
-hspace = update_active_functions (hspace, hmsh, new_cells, M);
-
+% hspace = update_active_functions (hspace, hmsh, new_cells, M);
+[hspace,Cref] = update_active_functions_rafa (hspace, hmsh, new_cells, M);
+%my_check
 
 % Update C, the matrices for changing basis
 C = cell (hmsh.nlevels, 1);
@@ -266,5 +269,157 @@ for lev = 1:hspace.nlevels
     hspace.globnum_active(ind_f, 2:end) = cell2mat (globnum);
   end
 end
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function [hspace,Cref] = update_active_functions_rafa (hspace, hmsh, new_cells, marked_fun)
+
+active = hspace.active;
+deactivated = hspace.deactivated;
+
+
+nn3 = hspace.ndof_per_level(1);
+active_and_deact = union (active{1}, deactivated{1});
+[~,indices] = intersect (active_and_deact, hspace.active{1});
+Id = sparse (numel(active_and_deact), nn3);
+Id(indices,:) = speye (nn3, nn3);
+Cref = Id;
+
+for lev = 1:hspace.nlevels-1
+
+  Cmat = 1;
+  for idim = 1:hmsh.ndim
+    Cmat = kron (hspace.Proj{lev,idim}, Cmat);
+  end
+
+  old_active = union (active{lev}, deactivated{lev});
+  
+  marked_and_deact = union (marked_fun{lev}, deactivated{lev});
+  [~,marked_deact_indices] = intersect (active_and_deact, marked_and_deact);
+    
+  if (~isempty(marked_fun{lev}))
+
+    % Remove the marked functions from the active functions of level lev
+    active{lev} = setdiff (active{lev}, marked_fun{lev});
+    deactivated{lev} = marked_and_deact(:);
+
+    [ii,~] = find (Cmat(:,marked_fun{lev}));
+
+    active_and_deact = union (active{lev+1}, deactivated{lev+1});
+    new_active = setdiff (unique (ii), active_and_deact);
+
+% Mark functions whose support has been already refined completely
+    if (strcmpi (hspace.type, 'simplified'))
+      [~, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_active);
+      flag = cellfun (@(x) isempty (intersect (x, hmsh.active{lev+1})), cells_per_fun);
+      marked_fun{lev+1} = union (marked_fun{lev+1}, new_active(flag==1,:));
+    end
+
+    active{lev+1} = union (active{lev+1}, new_active);
+  end %if
+
+% For the classical hierarchical space, we activate functions of level lev+1, 
+%  that are not children of any removed function of level lev
+  if (strcmpi (hspace.type, 'standard') && ~isempty (new_cells{lev+1}))
+
+    new_possible_active_fun = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_cells{lev+1});
+    new_possible_active_fun = setdiff (new_possible_active_fun, active{lev+1});
+
+    [dummy, elem] = sp_get_cells (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_possible_active_fun);
+
+    new_functions = cellfun (@(x) all (ismember (x, union (hmsh.active{lev+1}, hmsh.deactivated{lev+1}))), elem);
+    active{lev+1} = union (active{lev+1}, new_possible_active_fun(new_functions));
+  end
+
+  aux = Cref;
+  
+  ndof_per_level = cellfun (@numel, active);
+  nn1 = sum (ndof_per_level(1:lev-1));
+  [~,~,indices] = intersect (active{lev}, old_active);
+  Cref(nn1+(1:numel(active{lev})),:) = Cref(nn1+indices,:);
+  
+  nn2 = sum (ndof_per_level(1:lev));
+  active_and_deact = union (active{lev+1}, deactivated{lev+1});
+  Cref(nn2+(1:numel(active_and_deact)),:) = Cmat(active_and_deact,marked_and_deact) * aux(nn1+marked_deact_indices,:);
+  
+  nn3 = hspace.ndof_per_level(lev+1);
+  [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
+  Id = sparse (numel(active_and_deact), nn3);
+  Id(indices,:) = speye (nn3, nn3);
+  Cref = [Cref, [sparse(nn2,nn3); Id]];  
+  
+end % for lev
+
+hspace.active = active(1:hspace.nlevels);
+hspace.deactivated = deactivated(1:hspace.nlevels);
+hspace.ndof_per_level = cellfun (@numel, hspace.active);
+hspace.ndof = sum(hspace.ndof_per_level);
+
+hspace.globnum_active = zeros (hspace.ndof,hmsh.ndim+1);
+Nf = cumsum ([0; hspace.ndof_per_level(:)]);
+for lev = 1:hspace.nlevels
+  ind_f = (Nf(lev)+1):Nf(lev+1);
+  if (~isempty(ind_f))
+    hspace.globnum_active(ind_f, 1) = lev;
+    globnum = cell (1,hmsh.ndim);
+    [globnum{:}] = ind2sub (hspace.space_of_level(lev).ndof_dir, hspace.active{lev}(:));
+    hspace.globnum_active(ind_f, 2:end) = cell2mat (globnum);
+  end
+end
+
+hspace.coeff_pou = Cref * hspace.coeff_pou;
 
 end
