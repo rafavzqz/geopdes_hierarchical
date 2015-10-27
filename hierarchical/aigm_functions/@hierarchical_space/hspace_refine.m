@@ -3,7 +3,7 @@
 
 % HSPACE_REFINE: refine the hierarchical space, updating the fields of the object.
 %
-%   hspace = hspace_refine (hspace, hmsh, marked, flag, new_cells)
+%   [hspace, Cref] = hspace_refine (hspace, hmsh, marked, flag, new_cells)
 %
 % INPUT:
 %
@@ -16,6 +16,7 @@
 % OUTPUT:
 %
 %   hspace:    object representing the refined hierarchical space (see hierarchical_space)
+%   Cref:      a matrix to pass from the coarse space (input) to the refined space (output)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
