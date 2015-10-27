@@ -651,6 +651,80 @@ For the routines in this section notice that the variable $\mesh$ is already upd
 \end{algorithm}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
+\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
+\caption{\texttt{update\_active\_functions}}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+%\begin{center}
+\medskip
+{\footnotesize
+\% This function updates the active and deactivated B-spline basis functions, {\Rd when using the simplified hierarchical space}. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
+
+\KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
+ \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^n$}
+\medskip
+
+\begin{enumerate}
+ \item[1.] \lIf{ $\functionstoremove_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=\emptyset$}
+\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+\begin{enumerate}
+\item[2.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
+\item[3.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
+\item[4.] $F^C \leftarrow$ \texttt{split\_fun} $(\functionstoremove_\ell)$, \% Compute the list of children functions of the marked functions;
+\item[5.] $F^C \leftarrow F^C \setminus (F^A_{\ell+1} \cup F^D_{\ell+1})$ Take only the children that have not been already activated.
+ \item[6.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup F^C$ \% Enlarge $F^A_{\ell+1}$ by adding the new active functions\;
+ \item[7.] Use \texttt{get\_cells} to update $\functionstoremove_{\ell+1}$ by adding the functions in $F^C$ that have no active cell of level $\ell+1$ within its support.
+
+\end{enumerate}
+}
+\end{enumerate}
+\medskip
+}%\end{center}
+\end{minipage}
+}
+\end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
+\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
+\caption{\texttt{update\_active\_functions}}
+\bigskip
+\doublebox{
+\begin{minipage}{.95\textwidth}
+%\begin{center}
+\medskip
+{\footnotesize
+\% This function updates the active and deactivated B-spline basis functions, {\Rd when using the standard hierarchical space}. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
+
+\KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
+ \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^n$}
+\medskip
+
+\begin{enumerate}
+ \item[1.] \lIf{ $\newcells_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=\emptyset$}
+\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+\begin{enumerate}
+\item[2.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
+\item[3.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
+\item[4.] $F^C \leftarrow$\texttt{get\_basis\_functions($\newcells_{\ell+1}$)} \% Compute the indices of B-splines of level $\ell+1$ that do not vanish in some cell of $\newcells_{\ell+1}$\;
+\item[5.] $F^C \leftarrow F^C \setminus F^A_{\ell+1}$ \% Remove from $F^C$ the functions that were already active\;
+\item[6.] Use \texttt{get\_cells} to update $F^C$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $E^A_{\ell+1}\cup E^D_{\ell+1}$\;
+\item[7.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup F^C$\;
+\end{enumerate}
+}
+\end{enumerate}
+\medskip
+}%\end{center}
+\end{minipage}
+}
+\end{algorithm}
+
 \newpage
 
 \subsection{Initialization of a hierarchical spline space}
