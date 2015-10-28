@@ -208,7 +208,7 @@ end % for lev
 
 % Computation of the matrix to pass from the original to the refined space
 ndlev = hspace.ndof_per_level(1);
-active_and_deact = union (hspace.active{1}, hspace.deactivated{1});
+active_and_deact = union (active{1}, deactivated{1});
 [~,indices] = intersect (active_and_deact, hspace.active{1});
 Id = sparse (numel(active_and_deact), ndlev);
 Id(indices,:) = speye (ndlev, ndlev);
