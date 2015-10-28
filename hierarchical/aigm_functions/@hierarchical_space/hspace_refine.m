@@ -169,29 +169,16 @@ active = hspace.active;
 deactivated = hspace.deactivated;
 
 
-ndlev = hspace.ndof_per_level(1);
-active_and_deact = union (active{1}, deactivated{1});
-[~,indices] = intersect (active_and_deact, hspace.active{1});
-Id = sparse (numel(active_and_deact), ndlev);
-Id(indices,:) = speye (ndlev, ndlev);
-Cref = Id;
-
-
 for lev = 1:hspace.nlevels-1
 
   Cmat = 1;
   for idim = 1:hmsh.ndim
     Cmat = kron (hspace.Proj{lev,idim}, Cmat);
   end
-  
-  old_active = union (active{lev}, deactivated{lev});
-  
-  marked_and_deact = union (marked_fun{lev}, deactivated{lev});
-  [~,marked_deact_indices] = intersect (active_and_deact, marked_and_deact);
-
-  % Remove the marked functions from the active functions of level lev
+    
+% Remove the marked functions from the active functions of level lev
   active{lev} = setdiff (active{lev}, marked_fun{lev});
-  deactivated{lev} = marked_and_deact(:);
+  deactivated{lev} = union (marked_fun{lev}, deactivated{lev});
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
     [ii,~] = find (Cmat(:,marked_fun{lev}));
@@ -215,18 +202,40 @@ for lev = 1:hspace.nlevels-1
     active{lev+1} = union (active{lev+1}, new_possible_active_fun(new_functions));
   end
   
-  aux = Cref;
-  active_and_deact = union (active{lev+1}, deactivated{lev+1});
+end % for lev
+
+
+
+% Computation of the matrix to pass from the original to the refined space
+ndlev = hspace.ndof_per_level(1);
+active_and_deact = union (hspace.active{1}, hspace.deactivated{1});
+[~,indices] = intersect (active_and_deact, hspace.active{1});
+Id = sparse (numel(active_and_deact), ndlev);
+Id(indices,:) = speye (ndlev, ndlev);
+Cref = Id;
+
+for lev = 1:hspace.nlevels-1
+
+  Cmat = 1;
+  for idim = 1:hmsh.ndim
+    Cmat = kron (hspace.Proj{lev,idim}, Cmat);
+  end
+
+  [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
   
+  aux = Cref;
+
   ndof_per_level = cellfun (@numel, active);
   ndof_prev_levs = sum (ndof_per_level(1:lev-1));
-  [~,~,indices] = intersect (active{lev}, old_active);
+  [~,~,indices] = intersect (active{lev}, active_and_deact);
   Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:);
+
+  active_and_deact = union (active{lev+1}, deactivated{lev+1});
   
   ndof_until_lev = sum (ndof_per_level(1:lev));
   Cref(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
-      Cmat(active_and_deact,marked_and_deact) * aux(ndof_prev_levs+marked_deact_indices,:);
-  
+      Cmat(active_and_deact,deactivated{lev}) * aux(ndof_prev_levs+deact_indices,:);
+
   ndlev = hspace.ndof_per_level(lev+1);
   [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
   Id = sparse (numel(active_and_deact), ndlev);
