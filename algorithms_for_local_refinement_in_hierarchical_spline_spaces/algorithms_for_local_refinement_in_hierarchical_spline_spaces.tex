@@ -1,63 +1,63 @@
-\documentclass[12pt,a4paper,pdftex]{article}
+\documentclass[a4paper]{siamltex1213}
 
 %\usepackage[notref,notcite]{showkeys}
 %\usepackage{latexsym,amsfonts,amssymb,amsthm,amsmath,amscd,eufrak,makeidx}
-\usepackage{fullpage}
+%\usepackage{fullpage}
 \usepackage[dvips]{graphicx}
-\usepackage{psfrag}
+%\usepackage{psfrag}
 \usepackage{amsmath}
 \usepackage{fancybox}
 \usepackage{amsfonts}
-\usepackage{amsthm}
+%\usepackage{amsthm}
 \usepackage{amssymb}
-\usepackage{comment}
-\usepackage{cancel}
+%\usepackage{comment}
+%\usepackage{cancel}
 \usepackage{color}
 \usepackage[]{algorithm2e}
 \usepackage[]{algorithmicx}
-\usepackage{bm}
-\usepackage{xspace}
-\usepackage[english]{babel}
-\usepackage{authblk}
+%\usepackage{bm}
+%\usepackage{xspace}
+%\usepackage[english]{babel}
+%\usepackage{authblk}
 
-\usepackage[normalem]{ulem} % to be able to use \sout
+%\usepackage[normalem]{ulem} % to be able to use \sout
 
-\usepackage{enumerate}
+%\usepackage{enumerate}
 %\usepackage{pdfsync}
 
-\usepackage[%
-%   pdftex=true,  % si se usa pdftex
-%   pdfpagemode=UseNone,
-%   pdfstartpage=3,   % para empezar en pag. 3
-   bookmarks=true,
-%   bookmarksopen=true,
-%   bookmarksnumbered=true,
-%   plainpages=false, % cuando existe p\'agina i y p\'agina 1
-%   pdfstartview=XYZ,
-%   pdfpagelabels=true, % ii en preambulo
-   pagebackref=false, % referencias a citas
-   colorlinks,
-   linkcolor=blue,
-%   linktocpage, % link en el n\'umero de pagina en toc
-   anchorcolor=blue,
-   citecolor=blue,
-   filecolor=blue,
-   %pagecolor=blue,
-   urlcolor=blue
-   ]{hyperref}
+%% \usepackage[%
+%% %   pdftex=true,  % si se usa pdftex
+%% %   pdfpagemode=UseNone,
+%% %   pdfstartpage=3,   % para empezar en pag. 3
+%%    bookmarks=true,
+%% %   bookmarksopen=true,
+%% %   bookmarksnumbered=true,
+%% %   plainpages=false, % cuando existe p\'agina i y p\'agina 1
+%% %   pdfstartview=XYZ,
+%% %   pdfpagelabels=true, % ii en preambulo
+%%    pagebackref=false, % referencias a citas
+%%    colorlinks,
+%%    linkcolor=blue,
+%% %   linktocpage, % link en el n\'umero de pagina en toc
+%%    anchorcolor=blue,
+%%    citecolor=blue,
+%%    filecolor=blue,
+%%    %pagecolor=blue,
+%%    urlcolor=blue
+%%    ]{hyperref}
 
 
 
- \theoremstyle{plain}
-    \newtheorem{theorem}{Theorem}[section]
-    \newtheorem{corollary}[theorem]{Corollary}
-    \newtheorem{lemma}[theorem]{Lemma}
-    \newtheorem{proposition}[theorem]{Proposition}
+% \theoremstyle{plain}
+%    \newtheorem{theorem}{Theorem}[section]
+%    \newtheorem{corollary}[theorem]{Corollary}
+%    \newtheorem{lemma}[theorem]{Lemma}
+%    \newtheorem{proposition}[theorem]{Proposition}
     \newtheorem{assumption}[theorem]{Assumption}
- \theoremstyle{definition}
-    \newtheorem{definition}[theorem]{Definition}
+% \theoremstyle{definition}
+%    \newtheorem{definition}[theorem]{Definition}
     \newtheorem{remark}[theorem]{Remark}
- \theoremstyle{remark}
+% \theoremstyle{remark}
   %  \newtheorem{notation}[theorem]{Notation}
     \newtheorem{example}[theorem]{Example}
  
@@ -113,7 +113,7 @@
 \newcommand{\D}{\displaystyle}
 
 
-\DeclareMathOperator{\supp}{supp}
+%\DeclareMathOperator{\supp}{supp}
 \DeclareMathOperator{\dist}{dist}
 \DeclareMathOperator{\Span}{span}
 \DeclareMathOperator{\diam}{diam}
@@ -167,19 +167,20 @@
 
 \newcommand{\bx}{{\bf x}}
 
+
+\title{Algorithms for local refinement \\ in hierarchical spline spaces. {\Rd UPDATE}}
+
+\author{Eduardo M.~Garau\footnotemark[1]\ \footnotemark[2]\ \footnotemark[3] \and Rafael V\'azquez\footnotemark[1]}
+
 \begin{document}
-
-\title{Algorithms for local refinement \\ in hierarchical spline spaces}
-
-
-\author[1,2,3]{Eduardo M. Garau}%\thanks{Corresponding author}}
-\author[1]{Rafael V\'azquez}
-\affil[1]{\small Istituto di Matematica Applicata e Tecnologie Informatiche 
-`E. Magenes' (CNR), Italy}
-\affil[2]{\small Instituto de Matem\'atica Aplicada del Litoral (CONICET-UNL), Argentina}
-\affil[3]{\small Facultad de Ingenier\'ia Qu\'imica (UNL), Argentina}
-
 \maketitle
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Istituto di Matematica Applicata e Tecnologie Informatiche `E. Magenes' (CNR), Italy}
+\footnotetext[2]{Instituto de Matem\'atica Aplicada del Litoral (CONICET-UNL), Argentina}
+\footnotetext[3]{Facultad de Ingenier\'ia Qu\'imica (UNL), Argentina}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
 % 
 % \begin{abstract}
 %  
@@ -215,7 +216,7 @@ with the corresponding tensor-product B-spline bases denoted by
  \BB_0,  \BB_1,  \BB_2, \BB_3,\dots,
 \end{equation}
 respectively. %In order to guarantee~\eqref{E:tensor-product spaces}, we assume that if $\xi$ is a knot in $\Xi_{p_i,n_i^\ell}$ with multiplicity $m$, then $\xi$ is also a knot in $\Xi_{p_i,n_i^{\ell+1}}$ with multiplicity at least $m$, for $i=1,\dots,d$ and $\ell\in\NN_0$. 
-Furthermore, for $\ell\in\NN_0$, we denote by $\QQ_\ell$ the tensor-product mesh associated to $\BB_\ell$ and we say that $Q\in\QQ_\ell$ is a \emph{cell of level $\ell$}. We now state some well-known properties of the B-spline basis functions~\cite{deBoor,Schumaker}:
+Furthermore, for $\ell\in\NN_0$, we denote by $\QQ_\ell$ the tensor-product mesh associated to $\BB_\ell$ and we say that $Q\in\QQ_\ell$ is a \emph{cell of level $\ell$}. We now state some well-known properties of the B-spline basis functions~\cite{DeBoor,Schumi}:
 \begin{itemize}
 \item \emph{Local linear independence.} For any nonempty open set $O\subset\Omega$, the functions in $\BB_\ell$ that do not vanish identically on $O$, are linearly independent on $O$.
 \item \emph{Positive partition of unity.} The B-spline basis functions of level $\ell$ form a partition of the unity 
@@ -389,7 +390,7 @@ is an array with the corresponding coefficients given by~\eqref{E:two scale rela
 \end{enumerate}
 \begin{remark}\label{R:two-scale relation}
 The routines listed above are in fact elementary. The \emph{hardest} thing in the previous routines is the computation of the coefficients for the two-scale relation~\eqref{E:two scale relation} in the function \texttt{split\_fun}. Nevertheless, by virtue of the tensor-product structure of B-splines, this task can be done by computing the corresponding coefficients in the two-scale relation for univariate B-splines and Kronecker products. On the other hand, it is important to remark that the coefficients in the univariate case can be computed using knot insertion formulae. 
-It is important to mention that these coefficients will be used in our algorithms below to compute the coefficients of the hierarchical basis functions for the partition of the unity~(cf.~\eqref{E:partition of the unity in the hierarchical space}). We remark that some a posteriori error estimators may require this information~\cite{BuGa15}.
+It is important to mention that these coefficients will be used in our algorithms below to compute the coefficients of the hierarchical basis functions for the partition of the unity~(cf.~\eqref{E:partition of the unity in the hierarchical space}). We remark that some a posteriori error estimators may require this information~\cite{BG15b}.
 
 Finally, we remark that if we do not need the explicit knowledge of the coefficients in~\eqref{E:partition of the unity in the hierarchical space}, we can consider a simple version of the function $\texttt{split\_fun}$ given by 
  $$I = \texttt{split\_fun} (i_\beta,\ell),$$ where $i_\beta$ is the global 
@@ -457,7 +458,7 @@ Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\
 \end{algorithm}
 
 
-\subsubsection{Routines for the mesh}
+\subsubsection{Routines for the mesh} \mbox{}
 
 % \begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$} 
 % \caption{$\texttt{refine\_hierarchical\_mesh}$}
@@ -882,14 +883,18 @@ By doing so, the global mass matrix is written as
 M = \sum_{\ell = 0}^n C^T_\ell M_\ell C_\ell.
 \end{equation*}
 
-%===============================================================================
-\begin{thebibliography}{1}
-%===============================================================================
-\bibitem[BG15a]{BG15}
-A. Buffa and E.M. Garau, \emph{New refinable spaces and local approximation estimates for hierarchical splines}, submitted, 2015.
 
-\bibitem[BG15b]{BuGa15}
-A. Buffa and E.M. Garau, \emph{A posteriori error estimators for hierarchical B-spline discretizations}, in preparation, 2015.
+\bibliographystyle{siam}
+\bibliography{biblio}
+
+%===============================================================================
+%\begin{thebibliography}{1}
+%===============================================================================
+%\bibitem[BG15a]{BG15}
+%A. Buffa and E.M. Garau, \emph{New refinable spaces and local approximation estimates for hierarchical splines}, submitted, 2015.
+
+%\bibitem[BG15b]{BuGa15}
+%A. Buffa and E.M. Garau, \emph{A posteriori error estimators for hierarchical B-spline discretizations}, in preparation, 2015.
 
 % 
 % \bibitem[BG15]{BG15}
@@ -904,17 +909,17 @@ A. Buffa and E.M. Garau, \emph{A posteriori error estimators for hierarchical B-
 % Poincar\'e inequalities on convex domains}, Proceedings of LMS \textbf{93} 
 % (2006), 197--226.
 
-\bibitem[dB01]{deBoor}
-C. de Boor, \emph{A practical guide to splines}, Revised edition. Applied Mathematical Sciences, 27. Springer-Verlag, New York, 2001. 
+%\bibitem[dB01]{deBoor}
+%C. de Boor, \emph{A practical guide to splines}, Revised edition. Applied Mathematical Sciences, 27. Springer-Verlag, New York, 2001. 
 
-\bibitem[GJS14]{GJS14}
-C. Giannelli, B. J\"uttler, and H. Speleers, \emph{Strongly stable bases for adaptively refined multilevel spline spaces}, Adv. Comput. Math. 40 (2014), no. 2, 459--490.
+%\bibitem[GJS14]{GJS14}
+%C. Giannelli, B. J\"uttler, and H. Speleers, \emph{Strongly stable bases for adaptively refined multilevel spline spaces}, Adv. Comput. Math. 40 (2014), no. 2, 459--490.
 
 % \bibitem[K97]{Kraft}
 % R. Kraft, \emph{Hierarchical B-splines}, Preprint of Math. Inst. A Uni.Stuttgart.
 
-\bibitem[K98]{Kraft-thesis}
-R. Kraft, \emph{Adaptive und linear unabh\"angige multilevel B-Splines und ihre Anwendungen}, Ph.D. thesis, Universit\"at Stuttgart, 1998. 
+%\bibitem[K98]{Kraft-thesis}
+%R. Kraft, \emph{Adaptive und linear unabh\"angige multilevel B-Splines und ihre Anwendungen}, Ph.D. thesis, Universit\"at Stuttgart, 1998. 
 
 % 
 % \bibitem[MSV08]{MSV-convergence}
@@ -928,8 +933,8 @@ R. Kraft, \emph{Adaptive und linear unabh\"angige multilevel B-Splines und ihre 
 % methods}, Multiscale and Adaptivity: Modeling, Numerics and Applications, CIME 
 % Lectures, eds R. Naldi and G. Russo, Springer (to appear).
 
-\bibitem[S07]{Schumaker}
-L.L. Schumaker, \emph{Spline functions: basic theory}, Third edition, Cambridge Mathematical Library, Cambridge University Press, Cambridge, 2007.
+%\bibitem[S07]{Schumaker}
+%L.L. Schumaker, \emph{Spline functions: basic theory}, Third edition, Cambridge Mathematical Library, Cambridge University Press, Cambridge, 2007.
 
 % 
 % \bibitem[S11]{S11}
@@ -943,11 +948,11 @@ L.L. Schumaker, \emph{Spline functions: basic theory}, Third edition, Cambridge 
 % residuals}, SIAM J. Numer. Anal. 47 (2009), no. 3, 2387--2405.
 
 
-\bibitem[VGJS11]{Vuong etal}
-A.-V. Vuong, C. Giannelli, B. J\"uttler and B. Simeon, \emph{A hierarchical approach to adaptive local refinement in isogeometric analysis}, Comput. Methods Appl. Mech. Engrg. 200 (2011), no. 49-52, 3554--3567.
+%\bibitem[VGJS11]{Vuong etal}
+%A.-V. Vuong, C. Giannelli, B. J\"uttler and B. Simeon, \emph{A hierarchical approach to adaptive local refinement in isogeometric analysis}, Comput. Methods Appl. Mech. Engrg. 200 (2011), no. 49-52, 3554--3567.
 
 
-\end{thebibliography}
+%\end{thebibliography}
 
 
 
