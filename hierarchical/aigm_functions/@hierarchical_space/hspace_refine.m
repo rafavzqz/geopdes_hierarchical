@@ -171,16 +171,16 @@ deactivated = hspace.deactivated;
 
 for lev = 1:hspace.nlevels-1
 
-  Cmat = 1;
-  for idim = 1:hmsh.ndim
-    Cmat = kron (hspace.Proj{lev,idim}, Cmat);
-  end
-    
 % Remove the marked functions from the active functions of level lev
   active{lev} = setdiff (active{lev}, marked_fun{lev});
   deactivated{lev} = union (marked_fun{lev}, deactivated{lev});
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
+    Cmat = 1;
+    for idim = 1:hmsh.ndim
+      Cmat = kron (hspace.Proj{lev,idim}, Cmat);
+    end
+  
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
