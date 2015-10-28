@@ -44,19 +44,20 @@ aux = (valf + der2num).^2; % size(aux) = [hmsh.nqn, hmsh.nel], valores en los no
 
 quad_weights = [];
 jacdet = [];
+h = [];
 for ilev = 1:hmsh.nlevels % Active levels
     if (hmsh.msh_lev{ilev}.nel ~= 0)
             quad_weights = cat(2,quad_weights, hmsh.msh_lev{ilev}.quad_weights);
             jacdet = cat(2,jacdet, hmsh.msh_lev{ilev}.jacdet);
+            h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
+            ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
+    else
+        ms(ilev) = 0;
     end
 end
 w = quad_weights .* jacdet;
-
-[h, ms] = hmsh_get_element_size (hmsh);
-
-% Computation of the diameter of the elements (only for hypercubes). 
-h = sqrt(hmsh.rdim)*h.^(1/hmsh.rdim);
-ms = sqrt(hmsh.rdim)*ms.^(1/hmsh.rdim);
+h = h * sqrt (hmsh.ndim);
+ms = ms * sqrt (hmsh.ndim);
 
 switch adaptivity_data.flag
     case 'elements',
