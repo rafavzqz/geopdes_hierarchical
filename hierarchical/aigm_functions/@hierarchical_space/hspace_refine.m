@@ -48,10 +48,9 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
   degree = hspace.space_of_level(hmsh.nlevels-1).degree;
   knots = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, degree, degree-1);
   hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, degree, msh_level);
-  coarse_space = hspace.space_of_level(hmsh.nlevels-1).constructor (msh_level);
 
   for idim = 1:hmsh.ndim
-    knt_coarse = coarse_space.knots{idim};
+    knt_coarse = hspace.space_of_level(hmsh.nlevels-1).knots{idim};
     knt_fine = hspace.space_of_level(hmsh.nlevels).knots{idim};
     hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree(idim), knt_coarse, knt_fine);
   end
