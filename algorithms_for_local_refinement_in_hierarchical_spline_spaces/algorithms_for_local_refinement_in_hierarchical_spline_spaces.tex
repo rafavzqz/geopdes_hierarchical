@@ -726,6 +726,44 @@ For the routines in this section notice that the variable $\mesh$ is already upd
 \end{algorithm}
 
 \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Refinement matrix between hierarchical spaces (knot insertion)}
+Since the spaces are nested, $\Span\HH \subset \Span\HH^*$, we can write a function in the first space as a linear combination of basis functions in the second one, and the operation can be done through a matrix. It is possible to use the information of active and deactivated functions to obtain this. 
+
+{\Rd MORE NOTATION TO BE FIXED
+\begin{itemize}
+\item $N_\ell$: number of basis functions for the tensor-product space of level $\ell$.
+\item $N^A_\ell$: number of active functions of level $\ell$ in the hierarchical space.
+\item $N^{A\cup D}_\ell$: number of active and deactivated functions of level $\ell$.
+\end{itemize}
+The analogous notation with $*$ is used for the refined space.
+}
+
+Since any (active) function in $\HH$ is either in $\HH^*$ or in the set of deactivated functions {\Rd (DEFINE)}, we can define the rectangular matrix $\tilde I_\ell \in {\cal M}_{N^{*^{A\cup D}}_{\ell}, N^A_\ell}$ such that 
+\begin{equation*}
+(\tilde I_\ell)_{ij} = \left \{ 
+\begin{array}{l}
+1, \text{ if }  \beta^{*^{A \cup D}}_{i,\ell} = \beta^A_{j,\ell} (active)\\
+0, \text{ otherwise. }
+\end{array}
+\right.
+\end{equation*}
+
+We define the matrix for refinement $K = K_n$ with the following recursive algorithm:
+\begin{enumerate}
+\item $K_0 = \tilde I_0$,
+\item $K_{\ell+1} = \left [ 
+\begin{array}{cc}
+K^{A^*}_\ell & 0 \\
+K_\ell^{\ell+1} K^{D^*}_\ell & \tilde I_{\ell+1}
+\end{array}
+\right]$,
+\end{enumerate}
+where $K_\ell^{A^*}$ and $K_\ell^{D^*}$ are submatrices of $K_\ell$ restricted to the rows corresponding to {\Rd active and deactivated functions in $\HH^*$. The matrix $K_\ell^{\ell+1}$ is the submatrix of $C_\ell^{\ell+1}$ restricted to the rows of active and deactivated functions of level $\ell+1$ in $\HH^*$, and the columns of deactivated functions of level $\ell$ in $\HH^*$. }
+
+We remark that this recursive algorithm is independent of the chosen hierarchical space (either standard or simplified). To compute the same matrix for truncated hierachical B-splines, one only needs to replace the matrix $C_\ell^{\ell+1}$ (and its submatrix) by its truncated version. {\Rd (EXPLAIN IN PREVIOUS SECTIONS)}
+
+The refinement matrix $K$ may become useful in several occasions. For instance, it can be used for applying knot insertion; in time dependent problems, it can serve to pass the solution from the previous time step to the current mesh; in multigrid methods, it can be used to pass from a grid of $n$ levels to a grid of $n+1$ levels...
 
 \subsection{Initialization of a hierarchical spline space}
 
@@ -785,8 +823,8 @@ The function \texttt{refine} detailed in the previous section can be also used t
 {\Rd SOME NOTATION, to be changed after discussion:
 \begin{itemize}
 \item $N_\ell$: number of basis functions in $\BB_\ell$.
-\item $A_\ell$: number of active functions of level $\ell$. Give a name to the sets in \eqref{E:Hierarchical basis}.
-\item $\tilde A_\ell := \sum_{k=0}^\ell A_\ell$, number of active functions up to level $\ell$.
+\item $N^A_\ell$: number of active functions of level $\ell$. Give a name to the sets in \eqref{E:Hierarchical basis}.
+\item $\tilde N^A_\ell := \sum_{k=0}^\ell N^A_k$, number of active functions up to level $\ell$.
 \item $\beta^A_{j,\ell}$ active functions. Probably we can avoid these.
 \end{itemize}
 }
@@ -824,7 +862,7 @@ The only missing part is the computation of the coefficients in an efficient way
 \begin{equation*}
 (M_\ell)_{k_i k_j} = \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell}  \beta_{k_i,\ell}  \beta_{k_j,\ell} \, d\bx,
 \end{equation*}
-and let us also denote by $\tilde I_\ell \in {\cal M}_{N_\ell, A_\ell}$ the rectangular matrix such that 
+and let us also denote by $\tilde I_\ell \in {\cal M}_{N_\ell, N^A_\ell}$ the rectangular matrix such that 
 $$
 (\tilde I_\ell)_{ij} = \left \{ 
 \begin{array}{l}
@@ -833,9 +871,9 @@ $$
 \end{array}
 \right.$$
 
-We define the matrices for basis change $C_\ell \in {\cal M}_{N_\ell, \tilde A_\ell}$ by the recursive algorithm
+We define the matrices for basis change $C_\ell \in {\cal M}_{N_\ell, \tilde N^A_\ell}$ by the recursive algorithm
 \begin{enumerate}
-\item $C^0 = \tilde I_0$.
+\item $C_0 = \tilde I_0$.
 \item $C_\ell = [C_{\ell-1}^\ell C_{\ell-1}, \tilde I_\ell]$.
 \end{enumerate}
 
