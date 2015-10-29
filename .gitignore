@@ -2,3 +2,9 @@
 *~
 *.vts
 *.vtu
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.swp
