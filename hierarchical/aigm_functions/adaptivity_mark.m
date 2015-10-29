@@ -1,50 +1,73 @@
-function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
+% ADAPTIVITY_MARK: mark cells or basis functions for refinement according to 
+% the marking strategy in adaptivity_data.mark_strategy.
 %
-% function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
+% [marked, nmarked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data)
 %
-% This function marks cells or basis functions for refinement according to 
-% the marking strategy in adaptivity_data.mark_strategy. Possible strategies are
-%           GR: global (uniform) refinement,  
-%           MS: maximum strategy,  
-%           GERS: guaranteed error reduction strategy (D\"orfler's)
+% INPUT:
 %
-% OUTPUT: marked{lev}: indices of marked cells (or functions) of level lev
-%         nmarked: total number of marked cells (or functions)
+%   est:    result obtained from the estimate step (see adaptivity_estimate_laplace)
+%   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
+%   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
+%   adaptivity_data: a structure with the data for the adaptivity method.
+%                    In particular, it contains the field 'mark_strategy'. The possible strategies are:
+%                     GR:   global (uniform) refinement,  
+%                     MS:   maximum strategy,  
+%                     GERS: guaranteed error reduction strategy (Dörfler's)
 %
+% OUTPUT:
+%
+%    marked:  cell-array with the indices of marked cells (or functions) for each level, in the tensor-product setting
+%    nmarked: total number of marked cells (or functions)
+%
+% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 % ATENCION: Despues describire mejor esta funcion y limpiare un poco mas el
 % codigo
-%
 
-max_est = max(est);
+
+function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
 
 switch adaptivity_data.flag
-    case 'elements', disp('marking elements for refinement')
-    case 'functions', disp('marking basis functions for refinement')
-    otherwise, disp('MARK: Error'), return,
+    case 'elements', disp ('marking elements for refinement')
+    case 'functions', disp ('marking basis functions for refinement')
+    otherwise, disp ('MARK: Error'), return,
 end
 
-aux_marked = zeros(size(est));
+max_est = max (est);
+aux_marked = zeros (size (est));
 
 switch adaptivity_data.mark_strategy
-case 'GR'
-  aux_marked = ones(size(est));
-case 'MS'
+ case 'GR'
+  aux_marked = ones (size (est));
+ case 'MS'
   aux_marked(est > adaptivity_data.mark_param * max_est) = 1;
-case 'GERS'
-  est_sum2 = sum(est.^2);
+ case 'GERS'
+  est_sum2 = sum (est.^2);
   est_sum2_marked = 0;
   threshold = (1 - adaptivity_data.mark_param)^2 * est_sum2;
   gamma = 1;
   while (est_sum2_marked < threshold)
     gamma = gamma - 0.1;
-    ff = find(est > gamma * max_est);
+    ff = find (est > gamma * max_est);
     aux_marked(ff) = 1;
-    est_sum2_marked = sum((est(ff)).^2);
+    est_sum2_marked = sum ((est(ff)).^2);
   end
 end
 
-marked_list = find(aux_marked);
+marked_list = find (aux_marked);
 nmarked = numel (marked_list);
 
 marked = cell (hmsh.nlevels, 1);
