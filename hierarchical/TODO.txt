@@ -1,8 +1,7 @@
-Add the references to articles (Buffa-Garau, our preprint, THB-splines)
+- Add the references to articles (our preprint, THB-splines)
 
-- Clean refine
-- Plot using hsp_eval
+- Clean estimate and mark
 - Change name of adaptivity_solve_laplace. Make it a script, instead of a function.
-- Make the classes, hierarchical_mesh and hiearchical_space. Move the functions into the classes.
-- Implement the truncated basis.
-- Change the way to call hsp_eval (also in geopdes_base).
+- Implement the truncated basis. (Cesare)
+- Try to optimize the refinement, if possible 
+- Try to avoid recomputing the 1D spaces for the boundary
