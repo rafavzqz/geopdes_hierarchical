@@ -13,8 +13,9 @@
 %\usepackage{comment}
 %\usepackage{cancel}
 \usepackage{color}
-\usepackage[]{algorithm2e}
-\usepackage[]{algorithmicx}
+%\usepackage[]{algorithm2e}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 %\usepackage{bm}
 %\usepackage{xspace}
 %\usepackage[english]{babel}
@@ -126,12 +127,21 @@
 \newcommand{\rdel}[1]{{\color{red}{\sout{#1}}}}
 %\newcommand{\rdel}[1]{}
 
+\newcommand{\activeelements}[1]{\tt E^A_{#1}}
+\newcommand{\deactelements}[1]{\tt E^D_{#1}}
+\newcommand{\activefunctions}[1]{\tt F^A_{#1}}
+\newcommand{\deactfunctions}[1]{\tt F^D_{#1}}
+
 \DeclareMathOperator\mesh{\texttt{MESH}}
 \DeclareMathOperator\basis{\texttt{SPACE}}
 \DeclareMathOperator\removed{\tt R}
 \DeclareMathOperator\marked{\tt MARKED}
 \DeclareMathOperator\newcells{\tt NE}
+%\DeclareMathOperator\activeelements{\tt E^A}
+%\DeclareMathOperator\deactelements{\tt E^D}
 \DeclareMathOperator\markedelements{\tt ME}
+%\DeclareMathOperator\activefunctions{\tt F^A}
+%\DeclareMathOperator\deactfunctions{\tt F^D}
 \DeclareMathOperator\functionstoremove{\tt MF}
 \newcommand\qih{\Pi}
 \newcommand\qihh{\breve{\Pi}}
@@ -200,6 +210,19 @@
 % 65Y20  % Complexity and performance of numerical algorithms 
 % \end{quote}
 
+
+
+\begin{algorithm}
+\begin{algorithmic}
+\State $\markedelements \gets \textbf{compute\_cells\_to\_refine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
+\State $\markedelements \gets \textbf{Compute\_Cells\_To\_Refine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
+\State $\markedelements \gets \textbf{ComputeCellsToRefine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
+\State $\markedelements \gets \textsc{ComputeCellsToRefine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Introduction}
+\cite{Scott2014222,Bornemann2013584}, \cite{KGJ14}?
 
 \section{Setting}
 
@@ -420,43 +443,59 @@ Notice that $F^D_{n-1}=\emptyset$.
 
 Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\ell\subset E^A_\ell$) is the set of global indices of \emph{marked} functions (or elements) of level $\ell$, i.e., functions (or elements) in $\MM_\ell$. Now, we present an algorithm for updating the information in $\mesh$ and $\basis$ when enlarging the hierarchy of subdomains ${\bf \Omega}_n$ with the marked functions or elements as explained in the previous section, cf.~\eqref{E:marking basis functions} and~\eqref{E:marking active cells}.
 
-
-\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\basis] = \texttt{refine}(\mesh,\basis,\marked)$} 
-\caption{$\texttt{refine}$ (REFINE THE HIERARCHICAL MESH AND SPACE)}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-\medskip
-
 \% This function updates $\mesh$ and $\basis$ when enlarging the current subdomains with the marked functions (or elements) given in $\marked$
-
-
-\KwData{(Data for $\QQ$, $\HH$ and $\MM$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\\ \marked=\{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
- \KwResult{(Data for $\QQ^*$ and $\HH^*$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n).$}
-
-\medskip
-
-\begin{enumerate}
- \item[] \% REFINE MESH\;
-  \item[] \Switch{marked functions or elements}{
-  \begin{enumerate}
-   \item[1.]\lCase{functions,}{$\markedelements = \texttt{compute\_cells\_to\_refine}(\{E^A_\ell\}_{\ell=0}^{n-1}, \marked)$}
-\item[2.]\lCase{elements,}{$\markedelements = \marked$}
-\end{enumerate}
-}
-\item[]\%   $\markedelements$ contains the cells that have to be refined\;
-  
-\item[3.]$[\mesh, \newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$\;
-%\item[3.]$[\mesh, \newcells] = \texttt{update\_active\_cells}(\mesh, \markedelements)$\;
- \item[]\% $\newcells$ contains the new cells\;
- \item[]\% REFINE SPACE\;
-\item[4.] $\basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$\;
-\end{enumerate}
- \medskip 
-\end{minipage}
-}
+\begin{algorithm}
+\caption{Refine}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\mesh, \basis, \marked$
+\If{(Marking functions)}
+\State $\markedelements \gets \textbf{compute\_cells\_to\_refine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
+\ElsIf{(Marking elements)}
+\State $\markedelements \gets \marked$
+\EndIf
+\State $\mesh \gets$ \textbf{refine\_hierarchical\_mesh}\, ($\markedelements$) \Comment{{\Rd Think about these two lines}}
+\State $\newcells \gets \textbf{get\_children} \, (\markedelements)$
+\State $\basis \gets \textbf{refine\_hierarchical\_space} \, (\mesh, \basis, \marked, \newcells)$
+\Statex \textbf{Output:} $\mesh, \basis$
+\end{algorithmic}
 \end{algorithm}
 
+
+%% \begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\basis] = \texttt{refine}(\mesh,\basis,\marked)$} 
+%% \caption{$\texttt{refine}$ (REFINE THE HIERARCHICAL MESH AND SPACE)}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% \medskip
+
+%% \% This function updates $\mesh$ and $\basis$ when enlarging the current subdomains with the marked functions (or elements) given in $\marked$
+
+
+%% \KwData{(Data for $\QQ$, $\HH$ and $\MM$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\\ \marked=\{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+%%  \KwResult{(Data for $\QQ^*$ and $\HH^*$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n).$}
+
+%% \medskip
+
+%% \begin{enumerate}
+%%  \item[] \% REFINE MESH\;
+%%   \item[] \Switch{marked functions or elements}{
+%%   \begin{enumerate}
+%%    \item[1.]\lCase{functions,}{$\markedelements = \texttt{compute\_cells\_to\_refine}(\{E^A_\ell\}_{\ell=0}^{n-1}, \marked)$}
+%% \item[2.]\lCase{elements,}{$\markedelements = \marked$}
+%% \end{enumerate}
+%% }
+%% \item[]\%   $\markedelements$ contains the cells that have to be refined\;
+  
+%% \item[3.]$[\mesh, \newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh, \markedelements)$\;
+%% %\item[3.]$[\mesh, \newcells] = \texttt{update\_active\_cells}(\mesh, \markedelements)$\;
+%%  \item[]\% $\newcells$ contains the new cells\;
+%%  \item[]\% REFINE SPACE\;
+%% \item[4.] $\basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$\;
+%% \end{enumerate}
+%%  \medskip 
+%% \end{minipage}
+%% }
+%% \end{algorithm}
 
 \subsubsection{Routines for the mesh} \mbox{}
 
@@ -477,256 +516,353 @@ Let $\marked=\{M_\ell\}_{\ell=0}^{n-1}$, where $M_\ell\subset F^A_\ell$ (or $M_\
 % \end{algorithm}
 
 
-\begin{algorithm}[H]{$\texttt{function}\quad \markedelements = \texttt{compute\_cells\_to\_refine}(\{E^A_\ell\}_{\ell=0}^{n-1}, \marked)$} 
+
+\begin{algorithm}
 \caption{$\texttt{compute\_cells\_to\_refine}$}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-\medskip
-\% This function computes the indices of cells that have to be splitted when marking for refinement the functions in $\marked$\,
-\medskip
-
- \KwData{$\begin{cases} \{E^A_\ell\}_\ell \text{ (indices of active cells)}\\  \marked = \{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
- \KwResult{$\markedelements = \{\markedelements_\ell\}_{\ell=0}^{n-1}$ (Indices of cells that have to be refined)}
-\medskip
-
- \ForEach{$\ell=0,1,\dots,n-1$}{
- \begin{enumerate}
-  \item[1.] Use \texttt{get\_cells} to compute the set of indices $\markedelements_\ell$ of the cells of level $\ell$ that are included in the support of functions in $M_\ell$\;
-  \item[2.] $\markedelements_\ell \leftarrow \markedelements_\ell\cap E^A_\ell$ \% Remove the nonactive cells from $\markedelements_\ell$\;
- \end{enumerate}
-  }
-\medskip 
-\end{minipage}
-}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\{\activeelements{\ell}\}, \{\functionstoremove_\ell\}$
+\For{$\ell=0,\ldots,n-1$}
+ \State $\markedelements_\ell \gets \textbf{get\_cells} \, (\functionstoremove_\ell)$
+ \State $\markedelements_\ell \gets \markedelements_\ell\cap \activeelements{\ell}$
+\EndFor
+\Statex \textbf{Output:} $\{\markedelements_\ell\}$
+\end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh,\markedelements)$} 
-\caption{\texttt{update\_active\_cells}}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-\medskip
 
-\% This function updates the active and deactive cells in each level when refining the cells in $\markedelements$
+%% \begin{algorithm}[H]{$\texttt{function}\quad \markedelements = \texttt{compute\_cells\_to\_refine}(\{E^A_\ell\}_{\ell=0}^{n-1}, \marked)$} 
+%% \caption{$\texttt{compute\_cells\_to\_refine}$}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% \medskip
+%% \% This function computes the indices of cells that have to be splitted when marking for refinement the functions in $\marked$\,
+%% \medskip
 
-\KwData{(Data for $\QQ$ and $\markedelements$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\  \markedelements = \{\markedelements_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
- \KwResult{(Data for $\QQ^*$ and $\newcells$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \newcells = \{\newcells_\ell\}_\ell\end{cases}\,\, (\ell=0,1,\dots,n).$}
-\medskip
+%%  \KwData{$\begin{cases} \{E^A_\ell\}_\ell \text{ (indices of active cells)}\\  \marked = \{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+%%  \KwResult{$\markedelements = \{\markedelements_\ell\}_{\ell=0}^{n-1}$ (Indices of cells that have to be refined)}
+%% \medskip
 
-\begin{enumerate}
-\item[1.] \lIf{$\markedelements_{n-1}\neq \emptyset$,} {$E^A_{n} = E^D_n = \emptyset$}
+%%  \ForEach{$\ell=0,1,\dots,n-1$}{
+%%  \begin{enumerate}
+%%   \item[1.] Use \texttt{get\_cells} to compute the set of indices $\markedelements_\ell$ of the cells of level $\ell$ that are included in the support of functions in $M_\ell$\;
+%%   \item[2.] $\markedelements_\ell \leftarrow \markedelements_\ell\cap E^A_\ell$ \% Remove the nonactive cells from $\markedelements_\ell$\;
+%%  \end{enumerate}
+%%   }
+%% \medskip 
+%% \end{minipage}
+%% }
+%% \end{algorithm}
 
-\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
-\begin{enumerate}
- \item[2.]$E^A_\ell \leftarrow E^A_\ell \setminus \markedelements_\ell$ \% Update $E^A_\ell$ by removing the cells to be refined\;
- \item[3.]$E^D_\ell \leftarrow E^D_\ell \cup \markedelements_\ell$ \% Update $E^D_\ell$ by adding the cells that were deactivated\;
- \item[4.] Use \texttt{split\_cell} to get the set of indices $\newcells_{\ell+1}$ of cells of level $\ell+1$ which are inside of the cells in $\markedelements_\ell$\;
- \item[5.]$E^A_{\ell+1} \leftarrow E^A_{\ell+1}\cup \newcells_{\ell+1}$ \% Update $E^A_{\ell+1}$ by adding the new active cells of level $\ell+1$; 
-\end{enumerate}
-}
-\end{enumerate}
-\end{minipage}
-}
+
+
+\begin{algorithm}
+\caption{Refine\_hierarchical\_mesh}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\mesh, \{\markedelements\}$
+\If {$\markedelements_{n-1} \not = \emptyset$} 
+\State $\mesh \gets \textbf{initialize\_empty\_level \, (n)}$
+\EndIf
+\For{$\ell = 0, \ldots, n-1$}
+\State $\activeelements{\ell} \gets \activeelements{\ell} \cap \markedelements_\ell$
+\State $\deactelements{\ell} \gets \deactelements{\ell} \cup \markedelements_\ell$
+\State $\newcells_\ell \gets \textbf{get\_children} \, (\markedelements_\ell)$ \Comment{{\Rd Should we move this out?}}
+\State $\activeelements{\ell+1} \gets \activeelements{\ell+1} \cup \newcells_{\ell+1}$
+\EndFor
+\Statex \textbf{Output:} $\mesh, {\Rd \{\newcells_\ell\}}$
+\end{algorithmic}
 \end{algorithm}
+
+%% \begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\newcells] = \texttt{refine\_hierarchical\_mesh}(\mesh,\markedelements)$} 
+%% \caption{\texttt{update\_active\_cells}}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% \medskip
+
+%% \% This function updates the active and deactive cells in each level when refining the cells in $\markedelements$
+
+%% \KwData{(Data for $\QQ$ and $\markedelements$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\  \markedelements = \{\markedelements_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+%%  \KwResult{(Data for $\QQ^*$ and $\newcells$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \newcells = \{\newcells_\ell\}_\ell\end{cases}\,\, (\ell=0,1,\dots,n).$}
+%% \medskip
+
+%% \begin{enumerate}
+%% \item[1.] \lIf{$\markedelements_{n-1}\neq \emptyset$,} {$E^A_{n} = E^D_n = \emptyset$}
+
+%% \item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+%% \begin{enumerate}
+%%  \item[2.]$E^A_\ell \leftarrow E^A_\ell \setminus \markedelements_\ell$ \% Update $E^A_\ell$ by removing the cells to be refined\;
+%%  \item[3.]$E^D_\ell \leftarrow E^D_\ell \cup \markedelements_\ell$ \% Update $E^D_\ell$ by adding the cells that were deactivated\;
+%%  \item[4.] Use \texttt{split\_cell} to get the set of indices $\newcells_{\ell+1}$ of cells of level $\ell+1$ which are inside of the cells in $\markedelements_\ell$\;
+%%  \item[5.]$E^A_{\ell+1} \leftarrow E^A_{\ell+1}\cup \newcells_{\ell+1}$ \% Update $E^A_{\ell+1}$ by adding the new active cells of level $\ell+1$; 
+%% \end{enumerate}
+%% }
+%% \end{enumerate}
+%% \end{minipage}
+%% }
+%% \end{algorithm}
 
 \subsubsection{Routines for the space}
 
 For the routines in this section notice that the variable $\mesh$ is already updated, i.e., it contains the information about $\QQ^*$.
 
-
-\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$} 
+\begin{algorithm}
 \caption{$\texttt{refine\_hierarchical\_space}$}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-{\footnotesize
-\medskip
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}, \{\newcells_\ell\}$
+\State $\functionstoremove \gets \textbf{compute\_functions\_to\_deactivate} \, (\mesh, \basis, \marked)$
+\If {$\marked_{n-1} \not = \emptyset$} 
+  \State $\basis \gets \textbf{initialize\_empty\_level \, (n)}$
+\EndIf
+\State $\texttt{REFINED}\_\basis \gets \textbf{Update\_Active\_Functions} \, (\mesh, \basis, \functionstoremove, \marked)$ \Comment{Split in two (elements and functions)?}
+\State {\Rd $K \gets \textbf{Compute\_Refinement\_Matrix} \, (\basis, \texttt{REFINED}\_\basis)$}
+\Statex \textbf{Output:} $\texttt{REFINED}\_\basis$, {\Rd $K$} \Comment The refined space
+\end{algorithmic}
+\end{algorithm}
 
-\KwData{(Data for $\QQ^*$, $\HH$, $\MM$, and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\\ \marked=\{M_\ell\}_\ell\\  \newcells = \{\newcells_\ell\}_\ell \end{cases}(\ell=0,\dots,n-1).$}
- \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\quad (\ell=0,1,\dots,n).$}
-\medskip
+\begin{algorithm}
+\caption{Compute\_Functions\_To\_Deactivate}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\mesh, \basis, \marked$
+\For {$\ell = 0, \ldots, n-1$}
+  \If{(Marking functions)}
+    \State $\functionstoremove_\ell \gets \textbf{get\_neighbors} \, (\marked_\ell)$
+    \State $\functionstoremove_\ell \gets (\functionstoremove_\ell \cap \activefunctions{\ell} ) \setminus \marked_\ell$ \Comment{{\Rd Why not $\functionstoremove_\ell \gets \functionstoremove_\ell \cap \activefunctions{\ell}$?}}
+  \ElsIf{(Marking elements)}
+    \State $\functionstoremove_\ell \gets \textbf{get\_basis\_functions} \, (\marked_\ell)$
+    \State $\functionstoremove_\ell \gets \functionstoremove_\ell \cap \activefunctions{\ell}$
+  \EndIf
+  \State {\Rd Update $\functionstoremove_\ell$ by removing the functions that have al least one active cell of level $\ell$ within their supports. Use \texttt{get\_cells}\;}
+  \If {(Marking functions)} 
+     \State $\functionstoremove_\ell \gets \functionstoremove_\ell \cup \marked_\ell$
+  \EndIf
+\EndFor
+\Statex \textbf{Output:} $\{\functionstoremove\}$
+\end{algorithmic}
+\end{algorithm}
+
+%% \begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{refine\_hierarchical\_space}(\mesh, \basis, \marked, \newcells)$} 
+%% \caption{$\texttt{refine\_hierarchical\_space}$}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% {%\footnotesize
+%% \medskip
+
+%% \KwData{(Data for $\QQ^*$, $\HH$, $\MM$, and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\\ \marked=\{M_\ell\}_\ell\\  \newcells = \{\newcells_\ell\}_\ell \end{cases}(\ell=0,\dots,n-1).$}
+%%  \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell\quad (\ell=0,1,\dots,n).$}
+%% \medskip
  
- \begin{enumerate}
-  \item [1.]$\functionstoremove = \texttt{compute\_functions\_to\_deactivate}(\mesh, \basis, \marked)$\;
-  \item[]\% $\functionstoremove$ contains all B-splines that have to be deactivated\;
-\item[2.]$\basis=\texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;
- \end{enumerate}
- }
- \end{minipage}
-}
-\end{algorithm}
+%%  \begin{enumerate}
+%%   \item [1.]$\functionstoremove = \texttt{compute\_functions\_to\_deactivate}(\mesh, \basis, \marked)$\;
+%%   \item[]\% $\functionstoremove$ contains all B-splines that have to be deactivated\;
+%% \item[2.]$\basis=\texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;
+%%  \end{enumerate}
+%%  }
+%%  \end{minipage}
+%% }
+%% \end{algorithm}
 
 
-\begin{algorithm}[H]{$\texttt{function}\quad \functionstoremove = \texttt{compute\_functions\_to\_deactivate}(\{E^A_\ell\}_{\ell=0}^{n}, \{F^A_\ell\}_{\ell=0}^{n-1},\marked)$} 
-\caption{\texttt{compute\_functions\_to\_deactivate}}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-{\footnotesize
-\medskip
-\% This function computes the indices of the functions that have to be deactivated when marking for refinement the functions (or elements) in $\marked$\,
-\medskip
+%% \begin{algorithm}[H]{$\texttt{function}\quad \functionstoremove = \texttt{compute\_functions\_to\_deactivate}(\{E^A_\ell\}_{\ell=0}^{n}, \{F^A_\ell\}_{\ell=0}^{n-1},\marked)$} 
+%% \caption{\texttt{compute\_functions\_to\_deactivate}}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% {%\footnotesize
+%% \medskip
+%% \% This function computes the indices of the functions that have to be deactivated when marking for refinement the functions (or elements) in $\marked$\,
+%% \medskip
 
- \KwData{$\begin{cases} \{E^A_\ell\}_{\ell=0}^n \text{ (indices of active cells)}\\ \{F^A_\ell\}_\ell\text{ (indices of active basis functions)}\\ \marked = \{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
- \KwResult{$\functionstoremove = \{\functionstoremove_\ell\}_{\ell=0}^{n-1}$ (Indices of basis functions that have to be deactivated)}
-\medskip
+%%  \KwData{$\begin{cases} \{E^A_\ell\}_{\ell=0}^n \text{ (indices of active cells)}\\ \{F^A_\ell\}_\ell\text{ (indices of active basis functions)}\\ \marked = \{M_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+%%  \KwResult{$\functionstoremove = \{\functionstoremove_\ell\}_{\ell=0}^{n-1}$ (Indices of basis functions that have to be deactivated)}
+%% \medskip
 
- \ForEach{$\ell=0,1,\dots,n-1$}{
- \begin{enumerate}
-  \item[] \% Computation of functions which \emph{possibly} have to be removed\;
- \item[]\Switch{marked functions or elements}{
-\Case{functions,}{
-\begin{enumerate}
- \item[1.] Use \texttt{get\_neighbors} to compute the set of indices $\functionstoremove_\ell$ of functions of level $\ell$ whose supports intersect the support of a function in $M_\ell$\;
- \item[2.] $\functionstoremove_\ell \leftarrow (\functionstoremove_\ell\cap F^A_\ell)\setminus M_\ell$ \% Remove from $\functionstoremove_\ell$ the nonactive functions and the active functions already selected for deactivation\; 
-\end{enumerate}
-}
- \Case{elements,}{
- \begin{enumerate}
-  \item[3.] Use \texttt{get\_basis\_functions} to compute the set of indices $\functionstoremove_\ell$ of functions of level $\ell$ whose supports intersect at least one cell in $M_\ell$\;
-  \item[4.] $\functionstoremove_\ell \leftarrow (\functionstoremove_\ell\cap F^A_\ell)$ \% Remove from $\functionstoremove_\ell$ the nonactive functions\;
- \end{enumerate}
-}
-}
-\item[] \% Computation of functions which \emph{in fact} have to be removed\;
-\item[5.] Update $\functionstoremove_\ell$ by removing the functions that have al least one active cell of level $\ell$ within their supports. Use \texttt{get\_cells}\;
- \item[6.] \lIf{marking functions,}{$\functionstoremove_\ell =  \functionstoremove_\ell\cup M_\ell $}
- \end{enumerate}
- }
-\medskip
-}
-\end{minipage}
-}
-\end{algorithm}
+%%  \ForEach{$\ell=0,1,\dots,n-1$}{
+%%  \begin{enumerate}
+%%   \item[] \% Computation of functions which \emph{possibly} have to be removed\;
+%%  \item[]\Switch{marked functions or elements}{
+%% \Case{functions,}{
+%% \begin{enumerate}
+%%  \item[1.] Use \texttt{get\_neighbors} to compute the set of indices $\functionstoremove_\ell$ of functions of level $\ell$ whose supports intersect the support of a function in $M_\ell$\;
+%%  \item[2.] $\functionstoremove_\ell \leftarrow (\functionstoremove_\ell\cap F^A_\ell)\setminus M_\ell$ \% Remove from $\functionstoremove_\ell$ the nonactive functions and the active functions already selected for deactivation\; 
+%% \end{enumerate}
+%% }
+%%  \Case{elements,}{
+%%  \begin{enumerate}
+%%   \item[3.] Use \texttt{get\_basis\_functions} to compute the set of indices $\functionstoremove_\ell$ of functions of level $\ell$ whose supports intersect at least one cell in $M_\ell$\;
+%%   \item[4.] $\functionstoremove_\ell \leftarrow (\functionstoremove_\ell\cap F^A_\ell)$ \% Remove from $\functionstoremove_\ell$ the nonactive functions\;
+%%  \end{enumerate}
+%% }
+%% }
+%% \item[] \% Computation of functions which \emph{in fact} have to be removed\;
+%% \item[5.] Update $\functionstoremove_\ell$ by removing the functions that have al least one active cell of level $\ell$ within their supports. Use \texttt{get\_cells}\;
+%%  \item[6.] \lIf{marking functions,}{$\functionstoremove_\ell =  \functionstoremove_\ell\cup M_\ell $}
+%%  \end{enumerate}
+%%  }
+%% \medskip
+%% }
+%% \end{minipage}
+%% }
+%% \end{algorithm}
 
-\bigskip
+%% \begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
+%% \caption{\texttt{update\_active\_functions}}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% %\begin{center}
+%% \medskip
+%% {%\footnotesize
+%% \% This function updates the active and deactive B-spline basis functions. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
 
-\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
-\caption{\texttt{update\_active\_functions}}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-%\begin{center}
-\medskip
-{\footnotesize
-\% This function updates the active and deactive B-spline basis functions. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
+%% \KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
+%%  \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell, W_\ell\}_{\ell=0}^n$}
+%% \medskip
 
-\KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
- \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell, W_\ell\}_{\ell=0}^n$}
-\medskip
-
-\begin{enumerate}
- \item[1.] \lIf{ $\functionstoremove_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=W_n=\emptyset$}
-\item[]\% Update of $\{F^A_\ell,F^D_\ell,W_\ell\}_\ell$\;
-\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
-\begin{enumerate}
- \item[2.] $\functionstoremove_\ell \leftarrow \functionstoremove_\ell \cup (F^A_\ell\cap F^D_\ell)$ \% This line is important for $\ell\ge 1$\;
-\item[3.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
-\item[4.]Save in \texttt{W} the values of $W_\ell$ corresponding to functions in $\functionstoremove_\ell$ and update $W_\ell$ by removing these values\;
- \item[5.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
-\item[]\ForEach{$\beta$ in $\functionstoremove_\ell$}{
-\begin{enumerate}
-  \item [6.] Compute the set of indices $I_\beta$ of the B-splines of level $\ell+1$ and the corresponding coefficients $c$ of the two-scale relation~\eqref{E:two scale relation} when writing $\beta$ as a linear combination of functions in $\BB_{\ell+1}$ 
- \item[7.] Use \texttt{get\_cells} to update $F^D_{\ell+1}$ by adding the functions in $(I_\beta\setminus F^A_{\ell+1})\setminus F^D_{\ell+1}$ that have no active cell of level $\ell+1$ within its support.
- \item[8.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I_\beta$ \% Enlarge $F^A_{\ell+1}$ by adding the \emph{possible} new active functions\;
- \item[9.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$.
-  \item[] \% Now, we update the values in $W_{\ell+1}$
-  \item[10.] \lForEach{ $\beta_{\ell+1}$ in $I_\beta$}{
-  $a_{\beta_{\ell+1}}\leftarrow a_{\beta_{\ell+1}}+a_\beta*c_{\beta_{\ell+1}}$, where $a_\beta$ is the value in \texttt{W} corresponding to $\beta$, and $a_{\beta_{\ell+1}}$ and $c_{\beta_{\ell+1}}$ are the values in $W_{\ell+1}$ and $c$, respectively, corresponding to $\beta_{\ell+1}$}
- \end{enumerate}
-}
-\item[]\% Now, we activate B-splines of level $\ell+1$ that are not children of any deactivated B-spline of level $\ell$\;
-\item[11.] Use \texttt{get\_basis\_functions} to compute the indices $I$ of the B-splines of level $\ell+1$ that do not vanish in some cell of $\newcells_{\ell+1}$\;
-\item[12.] $I\leftarrow I\setminus F^A_{\ell+1}$ \% Remove from $I$ the functions which were already active\;
-\item[13.] Use \texttt{get\_cells} to update $I$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $E^A_{\ell+1}\cup E^D_{\ell+1}$\;
-\item[14.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I$\;
-\item [15.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$\;
-\end{enumerate}
-}
-\end{enumerate}
-\medskip
-}%\end{center}
-\end{minipage}
-}
-\end{algorithm}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-
-\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
-\caption{\texttt{update\_active\_functions}}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-%\begin{center}
-\medskip
-{\footnotesize
-\% This function updates the active and deactivated B-spline basis functions, {\Rd when using the simplified hierarchical space}. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
-
-\KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
- \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^n$}
-\medskip
-
-\begin{enumerate}
- \item[1.] \lIf{ $\functionstoremove_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=\emptyset$}
-\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
-\begin{enumerate}
-\item[2.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
-\item[3.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
-\item[4.] $F^C \leftarrow$ \texttt{split\_fun} $(\functionstoremove_\ell)$, \% Compute the list of children functions of the marked functions;
-\item[5.] $F^C \leftarrow F^C \setminus (F^A_{\ell+1} \cup F^D_{\ell+1})$ Take only the children that have not been already activated.
- \item[6.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup F^C$ \% Enlarge $F^A_{\ell+1}$ by adding the new active functions\;
- \item[7.] Use \texttt{get\_cells} to update $\functionstoremove_{\ell+1}$ by adding the functions in $F^C$ that have no active cell of level $\ell+1$ within its support.
-
-\end{enumerate}
-}
-\end{enumerate}
-\medskip
-}%\end{center}
-\end{minipage}
-}
-\end{algorithm}
+%% \begin{enumerate}
+%%  \item[1.] \lIf{ $\functionstoremove_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=W_n=\emptyset$}
+%% \item[]\% Update of $\{F^A_\ell,F^D_\ell,W_\ell\}_\ell$\;
+%% \item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+%% \begin{enumerate}
+%%  \item[2.] $\functionstoremove_\ell \leftarrow \functionstoremove_\ell \cup (F^A_\ell\cap F^D_\ell)$ \% This line is important for $\ell\ge 1$\;
+%% \item[3.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
+%% \item[4.]Save in \texttt{W} the values of $W_\ell$ corresponding to functions in $\functionstoremove_\ell$ and update $W_\ell$ by removing these values\;
+%%  \item[5.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
+%% \item[]\ForEach{$\beta$ in $\functionstoremove_\ell$}{
+%% \begin{enumerate}
+%%   \item [6.] Compute the set of indices $I_\beta$ of the B-splines of level $\ell+1$ and the corresponding coefficients $c$ of the two-scale relation~\eqref{E:two scale relation} when writing $\beta$ as a linear combination of functions in $\BB_{\ell+1}$ 
+%%  \item[7.] Use \texttt{get\_cells} to update $F^D_{\ell+1}$ by adding the functions in $(I_\beta\setminus F^A_{\ell+1})\setminus F^D_{\ell+1}$ that have no active cell of level $\ell+1$ within its support.
+%%  \item[8.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I_\beta$ \% Enlarge $F^A_{\ell+1}$ by adding the \emph{possible} new active functions\;
+%%  \item[9.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$.
+%%   \item[] \% Now, we update the values in $W_{\ell+1}$
+%%   \item[10.] \lForEach{ $\beta_{\ell+1}$ in $I_\beta$}{
+%%   $a_{\beta_{\ell+1}}\leftarrow a_{\beta_{\ell+1}}+a_\beta*c_{\beta_{\ell+1}}$, where $a_\beta$ is the value in \texttt{W} corresponding to $\beta$, and $a_{\beta_{\ell+1}}$ and $c_{\beta_{\ell+1}}$ are the values in $W_{\ell+1}$ and $c$, respectively, corresponding to $\beta_{\ell+1}$}
+%%  \end{enumerate}
+%% }
+%% \item[]\% Now, we activate B-splines of level $\ell+1$ that are not children of any deactivated B-spline of level $\ell$\;
+%% \item[11.] Use \texttt{get\_basis\_functions} to compute the indices $I$ of the B-splines of level $\ell+1$ that do not vanish in some cell of $\newcells_{\ell+1}$\;
+%% \item[12.] $I\leftarrow I\setminus F^A_{\ell+1}$ \% Remove from $I$ the functions which were already active\;
+%% \item[13.] Use \texttt{get\_cells} to update $I$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $E^A_{\ell+1}\cup E^D_{\ell+1}$\;
+%% \item[14.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup I$\;
+%% \item [15.] Enlarge $W_{\ell+1}$ in order to match with the new $F^A_{\ell+1}$, setting equal to zero the coefficients corresponding to the new functions in $F^A_{\ell+1}$\;
+%% \end{enumerate}
+%% }
+%% \end{enumerate}
+%% \medskip
+%% }%\end{center}
+%% \end{minipage}
+%% }
+%% \end{algorithm}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 
-\begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
-\caption{\texttt{update\_active\_functions}}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-%\begin{center}
-\medskip
-{\footnotesize
-\% This function updates the active and deactivated B-spline basis functions, {\Rd when using the standard hierarchical space}. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
-
-\KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
- \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^n$}
-\medskip
-
-\begin{enumerate}
- \item[1.] \lIf{ $\newcells_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=\emptyset$}
-\item[]\ForEach{$\ell=0,1,\dots,n-1$}{
-\begin{enumerate}
-\item[2.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
-\item[3.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
-\item[4.] $F^C \leftarrow$\texttt{get\_basis\_functions($\newcells_{\ell+1}$)} \% Compute the indices of B-splines of level $\ell+1$ that do not vanish in some cell of $\newcells_{\ell+1}$\;
-\item[5.] $F^C \leftarrow F^C \setminus F^A_{\ell+1}$ \% Remove from $F^C$ the functions that were already active\;
-\item[6.] Use \texttt{get\_cells} to update $F^C$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $E^A_{\ell+1}\cup E^D_{\ell+1}$\;
-\item[7.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup F^C$\;
-\end{enumerate}
-}
-\end{enumerate}
-\medskip
-}%\end{center}
-\end{minipage}
-}
+\begin{algorithm}
+\caption{Update\_active\_functions: simplified hierarchical space}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\mesh, \basis, \{\functionstoremove\}$
+\For {$\ell = 0, \ldots, n-1$}
+  \State $\activefunctions{\ell}\gets \activefunctions{\ell} \setminus \functionstoremove_\ell$
+  \State $\deactfunctions{\ell}\gets \deactfunctions{\ell} \cup \functionstoremove_\ell$
+  \State $\tt{F^C} \gets \textbf{get\_children} \, (\functionstoremove_\ell)$
+  \State $\tt{F^C} \gets \tt{F^C} \setminus \activefunctions{\ell+1} \cup \deactfunctions{\ell+1}$ 
+  \State $\activefunctions{\ell+1} \gets (\activefunctions{\ell+1} \cup \tt{F^C})$
+  \State {\Rd Use \texttt{get\_cells} to update $\functionstoremove_{\ell+1}$ by adding the functions in $\tt{F^C}$ that have no active cell of level $\ell+1$ within its support.}
+\EndFor
+\Statex \textbf{Output:} ${\Rd \texttt{REFINED}\_\basis (\{\activefunctions{ }\}, \{\deactfunctions{} \})}$
+\end{algorithmic}
 \end{algorithm}
 
-\newpage
+%% \begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
+%% \caption{\texttt{update\_active\_functions}}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% %\begin{center}
+%% \medskip
+%% {%\footnotesize
+%% \% This function updates the active and deactivated B-spline basis functions, {\Rd when using the simplified hierarchical space}. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
+
+%% \KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
+%%  \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^n$}
+%% \medskip
+
+%% \begin{enumerate}
+%%  \item[1.] \lIf{ $\functionstoremove_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=\emptyset$}
+%% \item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+%% \begin{enumerate}
+%% \item[2.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
+%% \item[3.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
+%% \item[4.] $F^C \leftarrow$ \texttt{split\_fun} $(\functionstoremove_\ell)$, \% Compute the list of children functions of the marked functions;
+%% \item[5.] $F^C \leftarrow F^C \setminus (F^A_{\ell+1} \cup F^D_{\ell+1})$ Take only the children that have not been already activated.
+%%  \item[6.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup F^C$ \% Enlarge $F^A_{\ell+1}$ by adding the new active functions\;
+%%  \item[7.] Use \texttt{get\_cells} to update $\functionstoremove_{\ell+1}$ by adding the functions in $F^C$ that have no active cell of level $\ell+1$ within its support.
+
+%% \end{enumerate}
+%% }
+%% \end{enumerate}
+%% \medskip
+%% }%\end{center}
+%% \end{minipage}
+%% }
+%% \end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newpage
+
+\begin{algorithm}
+\caption{Update\_active\_functions: standard hierarchical space}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\mesh, \basis, \{\functionstoremove\} \{\newcells\}$
+\For {$\ell = 0, \ldots, n-1$}
+  \State $\activefunctions{\ell}\gets \activefunctions{\ell} \setminus \functionstoremove_\ell$
+  \State $\deactfunctions{\ell}\gets \deactfunctions{\ell} \cup \functionstoremove_\ell$
+  \State $\tt{F^C} \gets \textbf{get\_basis\_functions} \, (\newcells_{\ell+1})$
+  \State $\tt{F^C} \gets \tt{F^C} \setminus \activefunctions{\ell+1}$
+  \State {\Rd Use \texttt{get\_cells} to update $\tt{F^C}$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $\activeelements{\ell+1}\cup \deactelements{\ell+1}$\;}
+  \State $\activefunctions{\ell+1} \gets \activefunctions{\ell+1} \cup \tt{F^C}$
+\EndFor
+\Statex \textbf{Output:} ${\Rd \texttt{REFINED}\_\basis (\{\activefunctions{ }\}, \{\deactfunctions{} \})}$
+\end{algorithmic}
+\end{algorithm}
+
+%% \begin{algorithm}[H]{$\texttt{function}\quad \basis = \texttt{update\_active\_functions}(\mesh,\basis,\functionstoremove,\newcells)$\;} 
+%% \caption{\texttt{update\_active\_functions}}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% %\begin{center}
+%% \medskip
+%% {%\footnotesize
+%% \% This function updates the active and deactivated B-spline basis functions, {\Rd when using the standard hierarchical space}. The inputs $\mesh$ and $\newcells$ are already updated (see \texttt{refine\_hierarchical\_mesh}) and $\functionstoremove$ contains the indices of \emph{all B-splines that have to be deactivated} (see \texttt{compute\_functions\_to\_deactivate}). Finally, the variable $\basis$ in the input contains the information before updating the space\,
+
+%% \KwData{(Data for $\QQ^*$, $\HH$, $\functionstoremove$ and $\newcells$): $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_{\ell=0}^{n}\\ \basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^{n-1}\\ \functionstoremove=\{\functionstoremove_\ell\}_{\ell=0}^{n-1}\\  \newcells = \{\newcells_\ell\}_{\ell=0}^n \end{cases}$}
+%%  \KwResult{(Data for $\HH^*$):  $\basis = \{F^A_\ell, F^D_\ell\}_{\ell=0}^n$}
+%% \medskip
+
+%% \begin{enumerate}
+%%  \item[1.] \lIf{ $\newcells_{n-1}\neq \emptyset$,} {$F^A_n=F^D_n=\emptyset$}
+%% \item[]\ForEach{$\ell=0,1,\dots,n-1$}{
+%% \begin{enumerate}
+%% \item[2.]$F^A_\ell \leftarrow F^A_\ell \setminus \functionstoremove_\ell$ \% Remove $\functionstoremove_\ell$ from the active functions of level $\ell$\;
+%% \item[3.]$F^D_\ell\leftarrow F^D_\ell\cup \functionstoremove_\ell$ \% Update $F^D_\ell$ by adding the functions to be deactivated\;
+%% \item[4.] $F^C \leftarrow$\texttt{get\_basis\_functions($\newcells_{\ell+1}$)} \% Compute the indices of B-splines of level $\ell+1$ that do not vanish in some cell of $\newcells_{\ell+1}$\;
+%% \item[5.] $F^C \leftarrow F^C \setminus F^A_{\ell+1}$ \% Remove from $F^C$ the functions that were already active\;
+%% \item[6.] Use \texttt{get\_cells} to update $F^C$ by removing the functions such that have at least one cell of level $\ell+1$ in their support that does not belong to $E^A_{\ell+1}\cup E^D_{\ell+1}$\;
+%% \item[7.] $F^A_{\ell+1}\leftarrow F^A_{\ell+1}\cup F^C$\;
+%% \end{enumerate}
+%% }
+%% \end{enumerate}
+%% \medskip
+%% }%\end{center}
+%% \end{minipage}
+%% }
+%% \end{algorithm}
+
+%\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Refinement matrix between hierarchical spaces (knot insertion)}
 Since the spaces are nested, $\Span\HH \subset \Span\HH^*$, we can write a function in the first space as a linear combination of basis functions in the second one, and the operation can be done through a matrix. It is possible to use the information of active and deactivated functions to obtain this. 
@@ -770,46 +906,61 @@ The refinement matrix $K$ may become useful in several occasions. For instance, 
 
 The function \texttt{refine} detailed in the previous section can be also used to select the active functions of a hierarchical B-spline basis $\HH$, if we know the active cells of each level~$\{E^A_\ell\}_{\ell=0}^{n-1}$. 
 
-\begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\basis] = \texttt{build\_hierarchical\_space}(\{E^A_\ell\}_{\ell=0}^{n-1})$} 
-\caption{$\texttt{build\_hierarchical\_space}$}
-\bigskip
-\doublebox{
-\begin{minipage}{.95\textwidth}
-\medskip
-
-\KwData{$\{E^A_\ell\}_{\ell=0}^{n-1}$ (Active elements in each level)}
- \KwResult{(Data for $\QQ$ and $\HH$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
-\medskip
-
-\begin{enumerate}
- \item[1.] Define $\hat{E}^A_0$ as the set of indices of all the cells in $\QQ_0$\;
- \item[2.] Define $F^A_0$ as the set of indices of all the basis functions in $\BB_0$\;
-
-\item[3.] Define the corresponding array of weights $W_0$ setting all the values equal to $1$\;
-\item[4.] $\hat{E}^D_0=\emptyset$\;
-\item[5.] $F^D_0=\emptyset$\;
-\item[6.] $\mesh=\{\hat{E}^A_0,\hat{E}^D_0\}$\; 
-\item[7.] $\basis=\{F^A_0,F^D_0,W_0\}$\;
-\item[] \ForEach{$k = 0,\dots,n-2$}{
-\begin{enumerate}
- \item[8.] Let $M_0 =\dots = M_{k-1}=\emptyset$ and $M_{k} = \hat{E}^A_k\setminus E^A_k$. Then, $\marked=\{M_\ell\}_{\ell=0}^k$\;
- \item[9.] $[\mesh,\basis]\,=\,\texttt{refine}(\mesh,\basis,\marked)$\;
-\end{enumerate}
- }
-\end{enumerate}
-
-
-
-
-
-
-
-
-
-\medskip
-\end{minipage}
-}
+\begin{algorithm}
+\caption{build\_hierarchical\_space}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\{\activeelements{\ell}\}$
+\State $\mesh \gets \textbf{mesh\_cartesian}$  \Comment{Initialize as a Cartesian grid of level 0}
+\State $\basis \gets \textbf{spline\_space}$  \Comment{Initialize as a tensor product space of level 0}
+\For {$\ell = 0, n-2$}
+  \State $\{\marked\}_0^{\ell-1} \gets \emptyset$
+  \State $\marked_\ell \gets \tt{\hat E^A_\ell} \setminus \activeelements{\ell}$
+  \State $[\mesh, \basis] \gets \textbf{refine} \, (\mesh, \basis, \marked)$
+\EndFor
+\Statex \textbf{Output:}
+\end{algorithmic}
 \end{algorithm}
+
+%% \begin{algorithm}[H]{$\texttt{function}\quad [\mesh,\basis] = \texttt{build\_hierarchical\_space}(\{E^A_\ell\}_{\ell=0}^{n-1})$} 
+%% \caption{$\texttt{build\_hierarchical\_space}$}
+%% \bigskip
+%% \doublebox{
+%% \begin{minipage}{.95\textwidth}
+%% \medskip
+
+%% \KwData{$\{E^A_\ell\}_{\ell=0}^{n-1}$ (Active elements in each level)}
+%%  \KwResult{(Data for $\QQ$ and $\HH$):  $\begin{cases}\mesh = \{E^A_\ell,E^D_\ell\}_\ell\\ \basis = \{F^A_\ell, F^D_\ell, W_\ell\}_\ell \end{cases}\,\, (\ell=0,1,\dots,n-1).$}
+%% \medskip
+
+%% \begin{enumerate}
+%%  \item[1.] Define $\hat{E}^A_0$ as the set of indices of all the cells in $\QQ_0$\;
+%%  \item[2.] Define $F^A_0$ as the set of indices of all the basis functions in $\BB_0$\;
+
+%% \item[3.] Define the corresponding array of weights $W_0$ setting all the values equal to $1$\;
+%% \item[4.] $\hat{E}^D_0=\emptyset$\;
+%% \item[5.] $F^D_0=\emptyset$\;
+%% \item[6.] $\mesh=\{\hat{E}^A_0,\hat{E}^D_0\}$\; 
+%% \item[7.] $\basis=\{F^A_0,F^D_0,W_0\}$\;
+%% \item[] \ForEach{$k = 0,\dots,n-2$}{
+%% \begin{enumerate}
+%%  \item[8.] Let $M_0 =\dots = M_{k-1}=\emptyset$ and $M_{k} = \hat{E}^A_k\setminus E^A_k$. Then, $\marked=\{M_\ell\}_{\ell=0}^k$\;
+%%  \item[9.] $[\mesh,\basis]\,=\,\texttt{refine}(\mesh,\basis,\marked)$\;
+%% \end{enumerate}
+%%  }
+%% \end{enumerate}
+
+
+
+
+
+
+
+
+
+%% \medskip
+%% \end{minipage}
+%% }
+%% \end{algorithm}
 
 
 
