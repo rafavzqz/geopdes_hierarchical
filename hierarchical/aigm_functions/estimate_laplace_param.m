@@ -31,7 +31,7 @@ if strcmp(adaptivity_data.flag,'none')
     return;
 end
 
-% [der2num, F] = hspline_eval_old (u,hmsh,hspace,0,'laplacian'); 
+% [der2num, F] = hspline_eval_old (u,hmsh,hspace,0,'laplacian');
 [der2num, F] = hspace_eval_hmsh (u, hspace, hmsh, 'laplacian'); 
 
 x = cell (hmsh.rdim, 1);
@@ -45,6 +45,7 @@ aux = (valf + der2num).^2; % size(aux) = [hmsh.nqn, hmsh.nel], valores en los no
 quad_weights = [];
 jacdet = [];
 h = [];
+ms = zeros (hmsh.nlevels, 1);
 for ilev = 1:hmsh.nlevels % Active levels
     if (hmsh.msh_lev{ilev}.nel ~= 0)
             quad_weights = cat(2,quad_weights, hmsh.msh_lev{ilev}.quad_weights);
@@ -71,7 +72,7 @@ switch adaptivity_data.flag
         if forma
             coef = ms(hspace.globnum_active(:,1)).*sqrt(hspace.coeff_pou(:));
         else
-            coef = sqrt(hspace.coeff(:));
+            coef = sqrt(hspace.coeff_pou(:));
         end
         
         est = zeros(hspace.ndof,1);
