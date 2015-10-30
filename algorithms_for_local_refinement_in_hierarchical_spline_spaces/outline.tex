@@ -1,0 +1,106 @@
+\documentclass[a4paper]{siamltex1213}
+
+\usepackage[dvips]{graphicx}
+\usepackage{amsmath}
+\usepackage{fancybox}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\newcommand{\Rd}{\color{red}}   
+
+\title{DECIDE THE TITLE}
+
+\author{Eduardo M.~Garau\footnotemark[1]\ \footnotemark[2]\ \footnotemark[3] \and Rafael V\'azquez\footnotemark[1]}
+
+\begin{document}
+\maketitle
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Istituto di Matematica Applicata e Tecnologie Informatiche `E. Magenes' (CNR), Italy}
+\footnotetext[2]{Instituto de Matem\'atica Aplicada del Litoral (CONICET-UNL), Argentina}
+\footnotetext[3]{Facultad de Ingenier\'ia Qu\'imica (UNL), Argentina}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
+\section{Introduction}
+We give the algorithms for adaptivity, our focus is on the SOLVE and REFINE modules. Discuss the differences with existing references. The paper comes with an open-source and free implementation in GeoPDEs.
+
+\section{Mathematical definitions}
+We should try to avoid defining things for tensor product spline spaces.
+\subsection{Hierarchical B-splines}
+Definition as in current section 2.1 + 2.2. Notation for basis, basis functions, number of functions per level. We can try to define things in such a way that active and deactivated functions appear in the algorithm.
+
+Two-scale relation. Matrix operator. Partition of unity.
+\subsection{Simplified hierarchical B-splines (Can we find a better name?)}
+Definition. Two-scale relation. Partition of unity. In general, the results of the paper work for both spaces. We will use the $\tilde H$ when they differ.
+
+\subsection{Truncated hierarchical B-splines}
+Definition. Spanned space. Two-scale relation and partition of unity.
+
+\subsection{Refinement of hierarchical splines}
+Enlargement as defined in Definition~3.1. Span H $\subset$ Span H$^*$. Refinement matrix between the two-spaces (current Section 4.2).
+
+Marking strategies: we can mark either functions or elements.
+
+Refinement strategies: mention the admissible meshes by Annalisa and Carlotta.
+
+
+\section{Classes/structures for the implementation of HB-splines}
+Introduce them in a general way. What is the information they should contain. What are the needed methods.
+
+\subsection{The basic structures}
+The Cartesian grid and the tensor-product space. They should contain the functions to compute the connectivity, but also \texttt{GetCells, GetNeighbors, GetBasisFunctions}. 
+
+We also need something to compute information between two consecutive levels: \texttt{GetChildren} (of elements and of functions). Computation of the matrix $C_\ell^{\ell+1}$. Cite Casciola-Romani.
+\subsection{Hierarchical mesh}
+It must contain: 
+\begin{itemize}
+\item the current number of levels $n$.
+\item a Cartesian grid for each level. 
+\item the list of active elements per level.
+\item the list of deactivated elements per level.
+\end{itemize}
+And it should also contain the procedures to compute the needed information in the set of active elements. This can be easily get from the Cartesian grids.
+
+\subsection{Hierarchical space}
+It must contain: 
+\begin{itemize}
+\item the current number of levels $n$.
+\item a tensor-product space for each level. 
+\item the list of active functions per level.
+\item the list of deactivated functions per level.
+\item The coefficients of the two-scale relation between consecutive levels, in 1D.
+\end{itemize}
+
+\subsection{Boundary}
+The boundary of a hierarchical mesh is a hierarchical mesh. The boundary of a hierarchical space is  a hierarchical space. One can take advantage of this fact to implement things.
+
+\subsection{{\Rd Anything about multipatch?}}
+
+\section{The SOLVE module}
+Assembly of matrices and vectors
+Current section 5 in the paper.
+
+\section{The REFINE module}
+The algorithms in the draft, written in a clear and ordered way.
+
+Should we add something about the refinement strategy by Annalisa and Carlotta?
+
+{\Rd I vote for add something about COARSENING. Maybe just marking elements.}
+
+\section{Implementation in GeoPDEs}
+The tensor product spaces already exist. We have implemented this BLABLABLA
+\subsection{Hierarchical mesh}
+List all the properties and methods inside the class.
+\subsection{Hierarchical space}
+List all the properties and methods inside the class.
+\subsection{Assembly}
+
+\section{Numerical tests}
+L-shaped domain. Fichera's corner? Checkerboard pattern? Can we look for a more difficult problem (not the Laplacian)?
+
+Coarsening?
+
+\end{document}
