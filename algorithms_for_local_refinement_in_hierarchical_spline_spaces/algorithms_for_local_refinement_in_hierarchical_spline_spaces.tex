@@ -185,15 +185,15 @@
 
 \title{Algorithms for local refinement \\ in hierarchical spline spaces. {\Rd UPDATE}}
 
-\author{Eduardo M.~Garau\footnotemark[1]\ \footnotemark[2]\ \footnotemark[3] \and Rafael V\'azquez\footnotemark[1]}
+\author{Eduardo M.~Garau\footnotemark[1]\ \footnotemark[2]\ \and Rafael V\'azquez\footnotemark[3]}
 
 \begin{document}
 \maketitle
 
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
-\footnotetext[1]{Istituto di Matematica Applicata e Tecnologie Informatiche `E. Magenes' (CNR), Italy}
-\footnotetext[2]{Instituto de Matem\'atica Aplicada del Litoral (CONICET-UNL), Argentina}
-\footnotetext[3]{Facultad de Ingenier\'ia Qu\'imica (UNL), Argentina}
+\footnotetext[1]{Instituto de Matem\'atica Aplicada del Litoral (CONICET-UNL), Argentina}
+\footnotetext[2]{Facultad de Ingenier\'ia Qu\'imica (UNL), Argentina}
+\footnotetext[3]{Istituto di Matematica Applicata e Tecnologie Informatiche `E. Magenes' (CNR), Italy}
 \renewcommand{\thefootnote}{\arabic{footnote}}
 
 % 
@@ -214,17 +214,6 @@
 % 65N50, % Mesh generation and refinement
 % 65Y20  % Complexity and performance of numerical algorithms 
 % \end{quote}
-
-{\Rd CHOOSE A WAY TO WRITE FUNCTIONS}
-
-\begin{algorithm}
-\begin{algorithmic}
-\State $\markedelements \gets \textbf{compute\_cells\_to\_refine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
-\State $\markedelements \gets \textbf{Compute\_Cells\_To\_Refine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
-\State $\markedelements \gets \textbf{ComputeCellsToRefine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
-\State $\markedelements \gets \textsc{ComputeCellsToRefine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
-\end{algorithmic}
-\end{algorithm}
 
 {\Rd We have to decide about the levels. From 0 to $n$, and $n$ is empty, or from $1$ to $n+1$, and $n+1$ is empty. The first is C, the second is Matlab, Fortran.}
 
