@@ -93,7 +93,8 @@
 
 }
 
-\newcommand{\Rd}{\color{red}}   
+\newcommand{\Rd}{\color{red}}
+\renewcommand{\Rd}{\color{black}}
 
 % %%%%%%%% DEFINITION OF MACROS
 \newcommand{\note}[1]{{\noindent\centerline{\fbox{\parbox{.9\textwidth}{\textbf{
@@ -121,6 +122,7 @@
 \DeclareMathOperator{\Div}{div}
 \DeclareMathOperator{\id}{id}
 \DeclareMathOperator{\loc}{loc}
+\DeclareMathOperator{\trunc}{trunc}
 
 \newcommand{\bnew}[1]{{\color{blue}{#1}}}
 %\newcommand{\bnew}[1]{#1}
@@ -155,7 +157,7 @@
 \newcommand\PP{\mathbb P}
 \newcommand\QQ{\mathcal Q}
 \newcommand\HH{\mathcal H}
-%\newcommand\TT{\mathbb T}
+\newcommand\TT{\mathcal T}
 \newcommand\VV{\mathcal S}
 \newcommand\WW{\mathbb W}
 \newcommand\EE{\mathcal E}
@@ -177,6 +179,9 @@
 
 \newcommand{\bx}{{\bf x}}
 
+
+\let\hat\widehat
+\let\tilde\widetilde
 
 \title{Algorithms for local refinement \\ in hierarchical spline spaces. {\Rd UPDATE}}
 
@@ -210,7 +215,7 @@
 % 65Y20  % Complexity and performance of numerical algorithms 
 % \end{quote}
 
-
+{\Rd CHOOSE A WAY TO WRITE FUNCTIONS}
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -221,8 +226,232 @@
 \end{algorithmic}
 \end{algorithm}
 
+{\Rd We have to decide about the levels. From 0 to $n$, and $n$ is empty, or from $1$ to $n+1$, and $n+1$ is empty. The first is C, the second is Matlab, Fortran.}
+
+Por que el indice de nivel es un subindice, y no un superindice? Por mi no hay problema...
+
 \section{Introduction}
 \cite{Scott2014222,Bornemann2013584}, \cite{KGJ14}?
+
+\section{Setting and mathematical definitions}
+As it is standard in isogeometric analysis, we consider a domain $\Omega \subset \RR^r$ which is defined as the image of the unit domain $\hat \Omega = (0,1)^d$, with $d \le r$, through a given (rational) spline parametrization. One can think that the parametrization is defined with tensor product B-splines or NURBS, more details in the case of hierarchical splines will be given below.
+
+\subsection{Underlying sequence of tensor product spline spaces} \label{sec:B-splines}
+We consider a given sequence $\{\VV_\ell\}_{\ell \in\NN_0}$ of tensor-product $d$-variate spline spaces such that
+\begin{equation}\label{E:tensor-product spaces}
+ \VV_0\subset \VV_1\subset \VV_2\subset\VV_3\subset\dots,
+\end{equation}
+which are determined by their degree and their knot vectors. 
+For $\ell\in\NN_0$, the B-spline basis corresponding to $\VV_\ell$ is denoted by $\BB_\ell$, and the dimension of the space is $N_\ell$. Furthermore, we denote by $\QQ_\ell$ the Cartesian mesh associated to $\BB_\ell$, and we say that $Q\in\QQ_\ell$ is a \emph{cell of level $\ell$}.
+
+B-splines possess several important properties, that we do not list here, that make them suitable for design and analysis, see \cite{DeBoor, Schumi,IGA-book} for details. We will make extensive use in this work of the \emph{two-scale relation}, which consists in writing B-splines of level $\ell$ as linear combinations of B-splines of level $\ell+1$. More precisely, 
+\begin{equation} \label{E:two scale relation}
+ \beta_{i,\ell} = \sum_{k=1}^{N_{\ell+1}}
+c_{k,\ell+1}(\beta_{i,\ell}) \, \beta_{k,\ell+1}, 
+\qquad \forall\,\beta_{i,\ell} \in\BB_\ell.
+\end{equation}
+The two-scale relation is a direct consequence of the nestedness of the spaces. Moreover, due to the local linear independence of B-splines, only a limited number of the coefficients $c_{k,\ell+1}(\beta_{i,\ell})$ are different from zero. We will say that $\beta_{k,\ell+1}$ is a \emph{child} of $\beta_{i,\ell}$ if $c_{k,\ell+1}(\beta_{i,\ell}) \ne 0$, and denote by $\CC(\beta_{i,\ell})\subset\BB_{\ell+1}$ the set of children of $\beta_{i,\ell}$.
+
+Considering the two-scale relation for each basis function, we obtain an operator $C_\ell^{\ell+1}: \VV_\ell \longrightarrow \VV_{\ell+1}$, which can be written in matrix form, {\Rd with entries $(C_\ell^{\ell+1})_{ki} = c_{k,\ell+1}(\beta_{i,\ell})$.} For tensor product B-splines, the matrix is computed as the Kronecker tensor product of the analogous matrices corresponding to the univariate case.
+
+Successively applying the two-scale relation, we obtain the general version
+\begin{equation*}
+ \beta_{i,\ell} = \sum_{k=1}^{N_{\ell+m}}
+c_{k,\ell+m}(\beta_{i,\ell})\beta_{k,\ell+m}, 
+\qquad \forall\,\beta_{i,\ell} \in\BB_\ell,
+\end{equation*}
+and the matrix operator $C_\ell^{\ell+m} = C_{\ell+m-1}^{\ell+m} \ldots C_{\ell+1}^{\ell+2} C_\ell^{\ell+1}$, which relates functions of non-consecutive levels.
+
+\subsection{Hierarchical B-splines}
+For the definition of hierarchical B-splines we {\Rd essentially follow \cite{Kraft,Vuong_giannelli_juttler_simeon}}. 
+
+\begin{definition} \label{def:hierarchical}
+We consider a sequence of spaces like \eqref{E:tensor-product spaces}, and for some $n \in \NN$ we say that ${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$ is a hierarchy of subdomains of depth $n$ if
+\begin{equation*}
+\hat \Omega = \Omega_0 \supset \Omega_1 \supset \dots \supset 
+\Omega_{n-1}\supset \Omega_n = \emptyset,
+\end{equation*}
+and (the closure of) each subdomain $\Omega_\ell$ is (the closure of) the union of cells of level $\ell-1$.
+
+We define the hierarchical B-spline basis ${\HH} \equiv {\HH}({\bf\Omega}_n)$ by taking $\HH = \HH_{n-1}$ in the following recursive algorithm
+%\begin{equation}\label{E:Hierarchical basis}
+%{\HH}= \bigcup_{\ell = 0}^{n-1} \{\beta \in \BB_\ell \mid (\supp \beta 
+%\subset \Omega_\ell) \wedge (\supp \beta \not\subset \Omega_{\ell+1})\}.
+%\end{equation} 
+\begin{equation}\label{E:Hierarchical basis}
+\left \{
+\begin{array}{l}
+\HH_0 := \BB_0, \\
+\HH_{\ell+1} := \{\beta \in \HH_\ell \mid \supp \beta \not \subset \Omega_{\ell+1} \} \cup \{\beta \in \BB_{\ell+1} \mid \supp \beta \subset \Omega_{\ell+1}\}.
+\end{array}
+\right.
+\end{equation} 
+
+\end{definition}
+The hierarchical spline basis is associated to an underlying \emph{hierarchical mesh} $\QQ \equiv \QQ({\bf\Omega}_n)$, given by
+\begin{equation}\label{E:hierarchical mesh}
+\QQ:= \bigcup_{\ell = 0}^{n-1} \{ Q\in\QQ_\ell\,\mid\, Q\subset \Omega_\ell 
+\,\wedge\, Q\not\subset \Omega_{\ell+1}\}.
+\end{equation}
+In the following we say that $Q$ is an \emph{active cell} if $Q \in \QQ$, and it is an \emph{active cell of level $\ell$} if $Q \in \QQ_\ell \cap \QQ$. We will also say that $Q$ is a \emph{deactivated cell of level $\ell$} if $Q \in \QQ_\ell$ and $Q \subset \Omega_{\ell+1}$. 
+
+Analogously, we say that $\beta$ is an \emph{active (basis) function} if $\beta\in\HH$, it is an \emph{active function of level $\ell$} if $\beta \in \HH \cap \BB_\ell$, and it is a \emph{deactivated function of level $\ell$} if $\beta \in \HH_\ell \setminus \HH_{\ell+1}$. Moreover, $\HH_\ell \cap \BB_\ell$ is the union of active and deactivated functions of level $\ell$. Note that a function of level $\ell$ is active if all the active cells within its support are of level $\ell$ or higher, and at least one cell of level $\ell$ is active. A function is deactivated when all the cells of its level within the support have been deactivated.
+{\Rd ADD FIGURE?}
+
+It will be helpful, specially to write things in matrix form, to give a notation for the number of these functions. We will denote by $N= \# \HH$ the dimension of the hierarchical space, and by $N^A_\ell$ and $N^D_\ell$ the number of active and deactivated functions of level $\ell$, respectively. Sometimes we will also make use of {\Rd $N^A_\ell = \sum_{k=0}^\ell N_k^A$}, that is, the number of active functions up to level $\ell$.
+
+
+Finally, we remark that, unlike in the tensor product case, the basis functions of the hierarchical space do not form a partition of unity, although the unity belongs to the space. That is, there exist coefficients $a_\beta$ such that 
+ \begin{equation}\label{E:partition of the unity in the hierarchical space}
+\sum_{\beta\in {\HH}} a_\beta \beta (\bx) = 1, \qquad\text{for } \bx \in \hat \Omega,
+\end{equation}
+and it can be proved that $a_\beta \ge 0$. 
+
+
+\subsection{A {\Rd Simplified} hierarchical B-spline space}
+In \cite{BG15} the authors introduced a different hierarchical space, with the same approximation properties as the one in the previous section but with lower dimension. This new space is defined in a way that focus on the relation between functions. 
+
+\begin{definition}
+Given a sequence of spaces as in \eqref{E:tensor-product spaces} and a hierarchy of subdomains as in Definition~\ref{def:hierarchical}, we define the {\Rd simplified} hierarchical basis $\tilde \HH = \tilde \HH_{n-1}$ computed with the following recursive algorithm:
+\begin{equation}\label{E:Hierarchical basis2}
+\left \{
+\begin{array}{l}
+\tilde \HH_0 := \BB_0, \\
+\displaystyle \tilde \HH_{\ell+1} := \{\beta \in \tilde \HH_\ell \mid \supp \beta \not \subset \Omega_{\ell+1} \} \cup \bigcup_{\substack{\beta \in \tilde \HH_\ell \\ \supp \beta \subset \Omega_{\ell+1}}} \CC(\beta).
+\end{array}
+\right.
+\end{equation} 
+\end{definition}
+Unlike in the classical definition, where the decision for activating a function is based on its support, therefore checking whether the cells in its support are active, in this new space functions of level $\ell+1$ become active only if they are children of a deactivated function of level $\ell$. This may lead to simpler refinement schemes, specially for a posteriori estimators which are based on the basis functions and not on the elements \cite{BG15b}.
+
+Notice that the underlying hierarchical mesh is the same for both spaces. Moreover, the evaluation of the basis functions will be done exactly in the same way. From a practical point of view, the only difference between the spaces is the computation of the set of active functions during refinement.
+
+An interesting property of the new defined space is that now the coefficients for writing the unity are strictly positive. That is, we have 
+ \begin{equation*}\label{E:partition of the unity in the hierarchical space}
+\sum_{\beta\in {\tilde \HH}} a_\beta \beta (\bx) = 1, \qquad\text{for } \bx \in \hat \Omega,
+\end{equation*}
+with $a_\beta > 0$. 
+
+\subsection{Truncated hierarchical B-splines} \label{sec:truncated}
+Truncated hierarchical B-splines (THB-splines) were introduced and analysed in \cite{Giannelli2012485, GJS14}. THB-splines represent an alternative basis for the space of hierarchical splines, that recovers the partition of unity and reduces the support of the basis functions, therefore reducing the interaction between them. In particular, this leads to sparser and better conditioned matrices in isogeometric analysis. Moreover, the better properties of THB-splines with respect to the standard basis make them more appropriate to develop the mathematical theory of approximation and adaptivity \cite{MS15,BGi15}.
+
+The definition of THB-splines requires first the definition of the truncation operator. This consists in removing in the two-scale relation the contribution of active and deactivated functions of the next level, that we recall to be the functions in $\HH_{\ell+1} \cap \BB_{\ell+1}$:
+\begin{equation*}
+\trunc_{\ell+1} (\beta_{i,\ell}) := \sum_{k=1}^{N_\ell+1} c^\tau_{k,\ell+1} (\beta_{i,\ell}) \beta_{k,\ell+1},
+\end{equation*}
+where the coefficients are now
+\begin{equation*}
+c^\tau_{k,\ell+1}(\beta_{i,\ell}) = \left\{
+\begin{array}{ll}
+0 & \text{ if } \beta_{k,\ell+1} \in \HH_{\ell+1}, \\
+c_{k,\ell+1}(\beta_{i,\ell}) & \text{ otherwise}.
+\end{array}
+\right.
+\end{equation*}
+Now, following \cite{Giannelli2012485} we define the truncated hierarchical basis $\TT =\TT_{n-1}$ computed by the following recursive algorithm:
+\begin{equation*}\label{E:THB-splines}
+\left \{
+\begin{array}{l}
+\TT_0 := \BB_0, \\
+\displaystyle \TT_{\ell+1} := \{\trunc_{\ell+1}(\beta) \in \TT_\ell \mid \supp \beta \not \subset \Omega_{\ell+1} \} \cup \{\beta \in \BB_{\ell+1} : \supp \beta \subset \Omega_{\ell+1} \}.
+\end{array}
+\right.
+\end{equation*}
+
+Notice that to compute the truncation it is only necessary, in the matrix of the two-scale relation $C_\ell^{\ell+1}$, to set to zero the rows corresponding to active and deactivated functions of level $\ell+1$. Successively applying truncation, as it is done in the algorithm, is obtained by multiplying the modified matrix of the two scale relation, in the same way we defined $C_\ell^{\ell+m}$ in \S~\ref{sec:B-splines}.
+
+We also remark that truncation can be also applied to the hierarchical basis $\tilde \HH$, setting to zero the same lines of the matrix for the two-scale relation.
+
+\subsection{Refinement of hierarchical splines}
+In this section we review some results about the refinement of hierarchical splines. It is not our objective to introduce or analyse a particular refinement strategy, but to give the main ideas that will serve to introduce, in \S~\ref{sec:REFINE}, the algorithms to compute the refined hierarchical mesh and space.
+
+\subsubsection{Definition of refined hierarchical mesh and space}
+{\Rd ADD TEXT}
+\begin{definition}
+ Let ${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$ and ${\bf\Omega}_{n+1}^*:= \{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ be hierarchies of subdomains of $\Omega$ of depth (at most) $n$ and $n+1$, respectively. We say that ${\bf\Omega}_{n+1}^*$ is an \emph{enlargement} of ${\bf\Omega}_n$ if
+ $$\Omega_\ell\subset\Omega_\ell^*,\qquad \ell=1,2,\dots,n.$$ 
+ \end{definition}
+
+
+ Let $\HH$ and $\QQ$ be the hierarchical B-spline basis and the hierarchical mesh associated to the hierarchy of subdomains of depth $n$,
+${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$. For ${\bf\Omega}_{n+1}^*$ an enlargement of ${\bf\Omega}_n$, let $\HH^*$ and $\QQ^*$ be the corresponding \emph{refined hierarchical basis} and \emph{refined hierarchical mesh}, respectively, defined as in Definition~\ref{def:hierarchical}.
+ 
+In~\cite{GJS14} it has been proved that any enlargement of ${\bf\Omega}_n$ gives rise to a new enriched hierarchical B-spline basis $\HH^*$, in the sense that
+$$\Span\HH\subset\Span\HH^*.$$
+{\Rd SAY SOMETHING ABOUT $\Span\tilde\HH\subset\Span\tilde\HH^*$.}
+
+To compute the enlargement of the subdomains it is necessary to select the areas of the domain which need better approximation, and thus have to be further refined. This is usually decided according to a marking strategy, based on the results of an a-posteriori estimator. Such a choice can be done either by selecting to refine a set of active cells in $\QQ$, as it is usually done in adaptive finite elements, or selecting to refine a set of active basis functions in $\HH$, which is equivalent to refining their support \cite{BG15b}. More precisely, we consider the two following ways of refinement:
+\begin{itemize}
+\item {\bf Marking active cells:} We consider a subset of active cells $\MM^e\subset\QQ$. Let $\MM^e_\ell:=\MM^e\cap\QQ_\ell$, for $\ell = 0,1,\dots,n-1$. Now, we define the hierarchy of domains ${\bf\Omega}^*_{n+1} := 
+\{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ of depth (at most) 
+$n+1$, by
+\begin{align}\label{E:marking active cells}
+\begin{cases}\Omega_0^* &:=\Omega_0,\\
+\Omega_{\ell}^* &:=\Omega_{\ell}\cup \D\bigcup_{Q\in\MM^e_{\ell-1}}Q,\qquad \ell = 1,2,\dots,n,\\
+\Omega_{n+1}^*&:= \emptyset.
+\end{cases}
+\end{align}
+Notice that $\MM^e\subset\QQ\setminus\QQ^*$, i.e., all cells in $\MM^e$ have been refined.
+ \item {\bf Marking basis functions:} We consider a subset of active basis functions $\MM^f\subset\HH$. Let $\MM^f_\ell:=\MM^f\cap\BB_\ell$, for $\ell = 0,1,\dots,n-1$. Now, we define the hierarchy of domains ${\bf\Omega}^*_{n+1} := 
+\{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ of depth (at most) 
+$n+1$, by
+\begin{align}\label{E:marking basis functions}
+\begin{cases}\Omega_0^* &:=\Omega_0,\\
+\Omega_{\ell}^* &:=\Omega_{\ell}\cup \D\bigcup_{\beta\in\MM^f_{\ell-1}}\supp 
+\beta,\qquad \ell = 1,2,\dots,n,\\
+\Omega_{n+1}^*&:= \emptyset.
+\end{cases}
+\end{align}
+In this case, $\MM^f\subset\HH\setminus\HH^*$, i.e., all the functions in $\MM^f$ have been removed (or deactivated) from the hierarchical basis $\HH$. 
+\end{itemize}
+
+When marking basis functions one has to be careful with the set of functions to deactivate, since it may happen that a function that has not been marked must be deactivated, because its support is contained in the union of the supports of other functions, as it happens in Figure~\ref{}. {\Rd ADD FIGURE}
+
+We would also like to remark that a careless marking can lead to hierarchical bases where coarse and fine functions overlap, because coarse and fine cells are very close to each other or even adjacent. This can be avoided using the so-called using the refinement strategy proposed in \cite{BGi15}, which leads to the so-called \emph{admissible meshes of class $m$}, that is, meshes where on each element only (truncated) functions of $m$ different levels do not vanish. The complexity of this refinement strategy has been studied in \cite{BGMP15}. {\Rd ARE WE GOING TO IMPLEMENT THAT?}
+
+\subsubsection{Refinement matrix between hierarchical spaces (knot insertion)}
+In several occasions it is necessary to write a function in the coarse space as a linear combination of functions in the fine space. This is done, for instance, when applying knot insertion, in time dependent problems with adaptive refinement, or in multigrid methods. This coarse-to-fine operation can be computed as as a matrix-vector multiplication, using a rectangular matrix which is easily obtained from the information of active and deactivated functions for each space, that we now explain.
+
+By the way refinement is defined, any active function in $\HH \cap \BB_\ell$ is either in $\HH^* \cap \BB_\ell$ or in $\HH_\ell^* \setminus \HH^*_{\ell+1}$, that is, it is either active or deactivated in the new basis. We can therefore define the rectangular matrix $\tilde I_\ell$ of size $(N^{A^*}_{\ell} + N^{D^*}_{\ell}) \times N^A_\ell$ such that 
+\begin{equation*}
+(\tilde I_\ell)_{ij} = \left \{ 
+\begin{array}{l}
+1, \text{ if }  \beta^{*}_{i,\ell} = \beta_{j,\ell}\\
+0, \text{ otherwise. }
+\end{array}
+\right.
+\end{equation*}
+
+We define the matrix for refinement $K = K_n$ with the following recursive algorithm:
+\begin{enumerate}
+\item $K_0 = \tilde I_0$,
+\item $K_{\ell+1} = \left [ 
+\begin{array}{cc}
+K^{A^*}_\ell & 0 \\
+K_\ell^{\ell+1} K^{D^*}_\ell & \tilde I_{\ell+1}
+\end{array}
+\right]$,
+\end{enumerate}
+where $K_\ell^{A^*}$ and $K_\ell^{D^*}$ are submatrices of $K_\ell$ restricted to the rows corresponding to {\Rd active functions in $\HH^*$ up to level $\ell$, and deactivated functions of level $\ell$, respectively. The matrix $K_\ell^{\ell+1}$ is the submatrix of $C_\ell^{\ell+1}$ restricted to the rows of active and deactivated functions of level $\ell+1$ in $\HH^*$, and the columns of deactivated functions of level $\ell$ in $\HH^*$. }
+
+We remark that this recursive algorithm is independent of the chosen hierarchical space (either standard or simplified). To compute the same matrix for truncated hierachical B-splines, one only needs to replace the matrix $C_\ell^{\ell+1}$ (and its submatrix), by its version for truncated hierarchical splines, as explained in \S~\ref{sec:truncated}.
+
+{\Rd COARSENING?}
+
+\section{Structures for the implementation of hierarchical splines}
+In this section we introduce the {\Rd XXXXXXXXXX ADD TEXT}.
+
+\subsection{Structures for the tensor product case}
+Our starting point to implement adaptive isogeometric methods with hierarchical splines is the existence of a code capable to solve isogeometric methods with tensor product spaces, as those in Section~\ref{sec:B-splines}.
+
+{\Rd TEXT TEXT TEXT TEXT}
+
+In particular, we need to assume that we have the following functions that work for the tensor product case, and can therefore be used in one single level:
+\begin{itemize}
+\item {\bf get\_basis\_functions}: for a given cell, compute the indices of the basis functions that do not vanish on the cell. In IGA software this is equivalent to the computation of the connectivity, which is used for assembling the matrix.
+\item {\bf get\_cells}: for a given basis function, compute the cells in which the function does not vanish.
+\item {\bf get\_neighbors}: for a given basis function, compute the indices of basis functions such that their supports intersect. In IGA software, this information is used for computing the sparsity pattern of the matrix.
+\end{itemize}
 
 \section{Setting}
 
