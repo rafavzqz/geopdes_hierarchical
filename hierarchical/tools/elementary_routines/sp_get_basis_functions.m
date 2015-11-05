@@ -27,7 +27,7 @@
 
 function function_indices = sp_get_basis_functions (space, msh, cell_indices)
 
-space = sp_precompute_param (space, msh, 'connectivity', true);
+space = sp_precompute_param (space, msh, 'value', false);
 function_indices = space.connectivity (:,cell_indices);
 function_indices = unique (function_indices(:));
 
