@@ -94,7 +94,7 @@
 }
 
 \newcommand{\Rd}{\color{red}}
-\renewcommand{\Rd}{\color{black}}
+%\renewcommand{\Rd}{\color{black}}
 
 % %%%%%%%% DEFINITION OF MACROS
 \newcommand{\note}[1]{{\noindent\centerline{\fbox{\parbox{.9\textwidth}{\textbf{
@@ -241,17 +241,17 @@ c_{k,\ell+1}(\beta_{i,\ell}) \, \beta_{k,\ell+1},
 \end{equation}
 The two-scale relation is a direct consequence of the nestedness of the spaces. Moreover, due to the local linear independence of B-splines, only a limited number of the coefficients $c_{k,\ell+1}(\beta_{i,\ell})$ are different from zero. We will say that $\beta_{k,\ell+1}$ is a \emph{child} of $\beta_{i,\ell}$ if $c_{k,\ell+1}(\beta_{i,\ell}) \ne 0$, and denote by $\CC(\beta_{i,\ell})\subset\BB_{\ell+1}$ the set of children of $\beta_{i,\ell}$.
 
-Considering the two-scale relation for each basis function, we obtain an operator $C_\ell^{\ell+1}: \VV_\ell \longrightarrow \VV_{\ell+1}$, which can be written in matrix form, {\Rd with entries $(C_\ell^{\ell+1})_{ki} = c_{k,\ell+1}(\beta_{i,\ell})$.} For tensor product B-splines, the matrix is computed as the Kronecker tensor product of the analogous matrices corresponding to the univariate case.
+Considering the two-scale relation for each basis function, we obtain an operator $C_\ell^{\ell+1}: \VV_\ell \longrightarrow \VV_{\ell+1}$, which is merely the inclusion, and can be written in matrix form {\Rd with entries $(C_\ell^{\ell+1})_{ki} = c_{k,\ell+1}(\beta_{i,\ell})$.} For tensor product B-splines, the matrix is computed as the Kronecker tensor product of the analogous matrices corresponding to the univariate case.
 
 Successively applying the two-scale relation, we obtain the general version
-\begin{equation*}
+\begin{equation} \label{E:two-scale-many-levels}
  \beta_{i,\ell} = \sum_{k=1}^{N_{\ell+m}}
 c_{k,\ell+m}(\beta_{i,\ell})\beta_{k,\ell+m}, 
 \qquad \forall\,\beta_{i,\ell} \in\BB_\ell,
-\end{equation*}
+\end{equation}
 and the matrix operator $C_\ell^{\ell+m} = C_{\ell+m-1}^{\ell+m} \ldots C_{\ell+1}^{\ell+2} C_\ell^{\ell+1}$, which relates functions of non-consecutive levels.
 
-\subsection{Hierarchical B-splines}
+\subsection{Hierarchical B-splines} \label{sec:hierarchical}
 For the definition of hierarchical B-splines we {\Rd essentially follow \cite{Kraft,Vuong_giannelli_juttler_simeon}}. 
 
 \begin{definition} \label{def:hierarchical}
@@ -297,7 +297,7 @@ Finally, we remark that, unlike in the tensor product case, the basis functions 
 and it can be proved that $a_\beta \ge 0$. 
 
 
-\subsection{A {\Rd Simplified} hierarchical B-spline space}
+\subsection{A {\Rd Simplified} hierarchical B-spline space} \label{sec:simplified}
 In \cite{BG15} the authors introduced a different hierarchical space, with the same approximation properties as the one in the previous section but with lower dimension. This new space is defined in a way that focus on the relation between functions. 
 
 \begin{definition}
@@ -313,7 +313,7 @@ Given a sequence of spaces as in \eqref{E:tensor-product spaces} and a hierarchy
 \end{definition}
 Unlike in the classical definition, where the decision for activating a function is based on its support, therefore checking whether the cells in its support are active, in this new space functions of level $\ell+1$ become active only if they are children of a deactivated function of level $\ell$. This may lead to simpler refinement schemes, specially for a posteriori estimators which are based on the basis functions and not on the elements \cite{BG15b}.
 
-Notice that the underlying hierarchical mesh is the same for both spaces. Moreover, the evaluation of the basis functions will be done exactly in the same way. From a practical point of view, the only difference between the spaces is the computation of the set of active functions during refinement.
+Notice that the underlying hierarchical mesh is the same for both spaces. Moreover, the evaluation of the basis functions will be done exactly in the same way. From the point of view of the implementation, the only difference between the spaces is the computation of the set of active functions during refinement.
 
 An interesting property of the new defined space is that now the coefficients for writing the unity are strictly positive. That is, we have 
  \begin{equation*}\label{E:partition of the unity in the hierarchical space}
@@ -332,7 +332,7 @@ where the coefficients are now
 \begin{equation*}
 c^\tau_{k,\ell+1}(\beta_{i,\ell}) = \left\{
 \begin{array}{ll}
-0 & \text{ if } \beta_{k,\ell+1} \in \HH_{\ell+1}, \\
+0 & \text{ if } \beta_{k,\ell+1} \in \HH_{\ell+1} \cap \BB_{\ell+1}, \\
 c_{k,\ell+1}(\beta_{i,\ell}) & \text{ otherwise}.
 \end{array}
 \right.
@@ -349,9 +349,9 @@ Now, following \cite{Giannelli2012485} we define the truncated hierarchical basi
 
 Notice that to compute the truncation it is only necessary, in the matrix of the two-scale relation $C_\ell^{\ell+1}$, to set to zero the rows corresponding to active and deactivated functions of level $\ell+1$. Successively applying truncation, as it is done in the algorithm, is obtained by multiplying the modified matrix of the two scale relation, in the same way we defined $C_\ell^{\ell+m}$ in \S~\ref{sec:B-splines}.
 
-We also remark that truncation can be also applied to the hierarchical basis $\tilde \HH$, setting to zero the same lines of the matrix for the two-scale relation.
+We also remark that truncation can be also applied to the hierarchical basis $\tilde \HH$, setting to zero the lines of the matrix for the two-scale relation in the same way.
 
-\subsection{Refinement of hierarchical splines}
+\subsection{Refinement of hierarchical splines} \label{sec:refinement}
 In this section we review some results about the refinement of hierarchical splines. It is not our objective to introduce or analyse a particular refinement strategy, but to give the main ideas that will serve to introduce, in \S~\ref{sec:REFINE}, the algorithms to compute the refined hierarchical mesh and space.
 
 \subsubsection{Definition of refined hierarchical mesh and space}
@@ -360,7 +360,6 @@ In this section we review some results about the refinement of hierarchical spli
  Let ${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$ and ${\bf\Omega}_{n+1}^*:= \{\Omega_0^*,\Omega_1^*,\dots,\Omega_n^*,\Omega_{n+1}^*\}$ be hierarchies of subdomains of $\Omega$ of depth (at most) $n$ and $n+1$, respectively. We say that ${\bf\Omega}_{n+1}^*$ is an \emph{enlargement} of ${\bf\Omega}_n$ if
  $$\Omega_\ell\subset\Omega_\ell^*,\qquad \ell=1,2,\dots,n.$$ 
  \end{definition}
-
 
  Let $\HH$ and $\QQ$ be the hierarchical B-spline basis and the hierarchical mesh associated to the hierarchy of subdomains of depth $n$,
 ${\bf\Omega}_n := \{\Omega_0,\Omega_1,\dots,\Omega_n\}$. For ${\bf\Omega}_{n+1}^*$ an enlargement of ${\bf\Omega}_n$, let $\HH^*$ and $\QQ^*$ be the corresponding \emph{refined hierarchical basis} and \emph{refined hierarchical mesh}, respectively, defined as in Definition~\ref{def:hierarchical}.
@@ -396,10 +395,10 @@ In this case, $\MM^f\subset\HH\setminus\HH^*$, i.e., all the functions in $\MM^f
 
 When marking basis functions one has to be careful with the set of functions to deactivate, since it may happen that a function that has not been marked must be deactivated, because its support is contained in the union of the supports of other functions, as it happens in Figure~\ref{}. {\Rd ADD FIGURE}
 
-We would also like to remark that a careless marking can lead to hierarchical bases where coarse and fine functions overlap, because coarse and fine cells are very close to each other or even adjacent. This can be avoided using the so-called using the refinement strategy proposed in \cite{BGi15}, which leads to the so-called \emph{admissible meshes of class $m$}, that is, meshes where on each element only (truncated) functions of $m$ different levels do not vanish. The complexity of this refinement strategy has been studied in \cite{BGMP15}. {\Rd ARE WE GOING TO IMPLEMENT THAT?}
+We would also like to remark that a careless marking can lead to hierarchical bases where functions from many different levels overlap, because coarse and fine cells are very close to each other or even adjacent. This can be avoided using the refinement strategy proposed in \cite{BGi15}, which leads to the so-called \emph{admissible meshes of class $m$}, that is, meshes where on each active cell only (truncated) functions of $m$ different levels do not vanish. The complexity of this refinement strategy has been studied in \cite{BGMP15}. {\Rd ARE WE GOING TO IMPLEMENT THAT?}
 
 \subsubsection{Refinement matrix between hierarchical spaces (knot insertion)}
-In several occasions it is necessary to write a function in the coarse space as a linear combination of functions in the fine space. This is done, for instance, when applying knot insertion, in time dependent problems with adaptive refinement, or in multigrid methods. This coarse-to-fine operation can be computed as as a matrix-vector multiplication, using a rectangular matrix which is easily obtained from the information of active and deactivated functions for each space, that we now explain.
+In several occasions it is necessary to write a function in the coarse space as a linear combination of functions in the fine space. This is done, for instance, when applying knot insertion, in time dependent problems with adaptive refinement, or in multigrid methods. This coarse-to-fine operation can be computed as a matrix-vector multiplication, using a rectangular matrix which is easily obtained from the information of active and deactivated functions for each space, as we now explain.
 
 By the way refinement is defined, any active function in $\HH \cap \BB_\ell$ is either in $\HH^* \cap \BB_\ell$ or in $\HH_\ell^* \setminus \HH^*_{\ell+1}$, that is, it is either active or deactivated in the new basis. We can therefore define the rectangular matrix $\tilde I_\ell$ of size $(N^{A^*}_{\ell} + N^{D^*}_{\ell}) \times N^A_\ell$ such that 
 \begin{equation*}
@@ -427,20 +426,370 @@ We remark that this recursive algorithm is independent of the chosen hierarchica
 
 {\Rd COARSENING?}
 
-\section{Structures for the implementation of hierarchical splines}
+\subsection{Other issues}
+{\Rd Rational hierarchical splines. Physical domain. Multiple patches. Boundary. ANYTHING ELSE?}
+
+\section{Structures for the implementation of hierarchical splines} \label{sec:structures}
 In this section we introduce the {\Rd XXXXXXXXXX ADD TEXT}.
 
 \subsection{Structures for the tensor product case}
-Our starting point to implement adaptive isogeometric methods with hierarchical splines is the existence of a code capable to solve isogeometric methods with tensor product spaces, as those in Section~\ref{sec:B-splines}.
+Our starting point to implement adaptive isogeometric methods with hierarchical splines is the existence of a code capable to solve isogeometric methods with tensor product spaces, as those in Section~\ref{sec:B-splines}. We assume that for any tensor product space, and therefore for each level $\ell$, we have a \emph{mesh} structure (or class) with the information of the Cartesian grid $\QQ_\ell$, and a \emph{space} structure (or class) with the information of the tensor product space $\VV_\ell$. To solve a variational IGA problem with tensor product spaces, these structures are complemented with functions (or methods) to evaluate the basis functions of $\BB_\ell$ and their derivatives in the quadrature points, to compute local elementary matrices, and to assemble the global matrix of the problem. {\Rd REFERENCE. GEOPDES?}
 
-{\Rd TEXT TEXT TEXT TEXT}
-
-In particular, we need to assume that we have the following functions that work for the tensor product case, and can therefore be used in one single level:
+In particular, for the tensor product spaces we need the following functions, that work in one single level:
 \begin{itemize}
-\item {\bf get\_basis\_functions}: for a given cell, compute the indices of the basis functions that do not vanish on the cell. In IGA software this is equivalent to the computation of the connectivity, which is used for assembling the matrix.
-\item {\bf get\_cells}: for a given basis function, compute the cells in which the function does not vanish.
-\item {\bf get\_neighbors}: for a given basis function, compute the indices of basis functions such that their supports intersect. In IGA software, this information is used for computing the sparsity pattern of the matrix.
+\item {\bf get\_basis\_functions}: for a given cell $Q \in \QQ_\ell$ (or an array of cells), compute the indices of the basis functions in $\BB_\ell$ that do not vanish in $Q$. In IGA software this is equivalent to the computation of the connectivity, which is used for assembling the matrix.
+\item {\bf get\_cells}: for a given basis function $\beta \in \BB_\ell$ (or an array of functions), compute the cells in $\QQ_\ell$ in which the function does not vanish.
+\item {\bf get\_neighbors}: for a given basis function $\beta \in \BB_\ell$ (or an array of functions), compute the indices of basis functions in $\BB_\ell$ such that their supports intersect. In IGA software, this information is used for computing the sparsity pattern of the matrix.
 \end{itemize}
+
+We will also need functions to relate the information of two consecutive levels. To have this it is necessary to determine first the refinement between the two levels, that is, the spaces of the sequence \eqref{E:tensor-product spaces}. Usually this will be a simple dyadic $h$-refinement, but our algorithms are general enough to cover any other refinement, provided that the spline spaces are nested. The two functions that we will need are: 
+\begin{itemize}
+\item {\bf get\_children\_of\_cell}: for a given cell $Q \in \QQ_\ell$, compute the indices of the cells $Q' \in \QQ_{\ell+1}$ such that $Q' \subset Q$.
+\item {\bf get\_children\_of\_function}: for a given basis function $\beta \in \BB_\ell$, compute the indices of the children $\CC(\beta)$, as defined in Section~\ref{sec:B-splines}. Eventually, the function can also compute the coefficients of the two-scale relation \eqref{E:two scale relation}. For $h$-refinement, the coefficients can be computed using the algorithm in \cite{CR07}. {\Rd REFERENCE FOR $p$-REFINEMENT}
+\end{itemize}
+
+Notice that, since all these functions are for tensor product spaces on Cartesian grids, the computations can be done in the univariate case, and then generalized to the multivariate case using lexicographical ordering and tensor product\footnote{Octave and Matlab users will find the functions \texttt{ind2sub}, \texttt{sub2ind} and \texttt{kron} extremely useful.}.
+
+\subsection{The hierarchical mesh}
+The first structure (or class) must contain the information for the hierarchical mesh $\QQ$. The essential information that is required to be stored in this structure is the following:
+\begin{itemize}
+\item The current number of levels, $n$.
+\item The Cartesian mesh structure for each level, with the information for $\QQ_\ell$.
+\item The list of active cells for each level, that we denote by $\activeelements{\ell}$ in the algorithms.
+\item The list of deactivated cells for each level, that we denote by $\deactelements{\ell}$ in the algorithms.
+\item The mesh refinement to pass from level $\ell$ to $\ell+1$ (dyadic, triadic...)
+\end{itemize}
+When computing the numerical integrals for the assembly of the matrix, all the computations are restricted to the active elements of the mesh. The computations in one active element can be done identifying its level, and using the corresponding functions in the Cartesian mesh structure for that level. Notice that, since the mesh of each level is Cartesian, only one-dimensional information is needed to be saved in memory, and the multivariate information can be computed on the fly.
+
+\begin{remark}
+The hierarchical mesh can be implemented in a tree structure, that becomes a simple quadtree or octree for dyadic $h$-refinement. In this structure the active elements are the leaves, and the other nodes of the tree are the deactivated elements.
+\end{remark}
+
+\subsection{The hierarchical space}
+The second structure (or class) must contain all the information for the computation of the hierarchical basis. Although we have defined different hierarchical basis $\tilde \HH$ and $\tilde \HH$, each one with a truncated version, the fields present in the structure are independent of the chosen basis (obviously, their values will change). This is the list of necessary fields:
+\begin{itemize}
+\item The current number of levels $n$.
+\item For each level, a space structure with the information for the basis $\BB_\ell$.
+\item The list of active functions for each level, that we denote by $\activefunctions{\ell}$ in the algorithms.
+\item The list of deactivated cells for each level, that we denote by $\deactfunctions{\ell}$ in the algorithms.
+\item The coefficients for the (univariate) two-scale relation between levels $\ell$ and $\ell+1$.
+\end{itemize}
+
+As we mentioned above, the necessary fields are independent of the chosen basis, but the list of active and deactivated functions for the bases $\HH$ and $\tilde \HH$ will differ, and at each refinement step will be updated using different algorithms. The active and deactivated basis functions are the same when considering the truncated basis. 
+
+As we mentioned in \S\ref{sec:truncated}, truncation can be incorporated into the two-scale relation by setting some rows of the matrix to zero. We note that this has to be done in the multivariate matrix, computed by Kronecker tensor product of the univariate ones, that we store in the structure.
+
+\begin{remark}
+Similarly to the hierarchical mesh, the hierarchical space can be implemented in a tree structure. In this case, however, the implementation is not so clear, because the number of children of a function will not be always the same, as it will depend on the degree and the continuity, and a function of level $\ell+1$ will have several parents of level $\ell$. Moreover, it is possible that an active function is not a leaf of the tree, since one of its children may also be active (or even deactivated). 
+\end{remark}
+
+\subsection{Boundary}
+
+{\Rd Do we really want this?}
+
+\section{Matrix and vector assembly: the SOLVE module} \label{sec:SOLVE}
+
+{\Rd IN THIS SECTION WE NEED TO EXPLAIN HOW AND WHERE WE USE THE HIERARCHICAL STRUCTURES}
+
+One of the issues when implementing IGA with hierarchical splines is the assembly of the matrices. In order to compute the matrices of the discrete problem it is necessary to evaluate integrals that involve basis functions from different levels, and possibly in a level that does not correspond to the level of the functions. For instance, to compute one entry of the mass matrix, one must compute the following integral, which involves only active elements where the functions do not vanish:
+\begin{equation*}
+\int_\Omega \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx = \sum_{Q \in \QQ} \int_Q \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx = \sum_{\ell = \max\{\ell_i, \ell_j\}}^n \sum_{Q_\ell \in \QQ_\ell} \int_{Q_\ell} \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx.
+\end{equation*}
+
+In order to compute the integrals, we take advantage of the general version of the two-scale relation \eqref{E:two-scale-many-levels}. Replacing in the integral each basis function with its expression in terms of functions of level $\ell$, we obtain 
+\begin{align*}
+\int_\Omega \beta_{i,\ell_i} \beta_{j,\ell_j} \, d\bx = \\
+\sum_{\ell = \max\{\ell_i, \ell_j\}}^n \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell} \left(\sum_{k=1}^{N_\ell} c_{k,\ell}(\beta_{i,\ell_i}) \beta_{k,\ell}\right) \left(\sum_{k'=1}^{N_\ell} c_{k',\ell}(\beta_{j,\ell_j}) \beta_{k',\ell}\right) \, d\bx = \\
+\sum_{\ell = \max\{\ell_i, \ell_j\}}^n \sum_{k=1}^{N_\ell} \sum_{k'=1}^{N_\ell} c_{k,\ell}(\beta_{i,\ell_i}) c_{k',\ell}(\beta_{j,\ell_j}) \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell}  \beta_{k,\ell}  \beta_{k',\ell} \, d\bx.
+\end{align*}
+
+After the arrangements, we see that it is only needed to compute, in the active elements of level $\ell$, the integrals involving the tensor product functions of that level, both active and inactive. The computation of these integrals should be easily available in any IGA software.
+
+The only missing part is the computation of the coefficients in an efficient way, that can be done rewriting the equations in matrix form. First, let us denote by $M_\ell$ the matrix obtained when computing the integrals for functions of level $\ell$, that is
+\begin{equation*}
+(M_\ell)_{k k'} = \sum_{Q_\ell \in \QQ_\ell}  \int_{Q_\ell}  \beta_{k,\ell}  \beta_{k',\ell} \, d\bx,
+\end{equation*}
+Let us also denote by $\tilde I_\ell$ the rectangular matrix of size $N_\ell \times N^A_\ell$ such that
+$$
+(\tilde I_\ell)_{ij} = \left \{ 
+\begin{array}{l}
+1, \text{ if }  {\Rd \beta_{i,\ell} = \beta^A_{j,\ell} (active)} \\
+0, \text{ otherwise, }
+\end{array}
+\right.
+$$
+that is, it computes the inclusion of active functions of level $\ell$ into the whole tensor product space of the same level. We also define the matrices for basis change $C_\ell$ by the recursive algorithm
+\begin{enumerate}
+\item $C_0 = \tilde I_0$.
+\item $C_\ell = [C_{\ell-1}^\ell C_{\ell-1}, \tilde I_\ell]$.
+\end{enumerate}
+Thus, each $C_\ell$ is a rectangular matrix of size $N_\ell \times \tilde N^A_\ell$, where we recall that {\Rd $\tilde N^A_\ell = \sum_{k=0}^\ell N^A_k$} is the number of active functions up to level $\ell$. Finally, we can assemble the global mass matrix using the following expression
+\begin{equation*}
+M = \sum_{\ell = 0}^n C^T_\ell M_\ell C_\ell.
+\end{equation*}
+The same procedure can be used for the assembly of any other matrix coming from the variational formulation. Global vectors are assembled analogously, but in this case only the matrix multiplication on the left is required, that is
+\begin{equation*}
+F = \sum_{\ell = 0}^n C^T_\ell F_\ell.
+\end{equation*}
+
+The use of the subdivision matrix $C^\ell_{\ell-1}$ for the matrix assembly was first proposed by Bornemann and Cirak in \cite{Bornemann2013584}. The same approach was adopted in \cite{}[HENNIG] for truncated hierarchical B-splines. The advantage of this method is that, on active elements of a given level, only functions of the same level have to be evaluated.
+
+\section{Refinement algorithms for hierarchical splines: the REFINE module} \label{sec:REFINE}
+
+In this section we present the algorithms to update the sets of active and deactivated entities when applying refinement as explained in \S\ref{sec:refinement}. The algorithms cover both the case of marking cells and marking basis functions, and also the two different spaces: the standard hierarchical space presented in \S\ref{sec:hierarchical}, and the {\Rd simplified} hierarchical space of \S\ref{sec:simplified}. We recall that for the truncated basis, the only difference is in the computation of the matrix for the two-scale relation, therefore all the algorithms work for the truncated basis as well.
+
+Similar to Octave/Matlab usage of cell-arrays, in the algorithms we will write  $\{ \texttt{A}_\ell \}_{\ell=0}^n$ for variables where the size varies from one level to another, and simply $\texttt{A}_\ell$ when one single level is considered. To alleviate notation, the index interval in the cell-arrays will be specified only when it is different from 0 to $n$. Also similar to Octave/Matlab, we will use brackets $[\tt{A},{\tt B}]$ to indicate that a function gives two or more output variables.
+
+\subsection{Refinement}
+We assume that we are given a hierarchical mesh structure and a hierarchical space structure, that we denote $\mesh$ and $\basis$, respectively. These contain the information explained in \S\ref{sec:structures}. Apart from these two structures, we get as an input a set of marked entities for each level, either cells or basis functions, that we denote by $\{\marked_\ell\}_{\ell=0}^{n-1}$.
+
+Algorithm~\ref{alg:refine} provides as the output the refined hierarchical mesh and space, that is, the structures for the mesh $\QQ^*$ and the basis $\HH^*$ obtained when applying the refinement. The first step is, in the case of marking basis functions, to compute from their support the cells to refine, Then we use separate algorithms to refine the hierarchical mesh and the hierarchical space, that we explain in detail below. 
+
+Note that it is also possible to refine the mesh and the space at the same time. However, we think that this approach can be more convenient in several situations, for instance for mixed formulations (like Stokes) where two spaces have to be refined simultaneously. {\Rd EXPLAIN BETTER}
+
+\begin{algorithm}
+\caption{Refine: update $\mesh$ and $\basis$ when enlarging the current subdomains with the marked cells (or functions) given in $\marked$} \label{alg:refine}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}$
+\If{(Marking functions)}
+%\State $\markedelements \gets \textbf{compute\_cells\_to\_refine} \, (\{\activeelements{\ell}\}_\ell, \{\marked_\ell\}_\ell)$
+\State $\{\markedelements_\ell\} \gets \textbf{compute\_cells\_to\_refine} \, (\{\activeelements{\ell}\}, \{\marked_\ell\})$
+\ElsIf{(Marking cells)}
+%\State $\markedelements \gets \marked$
+\State $\{\markedelements_\ell\} \gets \{\marked_\ell\}$
+\EndIf
+%\State $[\mesh, \{\newcells_\ell\}_\ell] \gets$ \textbf{refine\_hierarchical\_mesh}\, ($\{\markedelements_\ell\}_\ell$)
+\State $[\mesh, \{\newcells_\ell\}] \gets$ \textbf{refine\_hierarchical\_mesh}\, ($\{\markedelements_\ell\}$)
+%\State $\basis \gets \textbf{refine\_hierarchical\_space} \, (\mesh, \basis, \{\marked_\ell\}_\ell, \{\newcells_\ell\}_\ell)$
+\State $\basis \gets \textbf{refine\_hierarchical\_space} \, (\mesh, \basis, \{\marked_\ell\}, \{\newcells_\ell\})$
+\Statex \textbf{Output:} $\mesh, \basis$
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsubsection{Routines for refining the mesh} \mbox{}
+In the case of marking basis functions instead of elements, the first thing to do to refine the mesh is to select the active cells in the support of the marked functions, as explained in \eqref{E:marking basis functions}. This is done in Algorithm~\ref{alg:cells_to_refine}.
+\begin{algorithm}
+\caption{compute\_cells\_to\_refine} \label{alg:cells_to_refine}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\{\activeelements{\ell}\}_\ell, \{\functionstoremove_\ell\}_\ell$
+\Statex \textbf{Input:} $\{\activeelements{\ell}\}, \{\functionstoremove_\ell\}$
+\For{$\ell=0,\ldots,n-1$}
+ \State $\markedelements_\ell \gets \textbf{get\_cells} \, (\functionstoremove_\ell)$
+ \State $\markedelements_\ell \gets \markedelements_\ell\cap \activeelements{\ell}$
+\EndFor
+%\Statex \textbf{Output:} $\{\markedelements_\ell\}_\ell$
+\Statex \textbf{Output:} $\{\markedelements_\ell\}$
+\end{algorithmic}
+\end{algorithm}
+
+Once we have the set of marked cells, the refinement of the mesh described in Algorithm~\ref{alg:refine_hierarchical_mesh} is quite standard. First we check whether it is necessary to add a new level. Then, for each level, we remove marked cells from the list of active cells and add them to the list of deactivated cells, and add their children to the list of active cells of the next level. The algorithm gives as the output the new refinend mesh, and the list of cells that have been activated.
+
+\begin{algorithm}
+\caption{refine\_hierarchical\_mesh} \label{alg:refine_hierarchical_mesh}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \{\markedelements_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \{\markedelements_\ell\}$
+\If {$\markedelements_{n-1} \not = \emptyset$} 
+\State $\mesh \gets \textbf{add\_empty\_level} \, (n)$
+\EndIf
+\For{$\ell = 0, \ldots, n-1$}
+\State $\activeelements{\ell} \gets \activeelements{\ell} \setminus \markedelements_\ell$
+\State $\deactelements{\ell} \gets \deactelements{\ell} \cup \markedelements_\ell$
+\State $\newcells_\ell \gets \textbf{get\_children\_of\_cell} \, (\markedelements_\ell)$
+\State $\activeelements{\ell+1} \gets \activeelements{\ell+1} \cup \newcells_{\ell+1}$
+\EndFor
+%\Statex \textbf{Output:} $\mesh, \{\newcells_\ell\}_\ell$
+\Statex \textbf{Output:} $\mesh, \{\newcells_\ell\}$
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsubsection{Routines for the space}
+
+
+
+
+For the routines in this section notice that the variable $\mesh$ is already updated, i.e., it contains the information about $\QQ^*$.
+
+\begin{algorithm}
+\caption{refine\_hierarchical\_space} \label{alg:refine_hierarchical_space}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}_\ell, \{\newcells_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}, \{\newcells_\ell\}$
+%\State $\{\functionstoremove_\ell\}_\ell \gets \textbf{compute\_functions\_to\_deactivate} \, (\mesh, \basis, \{\marked_\ell\}_\ell)$
+\If {(Marking elements)}
+  \State $\{\functionstoremove_\ell\} \gets \textbf{functions\_to\_deactivate\_from\_cells} \, (\mesh, \basis, \{\marked_\ell\})$
+\ElsIf{(Marking functions)}
+  \State $\{\functionstoremove_\ell\} \gets \textbf{functions\_to\_deactivate\_from\_neighbors} \, (\mesh, \basis, \{\marked_\ell\})$
+\EndIf
+\If {$\marked_{n-1} \not = \emptyset$} 
+  \State $\basis \gets \textbf{add\_empty\_level} \, (n)$
+\EndIf
+\State $\texttt{REFINED}\_\basis \gets \textbf{update\_active\_functions} \, (\mesh, \basis, \{\functionstoremove_\ell\}, \{\newcells_\ell\})$ \Comment{Split in two (elements and functions)?}
+\State {\Rd $K \gets \textbf{compute\_refinement\_matrix} \, (\basis, \texttt{REFINED}\_\basis)$}
+\Statex \textbf{Output:} $\texttt{REFINED}\_\basis$, {\Rd $K$} \Comment The refined space
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{functions\_to\_deactivate\_from\_cells} \label{alg:functions_to_deactivate_from_cells}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}$
+\For {$\ell = 0, \ldots, n-1$}
+  \State $\functionstoremove_\ell \gets \textbf{get\_basis\_functions} \, (\marked_\ell)$
+  \State $\functionstoremove_\ell \gets \functionstoremove_\ell \cap \activefunctions{\ell}$
+  \ForAll {$\beta \in \functionstoremove_\ell}$}
+    \If {(${\bf get\_cells}\, (\beta) \cap \activeelements{\ell} \not = \emptyset$)}
+      \State $\functionstoremove_\ell \gets \functionstoremove_\ell \setminus \beta$
+    \EndIf
+  \EndFor
+\EndFor
+%\Statex \textbf{Output:} $\{\functionstoremove_\ell\}_\ell$
+\Statex \textbf{Output:} $\{\functionstoremove_\ell\}$
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}
+\caption{functions\_to\_deactivate\_from\_neighbors} \label{alg:functions_to_deactivate_from_neighbors}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \basis, \{\marked_\ell\}$
+\For {$\ell = 0, \ldots, n-1$}
+  \State $\functionstoremove_\ell \gets \textbf{get\_neighbors} \, (\marked_\ell)$
+  \State $\functionstoremove_\ell \gets (\functionstoremove_\ell \cap \activefunctions{\ell} ) \setminus \marked_\ell$ \Comment{Check only the support of non-marked functions.}
+  \ForAll {$\beta \in \functionstoremove_\ell}$}
+    \If {(${\bf get\_cells}\, (\beta) \cap \activeelements{\ell} \not = \emptyset$)}
+      \State $\functionstoremove_\ell \gets \functionstoremove_\ell \setminus \beta$
+    \EndIf
+  \EndFor
+  \State $\functionstoremove_\ell \gets \functionstoremove_\ell \cup \marked_\ell$
+\EndFor
+%\Statex \textbf{Output:} $\{\functionstoremove_\ell\}_\ell$
+\Statex \textbf{Output:} $\{\functionstoremove_\ell\}$
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+%% \begin{algorithm}
+%% \caption{Compute\_Functions\_To\_Deactivate}
+%% \begin{algorithmic}[1]
+%% \Statex \textbf{Input:} $\mesh, \basis, \marked$
+%% \For {$\ell = 0, \ldots, n-1$}
+%%   \If{(Marking functions)}
+%%     \State $\functionstoremove_\ell \gets \textbf{get\_neighbors} \, (\marked_\ell)$
+%%     \State $\functionstoremove_\ell \gets (\functionstoremove_\ell \cap \activefunctions{\ell} ) \setminus \marked_\ell$ \Comment{{\Rd Why not $\functionstoremove_\ell \gets \functionstoremove_\ell \cap \activefunctions{\ell}$?}}
+%%   \ElsIf{(Marking elements)}
+%%     \State $\functionstoremove_\ell \gets \textbf{get\_basis\_functions} \, (\marked_\ell)$
+%%     \State $\functionstoremove_\ell \gets \functionstoremove_\ell \cap \activefunctions{\ell}$
+%%   \EndIf
+%%   \State {\Rd Update $\functionstoremove_\ell$ by removing the functions that have al least one active cell of level $\ell$ within their supports. Use \texttt{get\_cells}\;}
+%%   \If {(Marking functions)} 
+%%      \State $\functionstoremove_\ell \gets \functionstoremove_\ell \cup \marked_\ell$
+%%   \EndIf
+%% \EndFor
+%% \Statex \textbf{Output:} $\{\functionstoremove\}$
+%% \end{algorithmic}
+%% \end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
+\begin{algorithm}
+\caption{update\_active\_functions: simplified hierarchical space}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \basis, \{\functionstoremove_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \basis, \{\functionstoremove_\ell\}$
+\For {$\ell = 0, \ldots, n-1$}
+  \State $\activefunctions{\ell}\gets \activefunctions{\ell} \setminus \functionstoremove_\ell$
+  \State $\deactfunctions{\ell}\gets \deactfunctions{\ell} \cup \functionstoremove_\ell$
+  \State $\tt{F^C} \gets \textbf{get\_children} \, (\functionstoremove_\ell)$
+  \State $\tt{F^C} \gets \tt{F^C} \setminus (\activefunctions{\ell+1} \cup \deactfunctions{\ell+1})$ 
+  \State $\activefunctions{\ell+1} \gets \activefunctions{\ell+1} \cup \tt{F^C}$
+  \If {(Marking elements)} 
+    \ForAll {$\beta \in \tt{F^C}$}  \Comment{Mark new functions whose support is already refined}
+      \If {(${\bf get\_cells}\, (\beta) \cap \activeelements{\ell} = \emptyset$)}
+        \State $\functionstoremove_{\ell+1} \gets \functionstoremove_{\ell+1} \cup \beta$ 
+      \EndIf
+    \EndFor
+  \EndIf
+\EndFor
+%\Statex \textbf{Output:} $\basis$ \Comment{The refined space, with updated $\{\activefunctions{\ell}\}}_\ell$ and $\{\deactfunctions{\ell}\}_\ell$
+\Statex \textbf{Output:} $\basis$ \Comment{The refined space, with updated $\{\activefunctions{\ell}\}}$ and $\{\deactfunctions{\ell}\}$
+\end{algorithmic}
+\end{algorithm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newpage
+
+\begin{algorithm}
+\caption{update\_active\_functions: standard hierarchical space}
+\begin{algorithmic}[1]
+%\Statex \textbf{Input:} $\mesh, \basis, \{\functionstoremove_\ell\}_\ell \{\newcells_\ell\}_\ell$
+\Statex \textbf{Input:} $\mesh, \basis, \{\functionstoremove_\ell\} \{\newcells_\ell\}$
+\For {$\ell = 0, \ldots, n-1$}
+  \State $\activefunctions{\ell}\gets \activefunctions{\ell} \setminus \functionstoremove_\ell$
+  \State $\deactfunctions{\ell}\gets \deactfunctions{\ell} \cup \functionstoremove_\ell$
+  \State $\tt{F^C} \gets \textbf{get\_basis\_functions} \, (\newcells_{\ell+1})$
+  \State $\tt{F^C} \gets \tt{F^C} \setminus \activefunctions{\ell+1}$
+  \ForAll {$\beta \in \tt{F^C}$}
+    \State $\tt{Q_\beta} \gets {\bf get\_cells} \, (\beta)$
+%    \ForAll {$\tt{Q} \in \tt{Q}_\beta$}
+      \If {$(\text {\rm any } (\tt{Q}_\beta \not \in \activeelements{\ell} \cup \deactelements{\ell}))$}
+        \State $\tt{F^C} \gets \tt{F^C} \setminus \beta$
+      \EndIf
+%    \EndFor
+  \EndFor
+  \State $\activefunctions{\ell+1} \gets \activefunctions{\ell+1} \cup \tt{F^C}$
+\EndFor
+%\Statex \textbf{Output:} $\basis$ \Comment{The refined space, with updated $\{\activefunctions{\ell}\}}_\ell$ and $\{\deactfunctions{\ell}\}_\ell$
+\Statex \textbf{Output:} $\basis$ \Comment{The refined space, with updated $\{\activefunctions{\ell}\}}$ and $\{\deactfunctions{\ell}\}$
+\end{algorithmic}
+\end{algorithm}
+\subsection{Initialization of a hierarchical spline space}
+
+The function \texttt{refine} detailed in the previous section can be also used to select the active functions of a hierarchical B-spline basis $\HH$, if we know the active cells of each level~$\{E^A_\ell\}_{\ell=0}^{n-1}$. 
+
+\begin{algorithm}
+\caption{build\_hierarchical\_space}
+\begin{algorithmic}[1]
+\Statex \textbf{Input:} $\{\activeelements{ }\}$
+\State $\mesh \gets \textbf{mesh\_cartesian}$  \Comment{Initialize as a Cartesian grid of level 0}
+\State $\basis \gets \textbf{spline\_space}$  \Comment{Initialize as a tensor product space of level 0}
+\For {$\ell = 0, n-2$}
+  \State $\{\marked\}_0^{\ell-1} \gets \emptyset$
+  \State $\marked_\ell \gets \tt{\hat E^A_\ell} \setminus \activeelements{\ell}$
+  \State $[\mesh, \basis] \gets \textbf{refine} \, (\mesh, \basis, \marked)$
+\EndFor
+\Statex \textbf{Output:}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}
+ In order to make the last algorithm more understandable we have used the function $\verb+refine+$. This algorithm can be improved by adapting the code of $\verb+refine+$ instead of call it. Notice that the set of marked cells in each of the calls to $\verb+refine+$ has cells only of one level. 
+\end{remark}
+
+\section{Implementation of hierarchical splines in GeoPDEs} \label{sec:geopdes}
+
+\section{Numerical tests}\label{sec:tests}
+
+\subsection{Getting the new active basis functions from the current ones}
+ 
+\bibliographystyle{siam}
+\bibliography{biblio}
+
+
+\end{document}
 
 \section{Setting}
 
