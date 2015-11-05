@@ -1,5 +1,5 @@
 % GET_BOUNDARY_INDICES: given a set of indices (elements or dofs) in the
-%  whole domain, collect those which belong to a given boundary.
+%  whole domain, collect those that belong to a given boundary.
 %
 %   bnd_indices = get_boundary_indices (iside, size_dir, indices)
 %
@@ -11,7 +11,7 @@
 %
 % OUTPUT:
 %
-%   bnd_indices: set of indices which belong to the boundary, with the
+%   bnd_indices: set of indices that belong to the boundary, with the
 %     local numbering of the boundary.
 %
 % Copyright (C) 2015 Rafael Vazquez
