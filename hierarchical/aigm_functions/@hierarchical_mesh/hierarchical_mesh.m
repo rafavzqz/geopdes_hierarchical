@@ -20,7 +20,6 @@
 %    mesh_of_level  (1 x nlevels mesh)  Cartesian mesh of each level (see msh_cartesian)
 %    nel            (scalar)            total number of active cells  
 %    nel_per_level  (1 x nlevels array) number of active cells on each level
-%    globnum_active (nel x (dim+1))     global tensor-product numbering of active cells and their corresponding level
 %    active         (1 x nlevels cell-array) List of active elements on each level
 %    deactivated    (1 x nlevels cell-array) List of removed cells on each level
 %    msh_lev        (nlevels x 1 cell-array) msh_lev{ilev} is a structure
@@ -63,7 +62,6 @@ hmsh.nel_per_level = [msh.nel];
 
 aux = cell (hmsh.ndim, 1);
 [aux{:}] = ind2sub ([msh.nel_dir, 1], 1:msh.nel); % The extra 1 makes it work in any dimension
-hmsh.globnum_active = [ones(msh.nel, 1), cell2mat(aux)'];
 hmsh.active{1} = (1:msh.nel)';
 hmsh.deactivated{1} = [];
 hmsh.msh_lev{1} = msh_evaluate_element_list (hmsh.mesh_of_level(1), hmsh.active{1});

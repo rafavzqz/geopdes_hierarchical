@@ -75,7 +75,7 @@ function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %
 % function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %
-% This function updates the active cells (hmsh.active and hmsh.globnum_active) and deactivated cells (hmsh.deactivated) in each level when
+% This function updates the active cells (hmsh.active) and deactivated cells (hmsh.deactivated) in each level when
 % refining the cells in M. This function also updates hmsh.nlevels, hmsh.nel and hmsh.nel_per_level
 %
 % INPUT
@@ -86,10 +86,6 @@ function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %     hmsh: object representing the refined hierarchical mesh (see hierarchical_mesh)
 %     new_cells{lev}: global indices of the new cells of level lev (one row per cell)
 %
-
-if (nargin == 2)
-  indices = [];
-end
 
 nlevels = hmsh.nlevels;
 
@@ -120,19 +116,6 @@ end
 % Update hmsh.nel_per_level and hmsh.nel
 hmsh.nel_per_level = cellfun (@numel, hmsh.active);
 hmsh.nel = sum (hmsh.nel_per_level);
-
-% Update hmsh.globnum_active
-hmsh.globnum_active = zeros (hmsh.nel,hmsh.ndim+1);
-Ne = cumsum ([0; hmsh.nel_per_level(:)]);
-for lev = 1:hmsh.nlevels
-  ind_e = (Ne(lev)+1):Ne(lev+1);
-  if (~isempty(ind_e))
-    hmsh.globnum_active(ind_e, 1) = lev;
-    globnum = cell (1,hmsh.ndim);
-    [globnum{:}] = ind2sub (hmsh.mesh_of_level(lev).nel_dir, hmsh.active{lev}(:));
-    hmsh.globnum_active(ind_e, 2:end) = cell2mat (globnum);
-  end
-end
 
 end
 
