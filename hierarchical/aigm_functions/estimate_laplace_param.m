@@ -87,7 +87,8 @@ switch adaptivity_data.flag
             ndofs = ndofs + ndof_per_level(ilev);
             if hmsh.msh_lev{ilev}.nel
                 ind_e = (Ne(ilev)+1):Ne(ilev+1);
-                b_lev = op_f_v (hspace.sp_lev{ilev}, hmsh.msh_lev{ilev}, aux(:,ind_e));
+                sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
                 
                 dofs = 1:ndofs; % Active dofs from level 1 to ilev, in the numbering of the hierarchical space, whatever it is
                 est(dofs) = est(dofs) + hspace.C{ilev}'*b_lev;

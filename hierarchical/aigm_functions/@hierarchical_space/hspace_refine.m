@@ -82,13 +82,6 @@ end
 hspace.C = C;
 clear C
 
-% Update of sp_lev
-% XXXX This can be improved to save computational time
-hspace.sp_lev = cell (hmsh.nlevels,1);
-for ilev = 1:hmsh.nlevels
-  hspace.sp_lev{ilev} = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'gradient', true, 'hessian', true);
-end
-
 % Fill the information for the boundaries
 if (boundary)% && hmsh.ndim > 1)
   for iside = 1:2*hmsh.ndim

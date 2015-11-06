@@ -90,7 +90,6 @@ hspace.deactivated{1} = [];
 hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = [];
 hspace.C{1} = speye (space.ndof);
-hspace.sp_lev{1} = sp_evaluate_element_list (hspace.space_of_level(1), hmsh.msh_lev{1}, 'gradient', true,'hessian', true);
 
 hspace.dofs = [];
 

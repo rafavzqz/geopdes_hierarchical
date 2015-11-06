@@ -43,16 +43,20 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, varargin)
     option = varargin{1};
   end
 
+  value = false; gradient = false; laplacian = false;
   switch (lower (option))
     case {'value'}
-      eval_fun = @(U, SP, MSH) sp_eval_msh_old (U, SP, MSH);
+      eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, 'value');
       catdir = 2;
+      value = true;
     case {'gradient'}
-      eval_fun = @(U, SP, MSH) sp_eval_grad_msh_old (U, SP, MSH);
+      eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, 'gradient');
       catdir = 3;
+      gradient = true;
     case {'laplacian'}
-      eval_fun = @(U, SP, MSH) sp_eval_lapl_msh_old (U, SP, MSH);
+      eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, 'laplacian');
       catdir = 2;
+      laplacian = true;
 %     case {'divergence'}
 %     case {'curl'}
     otherwise
@@ -65,7 +69,8 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, varargin)
   for ilev = 1:hmsh.nlevels % Active levels
     if (hmsh.nel_per_level(ilev) > 0)
       msh_level = hmsh.msh_lev{ilev};
-      sp_level = hspace.sp_lev{ilev};
+%      sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_level, 'value', value, 'gradient', gradient);
+      sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_level, 'value', value, 'gradient', gradient, 'laplacian', laplacian);
         
       [eu_lev, F_lev] = eval_fun (hspace.C{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
       eu = cat (catdir, eu, eu_lev);
