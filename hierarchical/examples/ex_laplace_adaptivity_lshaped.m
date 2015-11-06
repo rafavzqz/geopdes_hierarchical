@@ -18,7 +18,7 @@ problem_data.h = @(x, y, ind) singular_function_laplace (x, y, k);
 
 % Exact solution (optional)
 problem_data.uex     = @(x, y) singular_function_laplace (x, y, k);
-problem_data.graduex = @(x, y) singular_function (x, y, k);
+problem_data.graduex = @(x, y) singular_function_maxwell (x, y, k);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
