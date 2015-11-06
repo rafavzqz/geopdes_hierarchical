@@ -24,7 +24,6 @@
 %                                           Proj{l,i} is a matrix of size N_{l+1} x N_l where N_l is the number 
 %                                           of univariate functions of level l in the direction l, such that
 %                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c_j = Proj{l,i}(j,k)
-%    globnum_active (ndof x (ndim+1))       global tensor-product numbering of active functions and their corresponding level
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
 %    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
@@ -82,7 +81,6 @@ hspace.space_of_level = space;
 
 aux = cell (hmsh.ndim, 1);
 [aux{:}] = ind2sub ([space.ndof_dir, 1], 1:space.ndof); % The extra 1 makes it work in any dimension
-hspace.globnum_active = [ones(space.ndof,1) cell2mat(aux)']; % XXXXX Will this be removed?
 hspace.active{1} = (1:space.ndof)';
 hspace.deactivated{1} = [];
 

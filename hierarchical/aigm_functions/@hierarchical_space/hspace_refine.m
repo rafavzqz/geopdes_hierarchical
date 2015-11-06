@@ -84,6 +84,8 @@ clear C
 
 % Fill the information for the boundaries
 if (boundary)% && hmsh.ndim > 1)
+
+  Nf = cumsum ([0, hspace.ndof_per_level]);
   for iside = 1:2*hmsh.ndim
     %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
     %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
@@ -110,14 +112,20 @@ if (boundary)% && hmsh.ndim > 1)
       hspace.boundary(iside) = hspace_refine (hspace.boundary(iside), hmsh.boundary(iside), ...
           M_boundary, 'functions', new_cells_boundary);
 
-      bnd_active = hspace.boundary(iside).globnum_active;
-      globnum_active_boundary = [bnd_active(:,1:ind2), boundary_ind(bnd_active(:,1)), bnd_active(:,(ind2+1):end)];
-      [dummy, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
-      
+      dofs = [];
+      for lev = 1:hspace.boundary(iside).nlevels
+        [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
+        dofs = union (dofs, Nf(lev) + iact);
+      end
+      hspace.boundary(iside).dofs = dofs;
+
     elseif (hmsh.ndim == 1)
-      aux = [(1:hspace.nlevels)', boundary_ind];
-      [dummy, dofs] = ismember (aux, hspace.globnum_active, 'rows');
-      hspace.boundary(iside).dofs = setdiff (dofs, 0);
+      dofs = [];
+      for lev = 1:hspace.nlevels
+        [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
+        dofs = union (dofs, Nf(lev) + iact);
+      end
+      hspace.boundary(iside).dofs = dofs;
     end
   end
   
@@ -130,7 +138,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function hspace = update_active_functions(hspace, hmsh, new_cells, marked_fun)
 %
-% This function updates the active dofs (hspace.active and hspace.globnum_active), their coefficients (hspace.coeff) and deactivated dofs (hspace.deactivated) in each level when
+% This function updates the active dofs (hspace.active), their coefficients (hspace.coeff_pou) and deactivated dofs (hspace.deactivated) in each level when
 % refining the functions in marked_fun. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
 %
 % Input:    hspace:    the coarse mesh, an object of the class hierarchical_space
@@ -241,18 +249,6 @@ hspace.active = active(1:hspace.nlevels);
 hspace.deactivated = deactivated(1:hspace.nlevels);
 hspace.ndof_per_level = cellfun (@numel, hspace.active);
 hspace.ndof = sum (hspace.ndof_per_level);
-
-hspace.globnum_active = zeros (hspace.ndof,hmsh.ndim+1);
-Nf = cumsum ([0; hspace.ndof_per_level(:)]);
-for lev = 1:hspace.nlevels
-  ind_f = (Nf(lev)+1):Nf(lev+1);
-  if (~isempty(ind_f))
-    hspace.globnum_active(ind_f, 1) = lev;
-    globnum = cell (1,hmsh.ndim);
-    [globnum{:}] = ind2sub (hspace.space_of_level(lev).ndof_dir, hspace.active{lev}(:));
-    hspace.globnum_active(ind_f, 2:end) = cell2mat (globnum);
-  end
-end
 
 hspace.coeff_pou = Cref * hspace.coeff_pou;
 

@@ -70,7 +70,12 @@ switch adaptivity_data.flag
         % estoy realizando comparaciones con corridas anteriores en las que
         % forma era igual a 1.
         if forma
-            coef = ms(hspace.globnum_active(:,1)).*sqrt(hspace.coeff_pou(:));
+            Nf = cumsum ([0; hspace.ndof_per_level(:)]);
+            dof_level = zeros (hspace.ndof, 1);
+            for lev = 1:hspace.nlevels
+              dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
+            end
+            coef = ms(dof_level).*sqrt(hspace.coeff_pou(:));
         else
             coef = sqrt(hspace.coeff_pou(:));
         end
@@ -98,6 +103,7 @@ switch adaptivity_data.flag
             est = coef.*sqrt(est);
         else
             diametro = zeros(hspace.ndof,1);
+% Should remove the use of globnum_active.
             for i = 1:hspace.ndof
                 lev = hspace.globnum_active(i,1);
                 cells = get_cells(hspace.globnum_active(i,2:end), hspace.degree, hmsh.mesh_of_level(lev).nel_dir);
