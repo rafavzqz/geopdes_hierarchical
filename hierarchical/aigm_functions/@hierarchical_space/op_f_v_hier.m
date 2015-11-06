@@ -44,7 +44,8 @@ function rhs = op_f_v_hier (hspace, hmsh, f)
       for idim = 1:hmsh.rdim
         x{idim} = hmsh.msh_lev{ilev}.geo_map(idim,:,:);
       end
-      b_lev = op_f_v (hspace.sp_lev{ilev}, hmsh.msh_lev{ilev}, f(x{:}));
+      sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+      b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, f(x{:}));
 
       dofs = 1:ndofs;
       rhs(dofs) = rhs(dofs) + hspace.C{ilev}'*b_lev;
