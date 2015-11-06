@@ -44,7 +44,7 @@ for ilev = 1:hmsh.nlevels
     sp_level = hspace.sp_lev{ilev};
 
     [errl2_lev, errl2_lev_elem] = ...
-      sp_l2_error_old (sp_level, msh_level, hspace.C{ilev}*u(1:last_dof(ilev)), uex);
+      sp_l2_error (sp_level, msh_level, hspace.C{ilev}*u(1:last_dof(ilev)), uex);
 
     errl2 = errl2 + errl2_lev.^2;
 
