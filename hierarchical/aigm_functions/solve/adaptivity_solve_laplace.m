@@ -1,4 +1,4 @@
-% ADAPTIVITY_SOLVE: assemble and solve the linear system for Laplacian problem, using hierarchical spaces.
+% ADAPTIVITY_SOLVE_LAPLACE: assemble and solve the linear system for Laplacian problem, using hierarchical spaces.
 %
 % The function solves the diffusion problem
 %
@@ -41,7 +41,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function u = adaptivity_solve (hmsh, hspace, problem_data)
+function u = adaptivity_solve_laplace (hmsh, hspace, problem_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);

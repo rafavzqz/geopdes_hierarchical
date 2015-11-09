@@ -1,4 +1,4 @@
-function  [geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
+function  [geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
 %
 % function  [hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_solve_laplace(problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol)
 %
@@ -35,7 +35,7 @@ while (iter < adaptivity_data.num_max_iter)
   %% SOLVE
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   disp('SOLVE:')
-  u = adaptivity_solve (hmsh, hspace, problem_data);
+  u = adaptivity_solve_laplace (hmsh, hspace, problem_data);
   fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
     
   if (plot_discrete_sol)
