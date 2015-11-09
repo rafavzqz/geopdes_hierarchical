@@ -45,14 +45,33 @@ M = compute_functions_to_deactivate (hmsh, hspace, M, flag);
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) < hmsh.nlevels)
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  degree = hspace.space_of_level(hmsh.nlevels-1).degree;
-  knots = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, degree, degree-1);
-  hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, degree, msh_level);
+  
+  if (isa (hspace.space_of_level(1), 'sp_scalar'))
+    degree = hspace.space_of_level(hmsh.nlevels-1).degree;
+    knots = kntrefine (hspace.space_of_level(hmsh.nlevels-1).knots, hmsh.nsub-1, degree, degree-1);
+    hspace.space_of_level(hmsh.nlevels) = sp_bspline (knots, degree, msh_level);
 
-  for idim = 1:hmsh.ndim
-    knt_coarse = hspace.space_of_level(hmsh.nlevels-1).knots{idim};
-    knt_fine = hspace.space_of_level(hmsh.nlevels).knots{idim};
-    hspace.Proj{hmsh.nlevels-1,idim} = basiskntins (degree(idim), knt_coarse, knt_fine);
+    for idim = 1:hmsh.ndim
+      knt_coarse = hspace.space_of_level(hmsh.nlevels-1).knots{idim};
+      knt_fine = hspace.space_of_level(hmsh.nlevels).knots{idim};
+      hspace.Proj{idim,hmsh.nlevels-1} = basiskntins (degree(idim), knt_coarse, knt_fine);
+    end
+    
+  elseif (isa (hspace.space_of_level(1), 'sp_vector'))
+    scalar_spaces = cell (hspace.ncomp, 1);
+    for icomp = 1:hspace.ncomp
+      sp_coarse = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp};
+      degree = sp_coarse.degree;
+      knots = kntrefine (sp_coarse.knots, hmsh.nsub-1, degree, degree-1);
+      scalar_spaces{icomp} = sp_bspline (knots, degree, msh_level);
+      
+      for idim = 1:hmsh.ndim
+        knt_coarse = sp_coarse.knots{idim};
+        knt_fine = knots{idim};
+        hspace.Proj{icomp,idim,hmsh.nlevels-1} = basiskntins (degree(idim), knt_coarse, knt_fine);
+      end
+    end
+    hspace.space_of_level(hmsh.nlevels) = sp_vector (scalar_spaces, msh_level);
   end
 
   hspace.nlevels = hmsh.nlevels;
@@ -73,10 +92,7 @@ C{1} = C{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = 1;
-  for idim = 1:hmsh.ndim
-    aux = kron (hspace.Proj{lev-1,idim}, aux);
-  end
+  aux = compute_Cmat (hspace, hmsh.ndim, lev-1);
   C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.C = C;
@@ -102,7 +118,7 @@ if (boundary)% && hmsh.ndim > 1)
     if (hmsh.ndim > 1)
       M_boundary = cell (size (M));
       for lev = 1:numel (M)
-        M_boundary{lev} = get_boundary_indices (iside, hspace.space_of_level(lev).ndof_dir, M{lev});
+        [~,~,M_boundary{lev}] = intersect (M{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
       end
       
       new_cells_boundary = cell (size (new_cells));
@@ -176,10 +192,8 @@ for lev = 1:hspace.nlevels-1
   deactivated{lev} = union (marked_fun{lev}, deactivated{lev});
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
-    Cmat = 1;
-    for idim = 1:hmsh.ndim
-      Cmat = kron (hspace.Proj{lev,idim}, Cmat);
-    end
+
+    Cmat = compute_Cmat (hspace, hmsh.ndim, lev);
   
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
@@ -216,10 +230,7 @@ Cref = Id;
 
 for lev = 1:hspace.nlevels-1
 
-  Cmat = 1;
-  for idim = 1:hmsh.ndim
-    Cmat = kron (hspace.Proj{lev,idim}, Cmat);
-  end
+  Cmat = compute_Cmat (hspace, hmsh.ndim, lev);
 
   [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
   
@@ -251,5 +262,26 @@ hspace.ndof_per_level = cellfun (@numel, hspace.active);
 hspace.ndof = sum (hspace.ndof_per_level);
 
 hspace.coeff_pou = Cref * hspace.coeff_pou;
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Cmat = compute_Cmat (hspace, ndim, lev)
+
+  if (isa (hspace.space_of_level(1), 'sp_scalar'))
+  Cmat = 1;
+    for idim = 1:ndim
+      Cmat = kron (hspace.Proj{idim,lev}, Cmat);
+    end
+  elseif (isa (hspace.space_of_level(1), 'sp_vector'))
+    for icomp = 1:hspace.ncomp
+      Caux{icomp} = 1;
+      for idim = 1:ndim
+        Caux{icomp} = kron (hspace.Proj{icomp,idim,lev}, Caux{icomp});
+      end
+      Cmat = blkdiag (Caux{:});
+    end
+  end
 
 end
