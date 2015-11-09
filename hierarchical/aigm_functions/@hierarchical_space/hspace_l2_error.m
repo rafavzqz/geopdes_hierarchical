@@ -41,7 +41,7 @@ last_dof = cumsum (hspace.ndof_per_level);
 for ilev = 1:hmsh.nlevels
   if (hmsh.nel_per_level(ilev) > 0)
     msh_level = hmsh.msh_lev{ilev};
-    sp_level = hspace.sp_lev{ilev};
+    sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
 
     [errl2_lev, errl2_lev_elem] = ...
       sp_l2_error (sp_level, msh_level, hspace.C{ilev}*u(1:last_dof(ilev)), uex);
