@@ -1,6 +1,6 @@
-% HSPACE_H1_ERROR: Evaluate the error in H^1 norm, for hierarchical splines.
+% SP_H1_ERROR: Evaluate the error in H^1 norm, for hierarchical splines.
 %
-%   [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = hspace_h1_error (hspace, hmsh, u, uex, graduex)
+%   [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
 %
 % INPUT:
 %
@@ -35,7 +35,7 @@
 % along with Octave; see the file COPYING.  If not, see
 % <http://www.gnu.org/licenses/>.
 
-function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = hspace_h1_error (hspace, hmsh, u, uex, graduex)
+function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
 
 errh1 = 0; errl2 = 0; errh1s = 0;
 errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);

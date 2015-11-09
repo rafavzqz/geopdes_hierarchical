@@ -51,4 +51,4 @@ plot_discrete_sol = false;
 % EXPORT VTK FILE
 npts = [51 51];
 output_file = 'laplace_adaptivity_Lshaped.vts';
-hspace_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
+sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})

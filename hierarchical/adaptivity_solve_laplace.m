@@ -52,7 +52,7 @@ while (iter < adaptivity_data.num_max_iter)
   gest = norm (est);
   fprintf('Computed estimate: %f \n', gest);
   if (isfield (problem_data, 'graduex'))
-    [err_h1, err_l2, err_h1s] = hspace_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
+    [err_h1, err_l2, err_h1s] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     fprintf('Error in H1 seminorm = %g\n', err_h1s);
   end
     

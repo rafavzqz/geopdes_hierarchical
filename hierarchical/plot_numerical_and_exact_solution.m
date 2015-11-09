@@ -13,7 +13,7 @@ end
 
 switch ndim
   case 1, %x = hmsh.quad_nodes(:);
-    [Z, pts] = hspace_eval (u, hspace, geometry, npts);
+    [Z, pts] = sp_eval (u, hspace, geometry, npts);
     if (isempty (uex))
       figure
     else
@@ -26,7 +26,7 @@ switch ndim
     title ('Numerical solution'),
         
   case 2,
-    [Z, pts] = hspace_eval (u, hspace, geometry, npts);
+    [Z, pts] = sp_eval (u, hspace, geometry, npts);
     x = reshape (pts(1,:,:), npts);
     y = reshape (pts(2,:,:), npts);
     if (isempty (uex))

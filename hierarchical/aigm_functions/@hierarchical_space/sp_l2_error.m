@@ -1,6 +1,6 @@
-% HSPACE_L2_ERROR: Evaluate the error in L^2 norm, for hierarchical splines.
+% SP_L2_ERROR: Evaluate the error in L^2 norm, for hierarchical splines.
 %
-%   [errl2, errl2_elem] = hspace_l2_error (hspace, hmsh, u, uex)
+%   [errl2, errl2_elem] = sp_l2_error (hspace, hmsh, u, uex)
 %
 % INPUT:
 %
@@ -30,7 +30,7 @@
 % along with Octave; see the file COPYING.  If not, see
 % <http://www.gnu.org/licenses/>.
 
-function [errl2, errl2_elem] = hspace_l2_error (hspace, hmsh, u, uex)
+function [errl2, errl2_elem] = sp_l2_error (hspace, hmsh, u, uex)
 
 errl2 = 0;
 errl2_elem = zeros (1, hmsh.nel);
