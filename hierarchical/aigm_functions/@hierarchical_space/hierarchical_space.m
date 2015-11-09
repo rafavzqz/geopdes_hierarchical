@@ -33,11 +33,11 @@
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
 %    METHOD NAME
-%    hspace_to_vtk:         export the solution to a VTK file, in a structured grid of points
-%    hspace_eval:           evaluate the solution in a Cartesian grid of points
+%    sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
+%    sp_eval:               evaluate the solution in a Cartesian grid of points
 %    hspace_eval_hmsh:      evaluate the solution in the quadrature points of a hierarchical mesh
-%    hspace_l2_error:       compute the error in L2 norm
-%    hspace_h1_error:       compute the error in H1 norm
+%    sp_l2_error:           compute the error in L2 norm
+%    sp_h1_error:           compute the error in H1 norm
 %    hspace_refine:         refine the hierarchical space
 %    hspace_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
 %    hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 

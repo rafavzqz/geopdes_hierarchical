@@ -1,7 +1,7 @@
-% HSPACE_EVAL: Compute the value or the derivatives of a hierarchical spline function, given by its degrees of freedom, at a given set of points.
+% SP_EVAL: Compute the value or the derivatives of a hierarchical spline function, given by its degrees of freedom, at a given set of points.
 %
-%   [eu, F] = hspace_eval (u, hspace, geometry, pts, [option]);
-%   [eu, F] = hspace_eval (u, hspace, geometry, npts, [option]);
+%   [eu, F] = sp_eval (u, hspace, geometry, pts, [option]);
+%   [eu, F] = sp_eval (u, hspace, geometry, npts, [option]);
 %
 % INPUT:
 %     
@@ -32,7 +32,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin)
+function [eu, F] = sp_eval (u, hspace, geometry, npts, varargin)
 
   sp_lev = hspace.space_of_level(hspace.nlevels);
   u_lev = hspace.C{hspace.nlevels} * u;
