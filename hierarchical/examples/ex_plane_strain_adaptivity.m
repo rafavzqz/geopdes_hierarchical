@@ -68,11 +68,11 @@ output_file = 'plane_strain_ring_Deg3_Reg2_Sub9';
 
 vtk_pts = {linspace(0, 1, 21), linspace(0, 1, 21)};
 fprintf ('results being saved in: %s \n \n', output_file)
-hspace_to_vtk (u, hspace, geometry, vtk_pts, output_file, {'displacement', 'stress'}, {'value', 'stress'}, ...
+sp_to_vtk (u, hspace, geometry, vtk_pts, output_file, {'displacement', 'stress'}, {'value', 'stress'}, ...
     problem_data.lambda_lame, problem_data.mu_lame)
 
 % 4.2) Plot in Matlab. Comparison with the exact solution.
-[eu, F] = hspace_eval (u, hspace, geometry, vtk_pts);
+[eu, F] = sp_eval (u, hspace, geometry, vtk_pts);
 [X, Y]  = deal (squeeze(F(1,:,:)), squeeze(F(2,:,:)));
 
 subplot (1,2,1)
@@ -83,5 +83,5 @@ eu2 = problem_data.uex (X, Y);
 quiver (X, Y, squeeze(eu2(1,:,:)), squeeze(eu2(2,:,:)))
 title ('Exact solution'), axis equal tight
 
-error_l2 = hspace_l2_error (hspace, hmsh, u, problem_data.uex)
+error_l2 = sp_l2_error (hspace, hmsh, u, problem_data.uex)
 

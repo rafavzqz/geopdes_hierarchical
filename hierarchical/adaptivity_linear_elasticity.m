@@ -28,7 +28,7 @@ while (iter < adaptivity_data.num_max_iter)
 % %   gest = norm (est);
 % %   fprintf('Computed estimate: %f \n', gest);
   if (isfield (problem_data, 'uex'))
-    err_l2 = hspace_l2_error (hspace, hmsh, u, problem_data.uex);
+    err_l2 = sp_l2_error (hspace, hmsh, u, problem_data.uex);
     fprintf('Error in L2 norm = %g\n', err_l2);
   end
     
