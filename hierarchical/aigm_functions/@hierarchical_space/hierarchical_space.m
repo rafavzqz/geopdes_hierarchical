@@ -79,8 +79,6 @@ hspace.ndof = space.ndof;
 hspace.ndof_per_level = space.ndof;
 hspace.space_of_level = space;
 
-aux = cell (hmsh.ndim, 1);
-[aux{:}] = ind2sub ([space.ndof_dir, 1], 1:space.ndof); % The extra 1 makes it work in any dimension
 hspace.active{1} = (1:space.ndof)';
 hspace.deactivated{1} = [];
 
