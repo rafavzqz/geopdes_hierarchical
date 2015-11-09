@@ -42,7 +42,7 @@ function rhs = op_f_v_hier (hspace, hmsh, f)
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell (hmsh.rdim, 1);
       for idim = 1:hmsh.rdim
-        x{idim} = hmsh.msh_lev{ilev}.geo_map(idim,:,:);
+        x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
       b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, f(x{:}));

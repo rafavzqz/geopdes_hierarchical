@@ -13,7 +13,7 @@
 %
 % OUTPUT:
 %
-%   mat:    assembled stiffness matrix
+%   mat:    assembled mass matrix
 %   rows:   row indices of the nonzero entries
 %   cols:   column indices of the nonzero entries
 %   values: values of the nonzero entries
@@ -49,7 +49,7 @@ function varargout = op_u_v_hier (hspu, hspv, hmsh, coeff)
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell(hmsh.msh_lev{ilev}.rdim,1);
       for idim = 1:hmsh.rdim
-        x{idim} = hmsh.msh_lev{ilev}.geo_map(idim,:,:);
+        x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
       spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
