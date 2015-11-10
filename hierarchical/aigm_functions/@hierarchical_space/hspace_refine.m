@@ -67,19 +67,7 @@ end
 [hspace,Cref] = update_active_functions (hspace, hmsh, new_cells, M);
 
 % Update C, the matrices for changing basis
-C = cell (hmsh.nlevels, 1);
-C{1} = speye (hspace.space_of_level(1).ndof);
-C{1} = C{1}(:,hspace.active{1});
-
-for lev = 2:hmsh.nlevels
-  I = speye (hspace.space_of_level(lev).ndof);
-  aux = 1;
-  for idim = 1:hmsh.ndim
-    aux = kron (hspace.Proj{lev-1,idim}, aux);
-  end
-  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
-end
-hspace.C = C;
+hspace.C = matrices_basis_change(hspace, hmsh);
 clear C
 
 % Update of sp_lev
@@ -219,6 +207,8 @@ for lev = 1:hspace.nlevels-1
   for idim = 1:hmsh.ndim
     Cmat = kron (hspace.Proj{lev,idim}, Cmat);
   end
+  
+ 
 
   [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
   
@@ -227,13 +217,13 @@ for lev = 1:hspace.nlevels-1
   ndof_per_level = cellfun (@numel, active);
   ndof_prev_levs = sum (ndof_per_level(1:lev-1));
   [~,~,indices] = intersect (active{lev}, active_and_deact);
-  Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:);
+  Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:); %ignoring deactivated{lev}
 
   active_and_deact = union (active{lev+1}, deactivated{lev+1});
   
   ndof_until_lev = sum (ndof_per_level(1:lev));
   Cref(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
-      Cmat(active_and_deact,deactivated{lev}) * aux(ndof_prev_levs+deact_indices,:);
+      Cmat(active_and_deact,deactivated{lev}) * aux(ndof_prev_levs+deact_indices,:); %deactivated{lev} in terms of active_deact{lev+1}
 
   ndlev = hspace.ndof_per_level(lev+1);
   [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
@@ -262,5 +252,38 @@ for lev = 1:hspace.nlevels
 end
 
 hspace.coeff_pou = Cref * hspace.coeff_pou;
+
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% function C=matrix_basis_change(hspace, hmsh)
+%
+% This function computes the new matrices to represents active functions of previous levels 
+% as linear combinations of splines (active and inactive) of the current level 
+%
+% Input:    hspace:    the hierarchical space, an object of the class hierarchical_space (already refined)
+%           hmsh:      an object of the class hierarchical_mesh (already refined)
+%
+% Output:   C:    cell array containing the matrices to change basis
+
+function C=matrices_basis_change(hspace, hmsh)
+
+C = cell (hmsh.nlevels, 1);
+C{1} = speye (hspace.space_of_level(1).ndof);
+C{1} = C{1}(:,hspace.active{1});
+
+for lev = 2:hmsh.nlevels
+  I = speye (hspace.space_of_level(lev).ndof);
+  aux = 1;
+  for idim = 1:hmsh.ndim
+    aux = kron (hspace.Proj{lev-1,idim}, aux);
+  end
+  %if the truncated basis has been chosen, we set to 0 the coefficients corresponding to functions active on level lev
+  if hspace.truncated==1   
+      aux(hspace.active{lev},:)=0;
+  end
+  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
+end
 
 end
