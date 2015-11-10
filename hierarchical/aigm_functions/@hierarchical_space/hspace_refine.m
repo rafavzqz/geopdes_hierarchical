@@ -67,7 +67,16 @@ end
 [hspace,Cref] = update_active_functions (hspace, hmsh, new_cells, M);
 
 % Update C, the matrices for changing basis
-hspace.C = matrices_basis_change(hspace, hmsh);
+C = cell (hmsh.nlevels, 1);
+C{1} = speye (hspace.space_of_level(1).ndof);
+C{1} = C{1}(:,hspace.active{1});
+
+for lev = 2:hmsh.nlevels
+  I = speye (hspace.space_of_level(lev).ndof);
+  aux = matrix_basis_change(hspace, hmsh, lev);
+  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
+end
+hspace.C = C;
 clear C
 
 % Update of sp_lev
@@ -257,33 +266,25 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function C=matrix_basis_change(hspace, hmsh)
+% function C=matrix_basis_change(hspace, hmsh,lev)
 %
-% This function computes the new matrices to represents active functions of previous levels 
+% This function computes the new matrices to represents functions of the previous level 
 % as linear combinations of splines (active and inactive) of the current level 
 %
 % Input:    hspace:    the hierarchical space, an object of the class hierarchical_space (already refined)
 %           hmsh:      an object of the class hierarchical_mesh (already refined)
 %
-% Output:   C:    cell array containing the matrices to change basis
+% Output:   C:    matrix to change basis from level lev-1 to level lev
 
-function C=matrices_basis_change(hspace, hmsh)
+function C = matrix_basis_change(hspace, hmsh, lev)
 
-C = cell (hmsh.nlevels, 1);
-C{1} = speye (hspace.space_of_level(1).ndof);
-C{1} = C{1}(:,hspace.active{1});
-
-for lev = 2:hmsh.nlevels
-  I = speye (hspace.space_of_level(lev).ndof);
-  aux = 1;
-  for idim = 1:hmsh.ndim
-    aux = kron (hspace.Proj{lev-1,idim}, aux);
-  end
-  %if the truncated basis has been chosen, we set to 0 the coefficients corresponding to functions active on level lev
-  if hspace.truncated==1   
-      aux(hspace.active{lev},:)=0;
-  end
-  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
+C = 1;
+for idim = 1:hmsh.ndim
+  C = kron (hspace.Proj{lev-1,idim}, C);
+end
+%if the truncated basis has been chosen, we set to 0 the coefficients corresponding to functions active on level lev
+if hspace.truncated==1   
+    C(hspace.active{lev},:)=0;
 end
 
 end
