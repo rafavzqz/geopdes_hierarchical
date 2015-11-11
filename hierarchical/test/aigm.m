@@ -115,7 +115,7 @@ while 1
     %% SOLVE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    u = adaptivity_solve (hmsh, hspace, problem_data);
+    u = adaptivity_solve_laplace (hmsh, hspace, problem_data);
     
     if plot_discrete_solution
       figure(2)
