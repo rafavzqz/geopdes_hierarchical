@@ -73,7 +73,7 @@ C{1} = C{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change(hspace, hmsh, lev);
+  aux = matrix_basis_change (hspace, hmsh, lev);
   C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.C = C;
@@ -116,11 +116,11 @@ if (boundary)% && hmsh.ndim > 1)
 
       bnd_active = hspace.boundary(iside).globnum_active;
       globnum_active_boundary = [bnd_active(:,1:ind2), boundary_ind(bnd_active(:,1)), bnd_active(:,(ind2+1):end)];
-      [dummy, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
+      [~, hspace.boundary(iside).dofs] = ismember (globnum_active_boundary, hspace.globnum_active, 'rows');
       
     elseif (hmsh.ndim == 1)
       aux = [(1:hspace.nlevels)', boundary_ind];
-      [dummy, dofs] = ismember (aux, hspace.globnum_active, 'rows');
+      [~, dofs] = ismember (aux, hspace.globnum_active, 'rows');
       hspace.boundary(iside).dofs = setdiff (dofs, 0);
     end
   end
@@ -172,11 +172,8 @@ for lev = 1:hspace.nlevels-1
   deactivated{lev} = union (marked_fun{lev}, deactivated{lev});
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
-    Cmat = 1;
-    for idim = 1:hmsh.ndim
-      Cmat = kron (hspace.Proj{lev,idim}, Cmat);
-    end
-  
+
+    Cmat = matrix_basis_change (hspace, hmsh, lev+1);  
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
@@ -201,46 +198,43 @@ for lev = 1:hspace.nlevels-1
 end % for lev
 
 
-
+%XXXXXXXXXXX The computation of Cref for truncated functions is wrong!!
 % Computation of the matrix to pass from the original to the refined space
-ndlev = hspace.ndof_per_level(1);
-active_and_deact = union (active{1}, deactivated{1});
-[~,indices] = intersect (active_and_deact, hspace.active{1});
-Id = sparse (numel(active_and_deact), ndlev);
-Id(indices,:) = speye (ndlev, ndlev);
-Cref = Id;
-
-for lev = 1:hspace.nlevels-1
-
-  Cmat = 1;
-  for idim = 1:hmsh.ndim
-    Cmat = kron (hspace.Proj{lev,idim}, Cmat);
-  end
-  
- 
-
-  [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
-  
-  aux = Cref;
-
-  ndof_per_level = cellfun (@numel, active);
-  ndof_prev_levs = sum (ndof_per_level(1:lev-1));
-  [~,~,indices] = intersect (active{lev}, active_and_deact);
-  Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:); %ignoring deactivated{lev}
-
-  active_and_deact = union (active{lev+1}, deactivated{lev+1});
-  
-  ndof_until_lev = sum (ndof_per_level(1:lev));
-  Cref(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
-      Cmat(active_and_deact,deactivated{lev}) * aux(ndof_prev_levs+deact_indices,:); %deactivated{lev} in terms of active_deact{lev+1}
-
-  ndlev = hspace.ndof_per_level(lev+1);
-  [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
+if (nargout == 2 || ~hspace.truncated)
+  ndlev = hspace.ndof_per_level(1);
+  active_and_deact = union (active{1}, deactivated{1});
+  [~,indices] = intersect (active_and_deact, hspace.active{1});
   Id = sparse (numel(active_and_deact), ndlev);
   Id(indices,:) = speye (ndlev, ndlev);
-  Cref = [Cref, [sparse(ndof_until_lev,ndlev); Id]];  
+  Cref = Id;
+
+  for lev = 1:hspace.nlevels-1
+
+    Cmat = matrix_basis_change (hspace, hmsh, lev+1);
+
+    [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
   
-end % for lev
+    aux = Cref;
+
+    ndof_per_level = cellfun (@numel, active);
+    ndof_prev_levs = sum (ndof_per_level(1:lev-1));
+    [~,~,indices] = intersect (active{lev}, active_and_deact);
+    Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:); %ignoring deactivated{lev}
+
+    active_and_deact = union (active{lev+1}, deactivated{lev+1});
+  
+    ndof_until_lev = sum (ndof_per_level(1:lev));
+    Cref(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
+      Cmat(active_and_deact,deactivated{lev}) * aux(ndof_prev_levs+deact_indices,:); %deactivated{lev} in terms of active_deact{lev+1}
+
+    ndlev = hspace.ndof_per_level(lev+1);
+    [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
+    Id = sparse (numel(active_and_deact), ndlev);
+    Id(indices,:) = speye (ndlev, ndlev);
+    Cref = [Cref, [sparse(ndof_until_lev,ndlev); Id]];  
+  
+  end % for lev
+end
 
 
 hspace.active = active(1:hspace.nlevels);
@@ -260,31 +254,37 @@ for lev = 1:hspace.nlevels
   end
 end
 
-hspace.coeff_pou = Cref * hspace.coeff_pou;
+if (hspace.truncated)
+  hspace.coeff_pou = ones (hspace.ndof, 1);
+else
+  hspace.coeff_pou = Cref * hspace.coeff_pou;
+end
 
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function C=matrix_basis_change(hspace, hmsh,lev)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% function C = matrix_basis_change (hspace, hmsh, lev)
 %
-% This function computes the new matrices to represents functions of the previous level 
+% Compute the new matrices to represent functions of the previous level 
 % as linear combinations of splines (active and inactive) of the current level 
 %
-% Input:    hspace:    the hierarchical space, an object of the class hierarchical_space (already refined)
-%           hmsh:      an object of the class hierarchical_mesh (already refined)
+% Input:  hspace: an object of the class hierarchical_space
+%         hmsh:   an object of the class hierarchical_mesh
+%         lev:    the level for which we compute the matrix
 %
 % Output:   C:    matrix to change basis from level lev-1 to level lev
 
-function C = matrix_basis_change(hspace, hmsh, lev)
+function C = matrix_basis_change (hspace, hmsh, lev)
 
 C = 1;
 for idim = 1:hmsh.ndim
   C = kron (hspace.Proj{lev-1,idim}, C);
 end
-%if the truncated basis has been chosen, we set to 0 the coefficients corresponding to functions active on level lev
-if hspace.truncated==1   
-    C(hspace.active{lev},:)=0;
+
+if (hspace.truncated)
+  indices = union (hspace.active{lev}, hspace.deactivated{lev});
+  C(indices,:) = 0;
 end
 
 end

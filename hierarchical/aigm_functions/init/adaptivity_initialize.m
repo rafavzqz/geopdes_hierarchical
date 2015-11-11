@@ -48,7 +48,6 @@ space    = sp_bspline (knots, method_data.degree, msh);
 
 
 hmsh     = hierarchical_mesh (msh, geometry, method_data.nsub_refine);
-hspace   = hierarchical_space (hmsh, space, method_data.space_type);
-hspace.truncated = method_data.truncated;
+hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
 
 end
