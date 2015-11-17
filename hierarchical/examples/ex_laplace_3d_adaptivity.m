@@ -51,3 +51,8 @@ plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
 
 [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace(problem_data, method_data, adaptivity_data, plot_data);
+
+% EXPORT VTK FILE
+npts = [51 51 51];
+output_file = 'laplace_adaptivity_cube.vts';
+sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})

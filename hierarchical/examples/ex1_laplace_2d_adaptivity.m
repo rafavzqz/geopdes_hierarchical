@@ -51,5 +51,12 @@ plot_data.plot_discrete_sol = false;
 
 % EXPORT VTK FILE
 npts = [51 51];
-output_file = 'laplace_adaptivity_square.vts';
+output_file = 'laplace_adaptivity_square_ex1.vts';
 sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
+
+% Plot in Octave/Matlab
+[eu, F] = sp_eval (u, hspace, geometry, npts);
+figure; subplot (1,2,1)
+surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+subplot(1,2,2)
+surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));
