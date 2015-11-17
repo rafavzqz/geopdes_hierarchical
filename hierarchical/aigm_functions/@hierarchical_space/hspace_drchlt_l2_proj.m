@@ -33,7 +33,7 @@ function [u, dofs] = hspace_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
 rhs  = zeros (hspace.ndof, 1);
 
-if (hmsh.ndim == 1) % The one-dimensional case has not been implemented yet
+if (hmsh.ndim == 1)
   dofs = []; u = zeros (numel(drchlt_sides), 1);
   for ii = 1:numel(drchlt_sides)
     iside = drchlt_sides(ii);

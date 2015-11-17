@@ -43,10 +43,10 @@ adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 1e-10;
 
 % GRAPHICS
-plot_hmesh = false;
-plot_discrete_sol = false;
+plot_data.plot_hmesh = false;
+plot_data.plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, gest, err_h1s, iter] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
+[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 
 % EXPORT VTK FILE
 npts = [51 51];

@@ -1,6 +1,6 @@
-% ADAPTIVITY_INITIALIZE: initialize a hierarchical mesh and a hierarchical space with one-single level.
+% ADAPTIVITY_INITIALIZE_LAPLACE: initialize a hierarchical mesh and a hierarchical space with one-single level.
 %
-% [hmsh, hspace] = adaptivity_initialize (problem_data, method_data)
+% [hmsh, hspace] = adaptivity_initialize_laplace (problem_data, method_data)
 %
 % INPUT:
 %
@@ -36,7 +36,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, geometry] = adaptivity_initialize (problem_data, method_data)
+function [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data)
 
 geometry  = geo_load (problem_data.geo_name);
 [knots, zeta] = kntrefine (geometry.nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);

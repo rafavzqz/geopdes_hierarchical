@@ -32,7 +32,7 @@ method_data.truncated   = 0;            % 0: False, 1: True
 clear adaptivity_data
 %adaptivity_data.flag = 'elements';
 adaptivity_data.flag = 'functions';
-adaptivity_data.mark_param = .015;
+adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 12;
 adaptivity_data.max_ndof = 5000;
@@ -41,8 +41,11 @@ adaptivity_data.max_nel = 5000;
 adaptivity_data.tol = 1e-9;
 
 % GRAPHICS
-plot_hmesh = false;
-plot_discrete_sol = false;
+plot_data.plot_hmesh = false;
+plot_data.plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, gest, err_h1s, iter] = ...
-    adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
+[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+
+% Plot
+[eu, F] = sp_eval (u, hspace, geometry, 101);
+figure; plot (F, eu)
