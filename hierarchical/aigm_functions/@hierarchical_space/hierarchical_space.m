@@ -90,7 +90,7 @@ hspace.dofs = [];
 
 if (~isempty (hmsh.boundary))
   if (hmsh.ndim > 1)
-    for iside = 1:2*hmsh.ndim
+    for iside = 1:numel (hmsh.boundary)
       boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
       boundary.dofs = space.boundary(iside).dofs;
       hspace.boundary(iside) = boundary;

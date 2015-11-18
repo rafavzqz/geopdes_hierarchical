@@ -5,7 +5,7 @@
 % INPUT:
 %
 %    msh:      the coarsest mesh (level 1), an object of the msh_structured class (see msh_structured)
-%    geometry: an object of the geometry class (see geo_load)
+%    geometry: structure with the information to define the geometry (see geo_load)
 %    nsub:     number of subdivisions between two different levels (by default 2)
 %
 % OUTPUT:
@@ -24,7 +24,7 @@
 %    deactivated    (1 x nlevels cell-array) List of removed cells on each level
 %    msh_lev        (nlevels x 1 cell-array) msh_lev{ilev} is a structure
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
-%    geometry                           a copy of the geometry object (not so nice)
+%    geometry                           a copy of the geometry struct (not so nice)
 %
 %    METHOD NAME
 %    hmsh_plot_cells:       plot the hierarchical mesh (not efficient)
