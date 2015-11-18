@@ -59,8 +59,6 @@ hmsh.mesh_of_level = msh;
 hmsh.nel = msh.nel;
 hmsh.nel_per_level = [msh.nel];
 
-aux = cell (hmsh.ndim, 1);
-[aux{:}] = ind2sub ([msh.nel_dir, 1], 1:msh.nel); % The extra 1 makes it work in any dimension
 hmsh.active{1} = (1:msh.nel)';
 hmsh.deactivated{1} = [];
 hmsh.msh_lev{1} = msh_evaluate_element_list (hmsh.mesh_of_level(1), hmsh.active{1});

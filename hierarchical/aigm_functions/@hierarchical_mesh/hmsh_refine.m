@@ -36,9 +36,8 @@ if (~isempty(M{hmsh.nlevels}))
   rule = msh_gauss_nodes (hmsh.mesh_of_level(1).nqn_dir);
   [dummy, zeta] = kntrefine (hmsh.mesh_of_level(hmsh.nlevels).breaks, hmsh.nsub-1, ones(1, hmsh.ndim), zeros(1, hmsh.ndim));
   [qn, qw] = msh_set_quad_nodes (zeta, rule);
-    
-  hmsh.mesh_of_level(hmsh.nlevels+1) = msh_cartesian (zeta, qn, qw, hmsh.geometry, 'boundary', boundary);
-  hmsh.mesh_of_level(hmsh.nlevels+1).boundary = []; % Remove redundant information
+  
+  hmsh.mesh_of_level(hmsh.nlevels+1) = msh_cartesian (zeta, qn, qw, hmsh.geometry, 'boundary', false);
 end
 
 % Update the set of active elements
