@@ -39,8 +39,8 @@
 
 function sp_to_vtk (u, hspace, geometry, npts, filename, fieldname, varargin)
 
-  [eu, F] = sp_eval (u, hspace, geometry, npts, varargin{:});
-  
-  msh_to_vtk (F, eu, filename, fieldname);
+  sp_lev = hspace.space_of_level(hspace.nlevels);
+  u_lev = hspace.C{hspace.nlevels} * u;
+  sp_to_vtk (u_lev, sp_lev, geometry, npts, filename, fieldname, varargin{:});
 
 end
