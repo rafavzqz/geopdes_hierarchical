@@ -83,7 +83,7 @@ end
 if (plot_data.plot_discrete_sol)
   fig_sol = figure;
 end
-nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel;
+nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
@@ -120,7 +120,6 @@ while (iter < adaptivity_data.num_max_iter)
    keyboard
   end
 
-  
 % ESTIMATE
   disp('ESTIMATE:')
   est = estimate_laplace_param (u, hmsh, hspace, problem_data, adaptivity_data);
@@ -130,7 +129,7 @@ while (iter < adaptivity_data.num_max_iter)
     [~, ~, err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     fprintf('Error in H1 seminorm = %g\n', err_h1s(iter));
   end
-    
+
 % STOPPING CRITERIA
   if (gest(iter) < adaptivity_data.tol)
     disp('Success: The error estimation reached the desired tolerance'); 
@@ -153,7 +152,7 @@ while (iter < adaptivity_data.num_max_iter)
   disp('MARK:')
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
-    
+
 % REFINE
   disp('REFINE:')
   [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);

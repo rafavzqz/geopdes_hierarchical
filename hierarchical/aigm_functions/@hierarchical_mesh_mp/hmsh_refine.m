@@ -31,7 +31,7 @@ function [hmsh, new_elements] = hmsh_refine (hmsh, M)
 
 boundary = ~isempty (hmsh.boundary);
 
-% Computation of a Cartesian grid if a new level is activated
+% Computation of a new grid if a new level is activated
 if (~isempty(M{hmsh.nlevels}))
   hmsh.mesh_of_level(hmsh.nlevels+1) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels), hmsh.nsub);
 end
@@ -47,16 +47,22 @@ hmsh.msh_lev = update_msh_lev (hmsh, old_elements, new_elements);
 %   hmsh.msh_lev{ilev} = msh_evaluate_element_list (hmsh.mesh_of_level(ilev), hmsh.active{ilev});
 % end
 
-% Update the boundary , calling the function recursively
+% Update the boundary, calling the function recursively
 if (boundary)
   if (hmsh.ndim > 1)
-    for iside = 1:2*hmsh.ndim
-      M_boundary = cell (size (M));
-      for lev = 1:numel (M)
-        M_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, M{lev});
+    M_boundary = cell (size (M));
+    for lev = 1:numel (M)
+      Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+      Nelem_bnd = cumsum ([0 hmsh.boundary.mesh_of_level(lev).nel_per_patch]);
+      for iptc = 1:hmsh.boundary.npatch
+        patch_number = hmsh.boundary.mesh_of_level(1).patch_numbers(iptc);
+        side_number  = hmsh.boundary.mesh_of_level(1).side_numbers(iptc);
+        [~,indices,~] = intersect (Nelem(patch_number)+1:Nelem(patch_number+1), M{lev});
+        bnd_indices = get_boundary_indices (side_number, hmsh.mesh_of_level(lev).msh_patch{patch_number}.nel_dir, indices);
+        M_boundary{lev} = union (M_boundary{lev}, bnd_indices+Nelem_bnd(iptc));
       end
-      hmsh.boundary(iside) = hmsh_refine (hmsh.boundary(iside), M_boundary);
     end
+    hmsh.boundary = hmsh_refine (hmsh.boundary, M_boundary);
   end
 else
   hmsh.boundary = [];
@@ -133,21 +139,27 @@ function children = split_cells_of_level (hmsh, lev, ind)
 %     children: indices of the children, with the numbering of the Cartesian grid
 %
 
-z = cell (hmsh.ndim, 1);
-cells_sub = cell (hmsh.ndim, 1);
-[cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension
-
 children = [];
-for ii = 1:numel(cells_sub{1})
-  aux = cell (hmsh.ndim, 1);
-  for idim = 1:hmsh.ndim
-    aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
-  end
-  [z{1:hmsh.ndim}] = ndgrid (aux{:});
-  auxI = sub2ind ([hmsh.mesh_of_level(lev+1).nel_dir, 1], z{:});
-  children = union (children, auxI(:));
-end
 
+Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+Nelem_fine = cumsum ([0 hmsh.mesh_of_level(lev+1).nel_per_patch]);
+for iptc = 1:hmsh.npatch
+  [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), ind);
+
+  z = cell (hmsh.ndim, 1);
+  cells_sub = cell (hmsh.ndim, 1);
+  [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir, 1], indices); % The extra 1 makes it work in any dimension
+
+  for ii = 1:numel(cells_sub{1})
+    aux = cell (hmsh.ndim, 1);
+    for idim = 1:hmsh.ndim
+      aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
+    end
+    [z{1:hmsh.ndim}] = ndgrid (aux{:});
+    auxI = sub2ind ([hmsh.mesh_of_level(lev+1).msh_patch{iptc}.nel_dir, 1], z{:});
+    children = union (children, auxI(:)+Nelem_fine(iptc));
+  end
+end
 end
 
 
@@ -176,13 +188,11 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev} = msh_evaluate_element_list (hmsh.mesh_of_level(lev), hmsh.active{lev});
   else
     [~, iold, iold_act] = intersect (old_elements{lev}, hmsh.active{lev});
+    msh_lev{lev}.npatch = hmsh.npatch;
     msh_lev{lev}.ndim = hmsh.ndim;
     msh_lev{lev}.rdim = hmsh.rdim;
     msh_lev{lev}.nel = hmsh.nel_per_level(lev);
-    msh_lev{lev}.elem_list = hmsh.active{lev}(:)';
-    msh_lev{lev}.nel_dir = hmsh.mesh_of_level(lev).nel_dir;
-    msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).nqn_dir;
-    msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).nqn;
+    msh_lev{lev}.elem_list = hmsh.active{lev}(:).';
 
     if (isempty (new_elements{lev}))
       indices = iold_act;
@@ -198,6 +208,16 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
     msh_lev{lev}.jacdet(:,indices) = [hmsh.msh_lev{lev}.jacdet(:,iold), msh_new.jacdet];
     msh_lev{lev}.element_size(:,indices) = [hmsh.msh_lev{lev}.element_size(:,iold), msh_new.element_size];
+
+    Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+    for iptc = 1:msh_lev{lev}.npatch
+      [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), msh_lev{lev}.elem_list);
+      msh_lev{lev}.nel_per_patch(iptc) = numel (indices);
+      msh_lev{lev}.elem_list_of_patch{iptc} = indices;
+      msh_lev{lev}.nel_dir_of_patch{iptc} = hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir;
+    end
+    msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).msh_patch{1}.nqn;
+    msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).msh_patch{1}.nqn_dir;
   end
 end
 
