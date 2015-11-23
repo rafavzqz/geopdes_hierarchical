@@ -19,16 +19,6 @@ problem_data.h = @(x, y, ind) singular_function_laplace (x, y, k);
 problem_data.uex     = @(x, y) singular_function_laplace (x, y, k);
 problem_data.graduex = @(x, y) singular_function_maxwell (x, y, k);
 
-% Source and boundary terms
-problem_data.f = @(x, y) exp(x).*((x.^2 + y.^2 - 1).*sin(x.*y) - 2*y.*cos(x.*y));
-problem_data.g = @(x, y, ind) test_Lshaped_mp_g_nmnn (x, y, ind);
-problem_data.h = @(x, y, ind) exp(x) .* sin (x.*y);
-
-% Exact solution (optional)
-problem_data.uex     = @(x, y) exp(x) .* sin (x.*y);
-problem_data.graduex = @(x, y) cat (1, ...
-               reshape (exp(x).*(sin(x.*y) + y.*cos(x.*y)), [1, size(x)]), ...
-               reshape (exp(x).*x.*cos(x.*y), [1, size(x)]));
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
 method_data.degree      = [3 3];        % Degree of the splines
