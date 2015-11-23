@@ -8,7 +8,7 @@
 %
 % USAGE:
 %
-% u = adaptivity_solve (hmsh, hspace, method_data)
+% u = adaptivity_solve_laplace (hmsh, hspace, method_data)
 %
 % INPUT:
 %

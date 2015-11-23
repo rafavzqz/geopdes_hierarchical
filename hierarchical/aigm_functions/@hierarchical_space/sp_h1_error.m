@@ -1,6 +1,6 @@
-% HSPACE_H1_ERROR: Evaluate the error in H^1 norm, for hierarchical splines.
+% SP_H1_ERROR: Evaluate the error in H^1 norm, for hierarchical splines.
 %
-%   [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = hspace_h1_error (hspace, hmsh, u, uex, graduex)
+%   [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
 %
 % INPUT:
 %
@@ -35,7 +35,7 @@
 % along with Octave; see the file COPYING.  If not, see
 % <http://www.gnu.org/licenses/>.
 
-function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = hspace_h1_error (hspace, hmsh, u, uex, graduex)
+function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
 
 errh1 = 0; errl2 = 0; errh1s = 0;
 errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);
@@ -46,10 +46,10 @@ last_dof = cumsum (hspace.ndof_per_level);
 for ilev = 1:hmsh.nlevels
   if (hmsh.nel_per_level(ilev) > 0)
     msh_level = hmsh.msh_lev{ilev};
-    sp_level = hspace.sp_lev{ilev};
+    sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
 
     [errh1_lev, errl2_lev, errh1s_lev, errh1_lev_elem, errl2_lev_elem, errh1s_lev_elem] = ...
-      sp_h1_error_old (sp_level, msh_level, hspace.C{ilev}*u(1:last_dof(ilev)), uex, graduex);
+      sp_h1_error (sp_level, msh_level, hspace.C{ilev}*u(1:last_dof(ilev)), uex, graduex);
 
     errh1 = errh1 + errh1_lev.^2;
     errl2 = errl2 + errl2_lev.^2;

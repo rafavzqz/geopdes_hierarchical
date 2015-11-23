@@ -1,7 +1,7 @@
-% HSPACE_TO_VTK: Export to VTK format for plotting.
+% SP_TO_VTK: Export to VTK format for plotting.
 %
-%  hspace_to_vtk (u, hspace, geometry, npts, filename, fieldname, [options], [lambda_lame, mu_lame])
-%  hspace_to_vtk (u, hspace, geometry, pts, filename, fieldname, [options], [lambda_lame, mu_lame])
+%  sp_to_vtk (u, hspace, geometry, npts, filename, fieldname, [options], [lambda_lame, mu_lame])
+%  sp_to_vtk (u, hspace, geometry, pts, filename, fieldname, [options], [lambda_lame, mu_lame])
 %
 % INPUT:
 %     
@@ -37,10 +37,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace_to_vtk (u, hspace, geometry, npts, filename, fieldname, varargin)
+function sp_to_vtk (u, hspace, geometry, npts, filename, fieldname, varargin)
 
-  [eu, F] = hspace_eval (u, hspace, geometry, npts, varargin{:});
-  
-  msh_to_vtk (F, eu, filename, fieldname);
+  sp_lev = hspace.space_of_level(hspace.nlevels);
+  u_lev = hspace.C{hspace.nlevels} * u;
+  sp_to_vtk (u_lev, sp_lev, geometry, npts, filename, fieldname, varargin{:});
 
 end

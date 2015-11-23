@@ -45,11 +45,11 @@ M = compute_functions_to_deactivate (hmsh, hspace, M, flag);
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) < hmsh.nlevels)
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  degree = hspace.space_of_level(hmsh.nlevels-1).degree;
+  degree = hspace.space_of_level(hmsh.nlevels-1).sp_patch{1}.degree;
   [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, degree-1);
   hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
   hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
-  
+
   hspace.nlevels = hmsh.nlevels;
   hspace.active{hmsh.nlevels} = [];
   hspace.deactivated{hmsh.nlevels} = [];
@@ -76,51 +76,46 @@ clear C
 
 % Fill the information for the boundaries
 if (boundary)% && hmsh.ndim > 1)
-
-  Nf = cumsum ([0, hspace.ndof_per_level]);
-  for iside = 1:2*hmsh.ndim
-    %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-    %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
-    ind2 = ceil (iside/2);
-    if (mod(iside,2) == 1)
-      boundary_ind = ones (hspace.nlevels,1);
-    else
-      boundary_ind = zeros (hspace.nlevels,1);
-      for lev = 1:hspace.nlevels
-        boundary_ind(lev) = hspace.space_of_level(lev).ndof_dir(ind2);
+  if (hmsh.ndim > 1)
+    new_cells_boundary = cell (size (new_cells));
+    levels = find (~cellfun (@isempty, new_cells));
+    for lev = levels(:).'
+      Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+      Nelem_bnd = cumsum ([0 hmsh.boundary.mesh_of_level(lev).nel_per_patch]);
+      for iptc = 1:hmsh.boundary.npatch
+        patch_number = hmsh.boundary.mesh_of_level(1).patch_numbers(iptc);
+        side_number  = hmsh.boundary.mesh_of_level(1).side_numbers(iptc);
+        [~,indices,~] = intersect (Nelem(patch_number)+1:Nelem(patch_number+1), new_cells{lev});
+        bnd_indices = get_boundary_indices (side_number, hmsh.mesh_of_level(lev).msh_patch{patch_number}.nel_dir, indices);
+        new_cells_boundary{lev} = union (new_cells_boundary{lev}, bnd_indices+Nelem_bnd(iptc));
       end
     end
-
-    if (hmsh.ndim > 1)
-      M_boundary = cell (size (M));
-      for lev = 1:numel (M)
-        M_boundary{lev} = get_boundary_indices (iside, hspace.space_of_level(lev).ndof_dir, M{lev});
+    M_boundary = cell (size (M));
+    levels = find (~cellfun (@isempty, M));
+    for lev = levels(:).'
+      for iptc = 1:hmsh.boundary.npatch
+        patch_number = hmsh.boundary.mesh_of_level(1).patch_numbers(iptc);
+        side_number  = hmsh.boundary.mesh_of_level(1).side_numbers(iptc);
+        [~,indices,~] = intersect (hspace.space_of_level(lev).gnum{patch_number}, M{lev});
+        bnd_indices = get_boundary_indices (side_number, hspace.space_of_level(lev).sp_patch{patch_number}.ndof_dir, indices);
+        bnd_indices = hspace.boundary.space_of_level(lev).gnum{iptc}(bnd_indices);
+        M_boundary{lev} = union (M_boundary{lev}, bnd_indices);
       end
-      
-      new_cells_boundary = cell (size (new_cells));
-      for lev = 1:numel (new_cells)
-        new_cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, new_cells{lev});
-      end
-      hspace.boundary(iside) = hspace_refine (hspace.boundary(iside), hmsh.boundary(iside), ...
-          M_boundary, 'functions', new_cells_boundary);
-
-      dofs = [];
-      for lev = 1:hspace.boundary(iside).nlevels
-        [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
-        dofs = union (dofs, Nf(lev) + iact);
-      end
-      hspace.boundary(iside).dofs = dofs;
-
-    elseif (hmsh.ndim == 1)
-      dofs = [];
-      for lev = 1:hspace.nlevels
-        [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
-        dofs = union (dofs, Nf(lev) + iact);
-      end
-      hspace.boundary(iside).dofs = dofs;
     end
+    
+    hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, 'functions', new_cells_boundary);
+
+    Nf = cumsum ([0, hspace.ndof_per_level]);
+    dofs = [];
+    for lev = 1:hspace.boundary.nlevels
+      [~,iact,jact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary.dofs);
+      [~, reorder] = sort (jact);
+      dofs = vertcat (dofs, Nf(lev) + iact(reorder));
+    end
+    hspace.boundary.dofs = dofs;
+  elseif (hmsh.ndim == 1)
+    error ('The 1D multipatch has not been implemented yet')
   end
-  
 else
     hspace.boundary = [];
 end
@@ -261,10 +256,16 @@ end
 
 function C = matrix_basis_change (hspace, hmsh, lev)
 
-C = 1;
-for idim = 1:hmsh.ndim
-  C = kron (hspace.Proj{lev-1,idim}, C);
+C = sparse (hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
+for ipatch = 1:hmsh.npatch
+  Cpatch = 1;
+  Proj = hspace.Proj{lev-1, ipatch};
+  for idim = 1:hmsh.ndim
+    Cpatch = kron (Proj{idim}, Cpatch);
+  end
+  C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
 end
+
 
 if (hspace.truncated)
   indices = union (hspace.active{lev}, hspace.deactivated{lev});

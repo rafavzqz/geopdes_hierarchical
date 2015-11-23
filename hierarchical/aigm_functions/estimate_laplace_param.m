@@ -70,7 +70,12 @@ switch adaptivity_data.flag
         % estoy realizando comparaciones con corridas anteriores en las que
         % forma era igual a 1.
         if forma
-            coef = ms(hspace.globnum_active(:,1)).*sqrt(hspace.coeff_pou(:));
+            Nf = cumsum ([0; hspace.ndof_per_level(:)]);
+            dof_level = zeros (hspace.ndof, 1);
+            for lev = 1:hspace.nlevels
+              dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
+            end
+            coef = ms(dof_level).*sqrt(hspace.coeff_pou(:));
         else
             coef = sqrt(hspace.coeff_pou(:));
         end
@@ -87,7 +92,8 @@ switch adaptivity_data.flag
             ndofs = ndofs + ndof_per_level(ilev);
             if hmsh.msh_lev{ilev}.nel
                 ind_e = (Ne(ilev)+1):Ne(ilev+1);
-                b_lev = op_f_v (hspace.sp_lev{ilev}, hmsh.msh_lev{ilev}, aux(:,ind_e));
+                sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
                 
                 dofs = 1:ndofs; % Active dofs from level 1 to ilev, in the numbering of the hierarchical space, whatever it is
                 est(dofs) = est(dofs) + hspace.C{ilev}'*b_lev;
@@ -97,6 +103,7 @@ switch adaptivity_data.flag
             est = coef.*sqrt(est);
         else
             diametro = zeros(hspace.ndof,1);
+% Should remove the use of globnum_active.
             for i = 1:hspace.ndof
                 lev = hspace.globnum_active(i,1);
                 cells = get_cells(hspace.globnum_active(i,2:end), hspace.degree, hmsh.mesh_of_level(lev).nel_dir);

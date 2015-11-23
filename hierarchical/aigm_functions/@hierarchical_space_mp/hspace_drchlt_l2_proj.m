@@ -31,53 +31,30 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 function [u, dofs] = hspace_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
-rhs  = zeros (hspace.ndof, 1);
+  M = spalloc (hspace.boundary.ndof, hspace.boundary.ndof, 3*hspace.boundary.ndof);
+  rhs  = zeros (hspace.boundary.ndof, 1);
 
-if (hmsh.ndim == 1)
-  dofs = []; u = zeros (numel(drchlt_sides), 1);
-  for ii = 1:numel(drchlt_sides)
-    iside = drchlt_sides(ii);
-    dofs = union (dofs, hspace.boundary(iside).dofs);
-    if (iside == 1)
-      u(ii) = h(hmsh.mesh_of_level(1).breaks{1}(1), iside);
-    else
-      u(ii) = h(hmsh.mesh_of_level(1).breaks{1}(end), iside); 
+  boundaries = hmsh.mesh_of_level(1).boundaries;
+  Nbnd = cumsum ([0, boundaries.nsides]);
+  bnd_dofs = [];
+
+  Nf = cumsum ([0, hspace.boundary.ndof_per_level]);
+  for iref = drchlt_sides
+    iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+    href = @(varargin) h(varargin{:}, iref);
+    f_one = @(varargin) ones (size(varargin{1}));
+    
+    M = M + op_u_v_hier (hspace.boundary, hspace.boundary, hmsh.boundary, f_one, iref_patch_list);
+    rhs = rhs + op_f_v_hier (hspace.boundary, hmsh.boundary, href, iref_patch_list);
+
+    for lev = 1:hspace.boundary.nlevels
+      boundary_gnum = hspace.boundary.space_of_level(lev).gnum;
+      [~,bnd_dofs_lev] = intersect (hspace.boundary.active{lev}, [boundary_gnum{iref_patch_list}]);
+      bnd_dofs = union (bnd_dofs, Nf(lev) + bnd_dofs_lev);
     end
   end
-  u = u(:);
-  return
-end
-
-
-dofs = [];
-nent = 0;
-for iside = drchlt_sides
-  nsh_max = hspace.boundary(iside).space_of_level(end).nsh_max;
-  nent = nent + hmsh.boundary(iside).nel * nsh_max^2;
-  dofs = union (dofs, hspace.boundary(iside).dofs);
-end
-rows = zeros (nent, 1);
-cols = zeros (nent, 1);
-vals = zeros (nent, 1);
-    
-ncounter = 0;
-for iside = drchlt_sides
-% Restrict the function handle to the specified side, in any dimension, hside = @(x,y) h(x,y,iside)
-  hside = @(varargin) h(varargin{:},iside);
-  f_one = @(varargin) ones (size(varargin{1}));
-  [rs, cs, vs] = ...
-     op_u_v_hier (hspace.boundary(iside), hspace.boundary(iside), hmsh.boundary(iside), f_one);
-  bnd_dofs = hspace.boundary(iside).dofs;
-
-  rows(ncounter+(1:numel(rs))) = bnd_dofs(rs);
-  cols(ncounter+(1:numel(rs))) = bnd_dofs(cs);
-  vals(ncounter+(1:numel(rs))) = vs;
-  ncounter = ncounter + numel (rs);
-
-  rhs(bnd_dofs) = rhs(bnd_dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), hside);
-end
-
-M = sparse (rows(1:ncounter), cols(1:ncounter), vals(1:ncounter));
-u = M(dofs, dofs) \ rhs(dofs, 1);
+  
+  u = M(bnd_dofs,bnd_dofs) \ rhs(bnd_dofs);
+  dofs = hspace.boundary.dofs(bnd_dofs);
 
 end

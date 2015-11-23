@@ -49,8 +49,19 @@ adaptivity_data.max_nel = 5000;
 adaptivity_data.tol = 1e-5;
 
 % GRAPHICS
-plot_hmesh = false;
-plot_discrete_sol = false;
+plot_data.plot_hmesh = false;
+plot_data.plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, gest, err_h1s, iter] = ...
-    adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_hmesh, plot_discrete_sol);
+[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+
+% EXPORT VTK FILE
+npts = [51 51];
+output_file = 'laplace_adaptivity_square_ex3.vts';
+sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
+
+% Plot in Octave/Matlab
+[eu, F] = sp_eval (u, hspace, geometry, npts);
+figure; subplot (1,2,1)
+surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+subplot(1,2,2)
+surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));

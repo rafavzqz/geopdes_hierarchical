@@ -64,7 +64,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = hierarchical_space (hmsh, space, varargin)
+function hspace = hierarchical_space_mp (hmsh, space, varargin)
 
 default_values = {'standard', false};
 default_values(1:numel(varargin)) = varargin;
@@ -83,7 +83,7 @@ hspace.active{1} = (1:space.ndof)';
 hspace.deactivated{1} = [];
 
 hspace.coeff_pou = ones (space.ndof, 1);
-hspace.Proj = cell (0, hmsh.ndim);
+hspace.Proj = cell (0, hmsh.npatch);
 hspace.C{1} = speye (space.ndof);
 
 hspace.dofs = [];
@@ -91,7 +91,7 @@ hspace.dofs = [];
 if (~isempty (hmsh.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:numel (hmsh.boundary)
-      boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
+      boundary = hierarchical_space_mp (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
       boundary.dofs = space.boundary(iside).dofs;
       hspace.boundary(iside) = boundary;
     end
@@ -103,6 +103,6 @@ else
   hspace.boundary = [];
 end
 
-hspace = class (hspace, 'hierarchical_space');
+hspace = class (hspace, 'hierarchical_space_mp');
 
 end

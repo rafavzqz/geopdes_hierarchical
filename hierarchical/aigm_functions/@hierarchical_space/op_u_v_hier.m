@@ -49,9 +49,11 @@ function varargout = op_u_v_hier (hspu, hspv, hmsh, coeff)
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell(hmsh.msh_lev{ilev}.rdim,1);
       for idim = 1:hmsh.rdim
-        x{idim} = hmsh.msh_lev{ilev}.geo_map(idim,:,:);
+        x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
-      M_lev = op_u_v (hspu.sp_lev{ilev}, hspv.sp_lev{ilev}, hmsh.msh_lev{ilev}, coeff (x{:}));
+      spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+      spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+      M_lev = op_u_v (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
 
       dofs_u = 1:ndofs_u;
       dofs_v = 1:ndofs_v;
