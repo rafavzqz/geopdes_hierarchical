@@ -47,21 +47,32 @@ stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 % mass = op_u_v_hier (hspace, hspace, hmsh, problem_data.c_diff);
 
-% Apply Neumann boundary conditions 
-for iside = problem_data.nmnn_sides
-  if (hmsh.ndim > 1)
+% Apply Neumann boundary conditions
+if (~isfield (struct (hmsh), 'npatch'))
+  for iside = problem_data.nmnn_sides
+    if (hmsh.ndim > 1)
 % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
-    gside = @(varargin) problem_data.g(varargin{:},iside);
-    dofs = hspace.boundary(iside).dofs;
-    rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
-  else
-    if (iside == 1)
-      x = hmsh.mesh_of_level(1).breaks{1}(1);
+      gside = @(varargin) problem_data.g(varargin{:},iside);
+      dofs = hspace.boundary(iside).dofs;
+      rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
     else
-      x = hmsh.mesh_of_level(1).breaks{1}(end);
+      if (iside == 1)
+        x = hmsh.mesh_of_level(1).breaks{1}(1);
+      else
+        x = hmsh.mesh_of_level(1).breaks{1}(end);
+      end
+      sp_side = hspace.boundary(iside);
+      rhs(sp_side.dofs) = rhs(sp_side.dofs) + problem_data.g(x,iside);
     end
-    sp_side = hspace.boundary(iside);
-    rhs(sp_side.dofs) = rhs(sp_side.dofs) + problem_data.g(x,iside);
+  end
+else
+  boundaries = hmsh.mesh_of_level(1).boundaries;
+  Nbnd = cumsum ([0, boundaries.nsides]);
+  for iref = problem_data.nmnn_sides
+    iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+    gref = @(varargin) problem_data.g(varargin{:},iref);
+    rhs_nmnn = op_f_v_hier (hspace.boundary, hmsh.boundary, gref, iref_patch_list);
+    rhs(hspace.boundary.dofs) = rhs(hspace.boundary.dofs) + rhs_nmnn;
   end
 end
 
