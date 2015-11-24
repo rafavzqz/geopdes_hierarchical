@@ -1,10 +1,10 @@
-% HIERARCHICAL_MESH: constructor of the class for hierarchical meshes.
+% HIERARCHICAL_MESH_MP: constructor of the class for hierarchical meshes for multipatch geometries.
 %
-%    hmsh = hierarchical_mesh (msh, geometry, [nsub=2*ones(1,msh.ndim)])
+%    hmsh = hierarchical_mesh_mp (msh, geometry, [nsub=2*ones(1,msh.ndim)])
 %
 % INPUT:
 %
-%    msh:      the coarsest mesh (level 1), an object of the msh_structured class (see msh_structured)
+%    msh:      the coarsest mesh (level 1), an object of the msh_multipatch class (see msh_multipatch)
 %    nsub:     number of subdivisions between two different levels (by default 2)
 %
 % OUTPUT:

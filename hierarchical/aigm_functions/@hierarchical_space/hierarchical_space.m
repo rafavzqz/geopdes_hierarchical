@@ -4,7 +4,7 @@
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh (see hierarchical_mesh)
-%    space:      the coarsest space, an object of the class sp_bspline (see sp_bpline)
+%    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
 %                - 'simplified', a simplified basis, were only children of removed functions are activated\
@@ -32,18 +32,23 @@
 %                                            as linear combinations of splines (active and inactive) of the current level
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
-%    METHOD NAME
-%    sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
-%    sp_eval:               evaluate the solution in a Cartesian grid of points
-%    hspace_eval_hmsh:      evaluate the solution in the quadrature points of a hierarchical mesh
-%    sp_l2_error:           compute the error in L2 norm
-%    sp_h1_error:           compute the error in H1 norm
-%    hspace_refine:         refine the hierarchical space
-%    hspace_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
-%    hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 
-%    op_gradu_gradv_hier:   assemble the stiffness matrix
-%    op_u_v_hier:           assemble the mass matrix
-%    op_f_v_hier:           assemble the right-hand side
+%    METHODS
+%    Methods for post-processing, which require a computed vector of degrees of freedom
+%      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
+%      sp_eval:               evaluate the solution in a Cartesian grid of points
+%      hspace_eval_hmsh:      evaluate the solution in the quadrature points of the corresponding hierarchical mesh
+%      sp_l2_error:           compute the error in L2 norm
+%      sp_h1_error:           compute the error in H1 norm
+%
+%    Methods for matrix and vector assembly
+%      op_gradu_gradv_hier:   assemble the stiffness matrix
+%      op_u_v_hier:           assemble the mass matrix
+%      op_f_v_hier:           assemble the right-hand side
+%
+%    Other methods
+%      hspace_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
+%      hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 
+%      hspace_refine:         refine the hierarchical space
 %
 % For an explanation of the 'standard' and the 'simplified' basis for hierarchical splines, read:
 %  A. Buffa, E.M. Garau, New refinable spaces and local approximation

@@ -4,7 +4,7 @@
 %
 % INPUT:
 %
-%    msh:      the coarsest mesh (level 1), an object of the msh_structured class (see msh_structured)
+%    msh:      the coarsest mesh (level 1), an object of the msh_cartesian class (see msh_cartesian)
 %    nsub:     number of subdivisions between two different levels (by default 2)
 %
 % OUTPUT:
