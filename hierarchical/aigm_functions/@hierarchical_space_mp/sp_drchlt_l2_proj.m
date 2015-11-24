@@ -1,10 +1,10 @@
-% HSPACE_DRCHLT_L2_PROJ: assign the degrees of freedom of Dirichlet boundaries through an L2 projection.
+% SP_DRCHLT_L2_PROJ: assign the degrees of freedom of Dirichlet boundaries through an L2 projection.
 %
-%   [u, dofs] = hspace_drchlt_l2_proj (hspace, hmsh, h, sides)
+%   [u, dofs] = sp_drchlt_l2_proj (hspace, hmsh, h, sides)
 %
 % INPUT:
 %
-%  hspace: object representing the hierarchical space of trial functions (see hierarchical_space)
+%  hspace: object representing the hierarchical space of trial functions (see hierarchical_space_mp)
 %  hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
 %  h:      function handle to compute the Dirichlet condition
 %  sides:  boundary sides on which a Dirichlet condition is imposed
@@ -29,7 +29,7 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-function [u, dofs] = hspace_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
+function [u, dofs] = sp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
   M = spalloc (hspace.boundary.ndof, hspace.boundary.ndof, 3*hspace.boundary.ndof);
   rhs  = zeros (hspace.boundary.ndof, 1);

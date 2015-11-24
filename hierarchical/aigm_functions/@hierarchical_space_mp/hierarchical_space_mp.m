@@ -45,7 +45,7 @@
 %      op_f_v_hier:           assemble the right-hand side
 %
 %    Other methods
-%      hspace_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
+%      sp_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
 %      hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 
 %      hspace_refine:         refine the hierarchical space
 %

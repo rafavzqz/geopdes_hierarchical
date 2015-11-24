@@ -62,32 +62,3 @@ function rhs = op_f_v_hier (hspace, hmsh, f, patch_list)
   end
 
 end
-%   if (nargin < 4)
-%     patch_list = 1:hmsh.mesh_of_level(1).npatch;
-%   end
-%   
-%   rhs = zeros (hspace.ndof, 1);
-% 
-%   ndofs = 0;
-%   for ilev = 1:hmsh.nlevels
-%     ndofs = ndofs + hspace.ndof_per_level(ilev);
-%     if (hmsh.nel_per_level(ilev) > 0)
-%       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-%       
-%       b_lev = zeros (sp_lev.ndof, 1);
-%       for iptc = patch_list
-%         msh_ptc = hmsh.msh_lev{ilev}.msh_patch{iptc};
-%         x = cell (hmsh.rdim, 1);
-%         for idim = 1:hmsh.rdim
-%           x{idim} = reshape (msh_ptc.geo_map(idim,:,:), msh_ptc.nqn, msh_ptc.nel);
-%         end
-%         dofs = hspace.space_of_level(ilev).gnum{iptc};
-%         b_lev(dofs) = b_lev(dofs) + op_f_v (sp_lev.sp_patch{iptc}, msh_ptc, f(x{:}));
-%       end
-%       
-%       dofs = 1:ndofs;
-%       rhs(dofs) = rhs(dofs) + hspace.C{ilev}'*b_lev;
-%     end
-%   end
-%   
-% end
