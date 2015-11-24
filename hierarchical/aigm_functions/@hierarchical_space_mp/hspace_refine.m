@@ -93,14 +93,7 @@ if (boundary)% && hmsh.ndim > 1)
     M_boundary = cell (size (M));
     levels = find (~cellfun (@isempty, M));
     for lev = levels(:).'
-      for iptc = 1:hmsh.boundary.npatch
-        patch_number = hmsh.boundary.mesh_of_level(1).patch_numbers(iptc);
-        side_number  = hmsh.boundary.mesh_of_level(1).side_numbers(iptc);
-        [~,indices,~] = intersect (hspace.space_of_level(lev).gnum{patch_number}, M{lev});
-        bnd_indices = get_boundary_indices (side_number, hspace.space_of_level(lev).sp_patch{patch_number}.ndof_dir, indices);
-        bnd_indices = hspace.boundary.space_of_level(lev).gnum{iptc}(bnd_indices);
-        M_boundary{lev} = union (M_boundary{lev}, bnd_indices);
-      end
+      [~,~,M_boundary{lev}] = intersect (M{lev}, hspace.space_of_level(lev).boundary.dofs);
     end
     
     hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, 'functions', new_cells_boundary);

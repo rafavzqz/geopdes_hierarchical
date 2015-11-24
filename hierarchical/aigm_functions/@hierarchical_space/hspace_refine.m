@@ -94,7 +94,7 @@ if (boundary)% && hmsh.ndim > 1)
     if (hmsh.ndim > 1)
       M_boundary = cell (size (M));
       for lev = 1:numel (M)
-        M_boundary{lev} = get_boundary_indices (iside, hspace.space_of_level(lev).ndof_dir, M{lev});
+        [~,~,M_boundary{lev}] = intersect (M{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
       end
       
       new_cells_boundary = cell (size (new_cells));
