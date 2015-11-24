@@ -2,7 +2,6 @@
 %  given by its degrees of freedom, at the points of the corresponding hierarchical mesh.
 %
 %   [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, [option]);
-%   [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, [option]);
 %
 % INPUT:
 %     
