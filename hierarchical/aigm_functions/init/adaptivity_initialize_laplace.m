@@ -53,7 +53,7 @@ end
 if (npatch == 1)
   msh = msh{1};
   space = space{1};
-  hmsh     = hierarchical_mesh (msh, geometry, method_data.nsub_refine);
+  hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
   hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
 else
   msh = msh_multipatch (msh, boundaries);

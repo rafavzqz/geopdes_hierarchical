@@ -1,11 +1,10 @@
 % HIERARCHICAL_MESH: constructor of the class for hierarchical meshes.
 %
-%    hmsh = hierarchical_mesh (msh, geometry, [nsub=2*ones(1,msh.ndim)])
+%    hmsh = hierarchical_mesh (msh, [nsub=2*ones(1,msh.ndim)])
 %
 % INPUT:
 %
 %    msh:      the coarsest mesh (level 1), an object of the msh_structured class (see msh_structured)
-%    geometry: structure with the information to define the geometry (see geo_load)
 %    nsub:     number of subdivisions between two different levels (by default 2)
 %
 % OUTPUT:
@@ -24,7 +23,6 @@
 %    deactivated    (1 x nlevels cell-array) List of removed cells on each level
 %    msh_lev        (nlevels x 1 cell-array) msh_lev{ilev} is a structure
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
-%    geometry                           a copy of the geometry struct (not so nice)
 %
 %    METHOD NAME
 %    hmsh_plot_cells:       plot the hierarchical mesh (not efficient)
@@ -45,7 +43,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hmsh = hierarchical_mesh (msh, geometry, nsub)
+function hmsh = hierarchical_mesh (msh, nsub)
 
 if (nargin < 3)
   nsub = 2 * ones (1, msh.ndim);
@@ -63,14 +61,12 @@ hmsh.active{1} = (1:msh.nel)';
 hmsh.deactivated{1} = [];
 hmsh.msh_lev{1} = msh_evaluate_element_list (hmsh.mesh_of_level(1), hmsh.active{1});
 
-hmsh.geometry = geometry; % CAN WE AVOID THIS? XXXXXX
-
 if (~isempty (msh.boundary))
   if (msh.ndim > 1)
     for iside = 1:2*msh.ndim
       %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
       ind = setdiff (1:hmsh.ndim, ceil (iside/2));
-      hmsh.boundary(iside) = hierarchical_mesh (msh.boundary(iside), geometry.boundary(iside), nsub(ind));
+      hmsh.boundary(iside) = hierarchical_mesh (msh.boundary(iside), nsub(ind));
     end
   elseif (msh.ndim == 1)
     hmsh.boundary(1).ndim = 0;
