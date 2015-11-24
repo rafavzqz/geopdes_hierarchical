@@ -5,7 +5,6 @@
 % INPUT:
 %
 %    msh:      the coarsest mesh (level 1), an object of the msh_structured class (see msh_structured)
-%    geometry: an object of the geometry class (see geo_load)
 %    nsub:     number of subdivisions between two different levels (by default 2)
 %
 % OUTPUT:
@@ -17,14 +16,14 @@
 %    rdim           (scalar)            dimension of the physical space
 %    nlevels        (scalar)            the number of levels
 %    nsub           (1 x ndim array)    number of subdivisions between two different levels
-%    mesh_of_level  (1 x nlevels mesh)  Cartesian mesh of each level (see msh_cartesian)
+%    mesh_of_level  (1 x nlevels mesh)  multipatch mesh of each level (see msh_multipatch)
 %    nel            (scalar)            total number of active cells  
 %    nel_per_level  (1 x nlevels array) number of active cells on each level
 %    active         (1 x nlevels cell-array) List of active elements on each level
 %    deactivated    (1 x nlevels cell-array) List of removed cells on each level
-%    msh_lev        (nlevels x 1 cell-array) msh_lev{ilev} is a structure
+%    msh_lev        (nlevels x 1 cell-array) msh_lev{i} is a structure with mesh information
+%                                            for the active elements of the i-th level
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
-%    geometry                           a copy of the geometry object (not so nice)
 %
 %    METHOD NAME
 %    hmsh_plot_cells:       plot the hierarchical mesh (not efficient)

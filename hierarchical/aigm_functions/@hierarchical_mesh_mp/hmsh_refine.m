@@ -4,12 +4,12 @@
 %
 % INPUT:
 %
-%   hmsh:    object representing the coarse hierarchical mesh (see hierarchical_mesh)
+%   hmsh:    object representing the coarse hierarchical mesh (see hierarchical_mesh_mp)
 %   marked:  cell array with the indices, in the Cartesian grid, of the marked elements for each level
 %
 % OUTPUT:
 %
-%   hmsh:         object representing the refined hierarchical mesh (see hierarchical_mesh)
+%   hmsh:         object representing the refined hierarchical mesh (see hierarchical_mesh_mp)
 %   new_elements: cell array with the global indices of the new active elements for each level
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez

@@ -21,7 +21,8 @@
 %    nel_per_level  (1 x nlevels array) number of active cells on each level
 %    active         (1 x nlevels cell-array) List of active elements on each level
 %    deactivated    (1 x nlevels cell-array) List of removed cells on each level
-%    msh_lev        (nlevels x 1 cell-array) msh_lev{ilev} is a structure
+%    msh_lev        (nlevels x 1 cell-array) msh_lev{i} is a structure with mesh information
+%                                            for the active elements of the i-th level
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
 %
 %    METHOD NAME

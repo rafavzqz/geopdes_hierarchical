@@ -4,7 +4,7 @@
 %
 % INPUT:
 %
-%    hmsh:       object representing the hierarchical mesh (see hierarchical_mesh)
+%    hmsh:       object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %    npts:       number of points to use on each edge of the cell
 %    fig_number: figure number where to plot (if not given, a new figure is open)
 %
