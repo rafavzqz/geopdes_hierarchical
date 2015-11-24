@@ -1,14 +1,11 @@
-% This function uses:    compute_functions_to_deactivate
-%                        update_active_functions
-
 % HSPACE_REFINE: refine the hierarchical space, updating the fields of the object.
 %
 %   [hspace, Cref] = hspace_refine (hspace, hmsh, marked, flag, new_cells)
 %
 % INPUT:
 %
-%   hspace:    object representing the coarse hierarchical space (see hierarchical_space)
-%   hmsh:      object representing the refined hierarchical mesh (see hierarchical_mesh)
+%   hspace:    object representing the coarse hierarchical space (see hierarchical_space_mp)
+%   hmsh:      object representing the refined hierarchical mesh (see hierarchical_mesh_mp)
 %   marked:    cell array with the indices, in the tensor product setting, of the marked elements/functions for each level
 %   flag:      the refinement strategy, marking either 'elements' or 'functions'.
 %   new_cells: cell array with the global indices of the new active elements for each level
@@ -107,7 +104,7 @@ if (boundary)% && hmsh.ndim > 1)
     end
     hspace.boundary.dofs = dofs;
   elseif (hmsh.ndim == 1)
-    error ('The 1D multipatch has not been implemented yet')
+    error ('The 1D multipatch has not been implemented')
   end
 else
     hspace.boundary = [];
@@ -121,12 +118,12 @@ end
 % This function updates the active dofs (hspace.active), their coefficients (hspace.coeff_pou) and deactivated dofs (hspace.deactivated) in each level when
 % refining the functions in marked_fun. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
 %
-% Input:    hspace:    the coarse mesh, an object of the class hierarchical_space
-%           hmsh:      an object of the class hierarchical_mesh, already refined
+% Input:    hspace:    the coarse mesh, an object of the class hierarchical_space_mp
+%           hmsh:      an object of the class hierarchical_mesh_mp, already refined
 %           new_cells: cells added to the refined mesh, see hmsh_refine
 %           marked_fun{lev}: indices of active functions of level lev to be deactivated
 %
-% Output:   hspace:    the refined mesh, an object of the class hierarchical_space
+% Output:   hspace:    the refined mesh, an object of the class hierarchical_space_mp
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
@@ -241,8 +238,8 @@ end
 % Compute the new matrices to represent functions of the previous level 
 % as linear combinations of splines (active and inactive) of the current level 
 %
-% Input:  hspace: an object of the class hierarchical_space
-%         hmsh:   an object of the class hierarchical_mesh
+% Input:  hspace: an object of the class hierarchical_space_mp
+%         hmsh:   an object of the class hierarchical_mesh_mp
 %         lev:    the level for which we compute the matrix
 %
 % Output:   C:    matrix to change basis from level lev-1 to level lev
@@ -255,6 +252,14 @@ for ipatch = 1:hmsh.npatch
   Proj = hspace.Proj{lev-1, ipatch};
   for idim = 1:hmsh.ndim
     Cpatch = kron (Proj{idim}, Cpatch);
+  end
+  
+  if (strcmpi (hspace.space_of_level(1).sp_patch{ipatch}.space_type, 'NURBS'))
+    sp_patch = hspace.space_of_level(lev-1).sp_patch{ipatch};
+    Wlev = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
+    sp_patch = hspace.space_of_level(lev).sp_patch{ipatch};
+    Wlev_fine = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
+    Cpatch = Wlev_fine * Cpatch * Wlev;
   end
   C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
 end

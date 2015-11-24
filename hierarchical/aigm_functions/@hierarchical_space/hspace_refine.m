@@ -1,6 +1,3 @@
-% This function uses:    compute_functions_to_deactivate
-%                        update_active_functions
-
 % HSPACE_REFINE: refine the hierarchical space, updating the fields of the object.
 %
 %   [hspace, Cref] = hspace_refine (hspace, hmsh, marked, flag, new_cells)
@@ -264,6 +261,12 @@ function C = matrix_basis_change (hspace, hmsh, lev)
 C = 1;
 for idim = 1:hmsh.ndim
   C = kron (hspace.Proj{lev-1,idim}, C);
+end
+
+if (strcmpi (hspace.space_of_level(1).space_type, 'NURBS'))
+  Wlev = spdiags (hspace.space_of_level(lev-1).weights(:), 0, hspace.space_of_level(lev-1).ndof, hspace.space_of_level(lev-1).ndof);
+  Wlev_fine = spdiags (1./hspace.space_of_level(lev).weights(:), 0, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev).ndof);
+  C = Wlev_fine * C * Wlev;
 end
 
 if (hspace.truncated)
