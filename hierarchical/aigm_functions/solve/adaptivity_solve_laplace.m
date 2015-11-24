@@ -48,7 +48,7 @@ rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 % mass = op_u_v_hier (hspace, hspace, hmsh, problem_data.c_diff);
 
 % Apply Neumann boundary conditions
-if (~isfield (struct (hmsh), 'npatch'))
+if (~isfield (struct (hmsh), 'npatch')) % Single patch case
   for iside = problem_data.nmnn_sides
     if (hmsh.ndim > 1)
 % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
@@ -65,7 +65,7 @@ if (~isfield (struct (hmsh), 'npatch'))
       rhs(sp_side.dofs) = rhs(sp_side.dofs) + problem_data.g(x,iside);
     end
   end
-else
+else % Multipatch case
   boundaries = hmsh.mesh_of_level(1).boundaries;
   Nbnd = cumsum ([0, boundaries.nsides]);
   for iref = problem_data.nmnn_sides

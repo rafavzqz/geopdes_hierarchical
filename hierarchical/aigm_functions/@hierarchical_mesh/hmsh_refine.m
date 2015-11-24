@@ -70,7 +70,7 @@ function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %
 % function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %
-% This function updates the active cells (hmsh.active) and deactivated cells (hmsh.deactivated) in each level when
+% Update the sets of active cells (hmsh.active) and deactivated cells (hmsh.deactivated) in each level when
 % refining the cells in M. This function also updates hmsh.nlevels, hmsh.nel and hmsh.nel_per_level
 %
 % INPUT
@@ -158,7 +158,7 @@ function msh_lev = update_msh_lev (hmsh, old_elements, new_elements)
 %
 % function msh_lev = update_msh_lev (hmsh, old_elements, new_elements)
 %
-% This function updates the information in msh_lev, computing only the elements that have been added to the mesh
+% Update the information in msh_lev, computing only the elements that have been added to the mesh
 %
 % INPUT
 %     hmsh: object representing the fine hierarchical mesh (see hierarchical_mesh)

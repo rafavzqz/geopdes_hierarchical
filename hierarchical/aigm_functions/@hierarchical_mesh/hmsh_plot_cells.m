@@ -45,9 +45,13 @@ for ilev = 1:hmsh.nlevels
     for idim = 1:hmsh.ndim
       rule{idim} = [linspace(-1+1e-12, 1-1e-12, npts); zeros(1, npts)];
     end
+    aux_geometry.rdim = hmsh.rdim;
+    aux_geometry.map = hmsh.mesh_of_level(ilev).map;
+    aux_geometry.map_der = hmsh.mesh_of_level(ilev).map_der;
     qn = msh_set_quad_nodes (hmsh.mesh_of_level(ilev).breaks, rule);
-    msh_plot = msh_cartesian (hmsh.mesh_of_level(ilev).breaks, qn, [], hmsh.geometry);
+    msh_plot = msh_cartesian (hmsh.mesh_of_level(ilev).breaks, qn, [], aux_geometry, 'boundary', false);
     msh_level = msh_evaluate_element_list (msh_plot, hmsh.active{ilev});
+    clear msh_plot
 
     x = cell (hmsh.rdim, 1);
     for idim = 1:hmsh.rdim
