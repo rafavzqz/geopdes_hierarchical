@@ -46,7 +46,7 @@
 
 function hmsh = hierarchical_mesh_mp (msh, nsub)
 
-if (nargin < 3)
+if (nargin < 2)
   nsub = 2 * ones (1, msh.ndim);
 end
 
