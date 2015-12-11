@@ -1,5 +1,6 @@
 % ADAPTIVITY_MARK: mark cells or basis functions for refinement according to 
-% the marking strategy in adaptivity_data.mark_strategy.
+% the marking strategy in adaptivity_data.mark_strategy, taking into account 
+% the computed error estimators in the variable est.
 %
 % [marked, nmarked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data)
 %
@@ -9,10 +10,13 @@
 %   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
 %   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
 %   adaptivity_data: a structure with the data for the adaptivity method.
-%                    In particular, it contains the field 'mark_strategy'. The possible strategies are:
-%                     GR:   global (uniform) refinement,  
-%                     MS:   maximum strategy,  
-%                     GERS: guaranteed error reduction strategy (Dörfler's)
+%                    In particular, it contains the following fields:
+%                     -'mark_strategy': The possible strategies are:
+%                           GR:   global (uniform) refinement,  
+%                           MS:   maximum strategy,  
+%                           GERS: guaranteed error reduction strategy (Dörfler's)
+%                     -'mark_param': Parameter for marking, 0 < mark_param < 1.
+%                     -'flag': elements or functions, according to est
 %
 % OUTPUT:
 %
@@ -33,9 +37,6 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-% ATENCION: Despues describire mejor esta funcion y limpiare un poco mas el
-% codigo
 
 
 function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
