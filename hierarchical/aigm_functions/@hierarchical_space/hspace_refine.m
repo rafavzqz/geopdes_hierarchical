@@ -227,7 +227,7 @@ if (nargout == 2 || ~hspace.truncated)
     Id(hspace.active{lev+1},:) = speye (ndlev, ndlev);
     Cref = [Cref, [sparse(ndof_until_lev,ndlev); Id]];  
    
-  end % for lev
+  end
   ndof_per_level = cellfun (@numel, active);
   ndof_prev_levs = sum (ndof_per_level(1:hspace.nlevels-1));
   [~,~,indices] = intersect (active{hspace.nlevels}, active_and_deact);
@@ -269,7 +269,7 @@ if (nargout == 2 || ~hspace.truncated)
     Id(indices,:) = speye (ndlev, ndlev);
     Cref = [Cref, [sparse(ndof_until_lev,ndlev); Id]];  
    
-  end % for lev  
+  end  
   end
 end
 
