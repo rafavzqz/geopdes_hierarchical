@@ -179,7 +179,6 @@ for lev = 1:hspace.nlevels-1
 end % for lev
 
 
-%XXXXXXXXXXX The computation of Cref for truncated functions is wrong!!
 % Computation of the matrix to pass from the original to the refined space
 if (nargout == 2 || ~hspace.truncated)
     
