@@ -5,8 +5,12 @@ function [hmsh, hspace] = build_hspace_from_cells(dim, p, initial_num_el, cells,
 % This function fills hmsh and hspace. The active cells are given in
 % cells{lev}, for lev = 1,2,...
 %
-% ATENCION: Completar la descripcion de esta funcion y decidir si queremos argumentos de entrada mas generales. Por ahora, es una construccion
-% particular
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+%
+% ATENCION: 
+% - Decidir si queremos argumentos de entrada mas generales. Por ahora, es una construccion
+% particular. 
+% - Completar la descripcion de esta funcion. 
 %
 
 if nargin == 5
@@ -26,9 +30,10 @@ method_data.regularity = method_data.degree-1;       % Regularity of the splines
 method_data.nsub_coarse= initial_num_el*ones(1,dim);       % Number of subdivisions
 method_data.nsub_refine= 2*ones(1,dim);  
 method_data.nquad      = method_data.degree+1;       % Points for the Gaussian quadrature rule
-method_data.space_type = space_type;           % 0: , 1: Full basis (B-splines)
+method_data.space_type = space_type;           % 'simplified' (only children functions) or 'standard' (full basis)
+method_data.truncated = 0;
 
-[hmsh, hspace] = adaptivity_initialize (problem_data, method_data);
+[hmsh, hspace] = adaptivity_initialize_laplace (problem_data, method_data);
 
 nref = numel(cells);
 
@@ -41,15 +46,7 @@ for ref = 1:nref
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     marked = cell(ref,1);
-    aux = cell (hmsh.ndim, 1);
-    for idim = 1:hmsh.ndim
-        if ~isempty(cells{ref})
-            aux{idim} = cells{ref}(:,idim);
-        else
-            aux{idim} = [];
-        end
-    end
-    marked{ref} = sub2ind (hmsh.mesh_of_level(ref).nel_dir, aux{:});
+    marked{ref} = cells{ref};
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% REFINE
@@ -60,5 +57,5 @@ for ref = 1:nref
 end
 
 if graficar_malla
-    hmsh_plot_cells (hmsh, 1);
+    hmsh_plot_cells (hmsh);
 end

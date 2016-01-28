@@ -9,7 +9,10 @@ problem_data.drchlt_sides = [1 2 3 4];
 
 % Physical parameters
 problem_data.c_diff  = @(x, y) ones(size(x));
-
+problem_data.grad_c_diff = @(x, y) cat (1, ...
+            reshape (zeros(size(x)), [1, size(x)]), ...
+            reshape (zeros(size(x)), [1, size(x)]));
+        
 % Source and boundary terms
 % Choose 1.5 < Cx, Cy < 2.5. Thus, the solution belongs H2\H3
 Cx = 1.6;
@@ -38,14 +41,15 @@ method_data.truncated   = 0;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-%adaptivity_data.flag = 'elements';
-adaptivity_data.flag = 'functions';
+adaptivity_data.flag = 'elements';
+%adaptivity_data.flag = 'functions';
+adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.max_level = 10;
-adaptivity_data.max_ndof = 5000;
-adaptivity_data.num_max_iter = 15;
-adaptivity_data.max_nel = 5000;
+adaptivity_data.max_level = 15;
+adaptivity_data.max_ndof = 10000;
+adaptivity_data.num_max_iter = 16;
+adaptivity_data.max_nel = 10000;
 adaptivity_data.tol = 1e-5;
 
 % GRAPHICS

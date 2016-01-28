@@ -122,7 +122,7 @@ while (iter < adaptivity_data.num_max_iter)
 
 % ESTIMATE
   disp('ESTIMATE:')
-  est = estimate_laplace_param (u, hmsh, hspace, problem_data, adaptivity_data);
+  est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
   fprintf('Computed estimate: %f \n', gest(iter));
   if (isfield (problem_data, 'graduex'))

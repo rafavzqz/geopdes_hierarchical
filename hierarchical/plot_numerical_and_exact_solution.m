@@ -1,7 +1,9 @@
 function plot_numerical_and_exact_solution(u, hspace, geometry, npts, uex)
 %
 % function plot_numerical_and_exact_solution(u, hspace, geometry, npts, uex)
-%
+% 
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% 
 % Funcion personal
 % 
 %
