@@ -33,7 +33,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
   case 'functions'

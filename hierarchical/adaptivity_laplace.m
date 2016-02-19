@@ -103,7 +103,7 @@ while (iter < adaptivity_data.num_max_iter)
 
 % SOLVE AND PLOT
   disp('SOLVE:')
-  u = adaptivity_solve_laplace (hmsh, hspace, problem_data);
+  [u, bpx] = adaptivity_solve_laplace (hmsh, hspace, problem_data);
   fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
@@ -155,9 +155,14 @@ while (iter < adaptivity_data.num_max_iter)
 
 % REFINE
   disp('REFINE:')
-  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+  [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
   fprintf('\n');
+
+%
+bpx(iter).Pi = Cref;
+% Cambiare Qi, moltiplicando per Pi
 end
+
 
 solution_data.iter = iter;
 solution_data.gest = gest(1:iter);
