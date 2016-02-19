@@ -91,10 +91,6 @@ nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % ADAPTIVE LOOP
 iter = 0;
-bpx = struct ('Ai', [], 'rhs', [], 'int_dofs', [], 'ndof', [], 'new_dofs', [], 'Pi', [], 'Qi', []);
-
-bpx(1).Qi = speye (hspace.ndof);
-
 while (iter < adaptivity_data.num_max_iter)
   iter = iter + 1;
   
@@ -107,7 +103,7 @@ while (iter < adaptivity_data.num_max_iter)
 
 % SOLVE AND PLOT
   disp('SOLVE:')
-  [u, bpx] = adaptivity_solve_laplace (hmsh, hspace, problem_data, bpx);
+  u = adaptivity_solve_laplace_gerarchia (hmsh, hspace, problem_data);
   fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
@@ -159,16 +155,8 @@ while (iter < adaptivity_data.num_max_iter)
 
 % REFINE
   disp('REFINE:')
-  [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
   fprintf('\n');
-
-%
-bpx(iter).Pi = Cref;
-% Cambiare Qi, moltiplicando per Pi
-bpx(iter+1).Qi = speye (hspace.ndof);
-for lind = iter:-1:1
-  bpx(lind).Qi = bpx(lind+1).Qi * bpx(lind).Pi;
-end
 
 end
 
