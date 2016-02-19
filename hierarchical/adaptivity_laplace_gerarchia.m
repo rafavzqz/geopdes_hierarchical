@@ -74,7 +74,7 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function  [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data)
+function  [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_gerarchia (problem_data, method_data, adaptivity_data, plot_data)
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)

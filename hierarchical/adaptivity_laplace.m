@@ -159,12 +159,17 @@ while (iter < adaptivity_data.num_max_iter)
 
 % REFINE
   disp('REFINE:')
-  [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+  if (method_data.bpx_dofs)
+    [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+  else
+    [hmsh, hspace, Cref, new_dofs] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+    % NEW_DOFS VA POI INTERSECATO CON int_dofs dentro solve
+    bpx(iter+1).new_dofs = new_dofs;
+  end
   fprintf('\n');
-
+  
 %
 bpx(iter).Pi = Cref;
-% Cambiare Qi, moltiplicando per Pi
 bpx(iter+1).Qi = speye (hspace.ndof);
 for lind = iter:-1:1
   bpx(lind).Qi = bpx(lind+1).Qi * bpx(lind).Pi;

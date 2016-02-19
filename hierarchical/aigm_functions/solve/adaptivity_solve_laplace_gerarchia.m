@@ -41,13 +41,11 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, bpx] = adaptivity_solve_laplace (hmsh, hspace, problem_data, bpx)
+function [u, bpx] = adaptivity_solve_laplace_gerarchia (hmsh, hspace, problem_data, bpx)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 % mass = op_u_v_hier (hspace, hspace, hmsh, problem_data.c_diff);
-
-% end? end+1?
 
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
@@ -86,16 +84,39 @@ u(dirichlet_dofs) = u_dirichlet;
 int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
 rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs);
 
-bpx(end).Ai = stiff_mat;
-bpx(end).rhs = rhs;
-bpx(end).int_dofs = int_dofs;
-bpx(end).ndof = hspace.ndof;
-bpx(end).new_dofs = int_dofs;
+% Initialize
+  hmsh_bpx(1)     = hierarchical_mesh (hmsh.mesh_of_level(0), method_data.nsub_refine); % Bisogna passare method_data
+  hspace_bpx(1)   = hierarchical_space (hmsh_bps, hspace.space_of_level(0), method_data.space_type, method_data.truncated);
 
-this_level = numel(bpx);
-for lind = 1:this_level
-  bpx(lind).Qi = bpx(lind).Qi(:,bpx(lind).new_dofs);
+% CI MANCA L'INFORMAZIONE DI METHOD_DATA.BPX_DOFS  
+for ref = 1:hmsh.nlevels-1
+  marked = cell(ref,1);
+  marked{ref} = hmsh.deactivated{ref};
+  adap_data.flag = 'elements';
+  [hmsh_bpx(ref+1), hspace_bpx(ref+1), Cref, new_dofsXXX] = adaptivity_refine (hmsh, hspace, marked, adap_flag); % raffinando per elementi
+  
+  bpx(ref).Pi = Cref;
+%% Calcolare queste bene  
+%  bpx(ref+1).Ai = stiff_mat;
+%  bpx(ref+1).rhs = rhs;
+%  bpx(ref+1).int_dofs = int_dofs;
+  
+% Aggiungere calcolo della Qi
+  bpx(ref+1).ndof = hspace.ndof;
+  if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
+    bpx(ref+1).new_dofs = int_dofs;
+  else
+    bpx(ref+1).new_dofs = intersect (int_dofs, hspace.active{ref+1}XXXXXX); % Deve essere numerazione di hspace
+  end
+
+% Controllare che sia fatto nel modo giusto (togliere condizioni di bordo)  
+  for lind = 1:ref+1
+    bpx(lind).Qi = bpx(lind).Qi(:,bpx(lind).new_dofs);
+  end
+
 end
+
+
 
 % Solve the linear system
 % u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
@@ -107,7 +128,6 @@ end
   [u(int_dofs), flag, relres, iter, resvec, eigest_j] = ...
     pcg_w_eigest (A, b, tol, numel (int_dofs), @prec_bpx_new, [], bpx, this_level, 1);
 %     eigest_j = my_bpx (A, bpx, ilev, 1);
-  bpx(end).lambda_min_jac = eigest_j(1);
-  bpx(end).lambda_max_jac = eigest_j(2);
-  bpx(end).CondNum_PrecA_jac = eigest_j(2) / eigest_j(1);
-  bpx.CondNum_PrecA_jac
+  lambda_min_jac = eigest_j(1);
+  lambda_max_jac = eigest_j(2);
+  CondNum_PrecA_jac = eigest_j(2) / eigest_j(1);
