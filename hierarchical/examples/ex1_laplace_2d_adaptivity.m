@@ -34,6 +34,9 @@ method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rul
 method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 
+method_data.bpx_dofs = 'All_dofs'; % 'New_dofs'
+method_data.bpx_strategy = 'Adaptivity'; % 'Hierarchy'
+
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
 %adaptivity_data.flag = 'elements';
@@ -51,7 +54,11 @@ adaptivity_data.tol = 1e-10;
 plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+if (strcmpi (method_data.bpx_strategy, 'Adaptivity'))
+  [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+else
+  [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_gerarchia (problem_data, method_data, adaptivity_data, plot_data);
+end
 
 % EXPORT VTK FILE
 npts = [51 51];
