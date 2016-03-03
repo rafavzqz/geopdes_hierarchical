@@ -158,8 +158,8 @@ for lev = 1:hspace.nlevels-1
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
-    new_active = setdiff (unique (ii), active_and_deact);
-    active{lev+1} = union (active{lev+1}, new_active);
+    new_active = setdiff (unique (ii), active_and_deact(:));
+    active{lev+1} = union (active{lev+1}, new_active(:));
 
 % Mark functions whose support has been already refined completely
     [~, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_active);
@@ -218,7 +218,7 @@ if (nargout == 2 || ~hspace.truncated)
   end
   ndof_per_level = cellfun (@numel, active);
   ndof_prev_levs = sum (ndof_per_level(1:hspace.nlevels-1));
-  [~,~,indices] = intersect (active{hspace.nlevels}, active_and_deact);
+  [~,~,indices] = intersect (active{hspace.nlevels}, active_and_deact(:));
   Cref(ndof_prev_levs+(1:numel(active{hspace.nlevels})),:) = Cref(ndof_prev_levs+indices,:);
   Cref(ndof_prev_levs+numel(active{hspace.nlevels})+1:end,:)=[];
   
