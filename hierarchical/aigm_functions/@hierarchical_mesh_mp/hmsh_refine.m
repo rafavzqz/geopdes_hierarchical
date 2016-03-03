@@ -51,7 +51,7 @@ hmsh.msh_lev = update_msh_lev (hmsh, old_elements, new_elements);
 if (boundary)
   if (hmsh.ndim > 1)
     M_boundary = cell (size (M));
-    for lev = 1:numel (M)
+    for lev = 1:min(numel (M), hmsh.boundary.nlevels)
       Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
       Nelem_bnd = cumsum ([0 hmsh.boundary.mesh_of_level(lev).nel_per_patch]);
       for iptc = 1:hmsh.boundary.npatch

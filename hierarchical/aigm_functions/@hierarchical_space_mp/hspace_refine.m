@@ -76,6 +76,7 @@ if (boundary)% && hmsh.ndim > 1)
   if (hmsh.ndim > 1)
     new_cells_boundary = cell (size (new_cells));
     levels = find (~cellfun (@isempty, new_cells));
+    levels = intersect (levels, 1:hmsh.boundary.nlevels);
     for lev = levels(:).'
       Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
       Nelem_bnd = cumsum ([0 hmsh.boundary.mesh_of_level(lev).nel_per_patch]);
