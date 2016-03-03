@@ -76,18 +76,6 @@ if (boundary)% && hmsh.ndim > 1)
 
   Nf = cumsum ([0, hspace.ndof_per_level]);
   for iside = 1:2*hmsh.ndim
-    %%    ind =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-    %%    ind2 = [1 1 2 2 3 3] in 3D, ind2 = [1 1 2 2] in 2D
-    ind2 = ceil (iside/2);
-    if (mod(iside,2) == 1)
-      boundary_ind = ones (hspace.nlevels,1);
-    else
-      boundary_ind = zeros (hspace.nlevels,1);
-      for lev = 1:hspace.nlevels
-        boundary_ind(lev) = hspace.space_of_level(lev).ndof_dir(ind2);
-      end
-    end
-
     if (hmsh.ndim > 1)
       M_boundary = cell (size (M));
       for lev = 1:numel (M)
