@@ -54,6 +54,7 @@ for lev = 1:hspace.nlevels
     if (strcmpi (flag,'functions'))
       fun_indices{lev} = union (fun_indices{lev}, M{lev});
     end
+    fun_indices{lev} = fun_indices{lev}(:);
   end
 end
 
