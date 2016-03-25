@@ -186,79 +186,69 @@ if (nargout == 2 || ~hspace.truncated)
   %THB case
   if (hspace.truncated)
       
-  ndlev = hspace.ndof_per_level(1);
-  tp_ndlev=hspace.space_of_level(1).ndof;
-  active_and_deact = union (active{1}, deactivated{1});
-  [~,indices] = intersect (active_and_deact, hspace.active{1});
-  Id = sparse (tp_ndlev, ndlev);
-  Id(indices,:) = speye (ndlev, ndlev);
-  Cref = Id;
-
-  for lev = 1:hspace.nlevels-1
-    
-    Cmat = matrix_basis_change(hspace, hmsh, lev+1); 
-    n_act_deact=numel(active_and_deact);
-  
-    aux = Cref;
-
-    ndof_per_level = cellfun (@numel, active);
-    ndof_prev_levs = sum (ndof_per_level(1:lev-1));
-    Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+active{lev},:);
-
-    active_and_deact = union (active{lev+1}, deactivated{lev+1});
-    tp_ndlev=hspace.space_of_level(lev+1).ndof;
-  
-    ndof_until_lev = sum (ndof_per_level(1:lev));
-    Cref(ndof_until_lev+(1:tp_ndlev),:) = Cmat*aux(ndof_prev_levs+1:end,:);
-
-    ndlev = hspace.ndof_per_level(lev+1);
+    ndlev = hspace.ndof_per_level(1);
+    tp_ndlev = hspace.space_of_level(1).ndof;
     Id = sparse (tp_ndlev, ndlev);
-    Id(hspace.active{lev+1},:) = speye (ndlev, ndlev);
-    Cref = [Cref, [sparse(ndof_until_lev,ndlev); Id]];  
-   
-  end
-  ndof_per_level = cellfun (@numel, active);
-  ndof_prev_levs = sum (ndof_per_level(1:hspace.nlevels-1));
-  [~,~,indices] = intersect (active{hspace.nlevels}, active_and_deact(:));
-  Cref(ndof_prev_levs+(1:numel(active{hspace.nlevels})),:) = Cref(ndof_prev_levs+indices,:);
-  Cref(ndof_prev_levs+numel(active{hspace.nlevels})+1:end,:)=[];
-  
-  else  
-    
-  %HB-splines case  
-  ndlev = hspace.ndof_per_level(1);
-  active_and_deact = union (active{1}, deactivated{1});
-  [~,indices] = intersect (active_and_deact, hspace.active{1});
-  Id = sparse (numel(active_and_deact), ndlev);
-  Id(indices,:) = speye (ndlev, ndlev);
-  Cref = Id;
+    Id(hspace.active{1},:) = speye (ndlev, ndlev);
+    Cref = Id;
 
-  for lev = 1:hspace.nlevels-1
-    
-    Cmat = matrix_basis_change (hspace, hmsh, lev+1);
+    for lev = 1:hspace.nlevels-1
+      Cmat = matrix_basis_change (hspace, hmsh, lev+1);
 
-    [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
-  
-    aux = Cref;
+      ndof_per_level = cellfun (@numel, active);
+      ndof_prev_levs = sum (ndof_per_level(1:lev-1));
+      ndof_until_lev = sum (ndof_per_level(1:lev));
+      tp_ndlev = hspace.space_of_level(lev+1).ndof;
 
+      aux = sparse (ndof_until_lev + tp_ndlev, size(Cref,2));
+      aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
+      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+active{lev},:);
+      aux(ndof_until_lev+(1:tp_ndlev),:) = Cmat * Cref(ndof_prev_levs+1:end,:);
+
+      ndlev = hspace.ndof_per_level(lev+1);
+      Id = sparse (tp_ndlev, ndlev);
+      Id(hspace.active{lev+1},:) = speye (ndlev, ndlev);
+      Cref = [aux, [sparse(ndof_until_lev,ndlev); Id]];
+    end
     ndof_per_level = cellfun (@numel, active);
-    ndof_prev_levs = sum (ndof_per_level(1:lev-1));
-    [~,~,indices] = intersect (active{lev}, active_and_deact);
-    Cref(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:); 
-
-    active_and_deact = union (active{lev+1}, deactivated{lev+1});
+    ndof_prev_levs = sum (ndof_per_level(1:hspace.nlevels-1));
+    Cref(ndof_prev_levs+(1:numel(active{hspace.nlevels})),:) = Cref(ndof_prev_levs+active{hspace.nlevels},:);
+    Cref(ndof_prev_levs+numel(active{hspace.nlevels})+1:end,:) = [];
   
-    ndof_until_lev = sum (ndof_per_level(1:lev));
-    Cref(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
-      Cmat(active_and_deact,deactivated{lev}) * aux(ndof_prev_levs+deact_indices,:); 
+  else %HB-splines case
 
-    ndlev = hspace.ndof_per_level(lev+1);
-    [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
+    ndlev = hspace.ndof_per_level(1);
+    active_and_deact = union (active{1}, deactivated{1});
+    [~,indices] = intersect (active_and_deact, hspace.active{1});
     Id = sparse (numel(active_and_deact), ndlev);
     Id(indices,:) = speye (ndlev, ndlev);
-    Cref = [Cref, [sparse(ndof_until_lev,ndlev); Id]];  
-   
-  end  
+    Cref = Id;
+
+    for lev = 1:hspace.nlevels-1
+      Cmat = matrix_basis_change (hspace, hmsh, lev+1);
+      [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
+      
+      ndof_per_level = cellfun (@numel, active);
+      ndof_prev_levs = sum (ndof_per_level(1:lev-1));
+      ndof_until_lev = sum (ndof_per_level(1:lev));
+      [~,~,indices] = intersect (active{lev}, active_and_deact);
+      active_and_deact = union (active{lev+1}, deactivated{lev+1});
+
+      aux = sparse (ndof_until_lev + numel(active_and_deact), size(Cref,2));
+
+      aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
+      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:);
+      aux(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
+        Cmat(active_and_deact,deactivated{lev}) * Cref(ndof_prev_levs+deact_indices,:); 
+
+      ndlev = hspace.ndof_per_level(lev+1);
+      [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
+      Id = sparse (numel(active_and_deact), ndlev);
+      Id(indices,:) = speye (ndlev, ndlev);
+
+      Cref = [aux, [sparse(ndof_until_lev,ndlev); Id]];
+      clear aux;
+    end
   end
 end
 
