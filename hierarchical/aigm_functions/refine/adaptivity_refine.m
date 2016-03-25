@@ -1,7 +1,7 @@
 % ADAPTIVITY_REFINE: refine the hierarchical mesh and space, updating the corresponding structures hmsh and hspace.
 %  The refinement can be done marking either elements or basis functions.
 %
-%   [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
+%   [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 %
 % INPUT:
 %
@@ -17,6 +17,7 @@
 %
 %   hmsh:   object representing the refined hierarchical mesh (see hierarchical_mesh)
 %   hspace: object representing the refined space of hierarchical splines (see hierarchical_space)
+%   Cref:   refinement matrix, to pass from the original space to the refined one
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
@@ -33,14 +34,13 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
   case 'functions'
     marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
   case 'elements'
     marked_elements = marked;
-    indices = [];
 end
 
 [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
