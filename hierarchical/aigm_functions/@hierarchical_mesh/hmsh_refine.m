@@ -103,7 +103,7 @@ for lev = 1:nlevels
     hmsh.active{lev}(indE) = [];
     hmsh.deactivated{lev} = union (hmsh.deactivated{lev}, M{lev});
       
-    new_cells{lev+1} = split_cells_of_level (hmsh, lev, M{lev});
+    new_cells{lev+1} = hmsh_get_children (hmsh, lev, M{lev});
     hmsh.active{lev+1} = union (hmsh.active{lev+1}, new_cells{lev+1});
   end
 end
@@ -113,44 +113,6 @@ hmsh.nel_per_level = cellfun (@numel, hmsh.active);
 hmsh.nel = sum (hmsh.nel_per_level);
 
 end
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function children = split_cells_of_level (hmsh, lev, ind)
-%
-% function children = split_cells_of_level (hmsh, lev, ind)
-%
-% Split a set of cells of hmsh, of level lev, with the subdivision given by hmsh.nsub.
-%
-% Input:
-%     hmsh: the hierarchical mesh
-%     lev:  level of the cells to subdivide
-%     ind:  indices of the cells in the Cartesian grid
-%
-% Output:
-%     children: indices of the children, with the numbering of the Cartesian grid
-%
-
-z = cell (hmsh.ndim, 1);
-cells_sub = cell (hmsh.ndim, 1);
-[cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension
-
-children = [];
-for ii = 1:numel(cells_sub{1})
-  aux = cell (hmsh.ndim, 1);
-  for idim = 1:hmsh.ndim
-    aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
-  end
-  [z{1:hmsh.ndim}] = ndgrid (aux{:});
-  auxI = sub2ind ([hmsh.mesh_of_level(lev+1).nel_dir, 1], z{:});
-  children = union (children, auxI(:));
-end
-
-end
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
