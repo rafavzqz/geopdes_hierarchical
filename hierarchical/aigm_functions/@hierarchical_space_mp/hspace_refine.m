@@ -107,14 +107,14 @@ end
 % function hspace = update_active_functions(hspace, hmsh, new_cells, marked_fun)
 %
 % This function updates the active dofs (hspace.active), their coefficients (hspace.coeff_pou) and deactivated dofs (hspace.deactivated) in each level when
-% refining the functions in marked_fun. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
+% refining the functions in marked_fun. This function also updates hspace.ndof and hspace.ndof_per_level
 %
-% Input:    hspace:    the coarse mesh, an object of the class hierarchical_space_mp
+% Input:    hspace:    the coarse space, an object of the class hierarchical_space_mp
 %           hmsh:      an object of the class hierarchical_mesh_mp, already refined
 %           new_cells: cells added to the refined mesh, see hmsh_refine
 %           marked_fun{lev}: indices of active functions of level lev to be deactivated
 %
-% Output:   hspace:    the refined mesh, an object of the class hierarchical_space_mp
+% Output:   hspace:    the refined space, an object of the class hierarchical_space_mp
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
