@@ -4,12 +4,12 @@
 %
 % INPUT:
 %
-%   hmsh:    object representing the fine hierarchical mesh (see hierarchical_mesh)
+%   hmsh:    object representing the fine hierarchical mesh (see hierarchical_mesh_mp)
 %   marked:  cell array with the indices, in the Cartesian grid, of the elements to be reactivated for each level
 %
 % OUTPUT:
 %
-%   hmsh:             object representing the coarsened hierarchical mesh (see hierarchical_mesh)
+%   hmsh:             object representing the coarsened hierarchical mesh (see hierarchical_mesh_mp)
 %   removed_elements: cell array with the indices of the elements removed for each level
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
@@ -46,13 +46,19 @@ hmsh.msh_lev = update_msh_lev (hmsh, old_elements);
 % Update the boundary, calling the function recursively
 if (boundary)
   if (hmsh.ndim > 1)
-    for iside = 1:2*hmsh.ndim
-      M_boundary = cell (size (M));
-      for lev = 1:numel (M)
-        M_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, M{lev});
+    M_boundary = cell (size (M));
+    for lev = 1:min(numel (M), hmsh.boundary.nlevels)
+      Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+      Nelem_bnd = cumsum ([0 hmsh.boundary.mesh_of_level(lev).nel_per_patch]);
+      for iptc = 1:hmsh.boundary.npatch
+        patch_number = hmsh.boundary.mesh_of_level(1).patch_numbers(iptc);
+        side_number  = hmsh.boundary.mesh_of_level(1).side_numbers(iptc);
+        [~,indices,~] = intersect (Nelem(patch_number)+1:Nelem(patch_number+1), M{lev});
+        bnd_indices = get_boundary_indices (side_number, hmsh.mesh_of_level(lev).msh_patch{patch_number}.nel_dir, indices);
+        M_boundary{lev} = union (M_boundary{lev}, bnd_indices+Nelem_bnd(iptc));
       end
-      hmsh.boundary(iside) = hmsh_coarsen (hmsh.boundary(iside), M_boundary);
     end
+    hmsh.boundary = hmsh_coarsen (hmsh.boundary, M_boundary);
   end
 else
   hmsh.boundary = [];
@@ -75,11 +81,11 @@ function [hmsh, removed_cells] = update_active_cells (hmsh, M)
 % reactivating the cells in M. This function also updates hmsh.nlevels, hmsh.nel and hmsh.nel_per_level
 %
 % INPUT
-%     hmsh: object representing the fine hierarchical mesh (see hierarchical_mesh)
+%     hmsh: object representing the fine hierarchical mesh (see hierarchical_mesh_mp)
 %     M{lev}: global indices of marked cells of level lev (one row per cell)
 %
 % OUTPUT
-%     hmsh: object representing the coarsened hierarchical mesh (see hierarchical_mesh)
+%     hmsh: object representing the coarsened hierarchical mesh (see hierarchical_mesh_mp)
 %     removed_cells{lev}: global indices of the removed cells of level lev (one row per cell)
 %
 
@@ -114,7 +120,7 @@ function msh_lev = update_msh_lev (hmsh, old_elements)
 % Update the information in msh_lev, computing only the elements that have been added to the mesh
 %
 % INPUT
-%     hmsh: object representing the fine hierarchical mesh (see hierarchical_mesh)
+%     hmsh: object representing the fine hierarchical mesh (see hierarchical_mesh_mp)
 %     old_elements{lev}:     active elements in the previous mesh
 %
 % OUTPUT
@@ -128,15 +134,13 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev} = msh_evaluate_element_list (hmsh.mesh_of_level(lev), hmsh.active{lev});
   else
     new_elements = setdiff (hmsh.active{lev}, old_elements{lev});
-
+      
     [~, iold, iold_act] = intersect (old_elements{lev}, hmsh.active{lev});
+    msh_lev{lev}.npatch = hmsh.npatch;
     msh_lev{lev}.ndim = hmsh.ndim;
     msh_lev{lev}.rdim = hmsh.rdim;
     msh_lev{lev}.nel = hmsh.nel_per_level(lev);
     msh_lev{lev}.elem_list = hmsh.active{lev}(:).';
-    msh_lev{lev}.nel_dir = hmsh.mesh_of_level(lev).nel_dir;
-    msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).nqn_dir;
-    msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).nqn;
 
     if (isempty (new_elements))
       indices = iold_act;
@@ -152,6 +156,16 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
     msh_lev{lev}.jacdet(:,indices) = [hmsh.msh_lev{lev}.jacdet(:,iold), msh_new.jacdet];
     msh_lev{lev}.element_size(:,indices) = [hmsh.msh_lev{lev}.element_size(:,iold), msh_new.element_size];
+
+    Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+    for iptc = 1:msh_lev{lev}.npatch
+      [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), msh_lev{lev}.elem_list);
+      msh_lev{lev}.nel_per_patch(iptc) = numel (indices);
+      msh_lev{lev}.elem_list_of_patch{iptc} = indices;
+      msh_lev{lev}.nel_dir_of_patch{iptc} = hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir;
+    end
+    msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).msh_patch{1}.nqn;
+    msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).msh_patch{1}.nqn_dir;
   end
 end
 
