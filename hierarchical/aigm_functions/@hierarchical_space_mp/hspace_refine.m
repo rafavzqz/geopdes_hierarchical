@@ -41,17 +41,7 @@ M = compute_functions_to_deactivate (hmsh, hspace, M, flag);
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) < hmsh.nlevels)
-  msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  degree = hspace.space_of_level(hmsh.nlevels-1).sp_patch{1}.degree;
-  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, degree-1);
-  hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
-  hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
-
-  hspace.nlevels = hmsh.nlevels;
-  hspace.active{hmsh.nlevels} = [];
-  hspace.deactivated{hmsh.nlevels} = [];
-  hspace.ndof_per_level(hmsh.nlevels) = 0;
-  
+  hspace = hspace_add_new_level (hspace, hmsh);
   M{hmsh.nlevels} = [];
 end
 

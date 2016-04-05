@@ -1,4 +1,4 @@
-% HMSH_ADD_NEW_LEVEL: add an empty level to the hierarchical mesh
+% HMSH_ADD_NEW_LEVEL: add an empty level to the hierarchical mesh.
 %
 %   hmsh = hmsh_add_new_level (hmsh)
 %
