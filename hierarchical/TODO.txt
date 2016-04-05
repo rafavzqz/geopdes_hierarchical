@@ -2,6 +2,7 @@
 
 - Clean estimate and mark
 - Change name of adaptivity_solve_laplace. Make it a script, instead of a function.
-- Implement the truncated basis. (Cesare)
 - Try to optimize the refinement, if possible 
 - Try to avoid recomputing the 1D spaces for the boundary
+
+- In the matrix hspace.C, save only the functions working on active elements
