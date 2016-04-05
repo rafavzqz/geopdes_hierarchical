@@ -79,21 +79,17 @@ if (boundary)% && hmsh.ndim > 1)
       hspace.boundary(iside) = hspace_refine (hspace.boundary(iside), hmsh.boundary(iside), ...
           M_boundary, 'functions', new_cells_boundary);
 
-      dofs = [];
-      for lev = 1:hspace.boundary(iside).nlevels
-        [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
-        dofs = union (dofs, Nf(lev) + iact);
-      end
-      hspace.boundary(iside).dofs = dofs;
-
+      nlevels_aux = hspace.boundary(iside).nlevels;
     elseif (hmsh.ndim == 1)
-      dofs = [];
-      for lev = 1:hspace.nlevels
-        [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
-        dofs = union (dofs, Nf(lev) + iact);
-      end
-      hspace.boundary(iside).dofs = dofs;
+      nlevels_aux = hspace.nlevels;
     end
+    
+    dofs = [];
+    for lev = 1:nlevels_aux
+      [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
+      dofs = union (dofs, Nf(lev) + iact);
+    end
+    hspace.boundary(iside).dofs = dofs;
   end
   
 else
