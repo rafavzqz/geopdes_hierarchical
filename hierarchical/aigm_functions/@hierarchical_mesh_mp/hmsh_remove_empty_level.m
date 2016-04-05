@@ -1,6 +1,6 @@
-% HMSH_ADD_NEW_LEVEL: add an empty level to the hierarchical mesh
+% HMSH_REMOVE_EMPTY_LEVEL: remove the last level of the hierarchical mesh, only if it is empty.
 %
-%   hmsh = hmsh_add_new_level (hmsh)
+%   hmsh = hmsh_remove_empty_level (hmsh)
 %
 % INPUT:
 %
@@ -8,7 +8,7 @@
 %
 % OUTPUT:
 %
-%   hmsh:   the object of the hierarchical mesh with one more level, which is empty
+%   hmsh:   the object of the hierarchical mesh with one level less.
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
@@ -25,13 +25,16 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hmsh = hmsh_add_new_level (hmsh)
+function hmsh = hmsh_remove_empty_level (hmsh)
 
-  hmsh.nlevels = hmsh.nlevels + 1;
-  hmsh.active{hmsh.nlevels} = [];
-  hmsh.deactivated{hmsh.nlevels} = [];
-  hmsh.nel_per_level(hmsh.nlevels) = 0;
-  hmsh.mesh_of_level(hmsh.nlevels) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels-1), hmsh.nsub);
-  hmsh.msh_lev{hmsh.nlevels} = [];
+% Remove last level if empty (this is not necessary)
+if (isempty (hmsh.active{hmsh.nlevels}))
+  hmsh.nlevels = hmsh.nlevels - 1;
+  hmsh.active = hmsh.active(1:hmsh.nlevels);
+  hmsh.deactivated = hmsh.deactivated(1:hmsh.nlevels);
+  hmsh.nel_per_level = hmsh.nel_per_level(1:hmsh.nlevels);
+  hmsh.mesh_of_level = hmsh.mesh_of_level(1:hmsh.nlevels);
+  hmsh.msh_lev = hmsh.msh_lev(1:hmsh.nlevels);
+end
 
 end
