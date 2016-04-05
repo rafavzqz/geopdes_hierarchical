@@ -34,7 +34,6 @@ boundary = ~isempty (hmsh.boundary);
 % Computation of a Cartesian grid if a new level is activated
 if (~isempty(M{hmsh.nlevels}))
   hmsh = hmsh_add_new_level (hmsh);
-%   hmsh.mesh_of_level(hmsh.nlevels+1) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels), hmsh.nsub);
 end
 
 % Update the set of active elements
