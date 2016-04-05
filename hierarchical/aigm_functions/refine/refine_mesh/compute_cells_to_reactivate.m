@@ -47,7 +47,7 @@ for lev = 1:hspace.nlevels-1
       if (all (ismember (children, hmsh.active{lev+1}))) % if (isempty (intersect (children, hmsh.deactivated{lev+1}))) 
         funs = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), elems(iel));
         if (~any (ismember (funs, stay_deactivated))) % if (isempty (intersect (funs, stay_deactivated))) 
-          ME{lev} = union (ME{lev}, elems(iel));
+          ME{lev} = vertcat (ME{lev}, elems(iel));
         end
       end
     end
