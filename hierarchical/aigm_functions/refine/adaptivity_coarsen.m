@@ -44,5 +44,5 @@ end
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
 
-marked_fun = functions_to_remove_from_cells (hmsh, hspace, removed_cells);
-hspace = hspace_coarsen (hspace, hmsh, marked_fun);
+removed_fun = functions_to_remove_from_cells (hmsh, hspace, removed_cells);
+hspace = hspace_coarsen (hspace, hmsh, removed_fun);

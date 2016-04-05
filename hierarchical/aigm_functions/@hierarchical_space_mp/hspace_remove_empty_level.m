@@ -35,7 +35,7 @@ if (hspace.nlevels == hmsh.nlevels+1 && isempty (hspace.active{end}))
   hspace.active(hspace.nlevels) = [];
   hspace.deactivated(hspace.nlevels) = [];
   hspace.ndof_per_level(hspace.nlevels) = [];
-  hspace.C(hspace.nlevels) = [];
+%   hspace.C(hspace.nlevels) = [];
   hspace.nlevels = hmsh.nlevels;
 else
   warning ('The number of levels of the space in input should be one more than the number of levels of the mesh')
