@@ -145,6 +145,7 @@ for lev = 1:hspace.nlevels-1
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
 
+%    ii = hspace_get_children (hspace, lev, marked_fun{lev});
     Cmat = matrix_basis_change (hspace, hmsh, lev+1);  
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
