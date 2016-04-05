@@ -41,17 +41,7 @@ M = compute_functions_to_deactivate (hmsh, hspace, M, flag);
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) < hmsh.nlevels)
-  msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  degree = hspace.space_of_level(hmsh.nlevels-1).sp_patch{1}.degree;
-  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, degree-1);
-  hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
-  hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
-
-  hspace.nlevels = hmsh.nlevels;
-  hspace.active{hmsh.nlevels} = [];
-  hspace.deactivated{hmsh.nlevels} = [];
-  hspace.ndof_per_level(hmsh.nlevels) = 0;
-  
+  hspace = hspace_add_new_level (hspace, hmsh);
   M{hmsh.nlevels} = [];
 end
 
@@ -117,14 +107,14 @@ end
 % function hspace = update_active_functions(hspace, hmsh, new_cells, marked_fun)
 %
 % This function updates the active dofs (hspace.active), their coefficients (hspace.coeff_pou) and deactivated dofs (hspace.deactivated) in each level when
-% refining the functions in marked_fun. This function also updates hspace.nlevels, hspace.ndof and hspace.ndof_per_level
+% refining the functions in marked_fun. This function also updates hspace.ndof and hspace.ndof_per_level
 %
-% Input:    hspace:    the coarse mesh, an object of the class hierarchical_space_mp
+% Input:    hspace:    the coarse space, an object of the class hierarchical_space_mp
 %           hmsh:      an object of the class hierarchical_mesh_mp, already refined
 %           new_cells: cells added to the refined mesh, see hmsh_refine
 %           marked_fun{lev}: indices of active functions of level lev to be deactivated
 %
-% Output:   hspace:    the refined mesh, an object of the class hierarchical_space_mp
+% Output:   hspace:    the refined space, an object of the class hierarchical_space_mp
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
@@ -155,6 +145,7 @@ for lev = 1:hspace.nlevels-1
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
 
+%    ii = hspace_get_children (hspace, lev, marked_fun{lev});
     Cmat = matrix_basis_change (hspace, hmsh, lev+1);  
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
