@@ -33,7 +33,8 @@ boundary = ~isempty (hmsh.boundary);
 
 % Computation of a Cartesian grid if a new level is activated
 if (~isempty(M{hmsh.nlevels}))
-  hmsh.mesh_of_level(hmsh.nlevels+1) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels), hmsh.nsub);
+  hmsh = hmsh_add_new_level (hmsh);
+%   hmsh.mesh_of_level(hmsh.nlevels+1) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels), hmsh.nsub);
 end
 
 % Update the set of active elements
@@ -82,16 +83,10 @@ function [hmsh, new_cells] = update_active_cells (hmsh, M)
 %     new_cells{lev}: global indices of the new cells of level lev (one row per cell)
 %
 
-nlevels = hmsh.nlevels;
+% nlevels = hmsh.nlevels;
+nlevels = numel (M);
 
-if (~isempty(M{nlevels})) % if a new level is going to be activated
-  hmsh.nlevels = hmsh.nlevels + 1;
-  hmsh.active{nlevels+1} = [];
-  hmsh.deactivated{nlevels+1} = [];
-  new_cells = cell (nlevels+1, 1);
-else
-  new_cells = cell (nlevels, 1);
-end
+new_cells = cell (hmsh.nlevels, 1);
 
 % Deactivate the cells to be refined, and compute their children
 for lev = 1:nlevels
