@@ -34,18 +34,8 @@ boundary = ~isempty (hspace.boundary);
 % Update active functions
 hspace = update_active_functions (hspace, hmsh, M);
 
-% Update C, the matrices for changing basis
-C = cell (hmsh.nlevels, 1);
-C{1} = speye (hspace.space_of_level(1).ndof);
-C{1} = C{1}(:,hspace.active{1});
-
-for lev = 2:hmsh.nlevels
-  I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change__ (hspace, lev);
-  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
-end
-hspace.C = C;
-clear C
+% Update the matrices for changing basis
+hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
 
 % Fill the information for the boundaries
 if (boundary)% && hmsh.ndim > 1)

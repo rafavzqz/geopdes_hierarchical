@@ -1,12 +1,12 @@
 % HSPACE_SUBDIVISION_MATRIX: compute the matrices for changing basis, from
 %                 active functions to B-spline of the tensor product spaces.
 %
-%   Csub = hspace_subdivision_matrix (hspace, [hmsh], [option])
+%   Csub = hspace_subdivision_matrix (hspace, hmsh, [option])
 %
 % INPUT:
 %
-%   hspace:    object representing the hierarchical space (see hierarchical_space)
-%   hmsh:      object representing the hierarchical mesh, only needed for the 'reduced' version (see hierarchical_mesh)
+%   hspace:    object representing the hierarchical space (see hierarchical_space_mp)
+%   hmsh:      object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   option:    either 'reduced' (default) or 'full'. The first only uses functions
 %               acting on active elements (used for assembly); the second uses the 
 %               whole basis of each level (used for plotting), 
