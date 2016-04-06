@@ -155,16 +155,16 @@ while (iter < adaptivity_data.num_max_iter)
     disp('Success: The error estimation reached the desired tolerance'); 
     solution_data.flag = 1; break
   elseif (iter == adaptivity_data.num_max_iter)
-    disp('Warning: Maximum amount of iterations reached')
+    disp('Warning: reached the maximum number of iterations')
     solution_data.flag = 2; break
   elseif (hmsh.nlevels >= adaptivity_data.max_level)
-    disp('Warning: Maximum amount of levels reached')
+    disp('Warning: reached the maximum number of levels')
     solution_data.flag = 3; break
   elseif (hspace.ndof > adaptivity_data.max_ndof)
-    disp('Warning: Maximum allowed DOFs achieved')
+    disp('Warning: reached the maximum number of DOFs')
     solution_data.flag = 4; break
   elseif (hmsh.nel > adaptivity_data.max_nel)
-    disp('Warning: Maximum allowed amount of elements achieved')
+    disp('Warning: reached the maximum number of elements')
     solution_data.flag = 5; break
   end
   
