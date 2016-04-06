@@ -31,7 +31,7 @@ method_data.truncated   = 0;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-%adaptivity_data.flag = 'elements';
+% adaptivity_data.flag = 'elements';
 adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
@@ -116,3 +116,27 @@ figure; plot (F, eu)
 %! assert (solution_data.nel, [2 4 8 12 16 28 52 60 108 120 208]);
 %! assert (solution_data.err_h1s, [6.46392167473527e-02   5.35889596011715e-01   1.09845482621112e-01   6.42010867661501e-02   2.60112950295797e-02   8.31121898502044e-03   2.55125993516858e-03   1.66523666575394e-03 5.41035873522990e-04   4.12338369102373e-04   1.47630836012780e-04], 1e-15)
 %! assert (solution_data.flag, 2)
+%!
+%! adaptivity_data.max_level = 4;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.flag, 3)
+%! assert (solution_data.iter, 4)
+%!
+%! adaptivity_data.max_level = 12;
+%! adaptivity_data.max_ndof = 50;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.flag, 4)
+%! assert (solution_data.iter, 7)
+%!
+%! adaptivity_data.max_ndof = 5000;
+%! adaptivity_data.max_nel = 50;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.flag, 5)
+%! assert (solution_data.iter, 7)
+%!
+%! adaptivity_data.flag = 'functions';
+%! adaptivity_data.max_nel = 5000;
+%! adaptivity_data.tol = 1e-2;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.flag, 1)
+%! assert (solution_data.iter, 7)
