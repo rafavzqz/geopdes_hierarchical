@@ -43,7 +43,7 @@ adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 4;
+adaptivity_data.num_max_iter = 5;
 adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 1e-10;
 
@@ -64,3 +64,43 @@ figure; subplot (1,2,1)
 surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 subplot(1,2,2)
 surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));
+
+
+%!test
+%! problem_data.geo_name = 'geo_square.txt';
+%! problem_data.nmnn_sides   = [];
+%! problem_data.drchlt_sides = [1 2 3 4];
+%! problem_data.c_diff  = @(x, y) ones(size(x));
+%! problem_data.grad_c_diff = @(x, y) zeros ([2, size(x)]);
+%! problem_data.f = @(x, y) zeros (size (x));
+%! problem_data.g = @test_square_g_nmnn;
+%! problem_data.h = @(x, y, ind) exp (x) .* sin(y);
+%! problem_data.uex     = @(x, y) exp (x) .* sin (y);
+%! problem_data.graduex = @(x, y) cat (1, ...
+%!                        reshape (exp(x).*sin(y), [1, size(x)]), ...
+%!                        reshape (exp(x).*cos(y), [1, size(x)]));
+%! method_data.degree      = [3 3];        % Degree of the splines
+%! method_data.regularity  = [2 2];        % Regularity of the splines
+%! method_data.nsub_coarse = [3 3];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+%! method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
+%! method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rule
+%! method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
+%! method_data.truncated   = 0;            % 0: False, 1: True
+%! adaptivity_data.flag = 'functions';
+%! adaptivity_data.C0_est = 1.0;
+%! adaptivity_data.mark_param = .5;
+%! adaptivity_data.mark_strategy = 'MS';
+%! adaptivity_data.max_level = 10;
+%! adaptivity_data.max_ndof = 15000;
+%! adaptivity_data.num_max_iter = 5;
+%! adaptivity_data.max_nel = 15000;
+%! adaptivity_data.tol = 1e-10;
+%! plot_data.plot_hmesh = false;
+%! plot_data.plot_discrete_sol = false;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.iter, 5)
+%! assert (solution_data.ndof, [36 81 210 372 615]);
+%! assert (solution_data.nel, [9 36 138 291 510]);
+%! assert (solution_data.err_h1s, [2.448941825078764e-04, 3.245165315459014e-05, 4.555200816633961e-06, ...
+%!           2.449082638340557e-06, 6.648399812699606e-07], 1e-15)
+%! assert (solution_data.flag, 2)

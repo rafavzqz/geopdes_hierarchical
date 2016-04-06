@@ -58,6 +58,7 @@ figure; plot (F, eu)
 %! problem_data.nmnn_sides   = [];
 %! problem_data.drchlt_sides = [1 2];
 %! problem_data.c_diff  = @(x) ones(size(x));
+%! problem_data.grad_c_diff = @(x) reshape (zeros(size(x)), [1, size(x)]);
 %! problem_data.f = @(x) (2*pi)^2*sin(2*pi*x);
 %! problem_data.h = @(x, ind) zeros (size (x));
 %! problem_data.uex     = @(x) sin(2*pi*x);
@@ -70,6 +71,7 @@ figure; plot (F, eu)
 %! method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 %! method_data.truncated   = 0;            % 0: False, 1: True
 %! adaptivity_data.flag = 'functions';
+%! adaptivity_data.C0_est = 1.0;
 %! adaptivity_data.mark_param = .5;
 %! adaptivity_data.mark_strategy = 'MS';
 %! adaptivity_data.max_level = 12;
