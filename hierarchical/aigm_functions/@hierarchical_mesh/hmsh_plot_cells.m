@@ -62,8 +62,9 @@ for ilev = 1:hmsh.nlevels
     end
     
     if (hmsh.ndim == 1)
-      plot3 (x{1}, x{2}, x{3}, 'k', 'Marker', 'x');
+      plot3 (x{1}([1 end],:), x{2}([1 end],:), x{3}([1 end],:), 'k', 'Marker', 'x');
       hold on
+      plot3 (x{1}, x{2}, x{3}, 'k-');
     elseif (hmsh.ndim == 2)
       for iel = 1:msh_level.nel
         plot3 (x{1}(1,:,iel), x{2}(1,:,iel), x{3}(1,:,iel), 'k');
