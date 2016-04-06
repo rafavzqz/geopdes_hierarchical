@@ -35,7 +35,7 @@
 function [eu, F] = sp_eval (u, hspace, geometry, npts, varargin)
 
   sp_lev = hspace.space_of_level(hspace.nlevels);
-  u_lev = hspace.C{hspace.nlevels} * u;
+  u_lev = hspace.Csub{hspace.nlevels} * u;
   [eu, F] = sp_eval (u_lev, sp_lev, geometry, npts, varargin{:});
 
 end

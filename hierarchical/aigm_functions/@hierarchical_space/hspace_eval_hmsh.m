@@ -70,10 +70,9 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
   for ilev = 1:hmsh.nlevels % Active levels
     if (hmsh.nel_per_level(ilev) > 0)
       msh_level = hmsh.msh_lev{ilev};
-%      sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_level, 'value', value, 'gradient', gradient);
       sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_level, 'value', value, 'gradient', gradient, 'laplacian', laplacian);
         
-      [eu_lev, F_lev] = eval_fun (hspace.C{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
+      [eu_lev, F_lev] = eval_fun (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
       for iopt = 1:nopts
         eu{iopt} = cat (catdir(iopt), eu{iopt}, eu_lev{iopt});
       end

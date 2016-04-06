@@ -49,7 +49,7 @@ for ilev = 1:hmsh.nlevels
     sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
 
     [errh1_lev, errl2_lev, errh1s_lev, errh1_lev_elem, errl2_lev_elem, errh1s_lev_elem] = ...
-      sp_h1_error (sp_level, msh_level, hspace.C{ilev}*u(1:last_dof(ilev)), uex, graduex);
+      sp_h1_error (sp_level, msh_level, hspace.Csub{ilev}*u(1:last_dof(ilev)), uex, graduex);
 
     errh1 = errh1 + errh1_lev.^2;
     errl2 = errl2 + errl2_lev.^2;

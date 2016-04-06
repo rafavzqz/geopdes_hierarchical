@@ -124,8 +124,8 @@ switch adaptivity_data.flag
                 sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
                 b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
                 dofs = 1:ndofs; 
-                est(dofs) = est(dofs) + hspace.C{ilev}'*b_lev;
+                est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
             end
         end
-        est = adaptivity_data.C0_est*coef.*sqrt(est);
+        est = adaptivity_data.C0_est * coef .* sqrt(est);
 end

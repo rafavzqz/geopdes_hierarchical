@@ -49,17 +49,17 @@ end
 [hspace,Cref] = update_active_functions (hspace, hmsh, new_cells, M);
 
 % Update C, the matrices for changing basis
-C = cell (hmsh.nlevels, 1);
-C{1} = speye (hspace.space_of_level(1).ndof);
-C{1} = C{1}(:,hspace.active{1});
+Csub = cell (hmsh.nlevels, 1);
+Csub{1} = speye (hspace.space_of_level(1).ndof);
+Csub{1} = Csub{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
   aux = matrix_basis_change (hspace, hmsh, lev);
-  C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
+  Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
 end
-hspace.C = C;
-clear C
+hspace.Csub = Csub;
+clear Csub
 
 % Fill the information for the boundaries
 if (boundary)% && hmsh.ndim > 1)

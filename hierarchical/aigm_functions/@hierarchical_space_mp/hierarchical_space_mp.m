@@ -27,7 +27,7 @@
 %    active        (1 x nlevels cell-array) List of active functions on each level
 %    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
 %    deactivated   (1 x nlevels cell-array) List of deactivated functions on each level
-%    C             (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
+%    Csub          (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
 %                                            as linear combinations of splines (active and inactive) of the current level
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
@@ -88,7 +88,7 @@ hspace.deactivated{1} = [];
 
 hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = cell (0, hmsh.npatch);
-hspace.C{1} = speye (space.ndof);
+hspace.Csub{1} = speye (space.ndof);
 
 hspace.dofs = [];
 

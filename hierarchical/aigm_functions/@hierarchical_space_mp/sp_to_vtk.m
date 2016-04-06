@@ -40,7 +40,7 @@
 function sp_to_vtk (u, hspace, geometry, npts, filename, fieldname, varargin)
 
   sp_lev = hspace.space_of_level(hspace.nlevels);
-  u_lev = hspace.C{hspace.nlevels} * u;
+  u_lev = hspace.Csub{hspace.nlevels} * u;
   sp_to_vtk (u_lev, sp_lev, geometry, npts, filename, fieldname, varargin{:});
 
 end

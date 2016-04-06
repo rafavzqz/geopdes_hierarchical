@@ -48,7 +48,7 @@ function rhs = op_f_v_hier (hspace, hmsh, f)
       b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, f(x{:}));
 
       dofs = 1:ndofs;
-      rhs(dofs) = rhs(dofs) + hspace.C{ilev}'*b_lev;
+      rhs(dofs) = rhs(dofs) + hspace.Csub{ilev}.' * b_lev;
     end
   end
 

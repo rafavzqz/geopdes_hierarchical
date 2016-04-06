@@ -57,7 +57,7 @@ function varargout = op_u_v_hier (hspu, hspv, hmsh, coeff)
 
       dofs_u = 1:ndofs_u;
       dofs_v = 1:ndofs_v;
-      M(dofs_v,dofs_u) = M(dofs_v,dofs_u) + hspv.C{ilev}'*M_lev*hspu.C{ilev};
+      M(dofs_v,dofs_u) = M(dofs_v,dofs_u) + hspv.Csub{ilev}.' * M_lev * hspu.Csub{ilev};
     end
   end
   

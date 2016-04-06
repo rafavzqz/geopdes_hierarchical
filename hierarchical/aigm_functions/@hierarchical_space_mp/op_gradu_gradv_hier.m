@@ -67,7 +67,7 @@ function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff, patch_list)
         dofs_u = 1:ndofs_u;
         dofs_v = 1:ndofs_v;
 
-        K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.C{ilev}'*K_lev*hspu.C{ilev};
+        K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.Csub{ilev}.' * K_lev * hspu.Csub{ilev};
       end
     end
   end
