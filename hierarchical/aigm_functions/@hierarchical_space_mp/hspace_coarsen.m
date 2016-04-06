@@ -41,7 +41,7 @@ C{1} = C{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change (hspace, hmsh, lev);
+  aux = matrix_basis_change__ (hspace, hmsh, lev);
   C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.C = C;
@@ -110,7 +110,7 @@ deactivated = hspace.deactivated;
 for lev = hspace.nlevels:-1:2
   active{lev} = setdiff (active{lev}, marked_fun{lev});
 %   parents = hspace_get_parents (hspace, lev, marked_fun{lev});
-  Cmat = matrix_basis_change (hspace, hmsh, lev);
+  Cmat = matrix_basis_change__ (hspace, hmsh, lev);
   [~,parents] = find (Cmat(marked_fun{lev},:));
   parents = intersect (parents, deactivated{lev-1});
   active{lev-1} = union (active{lev-1}, parents);
@@ -126,47 +126,6 @@ if (hspace.truncated)
   hspace.coeff_pou = ones (hspace.ndof, 1);
 % else
 %   hspace.coeff_pou = Cref * hspace.coeff_pou;
-end
-
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function C = matrix_basis_change (hspace, hmsh, lev)
-%
-% Compute the new matrices to represent functions of the previous level 
-% as linear combinations of splines (active and inactive) of the current level 
-%
-% Input:  hspace: an object of the class hierarchical_space_mp
-%         hmsh:   an object of the class hierarchical_mesh_mp
-%         lev:    the level for which we compute the matrix
-%
-% Output:   C:    matrix to change basis from level lev-1 to level lev
-
-function C = matrix_basis_change (hspace, hmsh, lev)
-
-C = sparse (hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
-for ipatch = 1:hmsh.npatch
-  Cpatch = 1;
-  Proj = hspace.Proj{lev-1, ipatch};
-  for idim = 1:hmsh.ndim
-    Cpatch = kron (Proj{idim}, Cpatch);
-  end
-  
-  if (strcmpi (hspace.space_of_level(1).sp_patch{ipatch}.space_type, 'NURBS'))
-    sp_patch = hspace.space_of_level(lev-1).sp_patch{ipatch};
-    Wlev = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
-    sp_patch = hspace.space_of_level(lev).sp_patch{ipatch};
-    Wlev_fine = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
-    Cpatch = Wlev_fine * Cpatch * Wlev;
-  end
-  C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
-end
-
-
-if (hspace.truncated)
-  indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  C(indices,:) = 0;
 end
 
 end

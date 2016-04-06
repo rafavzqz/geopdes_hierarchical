@@ -55,7 +55,7 @@ Csub{1} = Csub{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change (hspace, hmsh, lev);
+  aux = matrix_basis_change__ (hspace, hmsh, lev);
   Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.Csub = Csub;
@@ -146,7 +146,7 @@ for lev = 1:hspace.nlevels-1
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
 
 %    ii = hspace_get_children (hspace, lev, marked_fun{lev});
-    Cmat = matrix_basis_change (hspace, hmsh, lev+1);  
+    Cmat = matrix_basis_change__ (hspace, hmsh, lev+1);  
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
@@ -184,7 +184,7 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change (hspace, hmsh, lev+1);
+      Cmat = matrix_basis_change__ (hspace, hmsh, lev+1);
 
       ndof_per_level = cellfun (@numel, active);
       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
@@ -216,7 +216,7 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change (hspace, hmsh, lev+1);
+      Cmat = matrix_basis_change__ (hspace, hmsh, lev+1);
       [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
       
       ndof_per_level = cellfun (@numel, active);
@@ -253,47 +253,6 @@ if (hspace.truncated)
   hspace.coeff_pou = ones (hspace.ndof, 1);
 else
   hspace.coeff_pou = Cref * hspace.coeff_pou;
-end
-
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function C = matrix_basis_change (hspace, hmsh, lev)
-%
-% Compute the new matrices to represent functions of the previous level 
-% as linear combinations of splines (active and inactive) of the current level 
-%
-% Input:  hspace: an object of the class hierarchical_space_mp
-%         hmsh:   an object of the class hierarchical_mesh_mp
-%         lev:    the level for which we compute the matrix
-%
-% Output:   C:    matrix to change basis from level lev-1 to level lev
-
-function C = matrix_basis_change (hspace, hmsh, lev)
-
-C = sparse (hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
-for ipatch = 1:hmsh.npatch
-  Cpatch = 1;
-  Proj = hspace.Proj{lev-1, ipatch};
-  for idim = 1:hmsh.ndim
-    Cpatch = kron (Proj{idim}, Cpatch);
-  end
-  
-  if (strcmpi (hspace.space_of_level(1).sp_patch{ipatch}.space_type, 'NURBS'))
-    sp_patch = hspace.space_of_level(lev-1).sp_patch{ipatch};
-    Wlev = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
-    sp_patch = hspace.space_of_level(lev).sp_patch{ipatch};
-    Wlev_fine = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
-    Cpatch = Wlev_fine * Cpatch * Wlev;
-  end
-  C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
-end
-
-
-if (hspace.truncated)
-  indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  C(indices,:) = 0;
 end
 
 end

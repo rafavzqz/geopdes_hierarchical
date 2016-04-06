@@ -41,7 +41,7 @@ C{1} = C{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change (hspace, hmsh, lev);
+  aux = matrix_basis_change__ (hspace, lev);
   C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.C = C;
@@ -116,7 +116,7 @@ deactivated = hspace.deactivated;
 for lev = hspace.nlevels:-1:2
   active{lev} = setdiff (active{lev}, marked_fun{lev});
 %   parents = hspace_get_parents (hspace, lev, marked_fun{lev});
-  Cmat = matrix_basis_change (hspace, hmsh, lev);
+  Cmat = matrix_basis_change__ (hspace, lev);
   [~,parents] = find (Cmat(marked_fun{lev},:));
   parents = intersect (parents, deactivated{lev-1});
   active{lev-1} = union (active{lev-1}, parents);
@@ -132,39 +132,6 @@ if (hspace.truncated)
   hspace.coeff_pou = ones (hspace.ndof, 1);
 % else
 %   hspace.coeff_pou = Cref * hspace.coeff_pou;
-end
-
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function C = matrix_basis_change (hspace, hmsh, lev)
-%
-% Compute the new matrices to represent functions of the previous level 
-% as linear combinations of splines (active and inactive) of the current level 
-%
-% Input:  hspace: an object of the class hierarchical_space
-%         hmsh:   an object of the class hierarchical_mesh
-%         lev:    the level for which we compute the matrix
-%
-% Output:   C:    matrix to change basis from level lev-1 to level lev
-
-function C = matrix_basis_change (hspace, hmsh, lev)
-
-C = 1;
-for idim = 1:hmsh.ndim
-  C = kron (hspace.Proj{lev-1,idim}, C);
-end
-
-if (strcmpi (hspace.space_of_level(1).space_type, 'NURBS'))
-  Wlev = spdiags (hspace.space_of_level(lev-1).weights(:), 0, hspace.space_of_level(lev-1).ndof, hspace.space_of_level(lev-1).ndof);
-  Wlev_fine = spdiags (1./hspace.space_of_level(lev).weights(:), 0, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev).ndof);
-  C = Wlev_fine * C * Wlev;
-end
-
-if (hspace.truncated)
-  indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  C(indices,:) = 0;
 end
 
 end
