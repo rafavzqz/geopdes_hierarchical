@@ -35,8 +35,10 @@
 %    - C0_est:        a multiplicative constant for the error indicators 
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
-%    - plot_hmesh
-%    - plot_discrete_sol
+%    - plot_hmesh:        plot the mesh at every iteration
+%    - plot_discrete_sol: plot the discrete solution at every iteration
+%    - print_info:    display info on the screen on every iteration (number of elements, 
+%          number of functions, estimated error, number of marked elements/functions...)
 %
 % OUTPUT:
 %    geometry: geometry structure (see geo_load)
@@ -59,7 +61,7 @@
 % 
 %    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: anything else?
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -76,6 +78,19 @@
 
 
 function  [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data)
+
+if (nargin == 3)
+  plot_data = struct ('print_info', true, 'plot_hmesh', false, 'plot_discrete_sol', false);
+end
+if (~isfield (plot_data, 'print_info'))
+  plot_data.print_info = true;
+end
+if (~isfield (plot_data, 'plot_hmesh'))
+  plot_data.plot_hmesh = false;
+end
+if (~isfield (plot_data, 'plot_discrete_sol'))
+  plot_data.plot_discrete_sol = false;
+end
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)
@@ -95,7 +110,9 @@ iter = 0;
 while (iter < adaptivity_data.num_max_iter)
   iter = iter + 1;
   
-  fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
+  if (plot_data.print_info)
+    fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
+  end
     
   if (~hspace_check_partition_of_unity (hspace, hmsh))
     disp('ERROR: The partition-of-the-unity property does not hold.')
@@ -103,9 +120,11 @@ while (iter < adaptivity_data.num_max_iter)
   end
 
 % SOLVE AND PLOT
-  disp('SOLVE:')
+  if (plot_data.print_info)
+    disp('SOLVE:')
+    fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
+  end
   u = adaptivity_solve_laplace (hmsh, hspace, problem_data);
-  fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
@@ -122,13 +141,13 @@ while (iter < adaptivity_data.num_max_iter)
   end
 
 % ESTIMATE
-  disp('ESTIMATE:')
+  if (plot_data.print_info); disp('ESTIMATE:'); end
   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
-  fprintf('Computed estimate: %f \n', gest(iter));
+  if (plot_data.print_info); fprintf('Computed estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))
     [~, ~, err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
-    fprintf('Error in H1 seminorm = %g\n', err_h1s(iter));
+    if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
   end
 
 % STOPPING CRITERIA
@@ -150,14 +169,15 @@ while (iter < adaptivity_data.num_max_iter)
   end
   
 % MARK
-  disp('MARK:')
+  if (plot_data.print_info); disp('MARK:'); end
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
-  fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
+  if (plot_data.print_info); 
+    fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
+    disp('REFINE:')
+  end
 
 % REFINE
-  disp('REFINE:')
   [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-  fprintf('\n');
 end
 
 solution_data.iter = iter;
