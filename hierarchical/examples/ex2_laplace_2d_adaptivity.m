@@ -40,8 +40,8 @@ method_data.truncated   = 0;           % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-adaptivity_data.flag = 'elements';
-%adaptivity_data.flag = 'functions';
+% adaptivity_data.flag = 'elements';
+adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
