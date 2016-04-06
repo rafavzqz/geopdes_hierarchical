@@ -37,33 +37,35 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, varargin)
     error ('hspace_eval_hmsh: Not implemented for vector valued spaces')
   end
 
+  output_cell = true;  
   if (nargin == 3)
-    option = 'value';
-  else
-    option = varargin{1};
+    options = {'value'};
+    output_cell = false;  
+  elseif (~iscell (options))
+    options = {options};
+    output_cell = false;
   end
+  nopts = numel (options);
 
   value = false; gradient = false; laplacian = false;
-  switch (lower (option))
-    case {'value'}
-      eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, 'value');
-      catdir = 2;
-      value = true;
-    case {'gradient'}
-      eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, 'gradient');
-      catdir = 3;
-      gradient = true;
-    case {'laplacian'}
-      eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, 'laplacian');
-      catdir = 2;
-      laplacian = true;
-%     case {'divergence'}
-%     case {'curl'}
-    otherwise
-      error ('hspace_eval_hmsh: unknown option to evaluate')
+  for iopt = 1:nopts
+    switch (lower (options{iopt}))
+      case 'value'
+        value = true;
+        catdir(iopt) = 2;
+      case 'gradient'
+        gradient = true;
+        catdir(iopt) = 3;
+      case 'laplacian'
+        laplacian = true;
+        catdir(iopt) = 2;
+      otherwise
+        error ('hspace_eval_msh: unknown option: %s', options{iopt})
+    end
   end
+  eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, options);
 
-  F = []; eu = [];
+  F = []; eu = cell (nopts, 1);
 
   last_dof = cumsum (hspace.ndof_per_level);
   for ilev = 1:hmsh.nlevels % Active levels
@@ -73,9 +75,15 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, varargin)
       sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_level, 'value', value, 'gradient', gradient, 'laplacian', laplacian);
         
       [eu_lev, F_lev] = eval_fun (hspace.C{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
-      eu = cat (catdir, eu, eu_lev);
+      for iopt = 1:nopts
+        eu{iopt} = cat (catdir(iopt), eu{iopt}, eu_lev{iopt});
+      end
       F = cat (3, F, F_lev);
     end
+  end
+  
+  if (~output_cell)
+    eu = eu{1};
   end
   
 end

@@ -32,6 +32,7 @@
 %    - num_max_iter:  stopping criterium, maximum number of iterations allowed
 %    - tol:           stopping criterium, adaptive refinement is stopped when the norm of the estimator
 %                      is lower than tol.
+%    - C0_est:        a multiplicative constant for the error indicators 
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh

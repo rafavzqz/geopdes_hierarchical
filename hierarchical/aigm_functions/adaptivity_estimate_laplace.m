@@ -17,11 +17,11 @@
 %   hspace: object representing the space of hierarchical splines (see hierarchical_space)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - c_diff:       diffusion coefficient (epsilon in the equation)
-%    - grad_c_diff:  gradient of the diffusion coefficient 
+%    - grad_c_diff:  gradient of the diffusion coefficient (equal to zero if not present)
 %    - f:            source term
 %   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
 %    - flag:         'elements' or 'functions', depending on the refinement strategy.
-%    - C0_est      : multiplicative constant for the error indicators 
+%    - C0_est:       multiplicative constant for the error indicators 
 %                    
 %
 % OUTPUT:
@@ -35,7 +35,7 @@
 %           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity in the hierarchical basis, and U is the Galerkin solution
 %
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -58,21 +58,24 @@
 
 function est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
 
-[der2num, F] = hspace_eval_hmsh (u, hspace, hmsh, 'laplacian'); 
-[dernum, ~] = hspace_eval_hmsh (u, hspace, hmsh, 'gradient'); 
-
+[ders, F] = hspace_eval_hmsh (u, hspace, hmsh, {'gradient', 'laplacian'});
+dernum = ders{1};
+der2num = ders{2};
 
 x = cell (hmsh.rdim, 1);
 for idim = 1:hmsh.rdim;
   x{idim} = reshape (F(idim,:), [], hmsh.nel);
 end
 
-val_c_diff = problem_data.c_diff(x{:});
-val_grad_c_diff  = feval (problem_data.grad_c_diff, x{:});
-
+aux = 0;
 valf = problem_data.f (x{:});
+val_c_diff = problem_data.c_diff(x{:});
+if (isfield (problem_data, 'grad_c_diff'))
+  val_grad_c_diff  = feval (problem_data.grad_c_diff, x{:});
+  aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
+end
+aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
-aux = (valf + val_c_diff.*der2num + squeeze(dot(val_grad_c_diff,dernum,1))).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
 quad_weights = [];
 jacdet = [];
