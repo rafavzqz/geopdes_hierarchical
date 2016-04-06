@@ -36,7 +36,7 @@ method_data.truncated   = 0;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-%adaptivity_data.flag = 'elements';
+% adaptivity_data.flag = 'elements';
 adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
@@ -50,6 +50,7 @@ adaptivity_data.tol = 1e-10;
 % GRAPHICS
 plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
+plot_data.print_info = true;
 
 [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 
@@ -95,6 +96,7 @@ surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), 
 %! adaptivity_data.num_max_iter = 5;
 %! adaptivity_data.max_nel = 15000;
 %! adaptivity_data.tol = 1e-10;
+%! plot_data.print_info = false;
 %! plot_data.plot_hmesh = false;
 %! plot_data.plot_discrete_sol = false;
 %! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
@@ -103,4 +105,21 @@ surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), 
 %! assert (solution_data.nel, [9 36 138 291 510]);
 %! assert (solution_data.err_h1s, [2.448941825078764e-04, 3.245165315459014e-05, 4.555200816633961e-06, ...
 %!           2.449082638340557e-06, 6.648399812699606e-07], 1e-15)
+%! assert (solution_data.flag, 2)
+%!
+%! adaptivity_data.flag = 'elements';
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.iter, 5)
+%! assert (solution_data.ndof, [36 45 60 72 84]);
+%! assert (solution_data.nel, [9 18 27 33 42]);
+%! assert (solution_data.err_h1s, [2.448941825078764e-04, 1.959352092852789e-04, 8.135128968531835e-05, 4.519709525363875e-05, 3.231472797704601e-05], 1e-15)
+%! assert (solution_data.flag, 2)
+%!
+%! method_data.space_type  = 'standard';
+%! method_data.truncated = true;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.iter, 5)
+%! assert (solution_data.ndof, [36 45 60 72 84]);
+%! assert (solution_data.nel, [9 18 27 33 42]);
+%! assert (solution_data.err_h1s, [2.448941825078764e-04, 1.959352092852789e-04, 8.135128968531835e-05, 4.519709525363875e-05, 3.231472797704601e-05], 1e-15)
 %! assert (solution_data.flag, 2)

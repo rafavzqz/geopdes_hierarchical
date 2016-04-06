@@ -79,6 +79,7 @@ figure; plot (F, eu)
 %! adaptivity_data.num_max_iter = 11;
 %! adaptivity_data.max_nel = 5000;
 %! adaptivity_data.tol = 1e-9;
+%! plot_data.print_info = false;
 %! plot_data.plot_hmesh = false;
 %! plot_data.plot_discrete_sol = false;
 %! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
