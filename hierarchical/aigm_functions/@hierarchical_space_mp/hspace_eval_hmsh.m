@@ -31,7 +31,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, varargin)
+function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
 
   if (hspace.ncomp ~= 1)
     error ('hspace_eval_hmsh: Not implemented for vector valued spaces')
