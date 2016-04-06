@@ -13,7 +13,7 @@
 %
 % OUTPUT:
 %
-%   Csub:      the matrices to change
+%   Csub:      the matrices for basis change
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %

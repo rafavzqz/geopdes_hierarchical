@@ -41,7 +41,7 @@ C{1} = C{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change__ (hspace, hmsh, lev);
+  aux = matrix_basis_change__ (hspace, lev);
   C{lev} = [aux*C{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.C = C;
@@ -110,7 +110,7 @@ deactivated = hspace.deactivated;
 for lev = hspace.nlevels:-1:2
   active{lev} = setdiff (active{lev}, marked_fun{lev});
 %   parents = hspace_get_parents (hspace, lev, marked_fun{lev});
-  Cmat = matrix_basis_change__ (hspace, hmsh, lev);
+  Cmat = matrix_basis_change__ (hspace, lev);
   [~,parents] = find (Cmat(marked_fun{lev},:));
   parents = intersect (parents, deactivated{lev-1});
   active{lev-1} = union (active{lev-1}, parents);

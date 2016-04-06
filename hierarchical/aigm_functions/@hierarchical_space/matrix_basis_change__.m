@@ -1,7 +1,7 @@
 % MATRIX_BASIS_CHANGE__: compute the subdivision matrix between two consecutive levels.
 %        This method is intended to remain private.
 %
-% function C = matrix_basis_change__ (hspace, hmsh, lev)
+% function C = matrix_basis_change__ (hspace, lev)
 %
 % Compute the new matrices to represent functions of level "lev"
 % as linear combinations of splines (active and inactive) of the current level 
@@ -9,7 +9,6 @@
 % INPUT:  
 %
 %   hspace: an object of the class hierarchical_space
-%   hmsh:   an object of the class hierarchical_mesh
 %   lev:    the level for which we compute the matrix
 %
 % OUTPUT:

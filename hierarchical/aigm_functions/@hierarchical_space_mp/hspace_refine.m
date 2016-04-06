@@ -55,7 +55,7 @@ Csub{1} = Csub{1}(:,hspace.active{1});
 
 for lev = 2:hmsh.nlevels
   I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change__ (hspace, hmsh, lev);
+  aux = matrix_basis_change__ (hspace, lev);
   Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
 end
 hspace.Csub = Csub;
@@ -146,7 +146,7 @@ for lev = 1:hspace.nlevels-1
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
 
 %    ii = hspace_get_children (hspace, lev, marked_fun{lev});
-    Cmat = matrix_basis_change__ (hspace, hmsh, lev+1);  
+    Cmat = matrix_basis_change__ (hspace, lev+1);  
     [ii,~] = find (Cmat(:,marked_fun{lev}));
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
@@ -184,7 +184,7 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change__ (hspace, hmsh, lev+1);
+      Cmat = matrix_basis_change__ (hspace, lev+1);
 
       ndof_per_level = cellfun (@numel, active);
       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
@@ -216,7 +216,7 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change__ (hspace, hmsh, lev+1);
+      Cmat = matrix_basis_change__ (hspace, lev+1);
       [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
       
       ndof_per_level = cellfun (@numel, active);
