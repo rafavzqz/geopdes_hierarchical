@@ -39,12 +39,12 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function [marked, nmarked] = adaptivity_mark(est, hmsh, hspace, adaptivity_data)
+function [marked, nmarked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data)
 
 switch adaptivity_data.flag
-    case 'elements', disp ('marking elements for refinement')
-    case 'functions', disp ('marking basis functions for refinement')
-    otherwise, disp ('MARK: Error'), return,
+    case 'elements' %, disp ('marking elements for refinement')
+    case 'functions' %, disp ('marking basis functions for refinement')
+    otherwise, error ('adaptivity_mark: Unknown option %s', adaptivity_data.flag)
 end
 
 max_est = max (est);
