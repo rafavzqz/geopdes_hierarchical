@@ -29,12 +29,14 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 function C = matrix_basis_change__ (hspace, lev)
 
 npatch = numel (hspace.space_of_level(1).sp_patch);
 ndim = size (hspace.Proj{1}, 2);
 
-C = sparse (hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
+% C = sparse (hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
+rows = []; cols = []; vals = [];
 for ipatch = 1:npatch
   Cpatch = 1;
   Proj = hspace.Proj{lev-1, ipatch};
@@ -49,9 +51,16 @@ for ipatch = 1:npatch
     Wlev_fine = spdiags (sp_patch.weights(:), 0, sp_patch.ndof, sp_patch.ndof);
     Cpatch = Wlev_fine * Cpatch * Wlev;
   end
-  C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
+%   C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
+  
+  [ii,jj,vv] = find (Cpatch);
+  rows = [rows; hspace.space_of_level(lev).gnum{ipatch}(ii)];
+  cols = [cols; hspace.space_of_level(lev-1).gnum{ipatch}(jj)];
+  vals = [vals; vv];
 end
-
+% The sparse construction would add the coefficients for the interface functions
+% C = sparse (rows, cols, vals, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
+C = accumarray ([rows,cols], vals.', [], @min, 0, true);
 
 if (hspace.truncated)
   indices = union (hspace.active{lev}, hspace.deactivated{lev});

@@ -135,12 +135,10 @@ for lev = 1:hspace.nlevels-1
 
   if (strcmpi (hspace.type, 'simplified') && ~isempty (marked_fun{lev}))
 
-%    ii = hspace_get_children (hspace, lev, marked_fun{lev});
-    Cmat = matrix_basis_change__ (hspace, lev+1);  
-    [ii,~] = find (Cmat(:,marked_fun{lev}));
+    children = hspace_get_children (hspace, lev, marked_fun{lev});
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
-    new_active = setdiff (unique (ii), active_and_deact(:));
+    new_active = setdiff (children, active_and_deact(:));
     active{lev+1} = union (active{lev+1}, new_active(:));
 
 % Mark functions whose support has been already refined completely
