@@ -32,7 +32,7 @@ function hspace = hspace_coarsen (hspace, hmsh, M)
 boundary = ~isempty (hspace.boundary);
 
 % Update active functions
-hspace = update_active_functions (hspace, hmsh, M);
+hspace = update_active_functions (hspace, M);
 
 % Update the matrices for changing basis
 hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
@@ -98,19 +98,19 @@ end
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = update_active_functions (hspace, hmsh, marked_fun)
+function hspace = update_active_functions (hspace, marked_fun)
 
 active = hspace.active;
 deactivated = hspace.deactivated;
 
 for lev = hspace.nlevels:-1:2
-  active{lev} = setdiff (active{lev}, marked_fun{lev});
-%   parents = hspace_get_parents (hspace, lev, marked_fun{lev});
-  Cmat = matrix_basis_change__ (hspace, lev);
-  [~,parents] = find (Cmat(marked_fun{lev},:));
-  parents = intersect (parents, deactivated{lev-1});
-  active{lev-1} = union (active{lev-1}, parents);
-  deactivated{lev-1} = setdiff (deactivated{lev-1}, parents);
+  if (~isempty (marked_fun{lev}))
+    active{lev} = setdiff (active{lev}, marked_fun{lev});
+    parents = hspace_get_parents (hspace, lev, marked_fun{lev});
+    parents = intersect (parents, deactivated{lev-1});
+    active{lev-1} = union (active{lev-1}, parents);
+    deactivated{lev-1} = setdiff (deactivated{lev-1}, parents);
+  end
 end
 
 hspace.active = active(1:hspace.nlevels);
