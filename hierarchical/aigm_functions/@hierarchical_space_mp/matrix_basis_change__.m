@@ -32,7 +32,7 @@
 
 function C = matrix_basis_change__ (hspace, lev)
 
-npatch = numel (hspace.space_of_level(1).sp_patch);
+npatch = hspace.space_of_level(1).npatch;
 ndim = size (hspace.Proj{1}, 2);
 
 % C = sparse (hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
