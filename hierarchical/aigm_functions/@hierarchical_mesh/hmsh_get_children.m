@@ -34,6 +34,14 @@
 
 function [children, flag] = hmsh_get_children (hmsh, lev, ind)
 
+if (lev < 1 || lev > hmsh.nlevels-1)
+  error ('The level should be between 1 and the number of levels of the mesh minus one')
+end
+
+if (any (ind > hmsh.mesh_of_level(lev).nel))
+  error ('There are some indices greater than the number of elements of the level')
+end
+
 z = cell (hmsh.ndim, 1);
 cells_sub = cell (hmsh.ndim, 1);
 [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension

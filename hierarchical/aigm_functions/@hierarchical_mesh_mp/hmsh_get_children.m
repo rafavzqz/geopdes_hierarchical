@@ -7,13 +7,13 @@
 %
 % INPUT:
 %
-%     hmsh: the hierarchical mesh (see hierarchical_mesh)
+%     hmsh: the hierarchical mesh (see hierarchical_mesh_mp)
 %     lev:  level of the cells to subdivide
 %     ind:  indices of the cells in the global multipatch grid of that level
 %
 % OUTPUT:
 %
-%     children: indices of the children, with the numbering of the Cartesian grid
+%     children: indices of the children, with the numbering of the multipatch grid
 %     flag:     a flag to tell whether all the input cells are active (1) 
 %               active or deactivated (2), or if there is any passive cell (0)
 %
@@ -33,6 +33,14 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function [children, flag] = hmsh_get_children (hmsh, lev, ind)
+
+if (lev < 1 || lev > hmsh.nlevels-1)
+  error ('The level should be between 1 and the number of levels of the mesh minus one')
+end
+
+if (any (ind > hmsh.mesh_of_level(lev).nel))
+  error ('There are some indices greater than the number of elements of the level')
+end
 
 children = [];
 

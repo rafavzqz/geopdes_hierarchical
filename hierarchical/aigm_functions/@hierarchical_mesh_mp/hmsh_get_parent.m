@@ -8,13 +8,13 @@
 %
 % INPUT:
 %
-%     hmsh: the hierarchical mesh (see hierarchical_mesh)
+%     hmsh: the hierarchical mesh (see hierarchical_mesh_mp)
 %     lev:  level of the subdivided cells to compute their parents
-%     ind:  indices of the cells in the Cartesian grid
+%     ind:  indices of the cells in the global multipatch grid of that level
 %
 % OUTPUT:
 %
-%     parent: index of the parent, with the numbering of the Cartesian grid
+%     parent: index of the parent, with the numbering of the multipatch grid
 %     flag:   a flag to tell whether all the input cells are active (1) 
 %               active or deactivated (2), or if there is any passive cell (0)
 %
@@ -42,20 +42,25 @@ if (any (ind > hmsh.mesh_of_level(lev).nel))
   error ('There are some indices greater than the number of elements of the level')
 end
 
-
-z = cell (hmsh.ndim, 1);
-cells_sub = cell (hmsh.ndim, 1);
-[cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension
-
 parent = [];
-for ii = 1:numel(cells_sub{1})
-  aux = cell (hmsh.ndim, 1);
-  for idim = 1:hmsh.ndim
-    aux{idim} = floor ((cells_sub{idim}(ii) + hmsh.nsub(idim) - 1) / hmsh.nsub(idim));
+
+Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
+Nelem_coarse = cumsum ([0 hmsh.mesh_of_level(lev-1).nel_per_patch]);
+for iptc = 1:hmsh.npatch
+  [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), ind);
+  z = cell (hmsh.ndim, 1);
+  cells_sub = cell (hmsh.ndim, 1);
+  [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir, 1], indices); % The extra 1 makes it work in any dimension
+
+  for ii = 1:numel(cells_sub{1})
+    aux = cell (hmsh.ndim, 1);
+    for idim = 1:hmsh.ndim
+      aux{idim} = floor ((cells_sub{idim}(ii) + hmsh.nsub(idim) - 1) / hmsh.nsub(idim));
+    end
+    [z{1:hmsh.ndim}] = ndgrid (aux{:});
+    auxI = sub2ind ([hmsh.mesh_of_level(lev-1).msh_patch{iptc}.nel_dir, 1], z{:});
+    parent = union (parent, auxI(:)+Nelem_coarse(iptc));
   end
-  [z{1:hmsh.ndim}] = ndgrid (aux{:});
-  auxI = sub2ind ([hmsh.mesh_of_level(lev-1).nel_dir, 1], z{:});
-  parent = union (parent, auxI(:));
 end
 
 if (nargout == 2)
