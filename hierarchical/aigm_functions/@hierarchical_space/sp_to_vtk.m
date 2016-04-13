@@ -40,7 +40,7 @@
 function sp_to_vtk (u, hspace, geometry, npts, filename, fieldname, varargin)
 
   sp_lev = hspace.space_of_level(hspace.nlevels);
-  C = hspace_subdivision_matrix (hspace, [], 'full');
+  C = hspace_subdivision_matrix (hspace);
   u_lev =  C{hspace.nlevels} * u;
   sp_to_vtk (u_lev, sp_lev, geometry, npts, filename, fieldname, varargin{:});
 
