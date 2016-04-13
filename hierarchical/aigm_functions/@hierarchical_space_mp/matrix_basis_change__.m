@@ -3,8 +3,8 @@
 %
 % function C = matrix_basis_change__ (hspace, lev)
 %
-% Compute the new matrices to represent functions of level "lev"
-% as linear combinations of splines (active and inactive) of the current level 
+% Compute the new matrices to represent functions of level "lev-1"
+% as linear combinations of splines (active and inactive) of level "lev"
 %
 % INPUT:  
 %
