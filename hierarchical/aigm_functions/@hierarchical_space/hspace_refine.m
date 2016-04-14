@@ -161,22 +161,34 @@ if (nargout == 2 || ~hspace.truncated)
 
     ndlev = hspace.ndof_per_level(1);
     tp_ndlev = hspace.space_of_level(1).ndof;
+    fun_on_act_deact_prev = 1:hspace.space_of_level(1).ndof;
     Id = sparse (tp_ndlev, ndlev);
     Id(hspace.active{1},:) = speye (ndlev, ndlev);
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change__ (hspace, lev+1);
+      Cmat = matrix_basis_change__ (hspace, lev+1, fun_on_act_deact_prev);
+
+      [~,deact_indices] = intersect (fun_on_act_deact_prev, deactivated{lev});
+      [~,act_indices] = intersect (fun_on_act_deact_prev, active{lev});
+
+      elems = union (hmsh.active{lev+1}, hmsh.deactivated{lev+1});
+      fun_on_act_deact = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), elems);
 
       ndof_per_level = cellfun (@numel, active);
       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
       ndof_until_lev = sum (ndof_per_level(1:lev));
       tp_ndlev = hspace.space_of_level(lev+1).ndof;
 
-      aux = sparse (ndof_until_lev + tp_ndlev, size(Cref,2));
+      aux = sparse (ndof_until_lev + numel(fun_on_act_deact), size(Cref,2));
       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
-      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+active{lev},:);
-      aux(ndof_until_lev+(1:tp_ndlev),:) = Cmat * Cref(ndof_prev_levs+1:end,:);
+      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
+      aux(ndof_until_lev+(1:numel(fun_on_act_deact)),:) = ...
+        Cmat(fun_on_act_deact,fun_on_act_deact_prev) * Cref(ndof_prev_levs+1:end,:);
+%       aux = sparse (ndof_until_lev + tp_ndlev, size(Cref,2));
+%       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
+%       aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+active{lev},:);
+%       aux(ndof_until_lev+(1:tp_ndlev),:) = Cmat * Cref(ndof_prev_levs+1:end,:);
 
       ndlev = hspace.ndof_per_level(lev+1);
       Id = sparse (tp_ndlev, ndlev);
@@ -200,17 +212,18 @@ if (nargout == 2 || ~hspace.truncated)
     for lev = 1:hspace.nlevels-1
 %       Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev});
       Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev});
+
       [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
-      
+      [~,act_indices] = intersect (active_and_deact, active{lev});
+      active_and_deact = union (active{lev+1}, deactivated{lev+1});
+
       ndof_per_level = cellfun (@numel, active);
       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
       ndof_until_lev = sum (ndof_per_level(1:lev));
-      [~,~,indices] = intersect (active{lev}, active_and_deact);
-      active_and_deact = union (active{lev+1}, deactivated{lev+1});
 
       aux = sparse (ndof_until_lev + numel(active_and_deact), size(Cref,2));
       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
-      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+indices,:);
+      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
       aux(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
         Cmat(active_and_deact,deactivated{lev}) * Cref(ndof_prev_levs+deact_indices,:); 
 
