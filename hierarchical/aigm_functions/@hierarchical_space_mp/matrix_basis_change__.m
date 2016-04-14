@@ -54,11 +54,6 @@ if (nargin < 3)
     C(hspace.space_of_level(lev).gnum{ipatch}, hspace.space_of_level(lev-1).gnum{ipatch}) = Cpatch;
   end
 
-  if (hspace.truncated)
-    indices = union (hspace.active{lev}, hspace.deactivated{lev});
-    C(indices,:) = 0;
-  end
-
 elseif (nargin == 3)
   nrows = hspace.space_of_level(lev).ndof; ncols = hspace.space_of_level(lev-1).ndof;
   size_alloc = numel (ind_coarse) * prod (hspace.space_of_level(lev).sp_patch{1}.degree + 1);
@@ -103,6 +98,11 @@ elseif (nargin == 3)
   if (size (C,1) < nrows || size(C,2) < ncols)
     C(nrows, ncols) = 0;
   end
+end
+
+if (hspace.truncated)
+  indices = union (hspace.active{lev}, hspace.deactivated{lev});
+  C(indices,:) = 0;
 end
 
 end

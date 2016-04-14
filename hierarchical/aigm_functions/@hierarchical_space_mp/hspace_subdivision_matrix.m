@@ -72,29 +72,4 @@ elseif (strcmpi (option, 'full'))
   end
 end
 
-
-% for lev = 2:hspace.nlevels
-%   I = speye (hspace.space_of_level(lev).ndof);
-%   aux = matrix_basis_change__ (hspace, lev);
-%   Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
-%   clear aux I
-%   if (strcmpi (option, 'reduced'))
-%     functions = sp_get_basis_functions (hspace.space_of_level(lev-1), hmsh.mesh_of_level(lev-1), hmsh.active{lev-1});
-%     functions = setdiff (1:hspace.space_of_level(lev-1).ndof, functions);
-%     Csub{lev-1}(functions,:) = 0;
-%     [i,j,v] = find (Csub{lev-1});
-%     [m, n] = size (Csub{lev-1});
-%     Csub{lev-1} = sparse (i, j, v, m, n);
-%   end
-% end
-% 
-% if (strcmpi (option, 'reduced'))
-%   functions = sp_get_basis_functions (hspace.space_of_level(hmsh.nlevels), hmsh.mesh_of_level(hmsh.nlevels), hmsh.active{hmsh.nlevels});
-%   functions = setdiff (1:hspace.space_of_level(hmsh.nlevels).ndof, functions);
-%   Csub{hmsh.nlevels}(functions,:) = 0;
-%   [i,j,v] = find (Csub{hmsh.nlevels});
-%   [m, n] = size (Csub{hmsh.nlevels});
-%   Csub{hmsh.nlevels} = sparse (i, j, v, m, n);
-% end
-
 end
