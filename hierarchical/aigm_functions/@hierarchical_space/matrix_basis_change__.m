@@ -44,7 +44,7 @@ elseif (nargin == 3)
   sub_coarse = cell (ndim, 1);
   [sub_coarse{:}] = ind2sub ([hspace.space_of_level(lev-1).ndof_dir, 1], ind_coarse);
   
-  rows = zeros (prod (hspace.space_of_level(lev).degree+2), 1); cols = rows; vals = rows;
+  rows = zeros (prod (hspace.space_of_level(lev).degree+1)*numel(ind_coarse), 1); cols = rows; vals = rows;
   ncounter = 0;
   for ii = 1:numel(ind_coarse)
     Caux = 1;
@@ -53,7 +53,7 @@ elseif (nargin == 3)
     end
     [ir, ic, iv] = find (Caux);
     rows(ncounter+(1:numel(ir))) = ir;
-    cols(ncounter+(1:numel(ir))) = ic*ind_coarse(ii);
+    cols(ncounter+(1:numel(ir))) = ind_coarse(ii);
     vals(ncounter+(1:numel(ir))) = iv;
     ncounter = ncounter + numel (ir);
   end
