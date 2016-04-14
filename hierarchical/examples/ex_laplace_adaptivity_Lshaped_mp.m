@@ -108,3 +108,10 @@ sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'lap
 %! assert (solution_data.ndof, [40 65 133 179])
 %! assert (solution_data.nel, [3 12 48 96])
 %! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.943112046124483e-02 2.493693365346569e-02], 1e-15)
+%!
+%! method_data.truncated  = 1;
+%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
+%! assert (solution_data.iter, 4)
+%! assert (solution_data.ndof, [40 65 133 179])
+%! assert (solution_data.nel, [3 12 48 96])
+%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.943112046124483e-02 2.493693365346569e-02], 1e-15)
