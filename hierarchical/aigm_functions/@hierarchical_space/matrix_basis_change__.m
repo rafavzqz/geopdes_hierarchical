@@ -3,8 +3,8 @@
 %
 % function C = matrix_basis_change__ (hspace, lev)
 %
-% Compute the new matrices to represent functions of level "lev"
-% as linear combinations of splines (active and inactive) of the current level 
+% Compute the new matrices to represent functions of level "lev-1"
+% as linear combinations of splines (active and inactive) of level "lev"
 %
 % INPUT:  
 %
@@ -30,13 +30,35 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function C = matrix_basis_change__ (hspace, lev)
+function C = matrix_basis_change__ (hspace, lev, ind_coarse)
 
 ndim = size (hspace.Proj, 2);
 
-C = 1;
-for idim = 1:ndim
-  C = kron (hspace.Proj{lev-1,idim}, C);
+if (nargin < 3)
+  C = 1;
+  for idim = 1:ndim
+    C = kron (hspace.Proj{lev-1,idim}, C);
+  end
+
+elseif (nargin == 3)
+  sub_coarse = cell (ndim, 1);
+  [sub_coarse{:}] = ind2sub ([hspace.space_of_level(lev-1).ndof_dir, 1], ind_coarse);
+  
+  rows = zeros (prod (hspace.space_of_level(lev).degree+1)*numel(ind_coarse), 1); cols = rows; vals = rows;
+  ncounter = 0;
+  for ii = 1:numel(ind_coarse)
+    Caux = 1;
+    for idim = 1:ndim
+      Caux = kron (hspace.Proj{lev-1,idim}(:,sub_coarse{idim}(ii)), Caux);
+    end
+    [ir, ic, iv] = find (Caux);
+    rows(ncounter+(1:numel(ir))) = ir;
+    cols(ncounter+(1:numel(ir))) = ind_coarse(ii);
+    vals(ncounter+(1:numel(ir))) = iv;
+    ncounter = ncounter + numel (ir);
+  end
+  rows = rows(1:ncounter); cols = cols(1:ncounter); vals = vals(1:ncounter);
+  C = sparse (rows, cols, vals, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
 end
 
 if (strcmpi (hspace.space_of_level(1).space_type, 'NURBS'))

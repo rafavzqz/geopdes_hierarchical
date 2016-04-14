@@ -1,19 +1,20 @@
 % HSPACE_SUBDIVISION_MATRIX: compute the matrices for changing basis, from
-%                 active functions to B-spline of the tensor product spaces.
+%                 active functions to B-splines of the tensor product spaces.
 %
-%   Csub = hspace_subdivision_matrix (hspace, hmsh, [option])
+%   Csub = hspace_subdivision_matrix (hspace, [hmsh])
+%
+% If the hierarchical mesh is present, only the rows relative to functions
+%  on active and deactivated elements are computed. The matrix size is not affected.
 %
 % INPUT:
 %
 %   hspace:    object representing the hierarchical space (see hierarchical_space_mp)
-%   hmsh:      object representing the hierarchical mesh (see hierarchical_mesh_mp)
-%   option:    either 'reduced' (default) or 'full'. The first only uses functions
-%               acting on active elements (used for assembly); the second uses the 
-%               whole basis of each level (used for plotting), 
+%   hmsh:      object representing the hierarchical mesh, only needed for the 'reduced' version (see hierarchical_mesh_mp)
 %
 % OUTPUT:
 %
-%   Csub:      the matrices for basis change
+%   Csub:      cell-array with the matrices for basis change. The size of the matrix Csub{lev} is
+%                 hspace.space_of_level(lev).ndof  x  sum(hspace.ndof_per_level(1:lev))
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
@@ -37,35 +38,38 @@ if (nargin == 1)
 elseif (nargin == 2)
   option = 'reduced';
 elseif (~strcmpi (option, 'reduced') && ~strcmpi (option, 'full'))
-  warning ('Unknown option. Computing the reduced version')
+  warning ('Unknown option. Trying to compute the reduced version')
 end
 
 Csub = cell (hspace.nlevels, 1);
 Csub{1} = speye (hspace.space_of_level(1).ndof);
 Csub{1} = Csub{1}(:,hspace.active{1});
 
-for lev = 2:hspace.nlevels
-  I = speye (hspace.space_of_level(lev).ndof);
-  aux = matrix_basis_change__ (hspace, lev);
-  Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
-  clear aux I
-  if (strcmpi (option, 'reduced'))
-    functions = sp_get_basis_functions (hspace.space_of_level(lev-1), hmsh.mesh_of_level(lev-1), hmsh.active{lev-1});
-    functions = setdiff (1:hspace.space_of_level(lev-1).ndof, functions);
-    Csub{lev-1}(functions,:) = 0;
-    [i,j,v] = find (Csub{lev-1});
-    [m, n] = size (Csub{lev-1});
-    Csub{lev-1} = sparse (i, j, v, m, n);
-  end
-end
-
 if (strcmpi (option, 'reduced'))
-  functions = sp_get_basis_functions (hspace.space_of_level(hmsh.nlevels), hmsh.mesh_of_level(hmsh.nlevels), hmsh.active{hmsh.nlevels});
-  functions = setdiff (1:hspace.space_of_level(hmsh.nlevels).ndof, functions);
-  Csub{hmsh.nlevels}(functions,:) = 0;
-  [i,j,v] = find (Csub{hmsh.nlevels});
-  [m, n] = size (Csub{hmsh.nlevels});
-  Csub{hmsh.nlevels} = sparse (i, j, v, m, n);
+  fun_on_active = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.active{1});
+  fun_on_deact = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.deactivated{1});
+  fun_on_deact = union (fun_on_active, fun_on_deact);
+
+  for lev = 2:hspace.nlevels
+%     I = speye (hspace.space_of_level(lev).ndof);
+%     I = I(:,hspace.active{lev});
+    I_rows = hspace.active{lev}; I_cols = 1:hspace.ndof_per_level(lev);
+    I = sparse (I_rows, I_cols, ones(size(I_cols)), hspace.space_of_level(lev).ndof, hspace.ndof_per_level(lev));
+    aux = matrix_basis_change__ (hspace, lev, fun_on_deact);
+
+    fun_on_active = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.active{lev});
+    fun_on_deact = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.deactivated{lev});
+    fun_on_deact = union (fun_on_active, fun_on_deact);
+    Csub{lev} = [aux*Csub{lev-1}, I];
+  end
+  
+elseif (strcmpi (option, 'full'))
+  for lev = 2:hspace.nlevels
+    I = speye (hspace.space_of_level(lev).ndof);
+    aux = matrix_basis_change__ (hspace, lev);
+    Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
+    clear aux I
+  end
 end
 
 end
