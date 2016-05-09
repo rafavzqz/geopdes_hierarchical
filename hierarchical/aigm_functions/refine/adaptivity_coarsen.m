@@ -44,5 +44,7 @@ end
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
 
-removed_fun = functions_to_remove_from_cells (hmsh, hspace, removed_cells);
-hspace = hspace_coarsen (hspace, hmsh, removed_fun);
+% removed_fun = functions_to_remove_from_cells (hmsh, hspace, removed_cells);
+% hspace = hspace_coarsen (hspace, hmsh, removed_fun);
+reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
+hspace = hspace_coarsen2 (hspace, hmsh, reactivated_fun, removed_cells);
