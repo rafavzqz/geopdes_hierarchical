@@ -37,12 +37,16 @@
 function [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
-  case 'functions'
-    marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
-  case 'elements'
-    marked_elements = marked;
+    case 'functions'
+        marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
+    case 'elements'
+        marked_elements = marked;
 end
 
 [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
-[hspace, Cref] = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+if nargout == 3
+    [hspace, Cref] = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+else
+    hspace = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+end
