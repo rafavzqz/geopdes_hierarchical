@@ -159,7 +159,7 @@ end % for lev
 
 
 % Computation of the matrix to pass from the original to the refined space
-if nargout == 2 % Antes esta linea decia: if (nargout == 2 || ~hspace.truncated). Por que?
+if (nargout == 2 || ~hspace.truncated)
     
   if (hspace.truncated) %THB-splines case
 
