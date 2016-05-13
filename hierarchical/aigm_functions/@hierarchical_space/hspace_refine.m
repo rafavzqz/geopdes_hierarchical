@@ -46,7 +46,11 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
 end
 
 % Update of active functions
-[hspace, Cref] = update_active_functions (hspace, hmsh, new_cells, M);
+if nargout == 2
+    [hspace, Cref] = update_active_functions (hspace, hmsh, new_cells, M);
+else
+    hspace = update_active_functions (hspace, hmsh, new_cells, M);
+end
 
 % Update the matrices for changing basis
 hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
@@ -156,7 +160,7 @@ end % for lev
 
 % Computation of the matrix to pass from the original to the refined space
 if (nargout == 2 || ~hspace.truncated)
-
+    
   if (hspace.truncated) %THB-splines case
 
     ndof_per_level = cellfun (@numel, active);

@@ -33,7 +33,7 @@
 function value = hspace_check_partition_of_unity (hspace, hmsh, tol)
 
 if (nargin < 3)
-  tol = 1e-14;
+  tol = 1e-12;
 end
 
 Z = hspace_eval_hmsh (hspace.coeff_pou, hspace, hmsh);

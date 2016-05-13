@@ -1,6 +1,6 @@
-function [hmsh, hspace] = build_hspace_from_cells(dim, p, initial_num_el, cells,space_type, graficar_malla)
+function [hmsh, hspace] = build_hspace_from_cells(dim, p, initial_num_el, cells,space_type, graficar_malla, truncated)
 %
-% function [hmsh, hspace] = build_hspace_from_cells(dim, p, initial_num_el, cells, space_type, graficar_malla)
+% function [hmsh, hspace] = build_hspace_from_cells(dim, p, initial_num_el, cells, space_type, graficar_malla, truncated)
 %
 % This function fills hmsh and hspace. The active cells are given in
 % cells{lev}, for lev = 1,2,...
@@ -17,9 +17,13 @@ if nargin == 5
     graficar_malla = 1;
 end
 
+if nargin == 6
+    truncated = 0;
+end
+
 switch dim
     case 1, problem_data.geo_name = nrbline ([0 0], [1 0]);
-    case 2, problem_data.geo_name = 'geo_square.txt'; 
+    case 2, problem_data.geo_name = 'geo_square.txt';
     case 3, problem_data.geo_name = 'geo_cube.txt';
 end
 
@@ -31,7 +35,7 @@ method_data.nsub_coarse= initial_num_el*ones(1,dim);       % Number of subdivisi
 method_data.nsub_refine= 2*ones(1,dim);  
 method_data.nquad      = method_data.degree+1;       % Points for the Gaussian quadrature rule
 method_data.space_type = space_type;           % 'simplified' (only children functions) or 'standard' (full basis)
-method_data.truncated = 0;
+method_data.truncated = truncated;
 
 [hmsh, hspace] = adaptivity_initialize_laplace (problem_data, method_data);
 
