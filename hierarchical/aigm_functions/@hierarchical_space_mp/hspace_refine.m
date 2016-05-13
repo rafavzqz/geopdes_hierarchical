@@ -15,7 +15,7 @@
 %   hspace:    object representing the refined hierarchical space (see hierarchical_space)
 %   Cref:      a matrix to pass from the coarse space (input) to the refined space (output)
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hspace,Cref] = hspace_refine (hspace, hmsh, M, flag, new_cells)
+function [hspace, Cref] = hspace_refine (hspace, hmsh, M, flag, new_cells)
 
 boundary = ~isempty (hspace.boundary);
 
@@ -46,7 +46,11 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
 end
 
 % Update of active functions
-[hspace,Cref] = update_active_functions (hspace, hmsh, new_cells, M);
+if (nargout == 2)
+  [hspace, Cref] = update_active_functions (hspace, hmsh, new_cells, M);
+else
+  hspace = update_active_functions (hspace, hmsh, new_cells, M);
+end
 
 % Update the matrices for changing basis
 hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
@@ -121,7 +125,7 @@ end
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hspace,Cref] = update_active_functions (hspace, hmsh, new_cells, marked_fun)
+function [hspace, Cref] = update_active_functions (hspace, hmsh, new_cells, marked_fun)
 
 active = hspace.active;
 deactivated = hspace.deactivated;

@@ -19,7 +19,7 @@
 %   hspace: object representing the refined space of hierarchical splines (see hierarchical_space)
 %   Cref:   refinement matrix, to pass from the original space to the refined one
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -37,16 +37,16 @@
 function [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
-    case 'functions'
-        marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
-    case 'elements'
-        marked_elements = marked;
+  case 'functions'
+    marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
+  case 'elements'
+    marked_elements = marked;
 end
 
 [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
-if nargout == 3
-    [hspace, Cref] = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+if (nargout == 3)
+  [hspace, Cref] = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
 else
-    hspace = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
+  hspace = hspace_refine (hspace, hmsh, marked, adaptivity_data.flag, new_cells);
 end
