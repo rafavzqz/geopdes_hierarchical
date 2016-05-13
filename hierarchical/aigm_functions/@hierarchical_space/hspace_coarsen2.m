@@ -114,6 +114,17 @@ for lev = hspace.nlevels:-1:2
     active{lev} = setdiff (active{lev}, removed_funs);
     active{lev-1} = union (active{lev-1}, funs_to_reactivate{lev-1});
     deactivated{lev-1} = setdiff (deactivated{lev-1}, funs_to_reactivate{lev-1});
+    
+    if (strcmpi (hspace.type, 'simplified'))
+      children = hspace_get_children (hspace, lev-1, funs_to_reactivate{lev-1});
+      children = intersect (children, active{lev});
+      for ifun = children
+        if (isempty (intersect (hspace_get_parents(hspace, lev, ifun), deactivated{lev-1})))
+          active{lev} = setdiff (active{lev}, ifun);
+        end
+      end
+    end
+    
   end
 end
 

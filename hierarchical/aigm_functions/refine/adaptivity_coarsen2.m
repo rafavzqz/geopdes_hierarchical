@@ -33,7 +33,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace] = adaptivity_coarsen2 (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
   case 'functions'
@@ -44,5 +44,10 @@ end
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
 
-removed_fun = functions_to_remove_from_cells (hmsh, hspace, removed_cells);
-hspace = hspace_coarsen (hspace, hmsh, removed_fun);
+reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
+hspace = hspace_coarsen2 (hspace, hmsh, reactivated_fun, removed_cells);
+
+if (hmsh.nel_per_level(hmsh.nlevels) == 0)
+  hmsh = hmsh_remove_empty_level (hmsh);
+  hspace = hspace_remove_empty_level (hspace, hmsh);
+end

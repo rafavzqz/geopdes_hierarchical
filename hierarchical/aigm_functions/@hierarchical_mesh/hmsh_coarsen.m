@@ -60,7 +60,7 @@ end
 
 % % Remove last level if empty (this is not a requirement)
 % if (isempty (hmsh.active{end}))
-%   hmsh = remove_empty_level (hmsh);
+%   hmsh = hmsh_remove_empty_level (hmsh);
 % end
 
 end
