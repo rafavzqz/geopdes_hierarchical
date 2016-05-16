@@ -69,7 +69,12 @@ end
 
 if (hspace.truncated)
   indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  C(indices,:) = 0;
+  if (nargin == 3)
+    ind = ~ismember (rows, indices);
+    C = sparse (rows(ind), cols(ind), vals(ind), hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
+  else
+    C(indices,:) = 0;
+  end
 end
 
 end
