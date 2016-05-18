@@ -250,10 +250,10 @@ hspace.deactivated = deactivated(1:hspace.nlevels);
 hspace.ndof_per_level = cellfun (@numel, hspace.active);
 hspace.ndof = sum (hspace.ndof_per_level);
 
-% if (hspace.truncated)
-%   hspace.coeff_pou = ones (hspace.ndof, 1);
-% else
+if (hspace.truncated)
+  hspace.coeff_pou = ones (hspace.ndof, 1);
+else
   hspace.coeff_pou = Cref * hspace.coeff_pou;
-% end
+end
 
 end
