@@ -69,12 +69,7 @@ end
 
 if (hspace.truncated)
   indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  if (nargin == 3 && strcmpi (hspace.space_of_level(1).space_type, 'spline'))
-    ind = ~ismember (rows, indices);
-    C = sparse (rows(ind), cols(ind), vals(ind), hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
-  else
-    C(indices,:) = 0;
-  end
+  C(indices,:) = 0;
 end
 
 end
