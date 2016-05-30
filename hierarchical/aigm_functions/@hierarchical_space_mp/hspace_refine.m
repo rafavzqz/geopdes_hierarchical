@@ -151,6 +151,13 @@ for lev = 1:hspace.nlevels-1
     marked_fun{lev+1} = union (marked_fun{lev+1}, new_active(flag==1,:));
 
   elseif (strcmpi (hspace.type, 'standard') && ~isempty (new_cells{lev+1}))
+
+    children = hspace_get_children (hspace, lev, marked_fun{lev});
+
+    active_and_deact = union (active{lev+1}, deactivated{lev+1});
+    new_active = setdiff (children, active_and_deact(:));
+    active{lev+1} = union (active{lev+1}, new_active(:));
+
     new_possible_active_fun = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), new_cells{lev+1});
     new_possible_active_fun = setdiff (new_possible_active_fun(:), active{lev+1});
 
