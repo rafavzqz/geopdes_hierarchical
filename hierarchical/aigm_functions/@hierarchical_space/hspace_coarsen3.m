@@ -28,7 +28,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = hspace_coarsen2 (hspace, hmsh, FtR, removed_cells)
+function hspace = hspace_coarsen3 (hspace, hmsh, FtR, removed_cells)
 
 boundary = ~isempty (hspace.boundary);
 
@@ -51,7 +51,7 @@ if (boundary)% && hmsh.ndim > 1)
       for lev = 1:numel (removed_cells)
         cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, removed_cells{lev});
       end
-      hspace.boundary(iside) = hspace_coarsen2 (hspace.boundary(iside), hmsh.boundary(iside), FtR_boundary, cells_boundary);
+      hspace.boundary(iside) = hspace_coarsen3 (hspace.boundary(iside), hmsh.boundary(iside), FtR_boundary, cells_boundary);
 
       nlevels_aux = hspace.boundary(iside).nlevels;
     elseif (hmsh.ndim == 1)
@@ -109,22 +109,21 @@ active = hspace.active;
 deactivated = hspace.deactivated;
 
 for lev = hspace.nlevels:-1:2
-  if (~isempty (removed_cells{lev}))
+  if (strcmpi (hspace.type, 'standard') && ~isempty (removed_cells{lev}))
     removed_funs = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
     active{lev} = setdiff (active{lev}, removed_funs);
     active{lev-1} = union (active{lev-1}, funs_to_reactivate{lev-1});
     deactivated{lev-1} = setdiff (deactivated{lev-1}, funs_to_reactivate{lev-1});
     
-    if (strcmpi (hspace.type, 'simplified'))
-      children = hspace_get_children (hspace, lev-1, funs_to_reactivate{lev-1});
-      children = intersect (children, active{lev});
-      for ifun = children
-        if (isempty (intersect (hspace_get_parents(hspace, lev, ifun), deactivated{lev-1})))
-          active{lev} = setdiff (active{lev}, ifun);
-        end
-      end
-    end
-    
+  elseif (strcmpi (hspace.type, 'simplified') && ~isempty (funs_to_reactivate{lev-1}))
+    active{lev-1} = union (active{lev-1}, funs_to_reactivate{lev-1});
+    deactivated{lev-1} = setdiff (deactivated{lev-1}, funs_to_reactivate{lev-1});
+    children = hspace_get_children (hspace, lev-1, funs_to_reactivate{lev-1});
+
+    neighbors = sp_get_neighbors (hspace.space_of_level(lev-1), hmsh.mesh_of_level(lev-1), funs_to_reactivate{lev-1});
+    deact_neighs = intersect (deactivated{lev-1}, neighbors);
+    children = setdiff (children, hspace_get_children (hspace, lev-1, deact_neighs));
+    active{lev} = setdiff (active{lev}, children);
   end
 end
 
