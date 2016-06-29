@@ -94,7 +94,11 @@ elseif (nargin == 3)
   end
   rows = rows(1:ncounter); cols = cols(1:ncounter); vals = vals(1:ncounter);
 %   C = sparse (rows, cols, vals, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev-1).ndof);
-  C = accumarray ([rows,cols], vals.', [], @min, 0, true);
+  if (~isempty (rows))
+    C = accumarray ([rows,cols], vals.', [], @min, 0, true);
+  else
+    C = sparse (nrows, ncols);
+  end
   if (size (C,1) < nrows || size(C,2) < ncols)
     C(nrows, ncols) = 0;
   end
