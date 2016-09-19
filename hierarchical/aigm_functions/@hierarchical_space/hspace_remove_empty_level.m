@@ -29,6 +29,13 @@
 function hspace = hspace_remove_empty_level (hspace, hmsh)
 
 if (hspace.nlevels == hmsh.nlevels+1 && isempty (hspace.active{end}))
+
+  for ibnd = 1:numel(hspace.boundary)
+    if (hspace.boundary(ibnd).nlevels == hmsh.boundary(ibnd).nlevels+1 && isempty(hspace.active{end}))
+       hspace.boundary(ibnd) = hspace_remove_empty_level (hspace.boundary(ibnd), hmsh.boundary(ibnd));
+    end
+  end
+  
   hspace.space_of_level(hspace.nlevels) = [];
   hspace.Proj(hspace.nlevels-1,:) = [];
 

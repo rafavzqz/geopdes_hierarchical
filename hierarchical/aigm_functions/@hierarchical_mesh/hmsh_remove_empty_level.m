@@ -29,12 +29,18 @@ function hmsh = hmsh_remove_empty_level (hmsh)
 
 % Remove last level if empty (this is not necessary)
 if (isempty (hmsh.active{hmsh.nlevels}))
+  for ibnd = 1:numel(hmsh.boundary)
+    if (hmsh.boundary(ibnd).nel_per_level(hmsh.boundary(ibnd).nlevels) == 0)
+       hmsh.boundary(ibnd) = hmsh_remove_empty_level (hmsh.boundary(ibnd));
+    end
+  end
+    
   hmsh.nlevels = hmsh.nlevels - 1;
   hmsh.active = hmsh.active(1:hmsh.nlevels);
   hmsh.deactivated = hmsh.deactivated(1:hmsh.nlevels);
   hmsh.nel_per_level = hmsh.nel_per_level(1:hmsh.nlevels);
   hmsh.mesh_of_level = hmsh.mesh_of_level(1:hmsh.nlevels);
-  hmsh.msh_lev = hmsh.msh_lev(1:hmsh.nlevels);
+  hmsh.msh_lev = hmsh.msh_lev(1:hmsh.nlevels);  
 end
 
 end
