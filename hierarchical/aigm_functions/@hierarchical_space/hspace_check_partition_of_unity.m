@@ -14,7 +14,7 @@
 %
 %    value:  true if the partition of unity is satisfied, false otherwise.
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 
 function value = hspace_check_partition_of_unity (hspace, hmsh, tol)
 
-
 if (nargin < 3)
   tol = 1e-10;
 end
@@ -42,6 +41,8 @@ Z = hspace_eval_hmsh (hspace.coeff_pou, hspace, hmsh);
 aux = max(abs(Z(:)-1));
 value = (aux < tol);
 
-if value == 0
+if (value == 0)
     fprintf('Warning: max(abs(Z(:)-1)) = %g\n', aux);
+end
+
 end

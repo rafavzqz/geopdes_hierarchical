@@ -17,11 +17,11 @@
 %    - truncated:   false (classical basis) or true (truncated basis)
 %
 % OUTPUT:
-%    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh)
-%    hspace:   object representing the space of hierarchical splines (see hierarchical_space)
-%    geometry: geometry structure (see geo_load)
+%    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh and hierarchical_mesh_mp)
+%    hspace:   object representing the space of hierarchical splines (see hierarchical_space and hierarchical_space_mp)
+%    geometry: geometry structure (see geo_load and mp_geo_load)
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -51,16 +51,15 @@ for iptc = 1:npatch
 end
 
 if (npatch == 1)
-  msh = msh{1};
+  msh   = msh{1};
   space = space{1};
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
   hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
 else
-  msh = msh_multipatch (msh, boundaries);
+  msh   = msh_multipatch (msh, boundaries);
   space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
   hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
   hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated);
 end
-
 
 end

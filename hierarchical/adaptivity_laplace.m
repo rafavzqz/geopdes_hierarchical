@@ -9,49 +9,52 @@
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
 %    - drchlt_sides: sides with Dirichlet boundary condition
 %    - c_diff:       diffusion coefficient (see solve_laplace)
-%    - f:            source term
+%    - grad_c_diff:  gradient of the diffusion coefficient (if not present, it is taken as zero)
+%    - f:            function handle of the source term
 %    - g:            function for Neumann condition (if nmnn_sides is not empty)
 %    - h:            function for Dirichlet boundary condition
 %
 %  method_data : a structure with discretization data. It contains the fields:
-%    - degree:      degree of the spline functions.
-%    - regularity:  continuity of the spline functions.
-%    - nsub_coarse: number of subelements with respect to the geometry mesh (1 leaves the mesh unchanged)
-%    - nsub_refine: number of subelements to be added at each refinement step (2 for dyadic)
-%    - nquad:       number of points for Gaussian quadrature rule
-%    - space_type:  'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
-%    - truncated:   false (classical basis) or true (truncated basis)
+%    - degree:       degree of the spline functions.
+%    - regularity:   continuity of the spline functions.
+%    - nsub_coarse:  number of subelements with respect to the geometry mesh (1 leaves the mesh unchanged)
+%    - nsub_refine:  number of subelements to be added at each refinement step (2 for dyadic)
+%    - nquad:        number of points for Gaussian quadrature rule
+%    - space_type:   'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
+%    - truncated:    false (classical basis) or true (truncated basis)
 %
 %  adaptivity_data: a structure with data for the adaptive method. It contains the fields:
 %    - flag:          refinement procedure, based either on 'elements' or on 'functions'
 %    - mark_strategy: marking strategy. See 'adaptivity_mark' for details
-%    - mark_param:    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX. See 'adaptivity_mark' for details
+%    - mark_param:    a parameter to decide how many entities should be marked. See 'adaptivity_mark' for details
 %    - max_level:     stopping criterium, maximum number of levels allowed during refinement
 %    - max_ndof:      stopping criterium, maximum number of degrees of freedom allowed during refinement
 %    - max_nel:       stopping criterium, maximum number of elements allowed during refinement
 %    - num_max_iter:  stopping criterium, maximum number of iterations allowed
 %    - tol:           stopping criterium, adaptive refinement is stopped when the norm of the estimator
 %                      is lower than tol.
-%    - C0_est:        a multiplicative constant for the error indicators 
+%    - C0_est:        a multiplicative constant for the error indicators XXXXXXXXXXX (details?)
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh:        plot the mesh at every iteration
 %    - plot_discrete_sol: plot the discrete solution at every iteration
-%    - print_info:    display info on the screen on every iteration (number of elements, 
-%          number of functions, estimated error, number of marked elements/functions...)
+%    - print_info:        display info on the screen on every iteration (number of elements, 
+%                          number of functions, estimated error, number of marked elements/functions...)
 %
 % OUTPUT:
-%    geometry: geometry structure (see geo_load)
-%    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh)
-%    hspace:   object representing the space of hierarchical splines (see hierarchical_space)
-%    u:        computed degrees of freedom, at the last iteration.
+%    geometry:      geometry structure (see geo_load)
+%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh)
+%    hspace:        object representing the space of hierarchical splines (see hierarchical_space)
+%    u:             computed degrees of freedom, at the last iteration.
 %    solution_data: a structure with the following fields
-%      - iter:    iteration on which the adaptive procedure stopped
-%      - ndof:    number of degrees of freedom for each computed iteration
-%      - nel:     number of elements for each computed iteration
-%      - gest:    norm of the estimator, for each computed iteration
-%      - err_h1s: error in H1 seminorm for each iteration, if the exact solution is known
-%      - flag:    a flag with one of the following values:
+%      - iter:       iteration on which the adaptive procedure stopped
+%      - ndof:       number of degrees of freedom for each computed iteration
+%      - nel:        number of elements for each computed iteration
+%      - gest:       norm of the estimator, for each computed iteration
+%      - err_h1s:    error in H1 seminorm for each iteration, if the exact solution is known
+%      - err_h1:     error in H1 norm for each iteration, if the exact solution is known
+%      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
+%      - flag:       a flag with one of the following values:
 %          -1: the coefficients for the partition of unity were wrong. This is probably caused by a bug.
 %           1: convergence is reached, the norm of the estimator is lower than the given tolerance
 %           2: maximum number of iterations reached before convergence.
@@ -60,6 +63,14 @@
 %           5: maximum number of elements reached before convergence
 % 
 %    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: anything else?
+%
+% For more details about the implementation, see:
+%    E. M. Garau, R. Vazquez, Algorithms for the implementation of adaptive
+%     isogeometric methods using hierarchical splines, Tech. Report, IMATI-CNR, 2016
+%
+% For details about the 'simplified' hierarchical space:
+%    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
+%     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
@@ -146,7 +157,7 @@ while (iter < adaptivity_data.num_max_iter)
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))
-    [~, ~, err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
+    [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
   end
 
@@ -186,6 +197,8 @@ solution_data.ndof = ndof(1:iter);
 solution_data.nel  = nel(1:iter);
 if (exist ('err_h1s', 'var'))
   solution_data.err_h1s = err_h1s(1:iter);
+  solution_data.err_h1 = err_h1(1:iter);
+  solution_data.err_l2 = err_l2(1:iter);
 end
 
 end
