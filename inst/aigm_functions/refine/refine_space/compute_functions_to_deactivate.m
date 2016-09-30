@@ -47,7 +47,7 @@ for lev = 1:hspace.nlevels
     end
 
   % Computation of functions that in fact have to be deactivated
-    [dummy, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), fun_indices{lev});
+    [~, cells_per_fun] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), fun_indices{lev});
     flag_ell = cellfun (@(x) isempty (intersect (x, hmsh.active{lev})), cells_per_fun);
     fun_indices{lev} = fun_indices{lev}(flag_ell == 1);
         
