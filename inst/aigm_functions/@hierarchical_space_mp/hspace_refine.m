@@ -30,13 +30,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hspace, Cref] = hspace_refine (hspace, hmsh, M, flag, new_cells)
+% function [hspace, Cref] = hspace_refine (hspace, hmsh, M, flag, new_cells)
+function [hspace, Cref] = hspace_refine (hspace, hmsh, M, new_cells)
 
 boundary = ~isempty (hspace.boundary);
-
-% Computation of indices of functions of level lev that will become
-% nonactive when removing the functions or elements in M{lev}
-M = compute_functions_to_deactivate (hmsh, hspace, M, flag);
 
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
@@ -78,7 +75,8 @@ if (boundary)% && hmsh.ndim > 1)
       [~,~,M_boundary{lev}] = intersect (M{lev}, hspace.space_of_level(lev).boundary.dofs);
     end
     
-    hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, 'functions', new_cells_boundary);
+%     hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, 'functions', new_cells_boundary);
+    hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, new_cells_boundary);
 
     Nf = cumsum ([0, hspace.ndof_per_level]);
     dofs = [];
