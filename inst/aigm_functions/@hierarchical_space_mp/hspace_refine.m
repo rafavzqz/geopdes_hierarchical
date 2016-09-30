@@ -1,13 +1,12 @@
 % HSPACE_REFINE: refine the hierarchical space, updating the fields of the object.
 %
-%   [hspace, Cref] = hspace_refine (hspace, hmsh, marked, flag, new_cells)
+%   [hspace, Cref] = hspace_refine (hspace, hmsh, marked, new_cells)
 %
 % INPUT:
 %
 %   hspace:    object representing the coarse hierarchical space (see hierarchical_space_mp)
 %   hmsh:      object representing the refined hierarchical mesh (see hierarchical_mesh_mp)
 %   marked:    cell array with the indices, in the tensor product setting, of the marked elements/functions for each level
-%   flag:      the refinement strategy, marking either 'elements' or 'functions'.
 %   new_cells: cell array with the global indices of the new active elements for each level
 %
 % OUTPUT:
@@ -30,7 +29,6 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% function [hspace, Cref] = hspace_refine (hspace, hmsh, M, flag, new_cells)
 function [hspace, Cref] = hspace_refine (hspace, hmsh, M, new_cells)
 
 boundary = ~isempty (hspace.boundary);
@@ -75,7 +73,6 @@ if (boundary)% && hmsh.ndim > 1)
       [~,~,M_boundary{lev}] = intersect (M{lev}, hspace.space_of_level(lev).boundary.dofs);
     end
     
-%     hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, 'functions', new_cells_boundary);
     hspace.boundary = hspace_refine (hspace.boundary, hmsh.boundary, M_boundary, new_cells_boundary);
 
     Nf = cumsum ([0, hspace.ndof_per_level]);
