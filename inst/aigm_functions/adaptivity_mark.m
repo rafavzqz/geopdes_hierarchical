@@ -1,22 +1,22 @@
 % ADAPTIVITY_MARK: mark cells or basis functions for refinement according to 
-% the marking strategy in adaptivity_data.mark_strategy, taking into account 
-% the computed error estimators in the variable est.
+%  the marking strategy in adaptivity_data.mark_strategy, taking into account 
+%  the computed error estimators in the variable est.
 %
-% [marked, nmarked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data)
+%   [marked, nmarked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data)
 %
 % INPUT:
 %
-%   est:    result obtained from the estimate step (see adaptivity_estimate_laplace)
-%   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
+%   est:     result obtained from the estimate step (see adaptivity_estimate_laplace)
+%   hmsh:    object representing the coarse hierarchical mesh (see hierarchical_mesh)
+%   hspace:  object representing the coarse space of hierarchical splines (see hierarchical_space)
 %   adaptivity_data: a structure with the data for the adaptivity method.
-%                    In particular, it contains the following fields:
-%                     -'mark_strategy': The possible strategies are:
-%                           GR:   global (uniform) refinement,  
-%                           MS:   maximum strategy,  
-%                           GERS: guaranteed error reduction strategy (Dörfler's)
-%                     -'mark_param': Parameter for marking, 0 < mark_param < 1.
-%                     -'flag': elements or functions, according to est
+%                    In particular, it must contain the following fields:
+%      -mark_strategy: the possible marking strategies are:
+%           GERS: guaranteed error reduction strategy (Dörfler's),
+%           MS:   maximum strategy,
+%           GR:   global (uniform) refinement.
+%      -mark_param:    parameter for marking, 0 < mark_param < 1.
+%      -flag:          elements or functions, according to est
 %
 % OUTPUT:
 %
@@ -57,15 +57,18 @@ switch adaptivity_data.mark_strategy
   aux_marked(est > adaptivity_data.mark_param * max_est) = 1;
  case 'GERS'
   est_sum2 = sum (est.^2);
-  est_sum2_marked = 0;
-  threshold = (1 - adaptivity_data.mark_param)^2 * est_sum2;
-  gamma = 1;
-  while (est_sum2_marked < threshold)
-    gamma = gamma - 0.1;
-    ff = find (est > gamma * max_est);
-    aux_marked(ff) = 1;
-    est_sum2_marked = sum ((est(ff)).^2);
-  end
+%   est_sum2_marked = 0;
+%   threshold = (1 - adaptivity_data.mark_param)^2 * est_sum2;
+%   gamma = 1;
+%   while (est_sum2_marked < threshold)
+%     gamma = gamma - 0.01;
+%     ff = find (est > gamma * max_est);
+%     aux_marked(ff) = 1;
+%     est_sum2_marked = sum ((est(ff)).^2);
+%   end
+  [est2_ordered, perm] = sort (est.^2, 'descend');
+  index = find (cumsum (est2_ordered) > (1 - adaptivity_data.mark_param)^2 * est_sum2, 1, 'first');
+  aux_marked(perm(1:index)) = 1;
 end
 
 marked_list = find (aux_marked);
