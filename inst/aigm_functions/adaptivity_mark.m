@@ -23,7 +23,7 @@
 %    marked:  cell-array with the indices of marked cells (or functions) for each level, in the tensor-product setting
 %    nmarked: total number of marked cells (or functions)
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

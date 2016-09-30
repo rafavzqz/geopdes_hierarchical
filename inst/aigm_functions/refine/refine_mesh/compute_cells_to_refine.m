@@ -40,6 +40,8 @@ ind = cell (hmsh.nlevels, 1);
 for lev = 1:hspace.nlevels
   if (~isempty(MF{lev}))
     ME{lev} = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), MF{lev});
-    [ME{lev}, dummy, ind{lev}] = intersect (ME{lev}, hmsh.active{lev});
+    [ME{lev}, ~, ind{lev}] = intersect (ME{lev}, hmsh.active{lev});
   end
+end
+
 end

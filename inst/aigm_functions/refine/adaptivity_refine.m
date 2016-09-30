@@ -10,7 +10,7 @@
 %   marked: cell array with the indices, in the tensor product space, of the marked elements/functions
 %            for each level
 %   adaptivity_data: a structure with the data for the adaptivity method.
-%                    In particular, it contains the field 'flag', that can take the value
+%                    It contains the field 'flag', that can take the value
 %                    'elements' or 'functions', depending on the refinement strategy.
 %
 % OUTPUT:
