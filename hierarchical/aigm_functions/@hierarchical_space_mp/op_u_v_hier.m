@@ -1,8 +1,8 @@
 % OP_U_V_HIER: assemble the mass matrix A = [a(i,j)], a(i,j) = (mu u_j, v_i), 
 %  for hierarchical splines, exploiting the multilevel structure.
 %
-%   mat = op_u_v_hier (hspu, hspv, hmsh, coeff, [patches]);
-%   [rows, cols, values] = op_u_v_hier (hspu, hspv, hmsh, coeff, [patches]);
+%   mat = op_u_v_hier (hspu, hspv, hmsh, [coeff], [patches]);
+%   [rows, cols, values] = op_u_v_hier (hspu, hspv, hmsh, [coeff], [patches]);
 %
 % INPUT:
 %
@@ -23,7 +23,7 @@
 %  of the same level of the active elements have to be computed. See also
 %  op_gradu_gradv_hier for more details.
 %
-% Copyright (C) 2015, Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -40,6 +40,9 @@
 
 function varargout = op_u_v_hier (hspu, hspv, hmsh, coeff, patch_list)
 
+  if (nargin < 4 || isempty (coeff))
+    coeff = @(varargin) ones (size(varargin{1}));    
+  end
   if (nargin < 5)
     patch_list = 1:hmsh.mesh_of_level(1).npatch;
   end

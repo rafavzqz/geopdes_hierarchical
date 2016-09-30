@@ -1,8 +1,8 @@
 % OP_GRADU_GRADV_HIER: assemble the stiffness matrix A = [a(i,j)], a(i,j) = (epsilon grad u_j, grad v_i), 
 %  for hierarchical splines, exploiting the multilevel structure.
 %
-%   mat = op_gradu_gradv_hier (hspu, hspv, hmsh, epsilon);
-%   [rows, cols, values] = op_gradu_gradv_hier (hspu, hspv, hmsh, epsilon);
+%   mat = op_gradu_gradv_hier (hspu, hspv, hmsh, [epsilon]);
+%   [rows, cols, values] = op_gradu_gradv_hier (hspu, hspv, hmsh, [epsilon]);
 %
 % INPUT:
 %
@@ -23,7 +23,7 @@
 %  and inactive). Then, the matrix for the hierarchical space is computed
 %  using the matrix relation between the basis functions of different levels.
 %
-% Copyright (C) 2015, Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,10 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff)
+
+  if (nargin == 3)
+    coeff = @(varargin) ones (size(varargin{1}));
+  end
 
   K = spalloc (hspv.ndof, hspu.ndof, 3*hspu.ndof);
 
