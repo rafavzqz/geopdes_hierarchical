@@ -45,7 +45,6 @@ function u = adaptivity_solve_laplace (hmsh, hspace, problem_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
-% mass = op_u_v_hier (hspace, hspace, hmsh, problem_data.c_diff);
 
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
@@ -86,3 +85,5 @@ rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_
 
 % Solve the linear system
 u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
+
+end

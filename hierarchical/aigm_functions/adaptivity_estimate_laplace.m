@@ -8,20 +8,20 @@
 %
 % USAGE:
 %
-% est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
+%   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
 %
 % INPUT:
 %
-%   u:      degrees of freedom
-%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the space of hierarchical splines (see hierarchical_space)
+%   u:            degrees of freedom
+%   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh)
+%   hspace:       object representing the space of hierarchical splines (see hierarchical_space)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
-%    - c_diff:       diffusion coefficient (epsilon in the equation)
-%    - grad_c_diff:  gradient of the diffusion coefficient (equal to zero if not present)
-%    - f:            source term
+%    - c_diff:        diffusion coefficient (epsilon in the equation)
+%    - grad_c_diff:   gradient of the diffusion coefficient (equal to zero if not present)
+%    - f:             function handle of the source term
 %   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
-%    - flag:         'elements' or 'functions', depending on the refinement strategy.
-%    - C0_est:       multiplicative constant for the error indicators 
+%    - flag:          'elements' or 'functions', depending on the refinement strategy.
+%    - C0_est:        multiplicative constant for the error indicators 
 %                    
 %
 % OUTPUT:
@@ -32,7 +32,7 @@
 %           where h_Q is the local meshsize and U is the Galerkin solution
 %           - (Buffa and Garau, 2016) When adaptivity_data.flag == 'functions': for a B-spline basis function b, 
 %                          est_b := C0_est*h_b*(int_{supp b} a_b*|f + div(epsilon(x) grad(U))|^2*b)^(1/2), 
-%           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity in the hierarchical basis, and U is the Galerkin solution
+%           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity, and U is the Galerkin solution
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
@@ -51,7 +51,6 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 % XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-% - When c_diff is constant, we could use a flag in order to avoid some useless computations
 % - Up to now, we are not considering jumps; thus, we assume also that c_diff is smooth. 
 % - These a posteriori error indicators a designed for homogeneous boundary conditions. I will think how to modify them for non-homogeneous boundary conditions
 %
@@ -77,21 +76,18 @@ end
 aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
 
-quad_weights = [];
-jacdet = [];
+w = [];
 h = [];
 ms = zeros (hmsh.nlevels, 1);
 for ilev = 1:hmsh.nlevels % Active levels
     if (hmsh.msh_lev{ilev}.nel ~= 0)
-            quad_weights = cat(2,quad_weights, hmsh.msh_lev{ilev}.quad_weights);
-            jacdet = cat(2,jacdet, hmsh.msh_lev{ilev}.jacdet);
-            h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
-            ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
+        w = cat (2, w, hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet);
+        h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
+        ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
     else
         ms(ilev) = 0;
     end
 end
-w = quad_weights .* jacdet;
 h = h * sqrt (hmsh.ndim);
 ms = ms * sqrt (hmsh.ndim);
 
@@ -112,7 +108,7 @@ switch adaptivity_data.flag
         % If we allow that the third input of op_f_v_hier can be f at the
         % quadrature nodes, we can use the following line instead of the
         % lines below.
-        % est = adaptivity_data.C0_est*coef.* sqrt(op_f_v_hier (hspace, hmsh, aux));
+        % est = adaptivity_data.C0_est * coef .* sqrt(op_f_v_hier (hspace, hmsh, aux));
         
         est = zeros(hspace.ndof,1);
         ndofs = 0;
@@ -128,4 +124,6 @@ switch adaptivity_data.flag
             end
         end
         est = adaptivity_data.C0_est * coef .* sqrt(est);
+end
+
 end
