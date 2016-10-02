@@ -46,11 +46,13 @@ end
 [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
 % Computation of indices of functions of level lev that will become
-% nonactive when removing the functions or elements in M{lev}
+% nonactive when removing the functions or elements in marked{lev}
 marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag);
 
 if (nargout == 3)
   [hspace, Cref] = hspace_refine (hspace, hmsh, marked_functions, adaptivity_data.flag, new_cells);
 else
   hspace = hspace_refine (hspace, hmsh, marked_functions, new_cells);
+end
+
 end

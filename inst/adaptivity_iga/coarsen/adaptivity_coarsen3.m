@@ -51,3 +51,5 @@ if (hmsh.nel_per_level(hmsh.nlevels) == 0)
   hmsh = hmsh_remove_empty_level (hmsh);
   hspace = hspace_remove_empty_level (hspace, hmsh);
 end
+
+end
