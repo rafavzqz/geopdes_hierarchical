@@ -6,7 +6,7 @@
 % INPUT:
 %     
 %     u:           vector of dof weights
-%     hspace:      object representing the space of discrete functions (see hierarchical_space)
+%     hspace:      object representing the space of discrete functions (see hierarchical_space_mp)
 %     geometry:    geometry structure (see geo_load)
 %     npts:        number of points along each parametric direction where to evaluate
 %     pts:         cell array with the coordinates along each parametric direction of the points where to evaluate

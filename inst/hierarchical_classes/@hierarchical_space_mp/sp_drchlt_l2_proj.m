@@ -5,7 +5,7 @@
 % INPUT:
 %
 %  hspace: object representing the hierarchical space of trial functions (see hierarchical_space_mp)
-%  hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
+%  hmsh:   object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %  h:      function handle to compute the Dirichlet condition
 %  sides:  boundary sides on which a Dirichlet condition is imposed
 %
@@ -29,6 +29,7 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 function [u, dofs] = sp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
   M = spalloc (hspace.boundary.ndof, hspace.boundary.ndof, 3*hspace.boundary.ndof);

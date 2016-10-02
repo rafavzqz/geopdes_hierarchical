@@ -6,9 +6,9 @@
 %
 % INPUT:
 %
-%   hspu:  object representing the hierarchical space of trial functions (see hierarchical_space)
-%   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space)
-%   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh)
+%   hspu:  object representing the hierarchical space of trial functions (see hierarchical_space_mp)
+%   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space_mp)
+%   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   coeff: function handle to compute the reaction coefficient
 %   patches: list of patches where the integrals have to be computed. By default, all patches are selected.
 %

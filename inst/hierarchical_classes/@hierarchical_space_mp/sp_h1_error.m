@@ -4,8 +4,8 @@
 %
 % INPUT:
 %
-%    hspace:  object defining the discrete space (see hierarchical_space)
-%    hmsh:    object representing the hierarchical mesh (see hierarchical_mesh)
+%    hspace:  object defining the discrete space (see hierarchical_space_mp)
+%    hmsh:    object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %    u:       vector of dof weights
 %    uex:     function handle to evaluate the exact solution
 %    graduex: function handle to evaluate the gradient of the exact solution

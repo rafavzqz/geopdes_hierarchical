@@ -5,7 +5,7 @@
 % INPUT:
 %
 %   hspace:  object representing the hierarchical space (see hierarchical_space)
-%   hmsh:    object representing the hierarchical mesh, already with an empty level (see hierarchical_mesh)
+%   hmsh:    object representing the hierarchical mesh, already with the new level (see hierarchical_mesh)
 %
 % OUTPUT:
 %

@@ -33,25 +33,33 @@
 %
 %    METHOD NAME
 %    Methods for post-processing, which require a computed vector of degrees of freedom
-%      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
-%      sp_eval:               evaluate the solution in a Cartesian grid of points
+%      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points on each patch
+%      sp_eval:               evaluate the solution in a Cartesian grid of points on each patch
 %      hspace_eval_hmsh:      evaluate the solution in the quadrature points of the corresponding hierarchical mesh
 %      sp_l2_error:           compute the error in L2 norm
 %      sp_h1_error:           compute the error in H1 norm
 %
-%    Methods for matrix and vector assembly
+%    Methods for matrix and vector assembly, and boundary conditions
 %      op_gradu_gradv_hier:   assemble the stiffness matrix
 %      op_u_v_hier:           assemble the mass matrix
 %      op_f_v_hier:           assemble the right-hand side
+%      sp_drchlt_l2_proj:     compute the boundary degrees of freedom using the L2-projection
+%
+%    Methods to obtain a relation between different levels
+%      hspace_get_children:   get the children of a given set of functions
+%      hspace_get_parents:    get the parents of a given set of functions
+%      hspace_subdivision_matrix: compute the matrix of basis change (the same stored in Csub)
 %
 %    Other methods
-%      sp_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
-%      hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 
 %      hspace_refine:         refine the hierarchical space
+%      hspace_check_partition_of_unity: check whether the computed coefficients
+%                             for the partition of unity are correct (used for debugging)
+%      hspace_add_new_level:  add a new level, initialized without active functions
+%      hspace_remove_empty_level: remove the finest level, if it is empty
 %
-% For an explanation of the 'standard' and the 'simplified' basis for hierarchical splines, read:
-%  A. Buffa, E.M. Garau, New refinable spaces and local approximation
-%    estimates for hierarchical splines (2015), arxiv:1507.06534v1
+% For details about the 'simplified' hierarchical space:
+%    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
+%     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %

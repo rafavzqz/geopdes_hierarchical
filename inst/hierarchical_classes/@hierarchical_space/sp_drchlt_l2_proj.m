@@ -29,6 +29,7 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 function [u, dofs] = sp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
 rhs  = zeros (hspace.ndof, 1);

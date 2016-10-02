@@ -26,8 +26,12 @@
 %    boundary       (2 x ndim array)    a hierarchical mesh representing the mesh on the boundary
 %
 %    METHOD NAME
-%    hmsh_plot_cells:       plot the hierarchical mesh (not efficient)
-%    hmsh_refine:           refine the hierarchical mesh, given the set of cells to refine
+%    hmsh_plot_cells:         plot the hierarchical mesh (not efficient)
+%    hmsh_refine:             refine the hierarchical mesh, given the set of cells to refine
+%    hmsh_get_children:       get the children of a given set of cells
+%    hmsh_get_parent:         get the parent of a given set of cells
+%    hmsh_add_new_level:      add a new level to the mesh, the set of active cells is initialized as empty
+%    hmsh_remove_empty_level: remove the last level from the mesh, if it is empty
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %

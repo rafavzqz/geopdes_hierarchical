@@ -7,7 +7,7 @@
 %    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
-%                - 'simplified', a simplified basis, were only children of removed functions are activated\
+%                - 'simplified', a simplified basis, were only children of removed functions are activated
 %    truncated:  decide whether the basis will be truncated or not
 %
 % OUTPUT:
@@ -40,19 +40,27 @@
 %      sp_l2_error:           compute the error in L2 norm
 %      sp_h1_error:           compute the error in H1 norm
 %
-%    Methods for matrix and vector assembly
+%    Methods for matrix and vector assembly, and boundary conditions
 %      op_gradu_gradv_hier:   assemble the stiffness matrix
 %      op_u_v_hier:           assemble the mass matrix
 %      op_f_v_hier:           assemble the right-hand side
+%      sp_drchlt_l2_proj:     compute the boundary degrees of freedom using the L2-projection
+%
+%    Methods to obtain a relation between different levels
+%      hspace_get_children:   get the children of a given set of functions
+%      hspace_get_parents:    get the parents of a given set of functions
+%      hspace_subdivision_matrix: compute the matrix of basis change (the same stored in Csub)
 %
 %    Other methods
-%      sp_drchlt_l2_proj: compute the boundary degrees of freedom using the L2-projection
-%      hspace_check_partition_of_unity: check whether the computed coefficients for the partition of unity are correct 
 %      hspace_refine:         refine the hierarchical space
+%      hspace_add_new_level:  add a new level, initialized without active functions
+%      hspace_remove_empty_level: remove the finest level, if it is empty
+%      hspace_check_partition_of_unity: check whether the computed coefficients
+%                             for the partition of unity are correct (used for debugging)
 %
-% For an explanation of the 'standard' and the 'simplified' basis for hierarchical splines, read:
-%  A. Buffa, E.M. Garau, New refinable spaces and local approximation
-%    estimates for hierarchical splines (2015), arxiv:1507.06534v1
+% For details about the 'simplified' hierarchical space:
+%    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
+%     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %

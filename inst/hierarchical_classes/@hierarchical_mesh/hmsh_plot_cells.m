@@ -6,7 +6,7 @@
 %
 %    hmsh:       object representing the hierarchical mesh (see hierarchical_mesh)
 %    npts:       number of points to use on each edge of the cell
-%    fig_number: figure number where to plot (if not given, a new figure is open)
+%    fig_number: figure number where to plot (if not given, plot in the current figure)
 %
 % To plot the cells of the mesh, the function plots its edges using plot3.
 %  A relative big number of points is needed for curved geometries.

@@ -9,12 +9,12 @@
 % INPUT:
 %
 %     hspace: the hierarchical space (see hierarchical_space_mp)
-%     lev:    level of the functions to refine
+%     lev:    level of the children functions
 %     ind:    indices of the functions in the multipatch space of level lev
 %
 % OUTPUT:
 %
-%     children: indices of the children, with the numbering of the tensor product space
+%     parents:  indices of the parents, with the numbering of the tensor product space
 %     flag:     a flag to tell whether all the input functions are active (1) 
 %               active or deactivated (2), or if there is any passive function (0)
 %

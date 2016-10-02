@@ -14,7 +14,7 @@
 %
 % OUTPUT:
 %
-%     children: indices of the parents, with the numbering of the tensor product space
+%     parents:  indices of the parents, with the numbering of the tensor product space
 %     flag:     a flag to tell whether all the input functions are active (1) 
 %               active or deactivated (2), or if there is any passive function (0)
 %

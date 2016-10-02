@@ -8,7 +8,7 @@
 %
 % INPUT:  
 %
-%   hspace: an object of the class hierarchical_space
+%   hspace: an object of the class hierarchical_space_mp
 %   lev:    the level for which we compute the matrix
 %
 % OUTPUT:
