@@ -58,11 +58,6 @@ else
   hmsh.boundary = [];
 end
 
-% % Remove last level if empty (this is not a requirement)
-% if (isempty (hmsh.active{end}))
-%   hmsh = hmsh_remove_empty_level (hmsh);
-% end
-
 end
 
 
@@ -92,12 +87,6 @@ for lev = nlevels-1:-1:1
   hmsh.deactivated{lev} = setdiff (hmsh.deactivated{lev}, M{lev});
   hmsh.active{lev} = union (hmsh.active{lev}, M{lev});
 end
-
-% if (isempty (hmsh.active{nlevels}))
-%   hmsh.nlevels = nlevels-1;
-%   hmsh.active = hmsh.active(1:nlevels-1);
-%   hmsh.deactivated = hmsh.deactivated(1:nlevels-1);
-% end
 
 % Update hmsh.nel_per_level and hmsh.nel
 hmsh.nel_per_level = cellfun (@numel, hmsh.active);
