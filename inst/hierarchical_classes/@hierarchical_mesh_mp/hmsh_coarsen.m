@@ -85,7 +85,7 @@ function [hmsh, removed_cells] = update_active_cells (hmsh, M)
 %
 
 nlevels = hmsh.nlevels;
-removed_cells = cell (nlevels+1, 1);
+removed_cells = cell (nlevels, 1);
 
 for lev = nlevels-1:-1:1
   removed_cells{lev+1} = hmsh_get_children (hmsh, lev, M{lev});
