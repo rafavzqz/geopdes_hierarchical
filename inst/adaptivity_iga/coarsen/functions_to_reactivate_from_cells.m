@@ -35,8 +35,19 @@ fun_indices = cell (hspace.nlevels,1);
 
 for lev = 1:hspace.nlevels-1
   if (~isempty(M{lev}))
-    fun_indices{lev} = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), M{lev});
+    fun_indices{lev} = union (fun_indices{lev}, sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), M{lev}));
     fun_indices{lev} = intersect (hspace.deactivated{lev}, fun_indices{lev});
+    
+    if (strcmpi (hspace.type, 'simplified'))
+      children = intersect (hspace_get_children (hspace, lev, fun_indices{lev}), hspace.deactivated{lev+1});
+      aux_deact = setdiff (hspace.deactivated{lev}, fun_indices{lev});
+      for ifun = children(:)'
+        if (~isempty (intersect (hspace_get_parents (hspace, lev+1, ifun), aux_deact)))
+          children = setdiff (children, ifun);
+        end
+      end
+      fun_indices{lev+1} = children;
+    end
   end
 end
 
