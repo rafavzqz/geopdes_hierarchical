@@ -47,9 +47,7 @@ end
 reactivated_fun = functions_to_reactivate_from_cells3 (hmsh, hspace, marked_elements);
 hspace = hspace_coarsen3 (hspace, hmsh, reactivated_fun, removed_cells);
 
-if (hmsh.nel_per_level(hmsh.nlevels) == 0)
-  hmsh = hmsh_remove_empty_level (hmsh);
-  hspace = hspace_remove_empty_level (hspace, hmsh);
-end
+hmsh = hmsh_remove_empty_levels (hmsh);
+hspace = hspace_remove_empty_levels (hspace, hmsh);
 
 end
