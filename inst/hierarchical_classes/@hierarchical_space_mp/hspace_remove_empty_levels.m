@@ -1,6 +1,8 @@
-% HSPACE_REMOVE_EMPTY_LEVEL: remove the last level of the hierarchical space, only if it is empty.
+% HSPACE_REMOVE_EMPTY_LEVELS: remove the last levels of the hierarchical space, if empty.
+%   The finest level will be the same as in the hierarchical mesh object,
+%   even if there are no active functions.
 %
-%   hspace = hmsh_remove_empty_level (hspace, hmsh)
+%   hspace = hmsh_remove_empty_levels (hspace, hmsh)
 %
 % INPUT:
 %
@@ -9,7 +11,7 @@
 %
 % OUTPUT:
 %
-%   hspace: the object of the hierarchical space with one level less.
+%   hspace: the object of the hierarchical space after removing the empty levels
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
@@ -26,19 +28,25 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = hspace_remove_empty_level (hspace, hmsh)
+function hspace = hspace_remove_empty_levels (hspace, hmsh)
 
-if (hspace.nlevels == hmsh.nlevels+1 && isempty (hspace.active{end}))
-  hspace.space_of_level(hspace.nlevels) = [];
-  hspace.Proj(hspace.nlevels-1,:) = [];
+if (~isempty (hmsh.boundary))
+  for iside = 1:numel(hmsh.boundary)
+    hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
+    hspace.boundary(iside) = hspace_remove_empty_levels (hspace.boundary(iside), hmsh.boundary(iside));
+  end
+end
 
-  hspace.active(hspace.nlevels) = [];
-  hspace.deactivated(hspace.nlevels) = [];
-  hspace.ndof_per_level(hspace.nlevels) = [];
-%   hspace.C(hspace.nlevels) = [];
-  hspace.nlevels = hmsh.nlevels;
-else
-  warning ('The number of levels of the space in input should be one more than the number of levels of the mesh')
+for ilev = hspace.nlevels:-1:hmsh.nlevels+1
+  if (isempty (hspace.active{ilev}))
+    hspace.space_of_level(ilev) = [];
+    hspace.Proj(ilev-1,:) = [];
+
+    hspace.active(ilev) = [];
+    hspace.deactivated(ilev) = [];
+    hspace.ndof_per_level(ilev) = [];
+    hspace.nlevels = hspace.nlevels - 1;
+  end
 end
 
 end

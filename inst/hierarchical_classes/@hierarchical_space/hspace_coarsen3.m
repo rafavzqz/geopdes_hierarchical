@@ -70,10 +70,6 @@ else
   hspace.boundary = [];
 end
 
-% if (hspace.nlevels > hmsh.nlevels)
-%   hspace = hspace_remove_empty_level (hspace, hmsh);
-% end
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
