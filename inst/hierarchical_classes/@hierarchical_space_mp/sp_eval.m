@@ -7,7 +7,7 @@
 %     
 %     u:         vector of dof weights
 %     hspace:    object defining the discrete space (see hierarchical_space_mp)
-%     geometry:  geometry structure (see geo_load)
+%     geometry:  geometry structure (see mp_geo_load)
 %     pts:       cell array with coordinates of points along each parametric direction
 %     npts:      number of points along each parametric direction
 %     option:    accepted options are 'value' (default), 'gradient', 'laplacian'
@@ -17,6 +17,9 @@
 %     eu: the function evaluated at the given points 
 %     F:  grid points in the physical domain, that is, the mapped points
 % 
+%    The current version is very unefficient, as it passes the solution to
+%     the tensor-product space of the finest level.
+%
 % Copyright (C) 2015 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify

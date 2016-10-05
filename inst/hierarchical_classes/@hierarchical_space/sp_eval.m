@@ -17,6 +17,9 @@
 %     eu: the function evaluated at the given points 
 %     F:  grid points in the physical domain, that is, the mapped points
 % 
+%    The current version is very unefficient, as it passes the solution to
+%     the tensor-product space of the finest level.
+%
 % Copyright (C) 2015 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
