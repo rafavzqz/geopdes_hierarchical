@@ -139,12 +139,11 @@ while (iter < adaptivity_data.num_max_iter)
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
-    hmsh_plot_cells (hmsh, 10, fig_mesh);
+    fig_mesh = hmsh_plot_cells (hmsh, 10, fig_mesh);
   end
   if (plot_data.plot_discrete_sol)
-    figure(fig_sol)
     npts = 51 * ones (1, hmsh.ndim);
-    plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex); 
+    fig_sol = plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex, fig_sol); 
   end
   if (plot_data.plot_hmesh || plot_data.plot_discrete_sol)
    disp('Paused. Type "dbcont" to continue')

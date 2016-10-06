@@ -1,4 +1,4 @@
-function plot_numerical_and_exact_solution(u, hspace, geometry, npts, uex)
+function fig = plot_numerical_and_exact_solution (u, hspace, geometry, npts, uex, fig)
 %
 % function plot_numerical_and_exact_solution(u, hspace, geometry, npts, uex)
 %
@@ -7,6 +7,13 @@ function plot_numerical_and_exact_solution(u, hspace, geometry, npts, uex)
 % Funcion personal
 %
 %
+if (nargin == 6 && ishandle(fig))
+  figure (fig)
+elseif (nargout == 1)
+  fig = figure;
+else
+  figure;
+end
 
 if (isa (hspace, 'hierarchical_space'))
   if (isa (hspace.space_of_level(1), 'sp_scalar'))
@@ -29,9 +36,7 @@ ndim = numel (sp_aux.knots);
 first_knot = cellfun (@(x) x(1), sp_aux.knots);
 last_knot = cellfun (@(x) x(end), sp_aux.knots);
 
-
-figure
-if ((nargin == 5 && ~isempty (uex)))
+if ((nargin > 4 && ~isempty (uex)))
   if (ndim == 3)
     warning ('The plot of the exact solution for volumes is not implemented. Plotting the numerical solution')
   elseif (is_vector)

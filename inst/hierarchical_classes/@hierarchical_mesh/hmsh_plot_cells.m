@@ -27,10 +27,14 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hmsh_plot_cells (hmsh, npts, nfig)
+function nfig = hmsh_plot_cells (hmsh, npts, nfig)
 
-if (nargin == 3)
-  figure(nfig)
+if (nargin == 3 && ishandle (nfig))
+  figure (nfig)
+elseif (nargout == 1)
+  nfig = figure;
+else
+  figure;
 end
 
 if (nargin < 2 || isempty (npts))
