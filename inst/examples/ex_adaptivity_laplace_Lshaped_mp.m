@@ -57,6 +57,7 @@ npts = [51 51];
 output_file = 'laplace_adaptivity_Lshaped_mp';
 sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
 
+plot_numerical_and_exact_solution(u,hspace,geometry,npts,problem_data.uex)
 
 %!test
 %! problem_data.geo_name = 'geo_Lshaped_mp.txt';
