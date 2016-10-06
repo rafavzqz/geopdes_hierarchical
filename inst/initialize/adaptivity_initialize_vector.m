@@ -48,7 +48,7 @@ sp_scalar= sp_bspline (knots, method_data.degree, msh);
 scalar_spaces = repmat ({sp_scalar}, 1, msh.rdim);
 space    = sp_vector (scalar_spaces, msh);
 
-hmsh     = hierarchical_mesh (msh, geometry, method_data.nsub_refine);
-hspace   = hierarchical_space (hmsh, space, method_data.space_type);
+hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
+hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
 
 end
