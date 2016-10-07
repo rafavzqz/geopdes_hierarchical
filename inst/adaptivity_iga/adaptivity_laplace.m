@@ -1,6 +1,6 @@
 % ADAPTIVITY_LAPLACE: solve the Laplace problem with an adaptive isogeometric method based on hierarchical splines.
 %
-% [geometry, hmsh, hspace, u] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data)
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data)
 %
 % INPUT:
 %
@@ -31,9 +31,9 @@
 %    - max_ndof:      stopping criterium, maximum number of degrees of freedom allowed during refinement
 %    - max_nel:       stopping criterium, maximum number of elements allowed during refinement
 %    - num_max_iter:  stopping criterium, maximum number of iterations allowed
-%    - tol:           stopping criterium, adaptive refinement is stopped when the norm of the estimator
+%    - tol:           stopping criterium, adaptive refinement is stopped when the global error estimator
 %                      is lower than tol.
-%    - C0_est:        a multiplicative constant for the error indicators XXXXXXXXXXX (details?)
+%    - C0_est:        an optional multiplicative constant for scaling the error estimators. (Default value: 1.0) XXXXXXXXXXXXXXXXXXXXXXXXX Esta bien asi? 
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh:        plot the mesh at every iteration
@@ -50,19 +50,18 @@
 %      - iter:       iteration on which the adaptive procedure stopped
 %      - ndof:       number of degrees of freedom for each computed iteration
 %      - nel:        number of elements for each computed iteration
-%      - gest:       norm of the estimator, for each computed iteration
+%      - gest:       global error estimator, for each computed iteration
 %      - err_h1s:    error in H1 seminorm for each iteration, if the exact solution is known
 %      - err_h1:     error in H1 norm for each iteration, if the exact solution is known
 %      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
 %      - flag:       a flag with one of the following values:
 %          -1: the coefficients for the partition of unity were wrong. This is probably caused by a bug.
-%           1: convergence is reached, the norm of the estimator is lower than the given tolerance
+%           1: convergence is reached, the global estimator is lower than the given tolerance
 %           2: maximum number of iterations reached before convergence.
 %           3: maximum number of levels reached before convergence
 %           4: maximum number of degrees of freedom reached before convergence
 %           5: maximum number of elements reached before convergence
 % 
-%    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: anything else?
 %
 % For more details about the implementation, see:
 %    E. M. Garau, R. Vazquez, Algorithms for the implementation of adaptive
@@ -110,15 +109,21 @@ end
 if (plot_data.plot_discrete_sol)
   fig_sol = figure;
 end
-nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
+nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+NaN;
 
+if (isfield (problem_data, 'graduex'))
+    err_h1 = gest;
+    err_l2 = gest;
+    err_h1s = gest;
+end
+  
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 
 % ADAPTIVE LOOP
 iter = 0;
-while (iter < adaptivity_data.num_max_iter)
+while (1)
   iter = iter + 1;
   
   if (plot_data.print_info)
@@ -154,7 +159,7 @@ while (iter < adaptivity_data.num_max_iter)
   if (plot_data.print_info); disp('ESTIMATE:'); end
   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
-  if (plot_data.print_info); fprintf('Computed estimate: %f \n', gest(iter)); end
+  if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))
     [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
