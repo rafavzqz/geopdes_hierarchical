@@ -28,14 +28,34 @@
 
 function hspace = hspace_add_new_level (hspace, hmsh)
 
+if (isa (hspace.space_of_level(1), 'sp_scalar'))
+  is_scalar = true;
+elseif (isa (hspace.space_of_level(1), 'sp_vector'))
+  is_scalar = false;
+else
+  error ('Unknown space type')
+end
+
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) == hmsh.nlevels-1)
+  if (is_scalar)
+    degree = hspace.space_of_level(hmsh.nlevels-1).degree;
+    regularity = degree - 1;
+  else
+    for icomp = 1:numel(hspace.space_of_level(1).scalar_spaces)
+      degree{icomp} = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp}.degree;
+      regularity{icomp} = degree{icomp} - 1;
+    end
+  end
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  degree = hspace.space_of_level(hmsh.nlevels-1).degree;
-  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, degree-1);
+  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, regularity);
   hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
-  hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
+  if (is_scalar)
+    hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
+  else
+    hspace.Proj(hmsh.nlevels-1,:,:) = Proj;
+  end
   
   hspace.nlevels = hmsh.nlevels;
   hspace.active{hmsh.nlevels} = [];
