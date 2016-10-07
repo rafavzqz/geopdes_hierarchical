@@ -65,7 +65,7 @@
 %    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
