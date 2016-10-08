@@ -39,17 +39,17 @@ end
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) == hmsh.nlevels-1)
-  if (is_scalar)
-    degree = hspace.space_of_level(hmsh.nlevels-1).degree;
-    regularity = degree - 1;
-  else
-    for icomp = 1:numel(hspace.space_of_level(1).scalar_spaces)
-      degree{icomp} = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp}.degree;
-      regularity{icomp} = degree{icomp} - 1;
-    end
-  end
+%   if (is_scalar)
+%     degree = hspace.space_of_level(hmsh.nlevels-1).degree;
+%     regularity = degree - 1;
+%   else
+%     for icomp = 1:numel(hspace.space_of_level(1).scalar_spaces)
+%       degree{icomp} = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp}.degree;
+%       regularity{icomp} = degree{icomp} - 1;
+%     end
+%   end
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, regularity);
+  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub);%, degree, regularity);
   hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
   if (is_scalar)
     hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
