@@ -65,14 +65,26 @@ while (iter < adaptivity_data.num_max_iter)
 %   fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
   
   if (iter == 1)
-    marked{1} = 1:hspace.ndof;
+    if (strcmpi (adaptivity_data.flag, 'functions'))
+      marked{1} = 1:hspace.ndof;
+    else
+      marked{1} = 1:hmsh.nel;
+    end
   elseif (iter == 2)
     marked{1} = [];
-    marked{2} = 1:hspace.ndof;
+    if (strcmpi (adaptivity_data.flag, 'functions'))
+      marked{2} = 1:hspace.ndof;
+    else
+      marked{2} = 1:hmsh.nel;
+    end
   elseif (iter == 3)
     marked{1} = [];
     marked{2} = [];
-    marked{3} = 1:hspace.ndof;
+    if (strcmpi (adaptivity_data.flag, 'functions'))
+      marked{3} = 1:hspace.ndof;
+    else
+      marked{3} = 1:hmsh.nel;
+    end
   else
     marked = cell (hspace.nlevels, 1);
   end
