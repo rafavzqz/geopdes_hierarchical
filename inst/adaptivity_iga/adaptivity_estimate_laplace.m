@@ -57,6 +57,12 @@
 
 function est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
 
+if (isfield(adaptivity_data, 'C0_est'))
+  C0_est = adaptivity_data.C0_est;
+else
+  C0_est = 1;
+end
+
 [ders, F] = hspace_eval_hmsh (u, hspace, hmsh, {'gradient', 'laplacian'});
 dernum = ders{1};
 der2num = ders{2};
@@ -94,7 +100,7 @@ ms = ms * sqrt (hmsh.ndim);
 switch adaptivity_data.flag
     case 'elements',
         est = sqrt (sum (aux.*w));
-        est = adaptivity_data.C0_est*h.*est(:);
+        est = C0_est*h.*est(:);
         
     case 'functions',
         Nf = cumsum ([0; hspace.ndof_per_level(:)]);
@@ -123,7 +129,7 @@ switch adaptivity_data.flag
                 est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
             end
         end
-        est = adaptivity_data.C0_est * coef .* sqrt(est);
+        est = C0_est * coef .* sqrt(est);
 end
 
 end

@@ -33,7 +33,7 @@
 %    - num_max_iter:  stopping criterium, maximum number of iterations allowed
 %    - tol:           stopping criterium, adaptive refinement is stopped when the global error estimator
 %                      is lower than tol.
-%    - C0_est:        an optional multiplicative constant for scaling the error estimators. (Default value: 1.0) XXXXXXXXXXXXXXXXXXXXXXXXX Esta bien asi? 
+%    - C0_est:        an optional multiplicative constant for scaling the error estimators (default value: 1).
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh:        plot the mesh at every iteration
