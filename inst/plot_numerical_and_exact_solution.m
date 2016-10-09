@@ -56,11 +56,13 @@ if ((nargin > 4 && ~isempty (uex)))
       elseif (ndim == 1 && rdim == 2)
         plot3 (F(1,:), F(2,:), uex(F)); hold on
       elseif (ndim == 2 && rdim == 2)
-        surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(uex(F(1,:,:),F(2,:,:)))); hold on
+        X = squeeze (F(1,:,:)); Y = squeeze (F(2,:,:));
+        surf (X, Y, uex(X, Y)); hold on
         shading interp
         xlabel('x'); ylabel('y'); zlabel('z')
       elseif (ndim == 2 && rdim == 3)
-        surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), squeeze(uex(F(1,:,:),F(2,:,:),F(3,:,:)))); hold on
+        X = squeeze (F(1,:,:)); Y = squeeze (F(2,:,:)); Z = squeeze (F(3,:,:));
+        surf (X, Y, Z, uex(X, Y, Z)); hold on
         shading interp
         xlabel('x'); ylabel('y'); zlabel('z')
       else
