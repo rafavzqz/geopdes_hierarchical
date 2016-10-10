@@ -38,17 +38,30 @@
 
 function [hmsh, hspace, geometry] = adaptivity_initialize_vector (problem_data, method_data)
 
-geometry  = geo_load (problem_data.geo_name);
-[knots, zeta] = kntrefine (geometry.nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
-  
-rule     = msh_gauss_nodes (method_data.nquad);
-[qn, qw] = msh_set_quad_nodes (zeta, rule);
-msh      = msh_cartesian (zeta, qn, qw, geometry);
-sp_scalar= sp_bspline (knots, method_data.degree, msh);
-scalar_spaces = repmat ({sp_scalar}, 1, msh.rdim);
-space    = sp_vector (scalar_spaces, msh);
+[geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
 
-hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
-hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
+npatch = numel (geometry);
+for iptc = 1:npatch
+  [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
+
+  rule     = msh_gauss_nodes (method_data.nquad);
+  [qn, qw] = msh_set_quad_nodes (zeta, rule);
+  msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc));
+  sp_scalar= sp_bspline (knots, method_data.degree, msh{iptc});
+  scalar_spaces = repmat ({sp_scalar}, 1, msh{iptc}.rdim);
+  space{iptc} = sp_vector (scalar_spaces, msh{iptc});
+end
+
+if (npatch == 1)
+  msh   = msh{1};
+  space = space{1};
+  hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
+  hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
+else
+  msh   = msh_multipatch (msh, boundaries);
+  space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
+  hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
+  hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated);
+end
 
 end
