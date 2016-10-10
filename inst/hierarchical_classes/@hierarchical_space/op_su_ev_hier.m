@@ -2,7 +2,7 @@
 %  for hierarchical splines, exploiting the multilevel structure.
 %
 %   mat = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu);
-%   [rows, cols, values] = op_u_v_hier (hspu, hspv, hmsh, lambda, mu);
+%   [rows, cols, values] = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu);
 %
 % INPUT:
 %

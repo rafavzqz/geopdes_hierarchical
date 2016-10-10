@@ -67,8 +67,8 @@ if (is_scalar)
   end
   
 else
-  cumsum_ndof_coarse = hspace.space_of_level(lev).cumsum_ndof;  
-  cumsum_ndof_fine = hspace.space_of_level(lev+1).cumsum_ndof;  
+  cumsum_ndof_coarse = hspace.space_of_level(lev).cumsum_ndof;
+  cumsum_ndof_fine = hspace.space_of_level(lev+1).cumsum_ndof;
   for icomp = 1:hspace.space_of_level(lev).ncomp_param
     ind_comp = ind(ind>cumsum_ndof_coarse(icomp) & ind<=cumsum_ndof_coarse(icomp+1)) - cumsum_ndof_coarse(icomp);
     [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).ndof_dir(icomp,:), 1], ind_comp); % The extra 1 makes it work in any dimension
