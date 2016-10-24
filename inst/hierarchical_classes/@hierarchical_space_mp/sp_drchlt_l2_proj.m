@@ -50,7 +50,8 @@ function [u, dofs] = sp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
 
     for lev = 1:hspace.boundary.nlevels
       boundary_gnum = hspace.boundary.space_of_level(lev).gnum;
-      [~,bnd_dofs_lev] = intersect (hspace.boundary.active{lev}, [boundary_gnum{iref_patch_list}]);
+      global_boundary_dofs = [boundary_gnum{iref_patch_list}];
+      [~,bnd_dofs_lev] = intersect (hspace.boundary.active{lev}, global_boundary_dofs(:));
       bnd_dofs = union (bnd_dofs, Nf(lev) + bnd_dofs_lev);
     end
   end
