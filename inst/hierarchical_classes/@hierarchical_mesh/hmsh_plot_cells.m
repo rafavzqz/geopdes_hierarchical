@@ -31,10 +31,8 @@ function nfig = hmsh_plot_cells (hmsh, npts, nfig)
 
 if (nargin == 3 && ishandle (nfig))
   figure (nfig)
-elseif (nargout == 1)
-  nfig = figure;
 else
-  figure;
+  nfig = gcf;
 end
 
 if (nargin < 2 || isempty (npts))
