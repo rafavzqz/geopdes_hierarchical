@@ -36,7 +36,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, geometry] = adaptivity_initialize_hcurl (problem_data, method_data)
+function [hmsh, hspace, geometry, hspace_l2] = adaptivity_initialize_hcurl (problem_data, method_data)
 
 [geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
 npatch = numel (geometry);
@@ -46,6 +46,7 @@ space  = cell (1, npatch);
 for iptc = 1:npatch
   [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
   [knots_hcurl, degree_hcurl] = knt_derham (knots, method_data.degree, 'Hcurl');
+  [knots_l2, degree_l2] = knt_derham (knots, method_data.degree, 'L2');
 
   rule     = msh_gauss_nodes (method_data.nquad);
   [qn, qw] = msh_set_quad_nodes (zeta, rule);
@@ -57,6 +58,8 @@ for iptc = 1:npatch
   end
   space{iptc} = sp_vector (scalar_spaces, msh{iptc}, 'curl-preserving');
   clear scalar_spaces
+  
+  space_l2{iptc} = sp_bspline (knots_l2, degree_l2, msh{iptc}, 'integral-preserving');
 end
 
 if (npatch == 1)
@@ -64,11 +67,15 @@ if (npatch == 1)
   space = space{1};
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
   hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
+  space_l2 = space_l2{1};
+  hspace_l2   = hierarchical_space (hmsh, space_l2, method_data.space_type, method_data.truncated);
 else
   msh   = msh_multipatch (msh, boundaries);
   space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
   hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
   hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated);
+  space_l2 = sp_multipatch (space_l2, msh, interfaces, boundary_interfaces);
+  hspace_l2= hierarchical_space_mp (hmsh, space_l2, method_data.space_type, method_data.truncated);
 end
 
 end
