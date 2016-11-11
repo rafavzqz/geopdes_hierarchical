@@ -68,14 +68,18 @@ if (npatch == 1)
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
   hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
   space_l2 = space_l2{1};
-  hspace_l2   = hierarchical_space (hmsh, space_l2, method_data.space_type, method_data.truncated);
+  if (nargout == 4)
+    hspace_l2   = hierarchical_space (hmsh, space_l2, method_data.space_type, method_data.truncated);
+  end
 else
   msh   = msh_multipatch (msh, boundaries);
   space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
   hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
   hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated);
   space_l2 = sp_multipatch (space_l2, msh, interfaces, boundary_interfaces);
-  hspace_l2= hierarchical_space_mp (hmsh, space_l2, method_data.space_type, method_data.truncated);
+  if (nargout == 4)
+    hspace_l2= hierarchical_space_mp (hmsh, space_l2, method_data.space_type, method_data.truncated);
+  end
 end
 
 end
