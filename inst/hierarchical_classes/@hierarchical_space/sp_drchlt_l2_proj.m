@@ -38,7 +38,7 @@ if (hmsh.ndim == 1)
   dofs = []; u = zeros (numel(drchlt_sides), 1);
   for ii = 1:numel(drchlt_sides)
     iside = drchlt_sides(ii);
-    dofs = union (dofs, hspace.boundary(iside).dofs);
+    dofs = [dofs, hspace.boundary(iside).dofs];
     if (iside == 1)
       u(ii) = h(hmsh.mesh_of_level(1).breaks{1}(1), iside);
     else
