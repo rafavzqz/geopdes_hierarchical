@@ -123,10 +123,6 @@ end
 
 % ADAPTIVE LOOP
 iter = 0;
-bpx = struct ('Ai', [], 'rhs', [], 'int_dofs', [], 'ndof', [], 'new_dofs', [], 'Pi', [], 'Qi', []);
-
-bpx(1).Qi = speye (hspace.ndof);
-
 while (1)
   iter = iter + 1;
   
@@ -144,7 +140,7 @@ while (1)
     disp('SOLVE:')
     fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   end
-  [u, bpx] = adaptivity_solve_laplace (hmsh, hspace, problem_data, bpx);
+  u = adaptivity_solve_laplace (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
@@ -196,25 +192,8 @@ while (1)
   end
 
 % REFINE
-  disp('REFINE:')
-  if (method_data.bpx_dofs)
-    [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-  else
-    [hmsh, hspace, Cref, new_dofs] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-    % NEW_DOFS VA POI INTERSECATO CON int_dofs dentro solve
-    bpx(iter+1).new_dofs = new_dofs;
-  end
-  fprintf('\n');
-  
-%
-bpx(iter).Pi = Cref;
-bpx(iter+1).Qi = speye (hspace.ndof);
-for lind = iter:-1:1
-  bpx(lind).Qi = bpx(lind+1).Qi * bpx(lind).Pi;
+  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
 end
-
-end
-
 
 solution_data.iter = iter;
 solution_data.gest = gest(1:iter);

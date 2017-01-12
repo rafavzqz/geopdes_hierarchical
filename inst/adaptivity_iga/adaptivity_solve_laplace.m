@@ -41,12 +41,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, bpx] = adaptivity_solve_laplace (hmsh, hspace, problem_data, bpx)
+function u = adaptivity_solve_laplace (hmsh, hspace, problem_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
-
-% end? end+1?
 
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
@@ -85,31 +83,7 @@ u(dirichlet_dofs) = u_dirichlet;
 int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
 rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs);
 
-bpx(end).Ai = stiff_mat;
-bpx(end).rhs = rhs;
-bpx(end).int_dofs = int_dofs;
-bpx(end).ndof = hspace.ndof;
-bpx(end).new_dofs = int_dofs;
-
-this_level = numel(bpx);
-for lind = 1:this_level
-  bpx(lind).Qi = bpx(lind).Qi(:,bpx(lind).new_dofs);
-end
-
 % Solve the linear system
-% u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
-  tol = 1e-10;% / 2^(ilev*degree(1));
-  
-  A = bpx(end).Ai(int_dofs, int_dofs);
-  b = bpx(end).rhs(int_dofs);
-
-  [u(int_dofs), flag, relres, iter, resvec, eigest_j] = ...
-    pcg_w_eigest (A, b, tol, numel (int_dofs), @prec_bpx_new, [], bpx, this_level, 1);
-%     eigest_j = my_bpx (A, bpx, ilev, 1);
-  bpx(end).lambda_min_jac = eigest_j(1);
-  bpx(end).lambda_max_jac = eigest_j(2);
-  bpx(end).CondNum_PrecA_jac = eigest_j(2) / eigest_j(1);
-  bpx.CondNum_PrecA_jac
+u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
 
 end
-
