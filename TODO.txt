@@ -1,0 +1,6 @@
+- Add the references to articles (our preprint, THB-splines)
+
+- Clean estimate and mark
+- Try to optimize the refinement, if possible 
+- Try to avoid recomputing the 1D spaces for the boundary
+
