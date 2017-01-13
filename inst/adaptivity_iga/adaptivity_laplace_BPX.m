@@ -120,8 +120,6 @@ end
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
-bpx = struct ();
-
 % ADAPTIVE LOOP
 iter = 0;
 while (1)
