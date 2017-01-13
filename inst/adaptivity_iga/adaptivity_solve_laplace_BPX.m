@@ -102,6 +102,20 @@ new_dofs = int_dofs;
   hmsh_bpx   = hierarchical_mesh (hmsh.mesh_of_level(1), method_data.nsub_refine); % Bisogna passare method_data
   hspace_bpx = hierarchical_space (hmsh_bpx, hspace.space_of_level(1), method_data.space_type, method_data.truncated);
 
+bpx = struct ('Pi', [], 'Ai', [], 'rhs', [], 'int_dofs', [], ...
+    'ndof', hspace_bpx.ndof, 'new_dofs', [], 'Qi', []);
+bpx(1).Ai = op_gradu_gradv_hier (hspace_bpx(1), hspace_bpx(1), hmsh_bpx(1));
+  drchlt_dofs_lev = [];
+  for ii = problem_data.drchlt_sides(:)'
+%     aux_dofs = hspace_bpx(ref+1).boundary(ii).dofs; % QUESTI NON ESISTONO
+    aux_dofs = intersect (hspace.space_of_level(1).boundary(ii).dofs, hspace_bpx(1).active{end});
+%     aux_dofs = aux_dofs + cumndof(ref+1);
+    drchlt_dofs_lev = union (drchlt_dofs_lev, aux_dofs);
+  end
+bpx(1).int_dofs = setdiff (1:hspace_bpx(1).ndof, drchlt_dofs_lev);
+bpx(1).new_dofs = bpx(1).int_dofs;
+bpx(1).Qi = speye (hspace_bpx(1).ndof);
+  
 % CI MANCA L'INFORMAZIONE DI METHOD_DATA.BPX_DOFS  
 for ref = 1:hmsh.nlevels-1
   marked = cell(ref,1);
@@ -114,31 +128,38 @@ for ref = 1:hmsh.nlevels-1
 %% Calcolare queste bene  
   bpx(ref+1).Ai = op_gradu_gradv_hier (hspace_bpx(ref+1), hspace_bpx(ref+1), hmsh_bpx(ref+1));
   bpx(ref+1).rhs = op_f_v_hier (hspace_bpx(ref+1), hmsh_bpx(ref+1), problem_data.f);
-  drchlt_dofs = [];
+  drchlt_dofs_lev = [];
+  cumndof = cumsum ([0 hspace_bpx(ref+1).ndof_per_level]);
   for ii = problem_data.drchlt_sides(:)'
-    drchlt_dofs = union (drchlt_dofs, hspace.boundary(ii).dofs);
+%     aux_dofs = hspace_bpx(ref+1).boundary(ii).dofs; % QUESTI NON ESISTONO
+    aux_dofs = intersect (hspace.space_of_level(ref+1).boundary(ii).dofs, hspace_bpx(ref+1).active{end});
+    aux_dofs = aux_dofs + cumndof(ref+1);
+    drchlt_dofs_lev = union (drchlt_dofs_lev, aux_dofs);
   end
-  bpx(ref+1).int_dofs = setdiff (1:hspace_bpx(ref+1), drchlt_dofs);
+  bpx(ref+1).int_dofs = setdiff (1:hspace_bpx(ref+1).ndof, drchlt_dofs_lev);
   
 % Aggiungere calcolo della Qi
-  bpx(ref+1).ndof = hspace.ndof;
+  bpx(ref+1).ndof = hspace_bpx(ref+1).ndof;
   if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
     bpx(ref+1).new_dofs = bpx(ref+1).int_dofs;
   else
     bpx(ref+1).new_dofs = [];%intersect (bpx(ref+1).int_dofs, hspace.active{ref+1}XXXXXX); % Deve essere numerazione di hspace
   end
 
-% Controllare che sia fatto nel modo giusto (togliere condizioni di bordo)  
-  for lind = 1:ref+1
-    bpx(lind).Qi = bpx(lind).Qi(:,bpx(lind).new_dofs);
+  bpx(ref+1).Qi = speye (bpx(ref+1).ndof);
+  for lind = ref:-1:1
+    bpx(lind).Qi = bpx(lind+1).Qi * bpx(lind).Pi;
   end
-
+  
 end
 
+% Controllare che sia fatto nel modo giusto (togliere condizioni di bordo)  
 Qi = speye (hspace.ndof);
-Qi = Qi(:,new_dofs);
-bpx(hmsh.nlevels) = struct ('Ai', stiff_mat, 'rhs', rhs, 'int_dofs', int_dofs, ...
-    'ndof', hspace.ndof, 'new_dofs', new_dofs, 'Pi', [], 'Qi', Qi);
+bpx(hmsh.nlevels) = struct ('Pi', [], 'Ai', stiff_mat, 'rhs', rhs, 'int_dofs', int_dofs, ...
+    'ndof', hspace.ndof, 'new_dofs', new_dofs, 'Qi', Qi);
+for lind = 1:hmsh.nlevels
+  bpx(lind).Qi = bpx(lind).Qi(:,bpx(lind).new_dofs);
+end
 
 
 % Solve the linear system
