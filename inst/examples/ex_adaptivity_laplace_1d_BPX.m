@@ -21,11 +21,11 @@ problem_data.graduex = @(x) 2*pi*cos(2*pi*x);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = 2;            % Degree of the splines
-method_data.regularity  = 1;            % Regularity of the splines
-method_data.nsub_coarse = 12;            % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.degree      = 3;            % Degree of the splines
+method_data.regularity  = 2;            % Regularity of the splines
+method_data.nsub_coarse = 2;            % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = 2;            % Number of subdivisions for each refinement
-method_data.nquad       = 3;            % Points for the Gaussian quadrature rule
+method_data.nquad       = 4;            % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 method_data.bpx_dofs = 'All_dofs';
