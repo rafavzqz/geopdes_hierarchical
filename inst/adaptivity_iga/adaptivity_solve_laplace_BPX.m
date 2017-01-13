@@ -100,7 +100,6 @@ rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_
 % Initialize
 hmsh_bpx   = hierarchical_mesh (hmsh.mesh_of_level(1), method_data.nsub_refine); % Bisogna passare method_data
 hspace_bpx = hierarchical_space (hmsh_bpx, hspace.space_of_level(1), method_data.space_type, method_data.truncated);
-new_dofs = 1:hspace_bpx.ndof;
 bpx(1).Qi = speye (hspace_bpx(1).ndof);
 
 % CI MANCA L'INFORMAZIONE DI METHOD_DATA.BPX_DOFS  
@@ -121,8 +120,9 @@ for ref = 1:hmsh.nlevels-1
 
   if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
     bpx(ref).new_dofs = bpx(ref).int_dofs;
-  else
-    bpx(ref).new_dofs = [];%intersect (bpx(ref+1).int_dofs, hspace.active{ref+1}XXXXXX); % Deve essere numerazione di hspace
+  elseif (strcmpi (method_data.bpx_dofs, 'New_dofs')) % XXXXXXX This is only valid for the non-truncated basis
+    new_dofs = cumndof(ref) + (1:numel(hspace_bpx(ref).active{end}));
+    bpx(ref).new_dofs = intersect (bpx(ref).int_dofs, new_dofs);
   end
   
   marked = cell(ref,1);
@@ -148,8 +148,10 @@ bpx(hmsh.nlevels).ndof = hspace.ndof;
 bpx(hmsh.nlevels).int_dofs = int_dofs;
 if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
   bpx(hmsh.nlevels).new_dofs = int_dofs;
-else
-  bpx(hmsh.nlevels).new_dofs = [];%intersect (int_dofs, hspace.active{end}); % Deve essere numerazione di hspace
+elseif (strcmpi (method_data.bpx_dofs, 'New_dofs'))
+  cumndof = cumsum ([0 hspace.ndof_per_level]);
+  new_dofs = cumndof(hmsh.nlevels) + (1:numel(hspace.active{end}));
+  bpx(hmsh.nlevels).new_dofs = intersect (int_dofs, new_dofs);
 end
 bpx(hmsh.nlevels).Qi = speye (hspace.ndof);
 
