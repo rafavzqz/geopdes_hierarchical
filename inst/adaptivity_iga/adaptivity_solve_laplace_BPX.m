@@ -50,7 +50,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, bpx] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data)
+function [u, bpx] = adaptivity_solve_laplace_BPX2 (hmsh, hspace, problem_data, method_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
@@ -97,56 +97,43 @@ rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %    FROM HERE WE DO THE BPX PRECONDITIONER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-new_dofs = int_dofs;
 % Initialize
-  hmsh_bpx   = hierarchical_mesh (hmsh.mesh_of_level(1), method_data.nsub_refine); % Bisogna passare method_data
-  hspace_bpx = hierarchical_space (hmsh_bpx, hspace.space_of_level(1), method_data.space_type, method_data.truncated);
-
-bpx = struct ('Pi', [], 'Ai', [], 'rhs', [], 'int_dofs', [], ...
-    'ndof', hspace_bpx.ndof, 'new_dofs', [], 'Qi', []);
-bpx(1).Ai = op_gradu_gradv_hier (hspace_bpx(1), hspace_bpx(1), hmsh_bpx(1));
-  drchlt_dofs_lev = [];
-  for ii = problem_data.drchlt_sides(:)'
-%     aux_dofs = hspace_bpx(ref+1).boundary(ii).dofs; % QUESTI NON ESISTONO
-    aux_dofs = intersect (hspace.space_of_level(1).boundary(ii).dofs, hspace_bpx(1).active{end});
-%     aux_dofs = aux_dofs + cumndof(ref+1);
-    drchlt_dofs_lev = union (drchlt_dofs_lev, aux_dofs);
-  end
-bpx(1).int_dofs = setdiff (1:hspace_bpx(1).ndof, drchlt_dofs_lev);
-bpx(1).new_dofs = bpx(1).int_dofs;
+hmsh_bpx   = hierarchical_mesh (hmsh.mesh_of_level(1), method_data.nsub_refine); % Bisogna passare method_data
+hspace_bpx = hierarchical_space (hmsh_bpx, hspace.space_of_level(1), method_data.space_type, method_data.truncated);
+new_dofs = 1:hspace_bpx.ndof;
 bpx(1).Qi = speye (hspace_bpx(1).ndof);
-  
+
 % CI MANCA L'INFORMAZIONE DI METHOD_DATA.BPX_DOFS  
 for ref = 1:hmsh.nlevels-1
+  bpx(ref).Ai = op_gradu_gradv_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
+  bpx(ref).rhs = op_f_v_hier (hspace_bpx(ref), hmsh_bpx(ref), problem_data.f);
+  bpx(ref).ndof = hspace_bpx(ref).ndof;
+  
+  drchlt_dofs_lev = [];
+  cumndof = cumsum ([0 hspace_bpx(ref).ndof_per_level]);
+  for ii = problem_data.drchlt_sides(:)'
+%     aux_dofs = hspace_bpx(ref+1).boundary(ii).dofs; % QUESTI NON ESISTONO
+    aux_dofs = intersect (hspace.space_of_level(ref).boundary(ii).dofs, hspace_bpx(ref).active{end});
+    aux_dofs = aux_dofs + cumndof(ref);
+    drchlt_dofs_lev = union (drchlt_dofs_lev, aux_dofs);
+  end
+  bpx(ref).int_dofs = setdiff (1:hspace_bpx(ref).ndof, drchlt_dofs_lev);
+
+  if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
+    bpx(ref).new_dofs = bpx(ref).int_dofs;
+  else
+    bpx(ref).new_dofs = [];%intersect (bpx(ref+1).int_dofs, hspace.active{ref+1}XXXXXX); % Deve essere numerazione di hspace
+  end
+  
   marked = cell(ref,1);
   marked{ref} = hmsh.deactivated{ref};
   adap_data.flag = 'elements';
 %   [hmsh_bpx(ref+1), hspace_bpx(ref+1), Cref, new_dofsXXX] = adaptivity_refine (hmsh, hspace, marked, adap_data); % raffinando per elementi
   [hmsh_bpx(ref+1), hspace_bpx(ref+1), Cref] = adaptivity_refine (hmsh_bpx(ref), hspace_bpx(ref), marked, adap_data); % raffinando per elementi
+  bpx(ref+1).ndof = hspace_bpx(ref+1).ndof;
   
   bpx(ref).Pi = Cref;
-%% Calcolare queste bene  
-  bpx(ref+1).Ai = op_gradu_gradv_hier (hspace_bpx(ref+1), hspace_bpx(ref+1), hmsh_bpx(ref+1));
-  bpx(ref+1).rhs = op_f_v_hier (hspace_bpx(ref+1), hmsh_bpx(ref+1), problem_data.f);
-  drchlt_dofs_lev = [];
-  cumndof = cumsum ([0 hspace_bpx(ref+1).ndof_per_level]);
-  for ii = problem_data.drchlt_sides(:)'
-%     aux_dofs = hspace_bpx(ref+1).boundary(ii).dofs; % QUESTI NON ESISTONO
-    aux_dofs = intersect (hspace.space_of_level(ref+1).boundary(ii).dofs, hspace_bpx(ref+1).active{end});
-    aux_dofs = aux_dofs + cumndof(ref+1);
-    drchlt_dofs_lev = union (drchlt_dofs_lev, aux_dofs);
-  end
-  bpx(ref+1).int_dofs = setdiff (1:hspace_bpx(ref+1).ndof, drchlt_dofs_lev);
-  
-% Aggiungere calcolo della Qi
-  bpx(ref+1).ndof = hspace_bpx(ref+1).ndof;
-  if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
-    bpx(ref+1).new_dofs = bpx(ref+1).int_dofs;
-  else
-    bpx(ref+1).new_dofs = [];%intersect (bpx(ref+1).int_dofs, hspace.active{ref+1}XXXXXX); % Deve essere numerazione di hspace
-  end
-
-  bpx(ref+1).Qi = speye (bpx(ref+1).ndof);
+  bpx(ref+1).Qi = speye (hspace_bpx(ref+1).ndof);
   for lind = ref:-1:1
     bpx(lind).Qi = bpx(lind+1).Qi * bpx(lind).Pi;
   end
@@ -154,9 +141,18 @@ for ref = 1:hmsh.nlevels-1
 end
 
 % Controllare che sia fatto nel modo giusto (togliere condizioni di bordo)  
-Qi = speye (hspace.ndof);
-bpx(hmsh.nlevels) = struct ('Pi', [], 'Ai', stiff_mat, 'rhs', rhs, 'int_dofs', int_dofs, ...
-    'ndof', hspace.ndof, 'new_dofs', new_dofs, 'Qi', Qi);
+bpx(hmsh.nlevels).Ai = stiff_mat;
+bpx(hmsh.nlevels).rhs = rhs;
+bpx(hmsh.nlevels).Pi = [];
+bpx(hmsh.nlevels).ndof = hspace.ndof;
+bpx(hmsh.nlevels).int_dofs = int_dofs;
+if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
+  bpx(hmsh.nlevels).new_dofs = int_dofs;
+else
+  bpx(hmsh.nlevels).new_dofs = [];%intersect (int_dofs, hspace.active{end}); % Deve essere numerazione di hspace
+end
+bpx(hmsh.nlevels).Qi = speye (hspace.ndof);
+
 for lind = 1:hmsh.nlevels
   bpx(lind).Qi = bpx(lind).Qi(:,bpx(lind).new_dofs);
 end
