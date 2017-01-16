@@ -50,7 +50,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, bpx] = adaptivity_solve_laplace_BPX2 (hmsh, hspace, problem_data, method_data)
+function [u, bpx] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
