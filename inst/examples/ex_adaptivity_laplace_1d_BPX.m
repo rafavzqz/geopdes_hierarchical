@@ -21,11 +21,11 @@ problem_data.graduex = @(x) 2*pi*cos(2*pi*x);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = 3;            % Degree of the splines
-method_data.regularity  = 2;            % Regularity of the splines
-method_data.nsub_coarse = 2;            % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.degree      = 4;            % Degree of the splines
+method_data.regularity  = 3;            % Regularity of the splines
+method_data.nsub_coarse = 16;            % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = 2;            % Number of subdivisions for each refinement
-method_data.nquad       = 4;            % Points for the Gaussian quadrature rule
+method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 method_data.bpx_dofs = 'All_dofs';
@@ -37,17 +37,18 @@ adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.max_level = 12;
+adaptivity_data.max_level = 11;
 adaptivity_data.max_ndof = 5000;
-adaptivity_data.num_max_iter = 15;
+adaptivity_data.num_max_iter = 7;
 adaptivity_data.max_nel = 5000;
-adaptivity_data.tol = 1e-9;
+adaptivity_data.tol = 1e-19;
 
 % GRAPHICS
 plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
+[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
 % Plot
 [eu, F] = sp_eval (u, hspace, geometry, 101);

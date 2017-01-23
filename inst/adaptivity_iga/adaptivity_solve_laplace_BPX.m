@@ -50,7 +50,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, bpx] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data)
+function [u, bpx, CondNum_PrecA_jac, CondA] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
@@ -102,7 +102,6 @@ hmsh_bpx   = hierarchical_mesh (hmsh.mesh_of_level(1), method_data.nsub_refine);
 hspace_bpx = hierarchical_space (hmsh_bpx, hspace.space_of_level(1), method_data.space_type, method_data.truncated);
 bpx(1).Qi = speye (hspace_bpx(1).ndof);
 
-% CI MANCA L'INFORMAZIONE DI METHOD_DATA.BPX_DOFS  
 for ref = 1:hmsh.nlevels-1
   bpx(ref).Ai = op_gradu_gradv_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
   bpx(ref).rhs = op_f_v_hier (hspace_bpx(ref), hmsh_bpx(ref), problem_data.f);
@@ -118,10 +117,23 @@ for ref = 1:hmsh.nlevels-1
   end
   bpx(ref).int_dofs = setdiff (1:hspace_bpx(ref).ndof, drchlt_dofs_lev);
 
-  if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+% Qua si decide se prendiamo tutte le funzioni fino a livello ref (All_dofs)
+%  solo le funzioni aggiunte a livello ref (New_dofs)
+%  o le funzioni aggiunte + le troncate dalle nuove funzioni (Mod_dofs)
+% Negli ultimi due casi, va cambiata la variabile new_dofs che ci
+% restituisce adaptivity_refine.
+% Forse bpx_dofs va messo su adaptivity_data (e adap_data), e non su method_data.
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
     bpx(ref).new_dofs = bpx(ref).int_dofs;
   elseif (strcmpi (method_data.bpx_dofs, 'New_dofs')) % XXXXXXX This is only valid for the non-truncated basis
     new_dofs = cumndof(ref) + (1:numel(hspace_bpx(ref).active{end}));
+    bpx(ref).new_dofs = intersect (bpx(ref).int_dofs, new_dofs);
+  elseif (strcmpi (method_data.bpx_dofs, 'Mod_dofs')) % XXXX This is only valid for the truncated basis in this particular case
+    new_dofs = cumndof(ref) + (1:numel(hspace_bpx(ref).active{end}));
+    new_dofs = union (new_dofs, new_dofs-method_data.degree(1));
     bpx(ref).new_dofs = intersect (bpx(ref).int_dofs, new_dofs);
   end
   
@@ -152,6 +164,11 @@ elseif (strcmpi (method_data.bpx_dofs, 'New_dofs'))
   cumndof = cumsum ([0 hspace.ndof_per_level]);
   new_dofs = cumndof(hmsh.nlevels) + (1:numel(hspace.active{end}));
   bpx(hmsh.nlevels).new_dofs = intersect (int_dofs, new_dofs);
+elseif (strcmpi (method_data.bpx_dofs, 'Mod_dofs')) % XXXXXXXX Only for this particular case
+  cumndof = cumsum ([0 hspace.ndof_per_level]);
+  new_dofs = cumndof(hmsh.nlevels) + (1:numel(hspace.active{end}));
+  new_dofs = union (new_dofs, new_dofs-method_data.degree(1));
+  bpx(hmsh.nlevels).new_dofs = intersect (int_dofs, new_dofs);
 end
 bpx(hmsh.nlevels).Qi = speye (hspace.ndof);
 
@@ -162,14 +179,18 @@ end
 
 % Solve the linear system
 % u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
-  tol = 1e-10;% / 2^(ilev*degree(1));
+  tol = 1e-10 / 2^(hmsh.nlevels*method_data.degree(1));
   
   A = bpx(end).Ai(int_dofs, int_dofs);
   b = bpx(end).rhs(int_dofs);
 
+% 1 is Jacobi, 2 is Gauss-Seidel, 4 is Richardson
   [u(int_dofs), flag, relres, iter, resvec, eigest_j] = ...
     pcg_w_eigest (A, b, tol, numel (int_dofs), @prec_bpx_new, [], bpx, hmsh.nlevels, 1);
-%     eigest_j = my_bpx (A, bpx, ilev, 1);
   lambda_min_jac = eigest_j(1);
   lambda_max_jac = eigest_j(2);
   CondNum_PrecA_jac = eigest_j(2) / eigest_j(1)
+  disp(eigest_j)
+
+% CondA = 0;
+   CondA = eigs(A,1,'LM')/eigs(A,1,'SM')
