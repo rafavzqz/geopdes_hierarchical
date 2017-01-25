@@ -100,7 +100,7 @@ hspace.Csub{1} = speye (space.ndof);
 
 hspace.dofs = [];
 
-if (~isempty (hmsh.boundary))
+if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:numel (hmsh.boundary)
       boundary = hierarchical_space_mp (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
