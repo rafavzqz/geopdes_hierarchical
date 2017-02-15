@@ -49,7 +49,7 @@ function varargout = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu)
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell (hmsh.msh_lev{ilev}.rdim,1);
       for idim = 1:hmsh.rdim
-        x{idim} = hmsh.msh_lev{ilev}.geo_map(idim,:,:);
+        x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
       spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true, 'divergence', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true, 'divergence', true);
