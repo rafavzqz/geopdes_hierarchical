@@ -190,8 +190,19 @@ while (1)
     disp('Refining all the elements of the finest level, except a fixed number. The estimator is not used.')
     disp('Refinement is forced to be done BY ELEMENTS')
     marked = cell (hmsh.nlevels, 1);
-    marked{end} = hmsh.active{end}(1:end-(method_data.degree));
+    if (hmsh.ndim == 1)
+      marked{end} = hmsh.active{end}(1:end-(method_data.degree));
+    elseif (hmsh.ndim == 2)
+      nel_elems = sqrt (numel(hmsh.active{end})); % Non funziona in generale
+      nel_dir = hmsh.mesh_of_level(end).nel_dir;
+      indx = 1:nel_elems-method_data.degree(1);
+      indy = 1:nel_elems-method_data.degree(2);
+      [IX,IY] = ndgrid (indx, indy);
+      indices = sub2ind (nel_dir, IX, IY);
+      marked{end} = indices(:);
+    end
     adaptivity_data.flag = 'elements';
+    num_marked = sum (cellfun (@numel, marked));
   end
   if (plot_data.print_info); 
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
