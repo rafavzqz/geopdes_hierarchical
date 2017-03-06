@@ -27,11 +27,12 @@
 
 function hmsh = hmsh_remove_empty_levels (hmsh)
 
-if (~isempty (hmsh.boundary))
+if (~isempty (hmsh.boundary) && ~isequal(hmsh.boundary.ndim,0))
   for iside = 1:numel(hmsh.boundary)
     hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
   end
 end
+
 
 for ilev = hmsh.nlevels:-1:2
   if (isempty (hmsh.active{ilev}))

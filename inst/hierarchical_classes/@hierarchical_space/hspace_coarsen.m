@@ -197,13 +197,14 @@ if (nargout == 2)
             % level lev
             active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
             % get cells to be activated in projection
-            cells_activated_in_proj = union(sp_get_cells(hspace.space_of_level(lev), hmsh.mesh_of_level(lev), active_funs_supported{lev}), reactivated_cell{lev}); % cells to be projected
+            cells_activated_in_proj = union(sp_get_cells(hspace.space_of_level(lev), hmsh.mesh_of_level(lev), active_funs_supported{lev}),...
+                reactivated_cell{lev}); 
             % initialize temporary coarse dofs vector
             u_coarse_temp = cell(1, max(cells_activated_in_proj));
             % element dimensional scaling parameter
-            htarget_el = hmsh.msh_lev{lev}.element_size(:);
+            htarget_el = hmsh.msh_lev{lev}.element_size(1);
             
-            % loop over elements to be reactivated
+            % loop over elements involved in projection
             for el = 1:numel(cells_activated_in_proj)
                 % get indeces of functions to be activated in projection
                 funs_projected = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), cells_activated_in_proj(el));
@@ -221,15 +222,15 @@ if (nargout == 2)
                 children_cells_unidim_indeces = [I, J, K];
                 [I,J,K] = ind2sub(nel_dir{lev}, cells_activated_in_proj');
                 cells_activated_in_proj_dir = [I; J; K];
-                parent_index = hmsh_get_parent(hmsh, lev, el);
+%                 parent_index = hmsh_get_parent(hmsh, lev, cells_activated_in_proj(el));
                 
                 % loop over dimensions
                 for idim = 1:hmsh.ndim
-                    hsource_el = htarget_el(parent_index)/hmsh.nsub(idim);
+                    hsource_el = htarget_el/hmsh.nsub(idim);
                     % get local Bézier projector
                     B_el_proj = bzrproj_el_hcoarse( hspace.space_of_level(lev).degree(idim),...
                         Bzr_ext_container{idim, lev+1}, inv(Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el))),...
-                        hsource_el, htarget_el(parent_index), unique(children_cells_unidim_indeces(:,idim)));
+                        hsource_el, htarget_el, unique(children_cells_unidim_indeces(:,idim)));
                     % assembly the operators of each sub-element
                     B_target_el = zeros(hspace.space_of_level(lev).degree(idim)+1, 2 + hspace.space_of_level(lev).degree(idim));
                     for j=1:2
@@ -250,7 +251,7 @@ if (nargout == 2)
             
             % smooth projected dofs
             u_coarse{lev}(funs_to_smooth) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_to_smooth, lev);
-
+            
             % ... else copy the level dof of the previous state
         else
             ndof_per_level_updated = cellfun (@numel, hspace.active);
@@ -282,7 +283,7 @@ end
 %           hmsh:                       an object of the class hierarchical_mesh, already coarsened
 %           u_coarse [1 x nel]:         cell array of projected dofs over each target element
 %           removed_cells:              cell array with the elements removed during coarsening, for each level
-%           level:                      level of the hierarchical mesh
+%           level:                      hierarchical mesh level
 %
 % Output:   smoothed_dofs:              array of smmothed dofs
 %
@@ -316,6 +317,5 @@ for i=1:numel(funs_to_smooth)
     % end j loop
 end
 % end loop over funs to smooth
-
 smoothed_dofs = smoothed_dofs(funs_to_smooth);
 end
