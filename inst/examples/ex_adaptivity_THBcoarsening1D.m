@@ -1,6 +1,6 @@
-%% EX_ADAPTIVITY_THBCOARSENING
+%% EX_ADAPTIVITY_THBCOARSENING1D
 % Test for THB-spline coarsening algorithm:
-% An initialtruncated hierarchical 2D mesh is considered.
+% An initial truncated hierarchical 1D mesh is considered.
 % The method works ONLY if THB-splines are used.
 %
 %
@@ -140,7 +140,7 @@ figure(4); plot (squeeze(F(1,:,:)), eu)
 
 %% Refinement =============================================================
 marked_ref{1} = [];
-marked_ref{2} = [];
+marked_ref{2} = 3;
 marked_ref{3} = [8 9];
 marked_ref{4} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
@@ -156,7 +156,7 @@ figure(5); plot (squeeze(F(1,:,:)), eu)
 %% Coarsening back to the initial state ===================================
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = [];
+marked_coarse{3} = [5 6];
 marked_coarse{4} = [15 16 17 18];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(3)));
@@ -174,6 +174,7 @@ figure(6); plot (squeeze(F(1,:,:)), eu)
 for i=1:numel(u)
     if (u(i) < initial_values(i)-eps(single(1/2)) || u(i) > initial_values(i)+eps(single(1/2)))
         disp('is not a projector !');
+        break;
     else
         disp('O.K.');
     end
