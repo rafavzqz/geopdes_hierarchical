@@ -131,8 +131,8 @@ function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_rea
 
 active = hspace.active;
 deactivated = hspace.deactivated;
-active_funs_supported = cell(1, hspace.nlevels);         % cell array with the active functions of level l supported by the reactivated_cell
-Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);     % n-dimensional cell array to cache Bézier extraction matrices of each level
+active_funs_support = cell(1, hspace.nlevels);                      % cell array with the active cells supporting reactivated functions
+Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);                % n-dimensional cell array to cache Bézier extraction matrices of each level
 
 % initialize the cell array to store the coarsened dofs u_coarse
 u_coarse = cell(1, hspace.nlevels);
@@ -151,14 +151,18 @@ for lev = hspace.nlevels-1:-1:1
     u_coarse{lev} = hspace.Csub{lev}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
     
     if  ~isempty (reactivated_cell{lev})
-        funs_on_reactivated_cells = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), reactivated_cell{lev});
-        funs2remove = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
+        [reactivated_funs_support, ~] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), funs_to_reactivate{lev});
         
+        funs2remove = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
         active{lev} = setdiff(active{lev}, funs2remove);
         active{lev} = union (active{lev}, funs_to_reactivate{lev});
         
         deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
-        active_funs_supported{lev} = intersect(funs_on_reactivated_cells, active{lev});
+
+        % active cells in projection
+        active_reactivated_funs_support = intersect(hmsh.active{lev}, reactivated_funs_support);         % active cells of the support of reactivated functions
+        active_funs_support{lev} = union(reactivated_cell{lev}, active_reactivated_funs_support);        % cells active in projection
+
     end
 end
 
@@ -196,8 +200,7 @@ if (nargout == 2)
             % level lev
             active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
             % get cells to be activated in projection        
-            [active_cells_supp, ~] =sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), active_funs_supported{lev});
-            cells_activated_in_proj = union(reactivated_cell{lev}, active_cells_supp);
+            cells_activated_in_proj = active_funs_support{lev};
             % initialize temporary coarse dofs vector
             u_coarse_temp = cell(1, max(cells_activated_in_proj));
             % element dimensional scaling parameter
@@ -207,12 +210,10 @@ if (nargout == 2)
             for el = 1:numel(cells_activated_in_proj)
                 % get children of the cell
                 children_cells = hmsh_get_children(hmsh, lev, cells_activated_in_proj(el));
-                
                 % get indeces of functions to be activated in projection
                 funs_projected = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), cells_activated_in_proj(el));
                 % initialize u_coarse_temp of the element el                
                 u_coarse_temp{cells_activated_in_proj(el)} = zeros(hspace.space_of_level(lev).ndof, 1);
-                
                 % functions with support on children cells to be
                 % projected
                 funs_supported = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), children_cells);
@@ -221,6 +222,7 @@ if (nargout == 2)
                 % get indeces for projection
                 [I,J,K] = ind2sub(nel_dir{lev+1}, children_cells);
                 children_cells_unidim_indeces = [I, J, K];
+                % check size of cells_activated_in_proj
                 if (size(cells_activated_in_proj,2) < size(cells_activated_in_proj, 1))
                     cells_activated_in_proj = cells_activated_in_proj';
                 end
@@ -247,16 +249,11 @@ if (nargout == 2)
                 
                 %project
                 u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
-                fun2reactivate = intersect(funs_on_reactivated_cells, funs_projected);
-                u_coarse{lev}(fun2reactivate) = u_coarse_temp{cells_activated_in_proj(el)}(fun2reactivate);
             end
             % end elements loop
             
             % smoothing of active functions with support on reactiveted cells
-            funs_to_smooth = union (active_funs_supported{lev}, funs_to_reactivate{lev});
-            
-            % smooth projected dofs
-            u_coarse{lev}(funs_to_smooth) = smooth_dofs (hspace, hmsh, active, deactivated, u_coarse_temp, funs_to_smooth, lev);
+            u_coarse{lev}(funs_to_reactivate{lev}) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_to_reactivate{lev}, lev);
             
             % ... else copy the level dof of the previous state
         else
@@ -266,7 +263,7 @@ if (nargout == 2)
         end
         % end if
     end
-    % end loop over elements
+    % end loop over levels
 end
 
 hspace.active = active(1:hspace.nlevels);
@@ -279,7 +276,7 @@ hspace.coeff_pou = ones (hspace.ndof, 1);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function smoothed_dofs = smooth_dofs (hspace, hmsh, active, deactivated, u_coarse, funs_to_smooth, level)
+% function smoothed_dofs = smooth_dofs (hspace, hmsh, u_coarse, funs_to_smooth, level)
 %
 % This function updates the active (hspace.active) and deactivated (hspace.deactivated) degrees of freedom,
 % reactivating the functions in marked_funs.
@@ -287,10 +284,8 @@ end
 %
 % Input:    hspace:                                the fine space, an object of the class hierarchical_space
 %           hmsh:                                  an object of the class hierarchical_mesh, already coarsened
-%           active:                                cell array with indeces of active functions
-%           deactiveted:                           cell array with indeces of deactivated functions
 %           u_coarse [1 x nel]:                    cell array of projected dofs over each target element
-%           funs_to_smooth:                        index of functions to be averaged
+%           funs_to_smooth:                        functions to be averaged
 %           level:                                 hierarchical mesh level
 %
 % Output:   smoothed_dofs:              array of smoothed dofs
@@ -309,21 +304,17 @@ end
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-function smoothed_dofs = smooth_dofs (hspace, hmsh, active, deactivated, u_coarse, funs_to_smooth, level)
+function smoothed_dofs = smooth_dofs (hspace, hmsh, u_coarse, funs_to_smooth, level)
 
 % functions supports
 [~, funs_support_index] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), funs_to_smooth);
-[active_funs_supports, ~] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), active{level});
-[deactiveted_funs_supports, ~] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), deactivated{level});
 
 % initialize smoothed dofs vector
 smoothed_dofs = zeros(max(funs_to_smooth), 1);
 % loop over functions to smooth
 for i=1:numel(funs_to_smooth)
-    % active cells
-    active_cells = setdiff(active_funs_supports, deactiveted_funs_supports);
-    % active index in funs support
-    index2smooth = intersect(funs_support_index{i}, active_cells);
+    % cell supports activated in projection
+    index2smooth = intersect(funs_support_index{i}, find(~cellfun('isempty', u_coarse)));
     % weights for smoothing
     w = wgheval_LLSQ( index2smooth );
     % loop over cell supports
