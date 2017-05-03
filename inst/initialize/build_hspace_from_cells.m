@@ -72,7 +72,7 @@ adaptivity_data.flag = 'elements';
 
 for ref = 1:nlevels
     marked = cell (ref,1);
-    marked{ref} = cells{ref};
+    marked{ref} = setdiff (hmsh.active{ref}, cells{ref});
     
     [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);    
 end
