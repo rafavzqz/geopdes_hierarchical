@@ -5,9 +5,9 @@
 %
 % INPUT:
 %
-%   hspace:    object representing the hierarchical space (see hierarchical_space)
-%   hmsh:      object representing the hierarchical mesh on which the space is defined (see hierarchical_mesh)
-%   hmsh_fine: object representing the finer hierarchical mesh where to evaluate the space (see hierarchical_mesh)
+%   hspace:    object representing the hierarchical space (see hierarchical_space_mp)
+%   hmsh:      object representing the hierarchical mesh on which the space is defined (see hierarchical_mesh_mp)
+%   hmsh_fine: object representing the finer hierarchical mesh where to evaluate the space (see hierarchical_mesh_mp)
 %
 % OUTPUT:
 %
@@ -45,17 +45,9 @@ for ilev = 1:hmsh.nlevels
   if (~all (ismember (hmsh.active{ilev}, union (hmsh_fine.active{ilev}, hmsh_fine.deactivated{ilev}))))
     error ('The new mesh is not finer than the original one')
   end
-  if (~all (hmsh.mesh_of_level(ilev).nel_dir == hmsh.mesh_of_level(ilev).nel_dir))
-    error ('The underlying Cartesian meshes are not the same')
+  if (~all (hmsh.mesh_of_level(ilev).nel_per_patch == hmsh.mesh_of_level(ilev).nel_per_patch))
+    error ('The underlying meshes for each level are not the same')
   end
-end
-
-if (isa (hspace.space_of_level(1), 'sp_scalar'))
-  is_scalar = true;
-elseif (isa (hspace.space_of_level(1), 'sp_vector'))
-  is_scalar = false;
-else
-  error ('Unknown space type')
 end
 
 % Adding empty levels
@@ -63,11 +55,7 @@ for ilev = hspace.nlevels+1:hmsh_fine.nlevels
   msh_level = hmsh_fine.mesh_of_level(ilev);
   [new_space, Proj] = sp_refine (hspace.space_of_level(ilev-1), msh_level, hmsh_fine.nsub); %, degree, degree-1);
   hspace.space_of_level(ilev) = new_space; clear new_space
-  if (is_scalar)
-    hspace.Proj(ilev-1,:) = Proj(:);
-  else
-    hspace.Proj(ilev-1,:,:) = Proj;
-  end
+  hspace.Proj(ilev-1,:) = Proj(:);
   
   hspace.nlevels = ilev;
   hspace.active{ilev} = [];

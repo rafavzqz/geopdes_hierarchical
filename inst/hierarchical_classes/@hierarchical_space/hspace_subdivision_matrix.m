@@ -46,10 +46,6 @@ Csub{1} = speye (hspace.space_of_level(1).ndof);
 Csub{1} = Csub{1}(:,hspace.active{1});
 
 if (strcmpi (option, 'reduced'))
-  if (hspace.nlevels < hmsh.nlevels)
-    hspace = hspace_add_new_level (hspace, hmsh);
-  end
-
   fun_on_active = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.active{1});
   fun_on_deact = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.deactivated{1});
   fun_on_deact = union (fun_on_active, fun_on_deact);
