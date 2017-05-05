@@ -43,13 +43,24 @@ for ilev = 1:hmsh.nlevels
   end
 end
 
+if (isa (hspace.space_of_level(1), 'sp_scalar'))
+  is_scalar = true;
+elseif (isa (hspace.space_of_level(1), 'sp_vector'))
+  is_scalar = false;
+else
+  error ('Unknown space type')
+end
+
 % Adding empty levels
 for ilev = hspace.nlevels+1:hmsh_fine.nlevels
   msh_level = hmsh_fine.mesh_of_level(ilev);
-  degree = hspace.space_of_level(ilev-1).degree;
-  [new_space, Proj] = sp_refine (hspace.space_of_level(ilev-1), msh_level, hmsh_fine.nsub, degree, degree-1);
+  [new_space, Proj] = sp_refine (hspace.space_of_level(ilev-1), msh_level, hmsh_fine.nsub); %, degree, degree-1);
   hspace.space_of_level(ilev) = new_space; clear new_space
-  hspace.Proj(ilev-1,:) = Proj(:);
+  if (is_scalar)
+    hspace.Proj(ilev-1,:) = Proj(:);
+  else
+    hspace.Proj(ilev-1,:,:) = Proj;
+  end
   
   hspace.nlevels = ilev;
   hspace.active{ilev} = [];
