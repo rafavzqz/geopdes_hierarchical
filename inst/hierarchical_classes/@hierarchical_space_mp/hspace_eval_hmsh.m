@@ -75,11 +75,9 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
   end
   if (hspace.ncomp ~= 1)
     catdir = catdir + 1;
-    eval_elements = @(SP, MSH) sp_evaluate_element_list (SP, MSH, 'value', value, 'gradient', gradient, 'hessian', hessian);
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
         'value', value, 'gradient', gradient, 'hessian', hessian, 'curl', curl, 'divergence', divergence);
   else
-    eval_elements = @(SP, MSH) sp_evaluate_element_list (SP, MSH, 'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian);
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
         'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian);
   end
