@@ -1,18 +1,16 @@
-function [ w ] = wgheval( p, C, fun_index, el_index, fnc_sup_el_index_vec, h )
+function [ w ] = wgheval( C, fun_index, el_index, fnc_sup_el_index_vec )
 %WGHEVAL: Bézier projection weights valuation
 % Evaluate the weights to smooth the projected control values.
 %
 % Calling Sequence:
 %
-%   G_inv = grmninv( p, U, n )
+%   w = wgheval( C, fun_index, el_index, fnc_sup_el_index_vec )
 %
 %    INPUT:
-%      p                    - polynomial degree
 %      C                    - Bézier extraction operator
 %      fun_index            - index of the function to smooth
-%      el_index             - number of elements of the source mesh to project
+%      el_index             - index of elements of the source mesh to project
 %      fnc_sup_el_index_vec - vector of element index support of the function
-%      h                    - element size
 %
 %    OUTPUT:
 %
@@ -44,21 +42,24 @@ c_num  = 0.0;
 c_den = 0.0;
 
 % loop over control values...
-for i=1:p+1
-    c_num = c_num + C(fun_index, i, el_index);
+for i=1:size(C,2)
+    c_num = c_num + C(fun_index(fnc_sup_el_index_vec==el_index), i, el_index);
 end
-c_num = c_num * h;
 % ... loop over each support element
 for i_el=1:numel(fnc_sup_el_index_vec)
     c_den_i = 0.0;
     % ... and loop again over the control values
-    for i=1:p+1
-        c_den_i = c_den_i + C(fun_index, i, fnc_sup_el_index_vec(i_el));
+    for i=1:size(C,2)
+        c_den_i = c_den_i + C(fun_index(i_el), i, fnc_sup_el_index_vec(i_el));
     end
     c_den = c_den_i + c_den;
-    c_den = c_den*h;
 end
 
+if (c_den==0)
+   disp('ERROR: Weight is not a number !!!') 
+elseif (c_den==0 && c_num==0)
+   disp('ERROR: Weight is zero !!!') 
+end
 w = c_num/c_den;
 
 end
@@ -67,11 +68,11 @@ end
 %! p = 2;
 %! knots = [0 0 0 1/3 2/3 1 1 1];
 %! C = bzrextr(knots, p);
-%! if (isequal(wgheval( p, C, 1, 1, 1, 1/3 ), 1) && ...
-%!      isequal(wgheval( p, C, 2, 1, [1 2], 1/3 ),[3/4 1/4]) && ...
-%!       isequal(wgheval( p, C, 3, 1, 1, 1/3 ),[1/6 2/3 1/6]) && ...
-%!        isequal(wgheval( p, C, 4, 1, 1, 1/3 ),[1/4 3/4]) && ...
-%!         isequal(wgheval( p, C, 5, 1, 1, 1/3 ),1))
+%! if (isequal(wgheval( C, 1, 1, 1 ), 1) && ...
+%!      isequal(wgheval(  C, [2 1], 1, [1 2] ),[3/4]) && ...
+%!       isequal(wgheval(  C, [3 2 1], 2, [1 2 3] ),[2/3]) && ...
+%!        isequal(wgheval(  C, [1 2], 2, [2 3] ),[1/4]) && ...
+%!         isequal(wgheval(  C, 3, 3, 3 ),1))
 %!     disp('Sucess !!!');
 %! else
 %!     disp('Error !!!');
