@@ -37,16 +37,17 @@ function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adapt
 
 switch (adaptivity_data.flag)
   case 'functions'
-    marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
+    [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+    reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
   case 'elements'
-    marked_elements = marked;
+    [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
 end
 
-[hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
+[hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 
-reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
+reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
 if (nargout == 3)
-%   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
   [hspace, Ccoar] = hspace_coarsen_new (hspace, hmsh, reactivated_fun, removed_cells);
 else
   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
@@ -55,4 +56,27 @@ end
 hmsh = hmsh_remove_empty_levels (hmsh);
 hspace = hspace_remove_empty_levels (hspace, hmsh);
 
+
+
+
+% switch (adaptivity_data.flag)
+%   case 'functions'
+%     marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
+%   case 'elements'
+%     marked_elements = marked;
+% end
+% 
+% [hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
+% 
+% reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
+% if (nargout == 3)
+% %   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+%   [hspace, Ccoar] = hspace_coarsen_new (hspace, hmsh, reactivated_fun, removed_cells);
+% else
+%   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+% end
+% 
+% hmsh = hmsh_remove_empty_levels (hmsh);
+% hspace = hspace_remove_empty_levels (hspace, hmsh);
+% 
 end
