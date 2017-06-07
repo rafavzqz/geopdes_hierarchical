@@ -40,20 +40,49 @@ function [parents, flag] = hspace_get_parents (hspace, lev, ind)
 % [~,parents] = find (Cmat(ind,:));
 % parents = unique (parents);
 
-ndim = size (hspace.Proj, 2);
+if (isa (hspace.space_of_level(1), 'sp_scalar'))
+  is_scalar = true;
+  ndim = size (hspace.Proj, 2);
+elseif (isa (hspace.space_of_level(1), 'sp_vector'))
+  is_scalar = false;
+  ndim = size (hspace.Proj, 3);
+else
+  error ('Unknown space type')
+end
+
 z = cell (ndim, 1);
 ind_sub = cell (ndim, 1);
-[ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).ndof_dir, 1], ind); % The extra 1 makes it work in any dimension
-
 parents = [];
-for ii = 1:numel(ind_sub{1})
-  aux = cell (ndim, 1);
-  for idim = 1:ndim
-    aux{idim} = find (hspace.Proj{lev-1, idim}(ind_sub{idim}(ii),:));
+if (is_scalar)
+  [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).ndof_dir, 1], ind); % The extra 1 makes it work in any dimension
+
+  for ii = 1:numel(ind_sub{1})
+    aux = cell (ndim, 1);
+    for idim = 1:ndim
+      aux{idim} = find (hspace.Proj{lev-1, idim}(ind_sub{idim}(ii),:));
+    end
+    [z{1:ndim}] = ndgrid (aux{:});
+    auxI = sub2ind ([hspace.space_of_level(lev-1).ndof_dir, 1], z{:});
+    parents = union (parents, auxI(:));
   end
-  [z{1:ndim}] = ndgrid (aux{:});
-  auxI = sub2ind ([hspace.space_of_level(lev-1).ndof_dir, 1], z{:});
-  parents = union (parents, auxI(:));
+  
+else
+  cumsum_ndof_coarse = hspace.space_of_level(lev-1).cumsum_ndof;  
+  cumsum_ndof_fine = hspace.space_of_level(lev).cumsum_ndof;  
+  for icomp = 1:hspace.space_of_level(lev).ncomp_param
+    ind_comp = ind(ind>cumsum_ndof_fine(icomp) & ind<=cumsum_ndof_fine(icomp+1)) - cumsum_ndof_fine(icomp);
+    [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).ndof_dir(icomp,:), 1], ind_comp); % The extra 1 makes it work in any dimension
+
+    for ii = 1:numel(ind_sub{1})
+      aux = cell (ndim, 1);
+      for idim = 1:ndim
+        aux{idim} = find (hspace.Proj{lev-1, icomp, idim}(:,ind_sub{idim}(ii)));
+      end
+      [z{1:ndim}] = ndgrid (aux{:});
+      auxI = sub2ind ([hspace.space_of_level(lev-1).ndof_dir(icomp,:), 1], z{:});
+      parents = union (parents, auxI(:)+cumsum_ndof_coarse(icomp));
+    end    
+  end
 end
 
 if (nargout == 2)

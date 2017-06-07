@@ -40,7 +40,7 @@ end
 for ilev = hspace.nlevels:-1:hmsh.nlevels+1
   if (isempty (hspace.active{ilev}))
     hspace.space_of_level(ilev) = [];
-    hspace.Proj(ilev-1,:) = [];
+    hspace.Proj(ilev-1,:,:) = [];
 
     hspace.active(ilev) = [];
     hspace.deactivated(ilev) = [];

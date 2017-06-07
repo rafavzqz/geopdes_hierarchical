@@ -19,11 +19,14 @@
 %    ndof           (scalar)                total number of active functions 
 %    nlevels        (scalar)                the number of levels
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
-%    Proj           (hmsh.nlevels-1 x ndim cell-array) 
+%    Proj           (hmsh.nlevels-1 x ndim cell-array)
+%                   (hmsh.nlevels-1 x ncomp x ndim cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels
 %                                           Proj{l,i} is a matrix of size N_{l+1} x N_l where N_l is the number 
 %                                           of univariate functions of level l in the direction l, such that
-%                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c_j = Proj{l,i}(j,k)
+%                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c^k_j = Proj{l,i}(j,k)
+%                                           For vectors, it takes the form Proj{l,c,i}, 
+%                                           where c is the component in the parametric domain
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
 %    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
@@ -62,7 +65,7 @@
 %    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -78,6 +81,14 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function hspace = hierarchical_space (hmsh, space, varargin)
+
+if (isa (space, 'sp_scalar'))
+  is_scalar = true;
+elseif (isa (space, 'sp_vector'))
+  is_scalar = false;
+else
+  error ('Unknown space type')
+end
 
 default_values = {'standard', false};
 default_values(1:numel(varargin)) = varargin;
@@ -96,12 +107,16 @@ hspace.active{1} = (1:space.ndof)';
 hspace.deactivated{1} = [];
 
 hspace.coeff_pou = ones (space.ndof, 1);
-hspace.Proj = cell (0, hmsh.ndim);
+if (is_scalar)
+  hspace.Proj = cell (0, hmsh.ndim);
+else
+  hspace.Proj = cell (0, numel (space.scalar_spaces), hmsh.ndim);
+end
 hspace.Csub{1} = speye (space.ndof);
 
 hspace.dofs = [];
 
-if (~isempty (hmsh.boundary))
+if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:numel (hmsh.boundary)
       boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
