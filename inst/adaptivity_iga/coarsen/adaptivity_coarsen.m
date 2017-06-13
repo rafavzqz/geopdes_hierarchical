@@ -37,10 +37,12 @@ function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adapt
 
 switch (adaptivity_data.flag)
   case 'functions'
-    [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+%     [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+    [reactivated_fun, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
     reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
   case 'elements'
-    [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+%     [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+    [reactivated_elements, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
 end
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
