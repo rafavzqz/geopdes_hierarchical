@@ -1,6 +1,6 @@
 % HSPACE_GET_CHILDREN: compute the children of a given set of functions of the same level.
 %
-%     [children, flag] = hspace_get_children (hspace, lev, ind)
+%     [children, flag, children_of_function] = hspace_get_children (hspace, lev, ind)
 %
 % Get the children of a given set of basis functions of level lev, with the
 %  subdivision given by the "Proj" matrices
@@ -17,8 +17,9 @@
 %     children: indices of the children, with the numbering of the tensor product space
 %     flag:     a flag to tell whether all the input functions are active (1) 
 %               active or deactivated (2), or if there is any passive function (0)
+%     children_of_function: cell array with the children of each function
 %
-% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2016, 2017 Eduardo M. Garau, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -55,8 +56,10 @@ ind_sub = cell (ndim, 1);
 children = [];
 
 npatch = numel (hspace.space_of_level(1).sp_patch);
+children_of_function = cell (numel(ind), 1);
 
 if (is_scalar)
+  aux = cell (ndim, 1);
   for iptc = 1:npatch
     gnum = hspace.space_of_level(lev).gnum{iptc};
     [~,indices,~] = intersect (gnum, ind);
@@ -65,16 +68,17 @@ if (is_scalar)
 
     gnum = hspace.space_of_level(lev+1).gnum{iptc};
     for ii = 1:numel(ind_sub{1})
-      aux = cell (ndim, 1);
       for idim = 1:ndim
         aux{idim} = find (hspace.Proj{lev, iptc}{idim}(:,ind_sub{idim}(ii)));
       end
       [z{1:ndim}] = ndgrid (aux{:});
       auxI = sub2ind ([hspace.space_of_level(lev+1).sp_patch{iptc}.ndof_dir, 1], z{:});
       children = union (children, gnum(auxI(:)));
+      children_of_function{ii} = gnum(auxI(:)');
     end
   end
 else
+  aux = cell (ndim, 1);
   for iptc = 1:npatch
     gnum = hspace.space_of_level(lev).gnum{iptc};
     [~,indices,~] = intersect (gnum, ind);
@@ -87,7 +91,6 @@ else
       [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir(icomp,:), 1], ind_comp); % The extra 1 makes it work in any dimension
 
       for ii = 1:numel(ind_sub{1})
-        aux = cell (ndim, 1);
         for idim = 1:ndim
           aux{idim} = find (hspace.Proj{lev, iptc}{icomp, idim}(:,ind_sub{idim}(ii)));
 %           aux{idim} = find (hspace.Proj{lev, icomp, idim}(:,ind_sub{idim}(ii)));
@@ -95,6 +98,7 @@ else
         [z{1:ndim}] = ndgrid (aux{:});
         auxI = sub2ind ([hspace.space_of_level(lev+1).sp_patch{iptc}.ndof_dir(icomp,:), 1], z{:});
         children = union (children, gnum(auxI(:)+cumsum_ndof_fine(icomp)));
+        children_of_function{ii} = gnum(auxI(:)'+cumsum_ndof_fine(icomp));
       end
     end
   end
