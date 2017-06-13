@@ -53,8 +53,8 @@ for iptc = 1:hmsh.npatch
   cells_sub = cell (hmsh.ndim, 1);
   [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir, 1], indices); % The extra 1 makes it work in any dimension
 
+  aux = cell (hmsh.ndim, 1);
   for ii = 1:numel(cells_sub{1})
-    aux = cell (hmsh.ndim, 1);
     for idim = 1:hmsh.ndim
       aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
     end
