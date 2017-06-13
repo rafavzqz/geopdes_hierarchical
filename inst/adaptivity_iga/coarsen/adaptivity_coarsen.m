@@ -47,7 +47,7 @@ end
 
 reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
 if (nargout == 3)
-  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+%   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
   [hspace, Ccoar] = hspace_coarsen_new (hspace, hmsh, reactivated_fun, removed_cells);
 else
   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
