@@ -63,7 +63,7 @@ for iptc = 1:hmsh.npatch
     [z{1:hmsh.ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([hmsh.mesh_of_level(lev+1).msh_patch{iptc}.nel_dir, 1], z{:});
     children = union (children, auxI(:)+Nelem_fine(iptc));
-    children_of_cell(:,ii) = auxI(:)' + Nelem_fine(iptc));
+    children_of_cell(:,ii) = auxI(:)' + Nelem_fine(iptc);
   end
 end
 
