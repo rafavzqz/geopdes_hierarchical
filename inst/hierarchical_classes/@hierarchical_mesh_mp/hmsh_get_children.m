@@ -45,12 +45,13 @@ end
 
 children = [];
 ndim = hmsh.ndim;
+nsub = hmsh.nsub;
 
 Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
 Nelem_fine = cumsum ([0 hmsh.mesh_of_level(lev+1).nel_per_patch]);
 z = cell (ndim, 1);
 aux = cell (ndim, 1);
-children_of_cell = zeros (prod (hmsh.nsub), numel (ind));
+children_of_cell = zeros (prod (nsub), numel (ind));
 for iptc = 1:hmsh.npatch
   [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), ind);
 
@@ -59,7 +60,7 @@ for iptc = 1:hmsh.npatch
 
   for ii = 1:numel(cells_sub{1})
     for idim = 1:ndim
-      aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
+      aux{idim} = nsub(idim)*(cells_sub{idim}(ii)-1)+1:nsub(idim)*(cells_sub{idim}(ii));
     end
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([hmsh.mesh_of_level(lev+1).msh_patch{iptc}.nel_dir, 1], z{:});

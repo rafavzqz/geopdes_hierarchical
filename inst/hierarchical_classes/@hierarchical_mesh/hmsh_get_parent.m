@@ -42,18 +42,20 @@ if (any (ind > hmsh.mesh_of_level(lev).nel))
   error ('There are some indices greater than the number of elements of the level')
 end
 
+ndim = hmsh.ndim;
+nsub = hmsh.nsub;
 
-z = cell (hmsh.ndim, 1);
-cells_sub = cell (hmsh.ndim, 1);
+z = cell (ndim, 1);
+cells_sub = cell (ndim, 1);
 [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension
 
 parent = [];
 for ii = 1:numel(cells_sub{1})
-  aux = cell (hmsh.ndim, 1);
-  for idim = 1:hmsh.ndim
-    aux{idim} = floor ((cells_sub{idim}(ii) + hmsh.nsub(idim) - 1) / hmsh.nsub(idim));
+  aux = cell (ndim, 1);
+  for idim = 1:ndim
+    aux{idim} = floor ((cells_sub{idim}(ii) + nsub(idim) - 1) / nsub(idim));
   end
-  [z{1:hmsh.ndim}] = ndgrid (aux{:});
+  [z{1:ndim}] = ndgrid (aux{:});
   auxI = sub2ind ([hmsh.mesh_of_level(lev-1).nel_dir, 1], z{:});
   parent = union (parent, auxI(:));
 end

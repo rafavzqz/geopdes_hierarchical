@@ -44,6 +44,8 @@ if (any (ind > hmsh.mesh_of_level(lev).nel))
 end
 
 ndim = hmsh.ndim;
+nsub = hmsh.nsub;
+
 z = cell (ndim, 1);
 cells_sub = cell (ndim, 1);
 [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension
@@ -53,7 +55,7 @@ aux = cell (ndim, 1);
 children_of_cell = zeros (prod (hmsh.nsub), numel (ind));
 for ii = 1:numel(cells_sub{1})
   for idim = 1:ndim
-    aux{idim} = hmsh.nsub(idim)*(cells_sub{idim}(ii)-1)+1:hmsh.nsub(idim)*(cells_sub{idim}(ii));
+    aux{idim} = nsub(idim)*(cells_sub{idim}(ii)-1)+1:nsub(idim)*(cells_sub{idim}(ii));
   end
   [z{1:ndim}] = ndgrid (aux{:});
   auxI = sub2ind ([hmsh.mesh_of_level(lev+1).nel_dir, 1], z{:});
