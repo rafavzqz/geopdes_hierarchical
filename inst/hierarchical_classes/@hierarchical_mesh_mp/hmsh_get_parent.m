@@ -48,6 +48,7 @@ nsub = hmsh.nsub;
 
 Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
 Nelem_coarse = cumsum ([0 hmsh.mesh_of_level(lev-1).nel_per_patch]);
+aux = cell (ndim, 1);
 for iptc = 1:hmsh.npatch
   [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), ind);
   z = cell (ndim, 1);
@@ -55,7 +56,6 @@ for iptc = 1:hmsh.npatch
   [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir, 1], indices); % The extra 1 makes it work in any dimension
 
   for ii = 1:numel(cells_sub{1})
-    aux = cell (ndim, 1);
     for idim = 1:ndim
       aux{idim} = floor ((cells_sub{idim}(ii) + nsub(idim) - 1) / nsub(idim));
     end
