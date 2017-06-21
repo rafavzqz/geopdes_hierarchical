@@ -50,8 +50,8 @@ cells_sub = cell (ndim, 1);
 [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], ind); % The extra 1 makes it work in any dimension
 
 parent = [];
+aux = cell (ndim, 1);
 for ii = 1:numel(cells_sub{1})
-  aux = cell (ndim, 1);
   for idim = 1:ndim
     aux{idim} = floor ((cells_sub{idim}(ii) + nsub(idim) - 1) / nsub(idim));
   end
