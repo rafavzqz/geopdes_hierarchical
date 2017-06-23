@@ -35,15 +35,28 @@
 
 function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
 
+% switch (adaptivity_data.flag)
+%   case 'functions'
+% %     [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+%     [reactivated_fun, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
+%     reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
+%   case 'elements'
+% %     [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
+%     [reactivated_elements, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
+% end
+
 switch (adaptivity_data.flag)
   case 'functions'
 %     [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
-    [reactivated_fun, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
-    reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
+    
+%     [reactivated_fun, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
+%     reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
+    marked_elements = compute_cells_to_coarsen (hspace, hmsh, marked);
   case 'elements'
+    marked_elements = marked;
 %     [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
-    [reactivated_elements, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
 end
+[reactivated_elements, ~] = mark_elements_to_reactivate_from_active (marked_elements, hmsh, hspace, adaptivity_data);
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 

@@ -58,10 +58,10 @@ switch adaptivity_data.mark_strategy
   case 'GR'
     aux_marked = ones (size (est));
   case {'MS', 'GERS'}
-    aux_marked(est < adaptivity_data.mark_param_coarsening * max_est) = 1;
-%     nn = round(adaptivity_data.mark_param_coarsening*numel(est));
-%     [~, ind] = sort(est);
-%     aux_marked(ind(1:nn)) = 1;
+%     aux_marked(est < adaptivity_data.mark_param_coarsening * max_est) = 1;
+    nn = round(adaptivity_data.mark_param_coarsening*numel(est));
+    [~, ind] = sort(est);
+    aux_marked(ind(1:nn)) = 1;
 %   case 'GERS'
 %     est_sum2 = sum (est.^2);
 %     [est2_ordered, perm] = sort (est.^2, 'ascend');
