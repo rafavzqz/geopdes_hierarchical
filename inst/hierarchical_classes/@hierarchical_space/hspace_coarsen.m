@@ -332,7 +332,8 @@ for i=1:numel(funs_to_smooth)
     % loop over cell supports
     for j=1:numel(index2smooth)
         % weights for smoothing
-        w = wgheval( p, C, fun_index, index2smooth(j), index2smooth);
+%         w = wgheval( p, C, fun_index, index2smooth(j), index2smooth);
+        w = wgheval( C, fun_index, index2smooth(j), index2smooth);
         smoothed_dofs(funs_to_smooth(i)) = smoothed_dofs(funs_to_smooth(i)) + u_coarse{index2smooth(j)}(funs_to_smooth(i))*w;
     end
     % end j loop
