@@ -262,9 +262,10 @@ if (nargout == 2)
                 Bzr_ext(:,:,cells_activated_in_proj(el)) = B_extr_temp;
                 %project
                 u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
-                u_coarse{lev}(funs_projected) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_projected, lev, Bzr_ext);
-                
-            end
+
+            end % end loop over elements
+
+            u_coarse{lev}(funs_projected) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_projected, lev, Bzr_ext);
             
         end
         % end if
