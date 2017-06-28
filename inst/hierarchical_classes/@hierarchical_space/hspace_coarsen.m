@@ -59,7 +59,7 @@ if (boundary)% && hmsh.ndim > 1)
     end
       
     dofs = [];
-    for lev = 1:nlevels_aux;
+    for lev = 1:nlevels_aux
       [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
       dofs = union (dofs, Nf(lev) + iact);
     end
