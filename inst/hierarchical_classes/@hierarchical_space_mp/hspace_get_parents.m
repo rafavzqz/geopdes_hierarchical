@@ -57,6 +57,7 @@ parents = [];
 npatch = numel (hspace.space_of_level(1).sp_patch);
 
 if (is_scalar)
+  aux = cell (ndim, 1);
   for iptc = 1:npatch
     gnum = hspace.space_of_level(lev).gnum{iptc};
     [~,indices,~] = intersect (gnum, ind);
@@ -65,7 +66,6 @@ if (is_scalar)
 
     gnum = hspace.space_of_level(lev-1).gnum{iptc};
     for ii = 1:numel(ind_sub{1})
-      aux = cell (ndim, 1);
       for idim = 1:ndim
         aux{idim} = find (hspace.Proj{lev-1, iptc}{idim}(ind_sub{idim}(ii),:));
       end
@@ -75,6 +75,7 @@ if (is_scalar)
     end
   end
 else
+  aux = cell (ndim, 1);
   for iptc = 1:npatch
     gnum = hspace.space_of_level(lev).gnum{iptc};
     [~,indices,~] = intersect (gnum, ind);
@@ -87,7 +88,6 @@ else
       [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir(icomp,:), 1], ind_comp); % The extra 1 makes it work in any dimension
 
       for ii = 1:numel(ind_sub{1})
-        aux = cell (ndim, 1);
         for idim = 1:ndim
           aux{idim} = find (hspace.Proj{lev-1, iptc}{icomp, idim}(:,ind_sub{idim}(ii)));
 %           aux{idim} = find (hspace.Proj{lev-1, icomp, idim}(:,ind_sub{idim}(ii)));

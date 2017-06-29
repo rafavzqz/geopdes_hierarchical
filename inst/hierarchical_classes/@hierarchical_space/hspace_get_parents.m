@@ -54,10 +54,10 @@ z = cell (ndim, 1);
 ind_sub = cell (ndim, 1);
 parents = [];
 if (is_scalar)
+  aux = cell (ndim, 1);
   [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).ndof_dir, 1], ind); % The extra 1 makes it work in any dimension
 
   for ii = 1:numel(ind_sub{1})
-    aux = cell (ndim, 1);
     for idim = 1:ndim
       aux{idim} = find (hspace.Proj{lev-1, idim}(ind_sub{idim}(ii),:));
     end
@@ -67,6 +67,7 @@ if (is_scalar)
   end
   
 else
+  aux = cell (ndim, 1);
   cumsum_ndof_coarse = hspace.space_of_level(lev-1).cumsum_ndof;  
   cumsum_ndof_fine = hspace.space_of_level(lev).cumsum_ndof;  
   for icomp = 1:hspace.space_of_level(lev).ncomp_param
@@ -74,7 +75,6 @@ else
     [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).ndof_dir(icomp,:), 1], ind_comp); % The extra 1 makes it work in any dimension
 
     for ii = 1:numel(ind_sub{1})
-      aux = cell (ndim, 1);
       for idim = 1:ndim
         aux{idim} = find (hspace.Proj{lev-1, icomp, idim}(:,ind_sub{idim}(ii)));
       end
