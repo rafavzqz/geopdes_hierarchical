@@ -12,11 +12,14 @@
 %
 % OUTPUT:
 %    hspace: hierarchical_space object, which contains the following fields and methods
+%     (fields between brackets are only used for vector-valued spaces)
 % 
 %    FIELD_NAME     TYPE                    DESCRIPTION
 %    ncomp          (scalar)                number of components of the space
+%    [ncomp_param]  (scalar)                number of components of the functions of the space in the parametric domain (usually equal to msh.ndim)
 %    type           (string)                'standard' or 'simplified'
 %    ndof           (scalar)                total number of active functions 
+%    [comp_dofs]    (1 x ncomp_param cell array) indices of the degrees of freedom for each component
 %    nlevels        (scalar)                the number of levels
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
 %    Proj           (hmsh.nlevels-1 x ndim cell-array)
@@ -34,6 +37,7 @@
 %    Csub          (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
 %                                            as linear combinations of splines (active and inactive) of the current level
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
+%    dofs          (1 x ndof array)         only for boundary spaces, degrees of freedom that do not vanish on the boundary
 %
 %    METHODS
 %    Methods for post-processing, which require a computed vector of degrees of freedom
@@ -109,18 +113,28 @@ hspace.deactivated{1} = [];
 hspace.coeff_pou = ones (space.ndof, 1);
 if (is_scalar)
   hspace.Proj = cell (0, hmsh.ndim);
+  hspace.ncomp_param = 1;
+  hspace.comp_dofs = [];
 else
   hspace.Proj = cell (0, numel (space.scalar_spaces), hmsh.ndim);
+  hspace.ncomp_param = space.ncomp_param;
+  aux = 0;
+  for icomp = 1:space.ncomp_param
+    hspace.comp_dofs{icomp} = aux+(1:space.scalar_spaces{icomp}.ndof);
+    aux = aux + space.scalar_spaces{icomp}.ndof;
+  end
 end
 hspace.Csub{1} = speye (space.ndof);
 
 hspace.dofs = [];
+hspace.adjacent_dofs = [];
 
 if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:numel (hmsh.boundary)
       boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
       boundary.dofs = space.boundary(iside).dofs;
+      boundary.adjacent_dofs = space.boundary(iside).adjacent_dofs;
       hspace.boundary(iside) = boundary;
     end
   elseif (hmsh.ndim == 1)
