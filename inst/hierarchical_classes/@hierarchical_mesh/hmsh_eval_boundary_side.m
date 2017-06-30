@@ -69,6 +69,7 @@ if (isempty (element_list))
   return
 else
   nel = numel (element_list);
+  msh_side.nqn = nqn;
   msh_side.quad_weights = zeros (nqn, nel);
   msh_side.geo_map = zeros (hmsh_bnd.rdim, nqn, nel);
   msh_side.geo_map_jac = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, nqn, nel);

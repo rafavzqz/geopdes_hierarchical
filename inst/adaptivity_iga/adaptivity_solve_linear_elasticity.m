@@ -72,12 +72,35 @@ for iside = problem_data.press_sides
   rhs(dofs) = rhs(dofs) - op_pn_v_hier (hspace.boundary(iside), hmsh.boundary(iside), pside);
 end
 
-% Apply Dirichlet boundary conditions
+% Apply symmetry conditions
 u = zeros (hspace.ndof, 1);
+symm_dofs = [];
+for iside = problem_data.symm_sides
+  msh_side = hmsh_eval_boundary_side (hmsh, iside);
+  normal_comp = zeros (msh_side.rdim, msh_side.nqn * msh_side.nel);
+  for idim = 1:msh_side.rdim
+    normal_comp(idim,:) = reshape (msh_side.normal(idim,:,:), 1, msh_side.nqn*msh_side.nel);
+  end
+
+  parallel_to_axes = false;
+  for ind = 1:msh_side.rdim
+    ind2 = setdiff (1:msh_side.rdim, ind);
+    if (all (all (abs (normal_comp(ind2,:)) < 1e-10)))
+      symm_dofs = union (symm_dofs, hspace.boundary(iside).dofs(hspace.boundary(iside).comp_dofs{ind}));
+      parallel_to_axes = true;
+      break
+    end
+  end
+  if (~parallel_to_axes)
+    error ('adaptivity_solve_linear_elasticity: We have only implemented the symmetry condition for boundaries parallel to the axes')
+  end
+end
+
+% Apply Dirichlet boundary conditions
 [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
 u(dirichlet_dofs) = u_dirichlet;
 
-int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
+int_dofs = setdiff (1:hspace.ndof, union (dirichlet_dofs, symm_dofs));
 rhs(int_dofs) = rhs(int_dofs) - mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs);
 
 % Solve the linear system
