@@ -159,7 +159,7 @@ while (1)
   if (plot_data.print_info); disp('ESTIMATE:'); end
   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
-  if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
+  if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))
     [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end

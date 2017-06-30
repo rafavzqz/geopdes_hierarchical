@@ -4,7 +4,6 @@
 clear problem_data
 % Physical domain, defined as NURBS map given in a text file
 problem_data.geo_name = nrb4surf([0 0], [1 0], [0 1], [1 1]);
-%problem_data.geo_name = 'geo_ring.txt';
 
 % Type of boundary conditions
 % problem_data.nmnn_sides   = [2];
@@ -43,9 +42,9 @@ uyex = @(x,y) sin(2*pi*x).*(sin(2*pi*y));
 problem_data.uex = @(x, y) cat(1, ...
                 reshape (uxex (x,y), [1, size(x)]), ...
                 reshape (uyex (x,y), [1, size(x)]));
+problem_data.h = @(x,y,ind) problem_data.uex(x,y);
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
-clear method_data
 clear method_data
 method_data.degree      = [3 3];        % Degree of the splines
 method_data.regularity  = [2 2];        % Regularity of the splines
@@ -55,12 +54,24 @@ method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rul
 method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 
-%adaptivity_data.flag = 'elements';
-adaptivity_data.flag = 'functions';
-adaptivity_data.num_max_iter = 5;
+adaptivity_data.flag = 'elements';
+% adaptivity_data.flag = 'functions';
+adaptivity_data.C0_est = 1.0;
+adaptivity_data.mark_param = .5;
+adaptivity_data.mark_strategy = 'MS';
+adaptivity_data.max_level = 10;
+adaptivity_data.max_ndof = 15000;
+adaptivity_data.num_max_iter = 8;
+adaptivity_data.max_nel = 5000;
+adaptivity_data.tol = 1e-5;
+
+% GRAPHICS
+plot_data.print_info = true;
+plot_data.plot_hmesh = false;
+plot_data.plot_discrete_sol = false;
 
 % 3) CALL TO THE SOLVER
-[geometry, hmsh, hspace, u] = adaptivity_linear_elasticity (problem_data, method_data, adaptivity_data);
+[geometry, hmsh, hspace, u] = adaptivity_linear_elasticity (problem_data, method_data, adaptivity_data, plot_data);
 
 % 4) POST-PROCESSING. 
 % 4.1) Export to Paraview

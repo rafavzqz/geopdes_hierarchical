@@ -42,15 +42,10 @@ if (plot_data.plot_discrete_sol)
 end
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Definition of the hierarchical mesh and space
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_vector (problem_data, method_data);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% ADAPTIVE LOOP
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ADAPTIVE LOOP
 iter = 0;
 while (iter < adaptivity_data.num_max_iter)
   iter = iter + 1;
@@ -62,9 +57,8 @@ while (iter < adaptivity_data.num_max_iter)
     disp('ERROR: The partition-of-the-unity property does not hold.')
     solution_data.flag = -1; break
   end
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %% SOLVE
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+% SOLVE AND PLOT
   if (plot_data.print_info)
     disp('SOLVE:')
     fprintf('Number of levels: %d \n', hspace.nlevels)
@@ -99,9 +93,7 @@ while (iter < adaptivity_data.num_max_iter)
   end
  
     
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %% ESTIMATE
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ESTIMATE
    disp('ESTIMATE:')
    if (plot_data.print_info); disp('ESTIMATE:'); end
      est = adaptivity_estimate_linear_el(u, hmsh, hspace, problem_data, adaptivity_data);
@@ -125,37 +117,25 @@ while (iter < adaptivity_data.num_max_iter)
      end
    end
   
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
-  %% STOPPING CRITERIA
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  if (gest < adaptivity_data.tol)
-    disp('Success: The error estimation reached the desired tolerance')
-    break
-  end
-    
-  if (iter == adaptivity_data.num_max_iter)
-    disp('Warning: Maximum amount of iterations reached')
-    break
-  end
-    
-  if (hmsh.nlevels >= adaptivity_data.max_level)
-    disp('Warning: Maximum amount of levels reached')
-    break
-  end
-    
-  if (hspace.ndof > adaptivity_data.max_ndof)
-    disp('Warning: Maximum allowed DOFs achieved')
-    break
-  end
-    
-  if (hmsh.nel > adaptivity_data.max_nel)
-    disp('Warning: Maximum allowed amount of elements achieved')
-    break
+% STOPPING CRITERIA
+  if (gest(iter) < adaptivity_data.tol)
+    disp('Success: The error estimation reached the desired tolerance'); 
+    solution_data.flag = 1; break
+  elseif (iter == adaptivity_data.num_max_iter)
+    disp('Warning: reached the maximum number of iterations')
+    solution_data.flag = 2; break
+  elseif (hmsh.nlevels >= adaptivity_data.max_level)
+    disp('Warning: reached the maximum number of levels')
+    solution_data.flag = 3; break
+  elseif (hspace.ndof > adaptivity_data.max_ndof)
+    disp('Warning: reached the maximum number of DOFs')
+    solution_data.flag = 4; break
+  elseif (hmsh.nel > adaptivity_data.max_nel)
+    disp('Warning: reached the maximum number of elements')
+    solution_data.flag = 5; break
   end
   
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %% MARK
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MARK
   if (plot_data.print_info); disp('MARK:'); end
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   if (plot_data.print_info); 
@@ -163,9 +143,7 @@ while (iter < adaptivity_data.num_max_iter)
     disp('REFINE:')
   end
 
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %% REFINE
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% REFINE
   [hmsh, hspace] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data);
 end
 
