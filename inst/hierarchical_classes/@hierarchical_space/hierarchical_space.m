@@ -134,7 +134,11 @@ if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
     for iside = 1:numel (hmsh.boundary)
       boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
       boundary.dofs = space.boundary(iside).dofs;
-      boundary.adjacent_dofs = space.boundary(iside).adjacent_dofs;
+      if (is_scalar)
+        boundary.adjacent_dofs = space.boundary(iside).adjacent_dofs;
+      else
+        boundary.adjacent_dofs = [];
+      end
       hspace.boundary(iside) = boundary;
     end
   elseif (hmsh.ndim == 1)
