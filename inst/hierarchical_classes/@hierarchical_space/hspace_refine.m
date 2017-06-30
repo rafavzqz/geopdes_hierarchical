@@ -33,7 +33,8 @@
 function [hspace, Cref] = hspace_refine (hspace, hmsh, M, new_cells)
 
 boundary = ~isempty (hspace.boundary);
-
+is_scalar = isa (hspace.space_of_level(1), 'sp_scalar');
+        
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) < hmsh.nlevels)
@@ -79,8 +80,10 @@ if (boundary)% && hmsh.ndim > 1)
     for lev = 1:nlevels_aux
       [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
       dofs = union (dofs, Nf(lev) + iact);
-      [~,iact_adj] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).adjacent_dofs);
-      adjacent_dofs = union (adjacent_dofs, Nf(lev) + iact_adj);
+      if (is_scalar)
+        [~,iact_adj] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).adjacent_dofs);
+        adjacent_dofs = union (adjacent_dofs, Nf(lev) + iact_adj);
+      end
     end
     hspace.boundary(iside).dofs = dofs;
     hspace.boundary(iside).adjacent_dofs = adjacent_dofs;
