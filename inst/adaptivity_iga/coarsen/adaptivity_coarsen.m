@@ -33,7 +33,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, Ccoar_L2] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
 
 % switch (adaptivity_data.flag)
 %   case 'functions'
@@ -65,9 +65,9 @@ reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_
 if (nargout == 3)
   hspace_fine = hspace;
   [hspace, Ccoar] = hspace_coarsen_new (hspace, hmsh, reactivated_fun, removed_cells);
-  M = op_u_v_hier (hspace, hspace, hmsh);
-  G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
-  Ccoar_L2 = M \ G; Ccoar_L2(abs(Ccoar_L2) < 1e-12) = 0;
+%   M = op_u_v_hier (hspace, hspace, hmsh);
+%   G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
+%   Ccoar_L2 = M \ G; Ccoar_L2(abs(Ccoar_L2) < 1e-12) = 0;
 %   hspace.dofs = ones (hspace.ndof, 1);
 %   [hspace, Ccoar] = hspace_coarsen_massimo (hspace, hmsh, reactivated_fun, removed_cells);
 %   hspace.dofs = [];
