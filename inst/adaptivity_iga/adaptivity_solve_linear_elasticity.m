@@ -101,7 +101,7 @@ end
 u(dirichlet_dofs) = u_dirichlet;
 
 int_dofs = setdiff (1:hspace.ndof, union (dirichlet_dofs, symm_dofs));
-rhs(int_dofs) = rhs(int_dofs) - mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs);
+rhs(int_dofs) = rhs(int_dofs) - mat(int_dofs, dirichlet_dofs)*u_dirichlet;
 
 % Solve the linear system
 u(int_dofs) = mat(int_dofs, int_dofs) \ rhs(int_dofs);
