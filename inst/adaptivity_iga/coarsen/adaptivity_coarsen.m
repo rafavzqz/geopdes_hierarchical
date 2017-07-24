@@ -35,26 +35,11 @@
 
 function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
 
-% switch (adaptivity_data.flag)
-%   case 'functions'
-% %     [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
-%     [reactivated_fun, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
-%     reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
-%   case 'elements'
-% %     [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
-%     [reactivated_elements, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
-% end
-
 switch (adaptivity_data.flag)
   case 'functions'
-%     [reactivated_fun, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
-    
-%     [reactivated_fun, ~] = mark_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data);
-%     reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
     marked_elements = compute_cells_to_coarsen (hspace, hmsh, marked);
   case 'elements'
     marked_elements = marked;
-%     [reactivated_elements, ~] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data);
 end
 [reactivated_elements, ~] = mark_elements_to_reactivate_from_active (marked_elements, hmsh, hspace, adaptivity_data);
 
@@ -62,43 +47,18 @@ hmsh_fine = hmsh;
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 
 reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
+
 if (nargout == 3)
   hspace_fine = hspace;
-  [hspace, Ccoar] = hspace_coarsen_new (hspace, hmsh, reactivated_fun, removed_cells);
-%   M = op_u_v_hier (hspace, hspace, hmsh);
-%   G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
-%   Ccoar_L2 = M \ G; Ccoar_L2(abs(Ccoar_L2) < 1e-12) = 0;
-%   hspace.dofs = ones (hspace.ndof, 1);
-%   [hspace, Ccoar] = hspace_coarsen_massimo (hspace, hmsh, reactivated_fun, removed_cells);
-%   hspace.dofs = [];
+  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+  M = op_u_v_hier (hspace, hspace, hmsh);
+  G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
+  Ccoar = M \ G; Ccoar(abs(Ccoar) < 1e-12) = 0;
 else
   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
 end
-
+  
 hmsh = hmsh_remove_empty_levels (hmsh);
 hspace = hspace_remove_empty_levels (hspace, hmsh);
 
-
-
-
-% switch (adaptivity_data.flag)
-%   case 'functions'
-%     marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
-%   case 'elements'
-%     marked_elements = marked;
-% end
-% 
-% [hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
-% 
-% reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
-% if (nargout == 3)
-% %   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
-%   [hspace, Ccoar] = hspace_coarsen_new (hspace, hmsh, reactivated_fun, removed_cells);
-% else
-%   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
-% end
-% 
-% hmsh = hmsh_remove_empty_levels (hmsh);
-% hspace = hspace_remove_empty_levels (hspace, hmsh);
-% 
 end
