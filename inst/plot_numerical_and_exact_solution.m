@@ -78,4 +78,10 @@ sp_plot_solution (u, hspace, geometry, npts)
 shading interp
 title ('Numerical solution'),
 
+if ((nargin > 4 && ~isempty (uex)))
+  xl = xlim; yl = ylim; zl = zlim;
+  subplot (1, 2, 2)
+  xlim(xl); ylim (yl); zlim (zl);
+end
+
 end

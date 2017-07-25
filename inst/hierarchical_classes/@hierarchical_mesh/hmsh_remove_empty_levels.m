@@ -28,8 +28,10 @@
 function hmsh = hmsh_remove_empty_levels (hmsh)
 
 if (~isempty (hmsh.boundary))
-  for iside = 1:numel(hmsh.boundary)
-    hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
+  if (hmsh.ndim > 1)
+    for iside = 1:numel(hmsh.boundary)
+      hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
+    end
   end
 end
 
