@@ -181,6 +181,7 @@ for lev = hspace.nlevels-1:-1:1
     sp_previous_loc.connectivity = position;
     Gprev = op_u_v (sp_previous, sp_previous_loc, msh_previous, ones (msh_previous.nqn, msh_previous.nel));
     Gprev = Gprev * hspace.Csub{lev};
+% This is for old functions finer than the element. Otherwise, Gprev and Gprev2 have different sizes.
     Gprev(:,ndof_until_lev_old+1:ndof_until_next_lev) = 0;
 
 % Computation in cells that have been reactivated. We pass to the
