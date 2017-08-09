@@ -45,6 +45,14 @@ function rhs = op_f_v_hier (hspace, hmsh, f)
         x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+      indices = unique (sp_lev.connectivity);
+      [~,position] = ismember (sp_lev.connectivity, indices);
+      fun_on_active = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
+      fun_on_deact = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
+      fun_on_deact = union (fun_on_active, fun_on_deact);
+      sp_lev.ndof = numel (fun_on_deact);
+      sp_lev.connectivity = position;
+      
       b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, f(x{:}));
 
       dofs = 1:ndofs;

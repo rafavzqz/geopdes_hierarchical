@@ -222,7 +222,7 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev});
+      Cmat = matrix_basis_change_new__ (hspace, lev+1, deactivated{lev});
 
       [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
       [~,act_indices] = intersect (active_and_deact, active{lev});

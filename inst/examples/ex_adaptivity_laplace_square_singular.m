@@ -31,18 +31,18 @@ problem_data.graduex = @(x,y) cat (1, ...
         
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [3 3];        % Degree of the splines
-method_data.regularity  = [2 2];        % Regularity of the splines
+method_data.degree      = [2 2];        % Degree of the splines
+method_data.regularity  = [1 1];        % Regularity of the splines
 method_data.nsub_coarse = [2 2];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rule
+method_data.nquad       = [3 3];        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-% adaptivity_data.flag = 'elements';
-adaptivity_data.flag = 'functions';
+adaptivity_data.flag = 'elements';
+% adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
@@ -60,12 +60,12 @@ plot_data.plot_discrete_sol = false;
 [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 
 % EXPORT VTK FILE
-npts = [51 51];
-output_file = 'laplace_adaptivity_square_ex3.vts';
-sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
+npts = [21 21];
+% output_file = 'laplace_adaptivity_square_ex3.vts';
+% sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
 
 % Plot in Octave/Matlab
-[eu, F] = sp_eval (u, hspace, geometry, npts);
+[eu, F] = sp_eval (u, hspace, hmsh, geometry, npts);
 figure; subplot (1,2,1)
 surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 subplot(1,2,2)

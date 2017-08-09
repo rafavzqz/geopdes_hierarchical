@@ -56,14 +56,40 @@ function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff)
       for idim = 1:hmsh.rdim
         x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
-      spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
-      spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
-      K_lev = op_gradu_gradv (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
+%         spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
+%         spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
+%         K_lev = op_gradu_gradv (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
+%         dofs_u = 1:ndofs_u;
+%         dofs_v = 1:ndofs_v;
+% 
+%         K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.Csub{ilev}.' * K_lev * hspu.Csub{ilev};
 
-      dofs_u = 1:ndofs_u;
-      dofs_v = 1:ndofs_v;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
+        spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
 
-      K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.Csub{ilev}.' * K_lev * hspu.Csub{ilev};
+        indices_u = unique (spu_lev.connectivity);
+        [~,position_u] = ismember (spu_lev.connectivity, indices_u);
+        fun_on_active_u = sp_get_basis_functions (hspu.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
+        fun_on_deact_u = sp_get_basis_functions (hspu.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
+        fun_on_deact_u = union (fun_on_active_u, fun_on_deact_u);
+        spu_lev.ndof = numel (fun_on_deact_u);
+        spu_lev.connectivity = position_u;
+        
+        indices_v = unique (spv_lev.connectivity);
+        [~,position_v] = ismember (spv_lev.connectivity, indices_v);
+        fun_on_active_v = sp_get_basis_functions (hspv.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
+        fun_on_deact_v = sp_get_basis_functions (hspv.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
+        fun_on_deact_v = union (fun_on_active_v, fun_on_deact_v);
+        spv_lev.ndof = numel (fun_on_deact_v);
+        spv_lev.connectivity = position_v;
+
+        K_lev = op_gradu_gradv (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
+
+        dofs_u = 1:ndofs_u;
+        dofs_v = 1:ndofs_v;
+
+        K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.Csub{ilev}.' * K_lev * hspu.Csub{ilev};    
     end
   end
 

@@ -90,7 +90,15 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
     if (hmsh.nel_per_level(ilev) > 0)
       msh_level = hmsh.msh_lev{ilev};
       sp_level = eval_element_list (hspace.space_of_level(ilev), msh_level);
-        
+      
+      indices = unique (sp_level.connectivity);
+      [~,position] = ismember (sp_level.connectivity, indices);
+      fun_on_active = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
+      fun_on_deact = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
+      fun_on_deact = union (fun_on_active, fun_on_deact);
+      sp_level.ndof = numel (fun_on_deact);
+      sp_level.connectivity = position;
+      
       [eu_lev, F_lev] = eval_fun (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
       for iopt = 1:nopts
         eu{iopt} = cat (catdir(iopt), eu{iopt}, eu_lev{iopt});

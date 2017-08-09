@@ -190,7 +190,6 @@ while (1)
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
   end
-
 % REFINE
 %%%% In the future, there should be only one function, and this check be performed inside
   if (isfield (adaptivity_data, 'adm'))
