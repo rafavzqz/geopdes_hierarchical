@@ -1,13 +1,13 @@
 % OP_DIV_V_Q_HIER: assemble the matrix B = [a(i,j)], b(i,j) = (q_i, div v_j), 
 %  for hierarchical splines, exploiting the multilevel structure.
 %
-%   mat = op_div_v_q_hier (hspu, hspv, hmsh);
-%   [rows, cols, values] = op_div_v_q_hier (hspu, hspv, hmsh);
+%   mat = op_div_v_q_hier (hspv, hspq, hmsh);
+%   [rows, cols, values] = op_div_v_q_hier (hspv, hspq, hmsh);
 %
 % INPUT:
 %
-%   hspu:  object representing the vector-valued hierarchical space of trial functions (see hierarchical_space)
-%   hspv:  object representing the scalar-valued hierarchical space of test functions  (see hierarchical_space)
+%   hspv:  object representing the vector-valued hierarchical space of trial functions (see hierarchical_space)
+%   hspq:  object representing the scalar-valued hierarchical space of test functions  (see hierarchical_space)
 %   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh)
 %
 % OUTPUT:
@@ -38,7 +38,7 @@
 
 function varargout = op_div_v_q_hier (hspv, hspq, hmsh)
 
-  M = spalloc (hspv.ndof, hspu.ndof, 3*hspu.ndof);
+  M = spalloc (hspq.ndof, hspv.ndof, 3*hspv.ndof);
   
   ndofs_v = 0;
   ndofs_q = 0;
