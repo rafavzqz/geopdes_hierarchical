@@ -1,6 +1,6 @@
 % HIERARCHICAL_SPACE: constructor of the class for hierarchical spaces.
 %
-%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated])
+%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated, regularity])
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh (see hierarchical_mesh)
@@ -8,7 +8,8 @@
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
 %                - 'simplified', a simplified basis, were only children of removed functions are activated
-%    truncated:  decide whether the basis will be truncated or not
+%    truncated:  decide whether the basis will be truncated or not (not truncated by default)
+%    regularity: will be used for refinement. By default, it is degree minus one
 %
 % OUTPUT:
 %    hspace: hierarchical_space object, which contains the following fields and methods
@@ -88,15 +89,19 @@ function hspace = hierarchical_space (hmsh, space, varargin)
 
 if (isa (space, 'sp_scalar'))
   is_scalar = true;
+  regularity = space.degree - 1;
 elseif (isa (space, 'sp_vector'))
   is_scalar = false;
+  for icomp = 1:space.ncomp_param
+    regularity{icomp} = space.scalar_spaces{icomp}.degree;
+  end
 else
   error ('Unknown space type')
 end
 
-default_values = {'standard', false};
+default_values = {'standard', false, regularity};
 default_values(1:numel(varargin)) = varargin;
-[space_type, truncated] = default_values{:};
+[space_type, truncated, regularity] = default_values{:};
 
 hspace.ncomp = space.ncomp;
 hspace.type = space_type;
@@ -129,10 +134,28 @@ hspace.Csub{1} = speye (space.ndof);
 hspace.dofs = [];
 hspace.adjacent_dofs = [];
 
+transform = hspace.space_of_level(1).transform;
 if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:numel (hmsh.boundary)
-      boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
+% This check is necessary for the regularity
+      ind = setdiff (1:hmsh.ndim, ceil(iside/2));
+      if (is_scalar)
+        bnd_regularity = regularity(ind);
+      else
+        if (strcmpi (transform, 'grad-preserving'))
+          comps = 1:space.ncomp;
+          bnd_regularity = cellfun (@(x) x(ind), regularity(comps), 'UniformOutput', false);
+        elseif (strcmpi (transform, 'curl-preserving'))
+          comps = setdiff (1:hmsh.ndim, ceil(iside/2)); % comps =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %comps = [2 2 1 1] in 2D;
+          bnd_regularity = cellfun (@(x) x(ind), regularity(comps), 'UniformOutput', false);
+%         elseif (strcmpi (transform, 'div-preserving'))
+%           comps = ceil (iside/2); % comps =[1, 1, 2, 2, 3, 3] in 3D, %comps = [1, 1, 2, 2] in 2D;
+%           bnd_regularity = regularity{comps}(ind);
+        end
+      end
+
+      boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated, bnd_regularity);
       boundary.dofs = space.boundary(iside).dofs;
       if (is_scalar)
         boundary.adjacent_dofs = space.boundary(iside).adjacent_dofs;
@@ -148,6 +171,8 @@ if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
 else
   hspace.boundary = [];
 end
+
+hspace.regularity = regularity;
 
 hspace = class (hspace, 'hierarchical_space');
 

@@ -52,16 +52,17 @@ for iptc = 1:npatch
   space{iptc} = sp_vector (scalar_spaces, msh{iptc});
 end
 
+regularity = repmat ({method_data.regularity}, 1, msh{iptc}.rdim);
 if (npatch == 1)
   msh   = msh{1};
   space = space{1};
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
+  hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, regularity);
 else
   msh   = msh_multipatch (msh, boundaries);
   space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
   hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated);
+  hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated, regularity);
 end
 
 end
