@@ -12,6 +12,7 @@
 %   hspace:   the object of the hierarchical space with one more level, without active functions
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -39,17 +40,17 @@ end
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
 if (numel(hspace.space_of_level) == hmsh.nlevels-1)
-%   if (is_scalar)
-%     degree = hspace.space_of_level(hmsh.nlevels-1).degree;
-%     regularity = degree - 1;
-%   else
-%     for icomp = 1:numel(hspace.space_of_level(1).scalar_spaces)
-%       degree{icomp} = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp}.degree;
-%       regularity{icomp} = degree{icomp} - 1;
-%     end
-%   end
+  regularity = hspace.regularity;
+  if (is_scalar)
+    degree = hspace.space_of_level(hmsh.nlevels-1).degree;
+  else
+    for icomp = 1:hspace.ncomp_param
+      degree{icomp} = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp}.degree;
+    end
+  end
+
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
-  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub);%, degree, regularity);
+  [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, regularity);
   hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
   if (is_scalar)
     hspace.Proj(hmsh.nlevels-1,:) = Proj(:);

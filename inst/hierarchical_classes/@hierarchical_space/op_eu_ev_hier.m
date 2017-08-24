@@ -1,15 +1,15 @@
-% OP_EU_EV_HIER: assemble the matrix A = [a(i,j)], a(i,j) = 1/2 (epsilon (u_j), epsilon (v_i))
+% OP_EU_EV_HIER: assemble the matrix A = [a(i,j)], a(i,j) = 2*mu (epsilon (u_j), epsilon (v_i))
 %  for hierarchical splines, exploiting the multilevel structure.
 %
-%   mat = op_eu_ev_hier (hspu, hspv, hmsh, lambda, mu);
-%   [rows, cols, values] = op_eu_ev_hier (hspu, hspv, hmsh, lambda, mu);
+%   mat = op_eu_ev_hier (hspu, hspv, hmsh, mu);
+%   [rows, cols, values] = op_eu_ev_hier (hspu, hspv, hmsh, mu);
 %
 % INPUT:
 %
 %   hspu:  object representing the hierarchical space of trial functions (see hierarchical_space)
 %   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space)
 %   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh)
-%   lambda, mu: function handles to compute the Lame' coefficients
+%   mu:    function handle to compute the Lame' coefficient
 %
 % OUTPUT:
 %
@@ -37,7 +37,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function varargout = op_eu_ev_hier (hspu, hspv, hmsh, lambda, mu)
+function varargout = op_eu_ev_hier (hspu, hspv, hmsh, mu)
 
   M = spalloc (hspv.ndof, hspu.ndof, 3*hspu.ndof);
   
@@ -53,7 +53,7 @@ function varargout = op_eu_ev_hier (hspu, hspv, hmsh, lambda, mu)
       end
       spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
-      M_lev = op_eu_ev (spu_lev, spv_lev, hmsh.msh_lev{ilev}, lambda (x{:}), mu (x{:}));
+      M_lev = op_eu_ev (spu_lev, spv_lev, hmsh.msh_lev{ilev}, mu (x{:}));
 
       dofs_u = 1:ndofs_u;
       dofs_v = 1:ndofs_v;

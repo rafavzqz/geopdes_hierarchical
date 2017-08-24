@@ -33,20 +33,31 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
   case 'functions'
-    marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
+    marked_elements = compute_cells_to_coarsen (hspace, hmsh, marked);
   case 'elements'
     marked_elements = marked;
 end
+[reactivated_elements, ~] = mark_elements_to_reactivate_from_active (marked_elements, hmsh, hspace, adaptivity_data);
 
-[hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
+hmsh_fine = hmsh;
+[hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 
-reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
-hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
 
+if (nargout == 3)
+  hspace_fine = hspace;
+  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+  M = op_u_v_hier (hspace, hspace, hmsh);
+  G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
+  Ccoar = M \ G; Ccoar(abs(Ccoar) < 1e-12) = 0;
+else
+  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+end
+  
 hmsh = hmsh_remove_empty_levels (hmsh);
 hspace = hspace_remove_empty_levels (hspace, hmsh);
 
