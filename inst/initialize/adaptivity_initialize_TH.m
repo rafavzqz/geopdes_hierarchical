@@ -71,20 +71,21 @@ for iptc = 1:npatch
   clear scalar_spaces scalar_space
 end
 
+regularity_u = repmat ({method_data.regularity}, 1, msh{iptc}.rdim);
 if (npatch == 1)
   msh = msh{1};
   spp = spp{1};
   spv = spv{1};
   hmsh         = hierarchical_mesh (msh, method_data.nsub_refine);
-  hspace       = hierarchical_space (hmsh, spv, method_data.space_type, method_data.truncated);
-  hspace_press = hierarchical_space (hmsh, spp, method_data.space_type, method_data.truncated);
+  hspace       = hierarchical_space (hmsh, spv, method_data.space_type, method_data.truncated, regularity_u);
+  hspace_press = hierarchical_space (hmsh, spp, method_data.space_type, method_data.truncated, method_data.regularity);
 else
   msh = msh_multipatch (msh, boundaries);
   spp = sp_multipatch (spp, msh, interfaces, boundary_interfaces);
   spv = sp_multipatch (spv, msh, interfaces, boundary_interfaces);
   hmsh         = hierarchical_mesh_mp (msh, method_data.nsub_refine);
-  hspace       = hierarchical_space_mp (hmsh, spv, method_data.space_type, method_data.truncated);
-  hspace_press = hierarchical_space_mp (hmsh, spp, method_data.space_type, method_data.truncated);
+  hspace       = hierarchical_space_mp (hmsh, spv, method_data.space_type, method_data.truncated, regularity_u);
+  hspace_press = hierarchical_space_mp (hmsh, spp, method_data.space_type, method_data.truncated, method_data.regularity);
 end
 
 end
