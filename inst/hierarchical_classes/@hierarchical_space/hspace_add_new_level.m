@@ -12,6 +12,7 @@
 %   hspace:   the object of the hierarchical space with one more level, without active functions
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -42,16 +43,10 @@ if (numel(hspace.space_of_level) == hmsh.nlevels-1)
   regularity = hspace.regularity;
   if (is_scalar)
     degree = hspace.space_of_level(hmsh.nlevels-1).degree;
-%     if (isempty (regularity))
-%       regularity = degree - 1;
-%     end
   else
     for icomp = 1:hspace.ncomp_param
       degree{icomp} = hspace.space_of_level(hmsh.nlevels-1).scalar_spaces{icomp}.degree;
     end
-%     if (isempty (regularity))
-%       for icomp = 1:hspace.ncomp_param; regularity{icomp} = degree{icomp} - 1; end
-%     end
   end
 
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);

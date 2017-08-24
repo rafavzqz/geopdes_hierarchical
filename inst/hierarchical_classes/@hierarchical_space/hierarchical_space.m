@@ -4,12 +4,12 @@
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh (see hierarchical_mesh)
-%    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar)
+%    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar or sp_vector)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
 %                - 'simplified', a simplified basis, were only children of removed functions are activated
 %    truncated:  decide whether the basis will be truncated or not (not truncated by default)
-%    regularity: will be used for refinement. By default, it is degree minus one
+%    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus one
 %
 % OUTPUT:
 %    hspace: hierarchical_space object, which contains the following fields and methods
@@ -39,6 +39,8 @@
 %                                            as linear combinations of splines (active and inactive) of the current level
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %    dofs          (1 x ndof array)         only for boundary spaces, degrees of freedom that do not vanish on the boundary
+%    regularity    (1 x ndim array)         the regularity of the space, used during refinement to add a new level 
+%               or (1 x ncomp cell-array)
 %
 %    METHODS
 %    Methods for post-processing, which require a computed vector of degrees of freedom
@@ -71,6 +73,7 @@
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -93,7 +96,7 @@ if (isa (space, 'sp_scalar'))
 elseif (isa (space, 'sp_vector'))
   is_scalar = false;
   for icomp = 1:space.ncomp_param
-    regularity{icomp} = space.scalar_spaces{icomp}.degree;
+    regularity{icomp} = space.scalar_spaces{icomp}.degree-1;
   end
 else
   error ('Unknown space type')
