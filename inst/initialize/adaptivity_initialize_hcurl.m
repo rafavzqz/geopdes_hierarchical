@@ -62,23 +62,29 @@ for iptc = 1:npatch
   space_l2{iptc} = sp_bspline (knots_l2, degree_l2, msh{iptc}, 'integral-preserving');
 end
 
+for icomp = 1:msh{iptc}.ndim
+  diffs = method_data.degree - degree_hcurl{icomp};
+  regularity{icomp} = method_data.regularity - diffs;
+end
+regularity_l2 = method_data.regularity - 1;
+
 if (npatch == 1)
   msh   = msh{1};
   space = space{1};
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
+  hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, regularity);
   space_l2 = space_l2{1};
   if (nargout == 4)
-    hspace_l2   = hierarchical_space (hmsh, space_l2, method_data.space_type, method_data.truncated);
+    hspace_l2   = hierarchical_space (hmsh, space_l2, method_data.space_type, method_data.truncated, regularity_l2);
   end
 else
   msh   = msh_multipatch (msh, boundaries);
   space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
   hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated);
+  hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated, regularity);
   space_l2 = sp_multipatch (space_l2, msh, interfaces, boundary_interfaces);
   if (nargout == 4)
-    hspace_l2= hierarchical_space_mp (hmsh, space_l2, method_data.space_type, method_data.truncated);
+    hspace_l2= hierarchical_space_mp (hmsh, space_l2, method_data.space_type, method_data.truncated, regularity_l2);
   end
 end
 

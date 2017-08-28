@@ -59,6 +59,7 @@ else
 end
 
 % Adding empty levels
+% Here it is not necessary to change the regularity.
 for ilev = hspace.nlevels+1:hmsh_fine.nlevels
   msh_level = hmsh_fine.mesh_of_level(ilev);
   [new_space, Proj] = sp_refine (hspace.space_of_level(ilev-1), msh_level, hmsh_fine.nsub); %, degree, degree-1);
