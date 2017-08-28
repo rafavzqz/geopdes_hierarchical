@@ -314,7 +314,6 @@ hspace.deactivated = deactivated(1:hspace.nlevels);
 hspace.ndof_per_level = cellfun (@numel, hspace.active);
 hspace.ndof = sum (hspace.ndof_per_level);
 
-<<<<<<< HEAD
 hspace.coeff_pou = ones (hspace.ndof, 1);
 
 end
@@ -366,34 +365,14 @@ for i=1:numel(funs_to_smooth)
         fun_index(j) = find(sp_get_basis_functions (hspace.space_of_level(level), hmsh.mesh_of_level(level), index2smooth(j))==funs_to_smooth(i));
     end
     % weights for smoothing
-%     w = wgheval_LLSQ( index2smooth );
+    %     w = wgheval_LLSQ( index2smooth );
     % loop over cell supports
     for j=1:numel(index2smooth)
         w = wgheval( C, fun_index, index2smooth(j), index2smooth);
         smoothed_dofs(funs_to_smooth(i)) = smoothed_dofs(funs_to_smooth(i)) + u_coarse{index2smooth(j)}(funs_to_smooth(i))*w;
     end
     % end j loop
-=======
-if (isa (hspace.space_of_level(1), 'sp_vector'))
-  shifting_indices = cumsum ([0 hspace.ndof_per_level]);
-  for iComponent = 1:hspace.ncomp_param
-    tmp_dofs = [];
-    for iLevel = 1:hspace.nlevels
-      [~, ~, ib] = intersect (hspace.space_of_level(iLevel).comp_dofs{iComponent}, hspace.active{iLevel});
-      tmp = shifting_indices(iLevel) + ib;
-      tmp_dofs = union (tmp_dofs, tmp);
-    end
-    hspace.comp_dofs{iComponent} = tmp_dofs;
-  end
-end
-
-if (hspace.truncated)
-  hspace.coeff_pou = ones (hspace.ndof, 1);
-% else
-%   hspace.coeff_pou = Cref * hspace.coeff_pou;
->>>>>>> master
 end
 % end loop over funs to smooth
 smoothed_dofs = smoothed_dofs(funs_to_smooth);
-
 end

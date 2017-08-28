@@ -42,12 +42,11 @@ function [hmsh, hspace, u_coarse] = adaptivity_coarsen (hmsh, hspace, marked, ad
 switch (adaptivity_data.flag)
     case 'functions'
         [reactivated_fun, ~] = active2deactivated_marking(marked, hmsh, hspace, adaptivity_data);
+        reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
     case 'elements'
         [reactivated_elements, ~] = active2deactivated_marking(marked, hmsh, hspace, adaptivity_data);
         reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
-
 end
-[reactivated_elements, ~] = mark_elements_to_reactivate_from_active (marked_elements, hmsh, hspace, adaptivity_data);
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 
@@ -55,16 +54,6 @@ if (nargout == 3)
     [hspace, u_coarse] = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells, reactivated_elements);
 else
     hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells, reactivated_elements);
-end
-
-if (nargout == 3)
-  hspace_fine = hspace;
-  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
-  M = op_u_v_hier (hspace, hspace, hmsh);
-  G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
-  Ccoar = M \ G; Ccoar(abs(Ccoar) < 1e-12) = 0;
-else
-  hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
 end
   
 hmsh = hmsh_remove_empty_levels (hmsh);
