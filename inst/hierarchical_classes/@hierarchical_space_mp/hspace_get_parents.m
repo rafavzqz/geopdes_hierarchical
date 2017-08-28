@@ -40,27 +40,63 @@ function [parents, flag] = hspace_get_parents (hspace, lev, ind)
 % [~,parents] = find (Cmat(ind,:));
 % parents = unique (parents);
 
+if (isa (hspace.space_of_level(1).sp_patch{1}, 'sp_scalar'))
+  is_scalar = true;
+  ndim = size (hspace.Proj{1}, 2);
+elseif (isa (hspace.space_of_level(1).sp_patch{1}, 'sp_vector'))
+  is_scalar = false;
+  ndim = size (hspace.Proj{1}, 2);
+else
+  error ('Unknown space type')
+end
+
+z = cell (ndim, 1);
+ind_sub = cell (ndim, 1);
 parents = [];
+
 npatch = numel (hspace.space_of_level(1).sp_patch);
-ndim = size (hspace.Proj{1}, 2);
 
-for iptc = 1:npatch
-  gnum = hspace.space_of_level(lev).gnum{iptc};
-  [~,indices,~] = intersect (gnum, ind);
+if (is_scalar)
+  aux = cell (ndim, 1);
+  for iptc = 1:npatch
+    gnum = hspace.space_of_level(lev).gnum{iptc};
+    [~,indices,~] = intersect (gnum, ind);
 
-  z = cell (ndim, 1);
-  ind_sub = cell (ndim, 1);
-  [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir, 1], indices); % The extra 1 makes it work in any dimension
+    [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir, 1], indices); % The extra 1 makes it work in any dimension
 
-  gnum = hspace.space_of_level(lev-1).gnum{iptc};
-  for ii = 1:numel(ind_sub{1})
-    aux = cell (ndim, 1);
-    for idim = 1:ndim
-      aux{idim} = find (hspace.Proj{lev-1, iptc}{idim}(ind_sub{idim}(ii),:));
+    gnum = hspace.space_of_level(lev-1).gnum{iptc};
+    for ii = 1:numel(ind_sub{1})
+      for idim = 1:ndim
+        aux{idim} = find (hspace.Proj{lev-1, iptc}{idim}(ind_sub{idim}(ii),:));
+      end
+      [z{1:ndim}] = ndgrid (aux{:});
+      auxI = sub2ind ([hspace.space_of_level(lev-1).sp_patch{iptc}.ndof_dir, 1], z{:});
+      parents = union (parents, gnum(auxI(:)));
     end
-    [z{1:ndim}] = ndgrid (aux{:});
-    auxI = sub2ind ([hspace.space_of_level(lev-1).sp_patch{iptc}.ndof_dir, 1], z{:});
-    parents = union (parents, gnum(auxI(:)));
+  end
+else
+  aux = cell (ndim, 1);
+  for iptc = 1:npatch
+    gnum = hspace.space_of_level(lev).gnum{iptc};
+    [~,indices,~] = intersect (gnum, ind);
+    gnum = hspace.space_of_level(lev-1).gnum{iptc};
+
+    cumsum_ndof_coarse = hspace.space_of_level(lev-1).sp_patch{iptc}.cumsum_ndof;  
+    cumsum_ndof_fine = hspace.space_of_level(lev).sp_patch{iptc}.cumsum_ndof;
+    for icomp = 1:hspace.space_of_level(lev).sp_patch{iptc}.ncomp_param
+      ind_comp = indices(indices>cumsum_ndof_fine(icomp) & indices<=cumsum_ndof_fine(icomp+1)) - cumsum_ndof_fine(icomp);
+      [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir(icomp,:), 1], ind_comp); % The extra 1 makes it work in any dimension
+
+      for ii = 1:numel(ind_sub{1})
+        for idim = 1:ndim
+          aux{idim} = find (hspace.Proj{lev-1, iptc}{icomp, idim}(:,ind_sub{idim}(ii)));
+%           aux{idim} = find (hspace.Proj{lev-1, icomp, idim}(:,ind_sub{idim}(ii)));
+        end
+        [z{1:ndim}] = ndgrid (aux{:});
+        auxI = sub2ind ([hspace.space_of_level(lev-1).sp_patch{iptc}.ndof_dir(icomp,:), 1], z{:});
+        parents = union (children, gnum(auxI(:)+cumsum_ndof_coarse(icomp)));
+      end
+    end
   end
 end
 

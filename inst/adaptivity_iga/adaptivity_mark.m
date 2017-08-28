@@ -68,6 +68,7 @@ switch adaptivity_data.mark_strategy
 %   end
   [est2_ordered, perm] = sort (est.^2, 'descend');
   index = find (cumsum (est2_ordered) > (1 - adaptivity_data.mark_param)^2 * est_sum2, 1, 'first');
+  index = find (est2_ordered > 0.999 * est2_ordered(index), 1, 'last');
   aux_marked(perm(1:index)) = 1;
 end
 

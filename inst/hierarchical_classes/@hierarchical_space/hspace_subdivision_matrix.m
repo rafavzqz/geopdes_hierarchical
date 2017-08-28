@@ -50,9 +50,8 @@ if (strcmpi (option, 'reduced'))
   fun_on_deact = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.deactivated{1});
   fun_on_deact = union (fun_on_active, fun_on_deact);
 
-  for lev = 2:hspace.nlevels
-%     I = speye (hspace.space_of_level(lev).ndof);
-%     I = I(:,hspace.active{lev});
+%   for lev = 2:hspace.nlevels
+  for lev = 2:hmsh.nlevels % This allows to compute Csub for finer meshes
     I_rows = hspace.active{lev}; I_cols = 1:hspace.ndof_per_level(lev);
     I = sparse (I_rows, I_cols, ones(size(I_cols)), hspace.space_of_level(lev).ndof, hspace.ndof_per_level(lev));
     aux = matrix_basis_change__ (hspace, lev, fun_on_deact);

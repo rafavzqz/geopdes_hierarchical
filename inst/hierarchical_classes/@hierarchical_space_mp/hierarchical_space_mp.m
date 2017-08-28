@@ -1,14 +1,15 @@
 % HIERARCHICAL_SPACE_MP: constructor of the class for hierarchical spaces for multipatch geometries.
 %
-%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated])
+%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated, regularity])
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh_mp (see hierarchical_mesh_mp)
 %    space:      the coarsest space, an object of the class sp_multipatch (see sp_multipatch)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
-%                - 'simplified', a simplified basis, were only children of removed functions are activated\
+%                - 'simplified', a simplified basis, were only children of removed functions are activated
 %    truncated:  decide whether the basis will be truncated or not
+%    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus one
 %
 % OUTPUT:
 %    hspace: hierarchical_space_mp object, which contains the following fields and methods
@@ -22,7 +23,7 @@
 %    Proj           (hmsh.nlevels-1 x npatch cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels for each patch
 %                                           Proj{l,i} is a cell-array of dimension ndim, with the information for
-%                                           the univariate Porjectors on the patch (see also hierarchical_space)
+%                                           the univariate Projectors on the patch (see also hierarchical_space)
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
 %    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
@@ -62,6 +63,7 @@
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -78,9 +80,27 @@
 
 function hspace = hierarchical_space_mp (hmsh, space, varargin)
 
-default_values = {'standard', false};
+if (isa (space.sp_patch{1}, 'sp_scalar'))
+  is_scalar = true;
+  regularity = space.sp_patch{1}.degree - 1;
+elseif (isa (space.sp_patch{1}, 'sp_vector'))
+  is_scalar = false;
+  for icomp = 1:space.sp_patch{1}.ncomp_param
+    regularity{icomp} = space.sp_patch{1}.scalar_spaces{icomp}.degree-1;
+  end
+else
+  error ('Unknown space type')
+end
+
+default_values = {'standard', false, regularity};
 default_values(1:numel(varargin)) = varargin;
-[space_type, truncated] = default_values{:};
+[space_type, truncated, regularity] = default_values{:};
+
+% This is done to simplify things for the boundary and gluing patches
+transform = space.sp_patch{1}.transform;
+if (check_regularity (regularity, space, is_scalar))
+  error ('For multipatch geometries, we force the regularity to be the same in all directions')
+end
 
 hspace.ncomp = space.ncomp;
 hspace.type = space_type;
@@ -100,10 +120,23 @@ hspace.Csub{1} = speye (space.ndof);
 
 hspace.dofs = [];
 
-if (~isempty (hmsh.boundary))
+if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
   if (hmsh.ndim > 1)
+    if (is_scalar)
+      bnd_regularity = regularity(1:end-1);
+    elseif (strcmpi (transform, 'grad-preserving'))
+      for icomp = 1:space.sp_patch{1}.ncomp
+        bnd_regularity{icomp} = regularity{icomp}(1:end-1);
+      end
+    elseif (strcmpi (transform, 'curl-preserving'))
+      for icomp = 1:space.sp_patch{1}.ncomp_param-1
+        bnd_regularity{icomp} = regularity{icomp}(1:end-1);
+      end
+    elseif (strcmpi (transform, 'div-preserving'))
+      bnd_regularity = regularity{1}(2:end);
+    end
     for iside = 1:numel (hmsh.boundary)
-      boundary = hierarchical_space_mp (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
+      boundary = hierarchical_space_mp (hmsh.boundary(iside), space.boundary(iside), space_type, truncated, bnd_regularity);
       boundary.dofs = space.boundary(iside).dofs;
       hspace.boundary(iside) = boundary;
     end
@@ -115,6 +148,47 @@ else
   hspace.boundary = [];
 end
 
+hspace.regularity = regularity;
 hspace = class (hspace, 'hierarchical_space_mp');
+
+end
+
+
+function error_flag = check_regularity (regularity, space, is_scalar)
+% Check if the regularity is the same in all directions.
+% For curl-preserving and div-preserving spaces, they should follow the
+%  standard relation given by the De Rham diagram, that is, the first space
+%  in the sequence should have the same regularity in all directions
+
+error_flag = false;
+if (is_scalar)
+  if (~all (regularity == regularity(1)))
+    error_flag = true;
+  end
+else
+  if (strcmpi (space.sp_patch{1}.transform, 'grad-preserving'))
+    for icomp = 1:space.sp_patch{1}.ncomp
+      if (~all (regularity{icomp} == regularity{icomp}(1)))
+        error_flag = true;
+      end
+    end
+  elseif (strcmpi (space.sp_patch{1}.transform, 'curl-preserving'))
+    for icomp = 1:space.sp_patch{1}.ncomp_param
+      reg = regularity{icomp};
+      reg(icomp) = reg(icomp) + 1;
+      if (~all (reg == reg(1)))
+        error_flag = true;
+      end
+    end
+  elseif (strcmpi (space.sp_patch{1}.transform, 'div-preserving'))
+    for icomp = 1:space.sp_patch{1}.ncomp_param
+      reg = regularity{icomp};
+      reg(icomp) = reg(icomp) - 1;
+      if (~all (reg == reg(1)))
+        error_flag = true;
+      end
+    end
+  end
+end
 
 end

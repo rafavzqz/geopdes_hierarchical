@@ -30,23 +30,25 @@
 
 function hspace = hspace_remove_empty_levels (hspace, hmsh)
 
-if (~isempty (hmsh.boundary) && ~isequal(hmsh.boundary.ndim,0))
+if (~isempty (hmsh.boundary))
+  if (hmsh.ndim > 1)
     for iside = 1:numel(hmsh.boundary)
-        hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
-        hspace.boundary(iside) = hspace_remove_empty_levels (hspace.boundary(iside), hmsh.boundary(iside));
+      hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
+      hspace.boundary(iside) = hspace_remove_empty_levels (hspace.boundary(iside), hmsh.boundary(iside));
     end
+  end
 end
 
 for ilev = hspace.nlevels:-1:hmsh.nlevels+1
-    if (isempty (hspace.active{ilev}))
-        hspace.space_of_level(ilev) = [];
-        hspace.Proj(ilev-1,:) = [];
-        
-        hspace.active(ilev) = [];
-        hspace.deactivated(ilev) = [];
-        hspace.ndof_per_level(ilev) = [];
-        hspace.nlevels = hspace.nlevels - 1;
-    end
+  if (isempty (hspace.active{ilev}))
+    hspace.space_of_level(ilev) = [];
+    hspace.Proj(ilev-1,:,:) = [];
+
+    hspace.active(ilev) = [];
+    hspace.deactivated(ilev) = [];
+    hspace.ndof_per_level(ilev) = [];
+    hspace.nlevels = hspace.nlevels - 1;
+  end
 end
 
 end

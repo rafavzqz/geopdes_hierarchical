@@ -8,7 +8,7 @@
 %   hspace: object representing the (coarse) space of hierarchical splines (see hierarchical_space)
 %   hmsh:   object representing the refined hierarchical mesh (see hierarchical_mesh)
 %   marked: cell array with the indices, in the Cartesian grid, of the elements that have to 
-%             be removed for each level
+%             be reactivated for each level
 %
 % OUTPUT:
 %   fun_indices: cell array with the indices of functions to be removed, for
