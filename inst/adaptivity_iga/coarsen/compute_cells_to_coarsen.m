@@ -20,8 +20,6 @@
 % From the list of (active) marked functions, we mark the (active) cells of
 %  its same level within the support, and such that they are not contained
 %  in the support of any function that has not been marked.
-% The cells to be coarsened are active cells in the support of the marked
-%  basis functions, such that they do not 
 %
 % Copyright (C) 2015, 2017 Eduardo M. Garau, Rafael Vazquez
 %
