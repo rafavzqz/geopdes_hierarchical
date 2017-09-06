@@ -13,7 +13,7 @@
 % OUTPUT:
 %
 %   marked_elem: cell array with the indices, in the tensor Cartesian grid, of the elements
-%                 to be refined for each level
+%                 to be coarsened for each level
 %   indices:     relative position of the marked elements in the numbering of the hierarchical mesh
 %                 within the level, that is, in hmsh.active{lev}
 %
