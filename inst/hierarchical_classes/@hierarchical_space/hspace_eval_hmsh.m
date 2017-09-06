@@ -43,7 +43,7 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
   nopts = numel (options);
 
 % For vector-valued spaces, the value of catdir is then corrected by adding one
-  value = false; gradient = false; laplacian = false;
+  value = false; gradient = false; laplacian = false; bilaplacian = false;
   hessian = false; curl = false; divergence = false;
   for iopt = 1:nopts
     switch (lower (options{iopt}))
@@ -56,6 +56,9 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
       case 'laplacian' % Only for scalars, at least for now
         laplacian = true;
         catdir(iopt) = 2;
+      case 'bilaplacian'
+        bilaplacian = true;
+        catdir(iopt) = 2;          
       case 'hessian'
         hessian = true;
         catdir(iopt) = 4;
@@ -79,7 +82,7 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
         'value', value, 'gradient', gradient, 'hessian', hessian, 'curl', curl, 'divergence', divergence);
   else
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
-        'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian);
+        'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian, 'bilaplacian', bilaplacian);
   end
   eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, options);
 
