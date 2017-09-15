@@ -27,8 +27,8 @@ method_data.nsub_coarse = 16;            % Number of subdivisions of the coarses
 method_data.nsub_refine = 2;            % Number of subdivisions for each refinement
 method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
-method_data.truncated   = 0;            % 0: False, 1: True
-method_data.bpx_dofs = 'All_dofs';
+method_data.truncated   = 1;            % 0: False, 1: True
+method_data.bpx_dofs = 'Mod_dofs';
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
@@ -39,7 +39,7 @@ adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 11;
 adaptivity_data.max_ndof = 5000;
-adaptivity_data.num_max_iter = 7;
+adaptivity_data.num_max_iter = 9;
 adaptivity_data.max_nel = 5000;
 adaptivity_data.tol = 1e-19;
 

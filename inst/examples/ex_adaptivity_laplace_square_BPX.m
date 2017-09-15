@@ -37,7 +37,7 @@ method_data.nsub_refine = [2 2];        % Number of subdivisions for each refine
 method_data.nquad       = method_data.degree+1;        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 1;            % 0: False, 1: True
-method_data.bpx_dofs = 'New_dofs';
+method_data.bpx_dofs = 'Mod_dofs';
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
