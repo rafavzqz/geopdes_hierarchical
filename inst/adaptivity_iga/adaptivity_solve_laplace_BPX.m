@@ -101,6 +101,7 @@ rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_
 hmsh_bpx   = hierarchical_mesh (hmsh.mesh_of_level(1), method_data.nsub_refine); % Bisogna passare method_data
 hspace_bpx = hierarchical_space (hmsh_bpx, hspace.space_of_level(1), method_data.space_type, method_data.truncated);
 bpx(1).Qi = speye (hspace_bpx(1).ndof);
+Cref = speye (hspace_bpx(1).ndof);
 
 for ref = 1:hmsh.nlevels-1
   bpx(ref).Ai = op_gradu_gradv_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
@@ -118,22 +119,42 @@ for ref = 1:hmsh.nlevels-1
   bpx(ref).int_dofs = setdiff (1:hspace_bpx(ref).ndof, drchlt_dofs_lev);
 
 % XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-% Qua si decide se prendiamo tutte le funzioni fino a livello ref (All_dofs)
-%  solo le funzioni aggiunte a livello ref (New_dofs)
-%  o le funzioni aggiunte + le troncate dalle nuove funzioni (Mod_dofs)
-% Negli ultimi due casi, va cambiata la variabile new_dofs che ci
-% restituisce adaptivity_refine.
+% Here we decide if we take all the functions until level ref (All_dofs)
+%  only the newly added functions until level ref (New_dofs)
+%  or the functions newly added + truncated (Mod_dofs)
+% In the last two cases, we have to change the variable new_dofs that
+%  is given by adaptivity_refine
 % Forse bpx_dofs va messo su adaptivity_data (e adap_data), e non su method_data.
 % XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
+  if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
     bpx(ref).new_dofs = bpx(ref).int_dofs;
   elseif (strcmpi (method_data.bpx_dofs, 'New_dofs')) % XXXXXXX This is only valid for the non-truncated basis
     new_dofs = cumndof(ref) + (1:numel(hspace_bpx(ref).active{end}));
     bpx(ref).new_dofs = intersect (bpx(ref).int_dofs, new_dofs);
-  elseif (strcmpi (method_data.bpx_dofs, 'Mod_dofs')) % XXXX This is only valid for the truncated basis in this particular case
+  elseif (strcmpi (method_data.bpx_dofs, 'Mod_dofs'))
     new_dofs = cumndof(ref) + (1:numel(hspace_bpx(ref).active{end}));
-    new_dofs = union (new_dofs, new_dofs-method_data.degree(1));
+    if (ref > 1 && hspace.truncated)
+      cumndof_old = cumsum ([0 hspace_bpx(ref-1).ndof_per_level]);
+      last_level_dofs = (cumndof(ref)+1):cumndof(ref+1);
+      
+      truncated_dofs = [];
+      for lev = 1:hmsh_bpx(ref-1).nlevels
+        [~,ind_new,ind_old] = intersect (hspace_bpx(ref).active{lev}, hspace_bpx(ref-1).active{lev});
+        global_indices_old = cumndof_old(lev) + ind_old;
+        global_indices = cumndof(lev) + ind_new;
+        for jj = 1:numel(ind_old)
+          [aa,bb] = find(Cref(:,global_indices_old(jj)));
+          bb = intersect (aa, last_level_dofs);
+          if (~isempty (bb))
+            truncated_dofs = union (truncated_dofs, global_indices(jj));
+          end
+        end
+      end
+      
+      new_dofs = union (new_dofs, truncated_dofs);
+    end
+%     new_dofs = union (new_dofs, new_dofs-method_data.degree(1));
     bpx(ref).new_dofs = intersect (bpx(ref).int_dofs, new_dofs);
   end
   
@@ -152,7 +173,7 @@ if (strcmpi (method_data.bpx_dofs, 'All_dofs'))
   
 end
 
-% Controllare che sia fatto nel modo giusto (togliere condizioni di bordo)  
+% Check that it is done correctly (remove boundary conditions)
 bpx(hmsh.nlevels).Ai = stiff_mat;
 bpx(hmsh.nlevels).rhs = rhs;
 bpx(hmsh.nlevels).Pi = [];
@@ -164,10 +185,30 @@ elseif (strcmpi (method_data.bpx_dofs, 'New_dofs'))
   cumndof = cumsum ([0 hspace.ndof_per_level]);
   new_dofs = cumndof(hmsh.nlevels) + (1:numel(hspace.active{end}));
   bpx(hmsh.nlevels).new_dofs = intersect (int_dofs, new_dofs);
-elseif (strcmpi (method_data.bpx_dofs, 'Mod_dofs')) % XXXXXXXX Only for this particular case
+elseif (strcmpi (method_data.bpx_dofs, 'Mod_dofs')) % XXXXXXXX Only for this particular 1D case
   cumndof = cumsum ([0 hspace.ndof_per_level]);
   new_dofs = cumndof(hmsh.nlevels) + (1:numel(hspace.active{end}));
-  new_dofs = union (new_dofs, new_dofs-method_data.degree(1));
+  if (hspace.nlevels > 1 && hspace.truncated)
+    cumndof_old = cumsum ([0 hspace_bpx(end-1).ndof_per_level]);
+    last_level_dofs = (cumndof(end-1)+1):cumndof(end);
+      
+    truncated_dofs = [];
+    for lev = 1:hmsh_bpx(end-1).nlevels
+      [~,ind_new,ind_old] = intersect (hspace_bpx(end).active{lev}, hspace_bpx(end-1).active{lev});
+      global_indices_old = cumndof_old(lev) + ind_old;
+      global_indices = cumndof(lev) + ind_new;
+      for jj = 1:numel(ind_old)
+        [aa,bb] = find(Cref(:,global_indices_old(jj)));
+        bb = intersect (aa, last_level_dofs);
+        if (~isempty (bb))
+          truncated_dofs = union (truncated_dofs, global_indices(jj));
+        end
+      end
+    end
+      
+    new_dofs = union (new_dofs, truncated_dofs);
+  end
+%   new_dofs = union (new_dofs, new_dofs-method_data.degree(1));
   bpx(hmsh.nlevels).new_dofs = intersect (int_dofs, new_dofs);
 end
 bpx(hmsh.nlevels).Qi = speye (hspace.ndof);
