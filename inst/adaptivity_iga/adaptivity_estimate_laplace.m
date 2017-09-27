@@ -92,6 +92,10 @@ switch adaptivity_data.flag
         est = sqrt (sum (aux.*w));
         est = C0_est*h.*est(:);
         
+        if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+          warning ('Jump terms not computed for multipatch geometries when marking by elements')
+        end
+      
     case 'functions',
     % Compute the mesh size for each level
         ms = zeros (hmsh.nlevels, 1);
@@ -131,12 +135,8 @@ switch adaptivity_data.flag
     if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
       coef1 = C0_est * sqrt (ms(dof_level) .* hspace.coeff_pou(:));
 
-      interfaces = hspace.space_of_level(1).interfaces;
-      for ii = 1:numel(interfaces)
-        jump_est = zeros (hspace.ndof, 1);
-%       for ilev = 1:msh.nlevels
-        est = est + coef1 .* jump_est;
-      end
+      jump_est = compute_jump_terms (u, hmsh, hspace);
+      est = est + coef1 .* jump_est;
     end
 
 end
@@ -144,8 +144,8 @@ end
 end
 
 
-
-function est = compute_jump_terms ()
+% Compute the jump terms for multipatch geometries, when marking by functions
+function est = compute_jump_terms (u, hmsh, hspace)
 
  est = zeros (hspace.ndof, 1);
 
@@ -188,8 +188,9 @@ function est = compute_jump_terms ()
 % XXXXX Multiply by the diffusion coefficient
 
 % XXXXX I should use a more local numbering, as in the branch localize_Csub
-        b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
-        est = est + hspace.Csub{ilev}.' * b_lev;
+% XXXXX Check the constant 1/sqrt(2)
+        b_lev(gnum) = op_f_v (spp, msh_side, 1/2 * grad_dot_normal.^2);
+        est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
       end
     end
   end
