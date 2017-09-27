@@ -93,6 +93,7 @@ switch adaptivity_data.flag
         est = C0_est*h.*est(:);
         
     case 'functions',
+    % Compute the mesh size for each level
         ms = zeros (hmsh.nlevels, 1);
         for ilev = 1:hmsh.nlevels
             if (hmsh.msh_lev{ilev}.nel ~= 0)
@@ -109,7 +110,8 @@ switch adaptivity_data.flag
             dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
         end
         coef = ms(dof_level).*sqrt(hspace.coeff_pou(:));
-        
+
+    % Residual terms, a_B * h_B * \int_{supp B} |div(A * grad u) + f|^2 B
         est = zeros(hspace.ndof,1);
         ndofs = 0;
         Ne = cumsum([0; hmsh.nel_per_level(:)]);
@@ -124,6 +126,73 @@ switch adaptivity_data.flag
             end
         end
         est = C0_est * coef .* sqrt(est);
+        
+    % Jump terms, only computed for multipatch geometries
+    if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+      coef1 = C0_est * sqrt (ms(dof_level) .* hspace.coeff_pou(:));
+
+      interfaces = hspace.space_of_level(1).interfaces;
+      for ii = 1:numel(interfaces)
+        jump_est = zeros (hspace.ndof, 1);
+%       for ilev = 1:msh.nlevels
+        est = est + coef1 .* jump_est;
+      end
+    end
+
 end
+
+end
+
+
+
+function est = compute_jump_terms ()
+
+ est = zeros (hspace.ndof, 1);
+
+ interfaces = hspace.space_of_level(1).interfaces;
+
+ for iref = 1:numel(interfaces)
+  patch(1) = interfaces(iref).patch1;
+  patch(2) = interfaces(iref).patch2;
+  side(1) = interfaces(iref).side1;
+  side(2) = interfaces(iref).side2;
+
+% I am computing \int (|grad u_1 \dot n_1|^2 + |grad u_2 \dot n_2|^2) \beta, instead of
+%  \int (|grad u_1 \dot n_1 + grad u_2 \dot n_2|^2) \beta
+% I also recall that  n_1 = - n_2
+  for lev = 1:hmsh.nlevels
+    ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+    Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+    u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+    
+    for ii = 1:2
+      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
+      msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
+      gnum = hspace.space_of_level(lev).gnum{patch(ii)};
+
+      % Set of active elements on the patch that are adjacent to the interface
+      [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
+      element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
+      
+      if (~isempty (element_list))
+        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
+
+        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
+        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
+
+        sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
+        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
+        
+        grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+        grad_dot_normal = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+% XXXXX Multiply by the diffusion coefficient
+
+% XXXXX I should use a more local numbering, as in the branch localize_Csub
+        b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
+        est = est + hspace.Csub{ilev}.' * b_lev;
+      end
+    end
+  end
+ end
 
 end
