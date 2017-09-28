@@ -136,6 +136,7 @@ switch adaptivity_data.flag
       coef1 = C0_est * sqrt (ms(dof_level) .* hspace.coeff_pou(:));
 
       jump_est = compute_jump_terms (u, hmsh, hspace);
+%       jump_est = compute_jump_terms (u, hmsh, hspace);
       est = est + coef1 .* jump_est;
     end
 
@@ -147,53 +148,89 @@ end
 % Compute the jump terms for multipatch geometries, when marking by functions
 function est = compute_jump_terms (u, hmsh, hspace)
 
- est = zeros (hspace.ndof, 1);
+  est = zeros (hspace.ndof, 1);
 
- interfaces = hspace.space_of_level(1).interfaces;
+  interfaces = hspace.space_of_level(1).interfaces;
 
- for iref = 1:numel(interfaces)
-  patch(1) = interfaces(iref).patch1;
-  patch(2) = interfaces(iref).patch2;
-  side(1) = interfaces(iref).side1;
-  side(2) = interfaces(iref).side2;
+  hm = hmsh;
+  hsp = hspace;
+  for iref = 1:numel(interfaces)
+    patch(1) = interfaces(iref).patch1;
+    patch(2) = interfaces(iref).patch2;
+    side(1) = interfaces(iref).side1;
+    side(2) = interfaces(iref).side2;
 
-% I am computing \int (|grad u_1 \dot n_1|^2 + |grad u_2 \dot n_2|^2) \beta, instead of
-%  \int (|grad u_1 \dot n_1 + grad u_2 \dot n_2|^2) \beta
-% I also recall that  n_1 = - n_2
-  for lev = 1:hmsh.nlevels
-    ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
-    Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-    u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
-    
-    for ii = 1:2
-      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
-      msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
-      gnum = hspace.space_of_level(lev).gnum{patch(ii)};
-
-      % Set of active elements on the patch that are adjacent to the interface
-      [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
-      element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
-      
-      if (~isempty (element_list))
+    for lev = 1:hmsh.nlevels
+      Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+  
+      for ii = 1:2
+        msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
         msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
-
-        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
-        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
-
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
-        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
-        
-        grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
-        grad_dot_normal = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
-% XXXXX Multiply by the diffusion coefficient
-
-% XXXXX I should use a more local numbering, as in the branch localize_Csub
-% XXXXX Check the constant 1/sqrt(2)
-        b_lev(gnum) = op_f_v (spp, msh_side, 1/2 * grad_dot_normal.^2);
-        est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
+      
+        hm.mesh_of_level(lev).msh_patch{patch(ii)} = msh_side_int;
+        hsp.space_of_level(lev).sp_patch{patch(ii)} = sp_bnd;
       end
     end
   end
- end
 
 end
+
+
+
+
+
+
+% % Compute the jump terms for multipatch geometries, when marking by functions
+% function est = compute_jump_terms (u, hmsh, hspace)
+% 
+%  est = zeros (hspace.ndof, 1);
+% 
+%  interfaces = hspace.space_of_level(1).interfaces;
+% 
+%  for iref = 1:numel(interfaces)
+%   patch(1) = interfaces(iref).patch1;
+%   patch(2) = interfaces(iref).patch2;
+%   side(1) = interfaces(iref).side1;
+%   side(2) = interfaces(iref).side2;
+% 
+% % I am computing \int (|grad u_1 \dot n_1|^2 + |grad u_2 \dot n_2|^2) \beta, instead of
+% %  \int (|grad u_1 \dot n_1 + grad u_2 \dot n_2|^2) \beta
+% % I also recall that  n_1 = - n_2
+%   for lev = 1:hmsh.nlevels
+%     ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+%     Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+%     u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+%     
+%     for ii = 1:2
+%       b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
+%       msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
+%       gnum = hspace.space_of_level(lev).gnum{patch(ii)};
+% 
+%       % Set of active elements on the patch that are adjacent to the interface
+%       [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
+%       element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
+%       
+%       if (~isempty (element_list))
+%         msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
+% 
+%         msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
+%         msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
+% 
+%         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
+%         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
+%         
+%         grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+%         grad_dot_normal = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+% % XXXXX Multiply by the diffusion coefficient
+% 
+% % XXXXX I should use a more local numbering, as in the branch localize_Csub
+% % XXXXX Check the constant 1/sqrt(2)
+%         b_lev(gnum) = op_f_v (spp, msh_side, 1/2 * grad_dot_normal.^2);
+%         est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
+%       end
+%     end
+%   end
+%  end
+% 
+% end
