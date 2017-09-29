@@ -233,14 +233,7 @@ function est = compute_the_integral (u, hmsh, hspace, interface, interface_eleme
  
 % Set of active elements on the patch that are adjacent to the interface
 % The numbering in interface_elements is already ordered to make them automatically coincide
-%         [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
-%         element_list2 = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
         element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
-%         if (numel(element_list) ~= numel(element_list2))
-%           error ('HAY ALGO AQUI QUE NO VA')
-%         elseif(sort (element_list) ~= sort (element_list2))
-%           error ('HAY ALGO AQUI QUE NO VA')
-%         end
 
         msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
 
@@ -249,22 +242,21 @@ function est = compute_the_integral (u, hmsh, hspace, interface, interface_eleme
  
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
-         
+
         grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
         grad_dot_normal{ii} = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
-        
+
         for idim = 1:hmsh.rdim
           x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
         end
         coeffs = coeff (x{:});
         grad_dot_normal{ii} = grad_dot_normal{ii} .* coeffs;
       end
-      
+
       % Reorder quadrature points, to consider the relative orientation of the patches
       reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
       grad_dot_normal = grad_dot_normal{1} + grad_dot_normal{2};
-      
-% XXXXX Multiply by the diffusion coefficient
+
 % XXXXX I should use a more local numbering, as in the branch localize_Csub
       b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
       b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
