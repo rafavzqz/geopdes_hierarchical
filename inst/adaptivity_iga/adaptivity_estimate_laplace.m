@@ -134,9 +134,7 @@ switch adaptivity_data.flag
     % Jump terms, only computed for multipatch geometries
     if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
       coef1 = C0_est * sqrt (ms(dof_level) .* hspace.coeff_pou(:));
-
-      jump_est = compute_jump_terms (u, hmsh, hspace);
-%       jump_est = compute_jump_terms (u, hmsh, hspace);
+      jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff);
       est = est + coef1 .* jump_est;
     end
 
@@ -146,20 +144,15 @@ end
 
 
 % Compute the jump terms for multipatch geometries, when marking by functions
-function est = compute_jump_terms (u, hmsh, hspace)
+function est = compute_jump_terms (u, hmsh, hspace, c_diff)
 
   est = zeros (hspace.ndof, 1);
 
   interfaces = hspace.space_of_level(1).interfaces;
 
   for iref = 1:numel(interfaces)
-    patch(1) = interfaces(iref).patch1;
-    patch(2) = interfaces(iref).patch2;
-    side(1) = interfaces(iref).side1;
-    side(2) = interfaces(iref).side2;
-
-% % Generate an auxiliary hierarchical mesh, such that the elements on the
-% %  interface coincide from each side. This is required for integration
+% Generate an auxiliary hierarchical mesh, such that the elements on the
+%  interface coincide from each side. This is required for integration
     [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfaces(iref));
     if (hmsh.nel ~= hmsh_aux.nel)
       hspace_aux = hspace_in_finer_mesh (hspace, hmsh, hmsh_aux);
@@ -167,6 +160,8 @@ function est = compute_jump_terms (u, hmsh, hspace)
       hspace_aux = hspace;
     end
 
+% Compute the integral of the jump of the normal derivative at the interface
+    est = compute_the_integral (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
   end
 
 end
@@ -216,7 +211,9 @@ function [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfa
   end
 end
 
-function compute_the_integral (hmsh, hspace, interface, interface_elements)
+function est = compute_the_integral (u, hmsh, hspace, interface, interface_elements, coeff)
+
+  est = zeros (hspace.ndof, 1);
 
   patch(1) = interface.patch1;
   patch(2) = interface.patch2;
@@ -224,26 +221,27 @@ function compute_the_integral (hmsh, hspace, interface, interface_elements)
   side(2) = interface.side2;
 
   for lev = 1:hmsh.nlevels
-    ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
-    Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-%     u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
-    
-    for ii = 1:2
-      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
-      msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
-      gnum = hspace.space_of_level(lev).gnum{patch(ii)};
- 
-      % Set of active elements on the patch that are adjacent to the interface
-      [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
-      element_list2 = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
-      element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
-      if (numel(element_list) ~= numel(element_list2))
-        error ('HAY ALGO AQUI QUE NO VA')
-      elseif(sort (element_list) ~= sort (element_list2))
-        error ('HAY ALGO AQUI QUE NO VA')
-      end
+    if (~isempty (interface_elements{lev}{1}))
+      ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+      Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+      u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
 
-      if (~isempty (element_list))
+      grad_dot_normal = cell (2, 1);
+      for ii = [2 1] % This ordering allows me to keep the variables from the first (master) side
+        gnum = hspace.space_of_level(lev).gnum{patch(ii)};
+        msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
+ 
+% Set of active elements on the patch that are adjacent to the interface
+% The numbering in interface_elements is already ordered to make them automatically coincide
+%         [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
+%         element_list2 = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
+        element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
+%         if (numel(element_list) ~= numel(element_list2))
+%           error ('HAY ALGO AQUI QUE NO VA')
+%         elseif(sort (element_list) ~= sort (element_list2))
+%           error ('HAY ALGO AQUI QUE NO VA')
+%         end
+
         msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
 
         msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
@@ -252,78 +250,41 @@ function compute_the_integral (hmsh, hspace, interface, interface_elements)
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
          
-%         grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
-%         grad_dot_normal = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+        grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+        grad_dot_normal{ii} = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+        
+        for idim = 1:hmsh.rdim
+          x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+        end
+        coeffs = coeff (x{:});
+        grad_dot_normal{ii} = grad_dot_normal{ii} .* coeffs;
       end
+      
+      % Reorder quadrature points, to consider the relative orientation of the patches
+      reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
+      grad_dot_normal = grad_dot_normal{1} + grad_dot_normal{2};
+      
+% XXXXX Multiply by the diffusion coefficient
+% XXXXX I should use a more local numbering, as in the branch localize_Csub
+      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
+      b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
+      est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
     end
   end
 
 end
 
 
-% % Compute the jump terms for multipatch geometries, when marking by functions
-% function est = compute_jump_terms (u, hmsh, hspace)
-% 
-%  est = zeros (hspace.ndof, 1);
-% 
-%  interfaces = hspace.space_of_level(1).interfaces;
-% 
-%  for iref = 1:numel(interfaces)
-%   patch(1) = interfaces(iref).patch1;
-%   patch(2) = interfaces(iref).patch2;
-%   side(1) = interfaces(iref).side1;
-%   side(2) = interfaces(iref).side2;
-% 
-% % I am computing \int (|grad u_1 \dot n_1|^2 + |grad u_2 \dot n_2|^2) \beta, instead of
-% %  \int (|grad u_1 \dot n_1 + grad u_2 \dot n_2|^2) \beta
-% % I also recall that  n_1 = - n_2
-%   for lev = 1:hmsh.nlevels
-%     ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
-%     Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-%     u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
-%     
-%     for ii = 1:2
-%       b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
-%       msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
-%       gnum = hspace.space_of_level(lev).gnum{patch(ii)};
-% 
-%       % Set of active elements on the patch that are adjacent to the interface
-%       [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
-%       element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
-%       
-%       if (~isempty (element_list))
-%         msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
-% 
-%         msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
-%         msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
-% 
-%         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
-%         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
-%         
-%         grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
-%         grad_dot_normal = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
-% % XXXXX Multiply by the diffusion coefficient
-% 
-% % XXXXX I should use a more local numbering, as in the branch localize_Csub
-% % XXXXX Check the constant 1/sqrt(2)
-%         b_lev(gnum) = op_f_v (spp, msh_side, 1/2 * grad_dot_normal.^2);
-%         est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
-%       end
-%     end
-%   end
-%  end
-% 
-% end
-
 function elem = reorder_elements (elem, interface, nel_dir)
 
-  if (numel (nel_dir) == 1)
+  ndim = numel (nel_dir) + 1;
+  if (ndim == 2)
     if (interface.ornt == -1)
       elem = fliplr (elem(:)');
     else
       elem = elem(:)';
     end
-  elseif (numel (nel_dir) == 2)
+  elseif (ndim == 3)
     if (interface.flag == -1)
       elem = elem';
     end
@@ -337,6 +298,34 @@ function elem = reorder_elements (elem, interface, nel_dir)
   end
 end
 
-function reorder_quad_points ()
+function field = reorder_quad_points (field, interface, nqn_dir)
+
+  ndim = numel (nqn_dir) + 1;
+  nqn = prod (nqn_dir);
+
+  if (ndim == 2)
+    if (interface.ornt == -1)
+      qpoints = nqn:-1:1;
+    else
+      qpoints = 1:nqn;  
+    end
+  elseif (ndim == 3)
+    if (interface.flag == 1)
+      qpoints = reshape (1:nqn, nqn_dir);
+    else % I am using nqn_dir from the opposite side (compare with mp_dg_penalty)
+      nqn_dir = fliplr (nqn_dir);
+      qpoints = reshape (1:nqn, nqn_dir);
+      qpoints = qpoints';
+    end
+    if (interface.ornt1 == -1)
+      qpoints = flipud (qpoints);
+    end
+    if (interface.ornt2 == -1)
+      qpoints = fliplr (qpoints);
+    end
+    qpoints = qpoints(:)';
+  end
+
+  field = field(qpoints,:);
 
 end
