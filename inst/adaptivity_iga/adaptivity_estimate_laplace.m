@@ -152,33 +152,113 @@ function est = compute_jump_terms (u, hmsh, hspace)
 
   interfaces = hspace.space_of_level(1).interfaces;
 
-  hm = hmsh;
-  hsp = hspace;
   for iref = 1:numel(interfaces)
     patch(1) = interfaces(iref).patch1;
     patch(2) = interfaces(iref).patch2;
     side(1) = interfaces(iref).side1;
     side(2) = interfaces(iref).side2;
 
-    for lev = 1:hmsh.nlevels
-      Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-  
-      for ii = 1:2
-        msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
-        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
-        sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
-      
-        hm.mesh_of_level(lev).msh_patch{patch(ii)} = msh_side_int;
-        hsp.space_of_level(lev).sp_patch{patch(ii)} = sp_bnd;
-      end
+% % Generate an auxiliary hierarchical mesh, such that the elements on the
+% %  interface coincide from each side. This is required for integration
+    [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfaces(iref));
+    if (hmsh.nel ~= hmsh_aux.nel)
+      hspace_aux = hspace_in_finer_mesh (hspace, hmsh, hmsh_aux);
+    else
+      hspace_aux = hspace;
     end
+
   end
 
 end
 
 
+function [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interface)
+  patch(1) = interface.patch1;
+  patch(2) = interface.patch2;
+  side(1) = interface.side1;
+  side(2) = interface.side2;
+  
+  hmsh_aux = hmsh;
+  interface_elements = cell (hmsh.nlevels, 1);
+  for lev = 1:hmsh.nlevels
+    marked = cell (hmsh.nlevels, 1);
+    Nelem = cumsum ([0, hmsh_aux.mesh_of_level(lev).nel_per_patch]);
+    for ii = 1:2
+      msh_patch_lev = hmsh_aux.mesh_of_level(lev).msh_patch{patch(ii)};
+      nel_dir = msh_patch_lev.nel_dir;
+%    ind = [1 1 2 2 3 3] in 3D, ind = [1 1 2 2] in 2D
+%    ind2 = [2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
+      ind = ceil (side(ii)/2);
+      ind2 = setdiff (1:hmsh.ndim, ind);
+      subindices = arrayfun (@(x) 1:x, nel_dir, 'UniformOutput', false);
+      if (mod (side(ii), 2) == 1)
+        subindices{ind} = 1;
+      else
+        subindices{ind} = nel_dir(ind);
+      end
+      [subindices{:}] = ndgrid (subindices{:});
+      elems{ii} = reshape (sub2ind ([nel_dir, 1], subindices{:}), [nel_dir(ind2), 1]);
+    end
+    elems{1} = elems{1}(:)';
+    elems{2} = reorder_elements (elems{2}, interface, nel_dir(ind2));
+    [active_elements{1}, pos1] = ismember (elems{1}+Nelem(patch(1)), hmsh_aux.active{lev});
+    [active_elements{2}, pos2] = ismember (elems{2}+Nelem(patch(2)), hmsh_aux.active{lev});
 
+    interface_indices = active_elements{1} & active_elements{2};
+    interface_elements{lev}{1} = hmsh_aux.active{lev}(pos1(interface_indices));
+    interface_elements{lev}{2} = hmsh_aux.active{lev}(pos2(interface_indices));
 
+    indices1 = (active_elements{1} & ~active_elements{2});
+    indices2 = (active_elements{2} & ~active_elements{1});
+    indices = union (pos1(indices1), pos2(indices2));
+    marked{lev} = hmsh_aux.active{lev}(indices);
+    hmsh_aux = hmsh_refine (hmsh_aux, marked);
+  end
+end
+
+function compute_the_integral (hmsh, hspace, interface, interface_elements)
+
+  patch(1) = interface.patch1;
+  patch(2) = interface.patch2;
+  side(1) = interface.side1;
+  side(2) = interface.side2;
+
+  for lev = 1:hmsh.nlevels
+    ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+    Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+%     u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+    
+    for ii = 1:2
+      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
+      msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
+      gnum = hspace.space_of_level(lev).gnum{patch(ii)};
+ 
+      % Set of active elements on the patch that are adjacent to the interface
+      [~,~,active_elements] = intersect (hmsh.active{lev}, Nelem(patch(ii))+1:Nelem(patch(ii)+1));
+      element_list2 = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, active_elements);
+      element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
+      if (numel(element_list) ~= numel(element_list2))
+        error ('HAY ALGO AQUI QUE NO VA')
+      elseif(sort (element_list) ~= sort (element_list2))
+        error ('HAY ALGO AQUI QUE NO VA')
+      end
+
+      if (~isempty (element_list))
+        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
+
+        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
+        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
+ 
+        sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
+        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
+         
+%         grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+%         grad_dot_normal = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+      end
+    end
+  end
+
+end
 
 
 % % Compute the jump terms for multipatch geometries, when marking by functions
@@ -234,3 +314,29 @@ end
 %  end
 % 
 % end
+
+function elem = reorder_elements (elem, interface, nel_dir)
+
+  if (numel (nel_dir) == 1)
+    if (interface.ornt == -1)
+      elem = fliplr (elem(:)');
+    else
+      elem = elem(:)';
+    end
+  elseif (numel (nel_dir) == 2)
+    if (interface.flag == -1)
+      elem = elem';
+    end
+    if (interface.ornt1 == -1)
+      elem = flipud (elem);
+    end
+    if (interface.ornt2 == -1)
+      elem = fliplr (elem);
+    end
+    elem = elem(:)';
+  end
+end
+
+function reorder_quad_points ()
+
+end
