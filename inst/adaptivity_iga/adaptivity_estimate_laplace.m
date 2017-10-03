@@ -129,14 +129,15 @@ switch adaptivity_data.flag
                 est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
             end
         end
-        est = C0_est * coef .* sqrt(est);
-        
+        est = coef.^2 .* est;
+
     % Jump terms, only computed for multipatch geometries
     if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-      coef1 = C0_est * sqrt (ms(dof_level) .* hspace.coeff_pou(:));
+      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
       jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff);
       est = est + coef1 .* jump_est;
     end
+    est = C0_est * sqrt (est);
 
 end
 
@@ -161,7 +162,7 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff)
     end
 
 % Compute the integral of the jump of the normal derivative at the interface
-    est = compute_the_integral (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
+    est = est + compute_the_integral (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
   end
 
 end
