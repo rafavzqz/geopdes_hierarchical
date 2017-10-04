@@ -27,12 +27,23 @@
 % OUTPUT:
 %
 %   est: computed a posteriori error indicators
-%           - (Buffa and Giannelli, 2016) When adaptivity_data.flag == 'elements': for an element Q,
-%                          est_Q := C0_est*h_Q*(int_Q |f + div(epsilon(x) grad(U))|^2)^(1/2),
+%           - When adaptivity_data.flag == 'elements': for an element Q, (Buffa and Giannelli, 2016)
+%                          est_Q := C0_est * h_Q * (int_Q |f + div(epsilon(x) grad(U))|^2)^(1/2),
 %           where h_Q is the local meshsize and U is the Galerkin solution
-%           - (Buffa and Garau, 2016) When adaptivity_data.flag == 'functions': for a B-spline basis function b,
-%                          est_b := C0_est*h_b*(int_{supp b} a_b*|f + div(epsilon(x) grad(U))|^2*b)^(1/2),
+%           - When adaptivity_data.flag == 'functions': for a B-spline basis function b, (Buffa and Garau, 2016)
+%                          est_b := C0_est * h_b * (a_b * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b)^(1/2),
 %           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity, and U is the Galerkin solution
+%
+% For multipatch domains, with C^0 continuity, jump terms between patches are also considered
+%
+%        est_Q := C0_est * (h_Q^2 * int_Q |f + div(epsilon(x) grad(U))|^2 + h_Q int_I [epsilon dU/dn]^2 )^(1/2),
+% where I is the intersection of the boundary of the element with the interface, 
+% and [*] denotes the jump at the interface
+%
+%        est_b := C0_est * (h_b^2 a_b * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b + h_b * a_b * int_I [epsilon dU/dn]^2 * b)^(1/2),
+% where I is the intersection of the support of the function with the interface
+%  
+%
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
@@ -54,10 +65,10 @@
 
 function est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
 
-if (isfield(adaptivity_data, 'C0_est'))
-    C0_est = adaptivity_data.C0_est;
+if (isfield (adaptivity_data, 'C0_est'))
+  C0_est = adaptivity_data.C0_est;
 else
-    C0_est = 1;
+  C0_est = 1;
 end
 
 [ders, F] = hspace_eval_hmsh (u, hspace, hmsh, {'gradient', 'laplacian'});
@@ -66,90 +77,87 @@ der2num = ders{2};
 
 x = cell (hmsh.rdim, 1);
 for idim = 1:hmsh.rdim;
-    x{idim} = reshape (F(idim,:), [], hmsh.nel);
+  x{idim} = reshape (F(idim,:), [], hmsh.nel);
 end
 
 aux = 0;
 valf = problem_data.f (x{:});
 val_c_diff = problem_data.c_diff(x{:});
 if (isfield (problem_data, 'grad_c_diff'))
-    val_grad_c_diff  = feval (problem_data.grad_c_diff, x{:});
-    aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
+  val_grad_c_diff  = feval (problem_data.grad_c_diff, x{:});
+  aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
 end
 aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
 switch lower (adaptivity_data.flag)
-    case 'elements',
-        w = [];
-        h = [];
-        for ilev = 1:hmsh.nlevels
-            if (hmsh.msh_lev{ilev}.nel ~= 0)
-                w = cat (2, w, hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet);
-                h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
-            end
-        end
-        h = h * sqrt (hmsh.ndim);
+  case 'elements',
+    w = []; h = [];
+    for ilev = 1:hmsh.nlevels
+      if (hmsh.msh_lev{ilev}.nel ~= 0)
+        w = cat (2, w, hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet);
+        h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
+      end
+    end
+    h = h * sqrt (hmsh.ndim);
         
-        est = sum (aux.*w);
-        est = h.^2 .* est(:);
-
+    est = sum (aux.*w);
+    est = h.^2 .* est(:);
+    
     % Jump terms, only computed for multipatch geometries
-        if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-            jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
-            est = est + h .* jump_est;
-        end
-        est = C0_est * sqrt (est);
+    if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+      jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
+      est = est + h .* jump_est;
+    end
+    est = C0_est * sqrt (est);
       
-    case 'functions',
+  case 'functions',
     % Compute the mesh size for each level
-        ms = zeros (hmsh.nlevels, 1);
-        for ilev = 1:hmsh.nlevels
-            if (hmsh.msh_lev{ilev}.nel ~= 0)
-                ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
-            else
-                ms(ilev) = 0;
-            end
-        end
-        ms = ms * sqrt (hmsh.ndim);
-        
-        Nf = cumsum ([0; hspace.ndof_per_level(:)]);
-        dof_level = zeros (hspace.ndof, 1);
-        for lev = 1:hspace.nlevels
-            dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
-        end
-        coef = ms(dof_level).*sqrt(hspace.coeff_pou(:));
+    ms = zeros (hmsh.nlevels, 1);
+    for ilev = 1:hmsh.nlevels
+      if (hmsh.msh_lev{ilev}.nel ~= 0)
+        ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
+      end
+    end
+    ms = ms * sqrt (hmsh.ndim);
+    
+    Nf = cumsum ([0; hspace.ndof_per_level(:)]);
+    dof_level = zeros (hspace.ndof, 1);
+    for lev = 1:hspace.nlevels
+      dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
+    end
+    coef = ms(dof_level).^2 .* hspace.coeff_pou(:);
 
-    % Residual terms, a_B * h_B * \int_{supp B} |div(A * grad u) + f|^2 B
-        est = zeros(hspace.ndof,1);
-        ndofs = 0;
-        Ne = cumsum([0; hmsh.nel_per_level(:)]);
-        for ilev = 1:hmsh.nlevels
-            ndofs = ndofs + hspace.ndof_per_level(ilev);
-            if (hmsh.nel_per_level(ilev) > 0)
-                ind_e = (Ne(ilev)+1):Ne(ilev+1);
-                sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
-                dofs = 1:ndofs;
-                est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
-            end
-        end
-        est = coef.^2 .* est;
-
+    % Residual terms, a_B * h_B^2 * \int_{supp B} |div(epsilon * grad u) + f|^2 B
+    est = zeros (hspace.ndof,1);
+    ndofs = 0;
+    Ne = cumsum([0; hmsh.nel_per_level(:)]);
+    for ilev = 1:hmsh.nlevels
+      ndofs = ndofs + hspace.ndof_per_level(ilev);
+      if (hmsh.nel_per_level(ilev) > 0)
+        ind_e = (Ne(ilev)+1):Ne(ilev+1);
+        sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+        b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
+        dofs = 1:ndofs;
+        est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
+      end
+    end
+    est = coef .* est;
+    
     % Jump terms, only computed for multipatch geometries
-        if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-            coef1 = ms(dof_level) .* hspace.coeff_pou(:);
-            jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
-            est = est + coef1 .* jump_est;
-        end
-        est = C0_est * sqrt (est);
-
+    if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
+      jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
+      est = est + coef1 .* jump_est;
+    end
+    est = C0_est * sqrt (est);
+    
 end
 
 end
 
 
-% Compute the jump terms for multipatch geometries, when marking by functions
 function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
+% Compute the jump terms for multipatch geometries, when marking by functions
 
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
@@ -183,6 +191,16 @@ end
 
 
 function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_auxiliary_mesh (hmsh, interface)
+% Generate an auxiliary (refined) hierarchical mesh, such that two adjacent elements
+%  on the interface are active on both patches
+%
+% OUTPUT
+%    hmsh_aux:           refined hierarchical mesh
+%    interface_elements: for each level, and for each side of the interface,
+%           indices of the adjacent active elements in hmsh_aux
+%    adjacent_elements_to_edge: array of size (2, nedges). For each edge of the interface,
+%           and for each side, global indices of the adjacent active elements (in hmsh)
+
   patch(1) = interface.patch1;
   patch(2) = interface.patch2;
   side(1) = interface.side1;
@@ -226,8 +244,6 @@ function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_au
     marked{lev} = hmsh_aux.active{lev}(indices);
     hmsh_aux = hmsh_refine (hmsh_aux, marked);
 
-
-% For now I use many unnecessary loops
     iedge_aux = iedge;
     Nelem_level = cumsum ([0 hmsh.nel_per_level]);
     for ii = 1:2
@@ -239,8 +255,8 @@ function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_au
         flag = 0;
         levj = lev;
         while (~flag)
-          [aa, pos] = ismember (elem_lev, hmsh.active{levj});
-          if (aa)
+          [is_active, pos] = ismember (elem_lev, hmsh.active{levj});
+          if (is_active)
             adjacent_elements_to_edge(ii,iedge) = Nelem_level(levj) + pos;
             flag = 1;
           else
@@ -251,16 +267,20 @@ function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_au
         end
       end
     end
-    
+
   end  
 
 end
 
 
-
-
 function est = integral_term_by_functions (u, hmsh, hspace, interface, interface_elements, coeff)
-
+% Compute the edge integrals for the estimator by functions
+%
+% OUTPUT
+%    est: an array of size hspace.ndof x 1, with the value for each function of
+%
+%    int_{I \cap supp B} [A dU/dn]^2 B
+%
   est = zeros (hspace.ndof, 1);
 
   patch(1) = interface.patch1;
@@ -317,6 +337,14 @@ end
 
 
 function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, interface_elements, coeff)
+% Compute the edge integrals for the estimator by elements
+%
+% OUTPUT
+%    est: an array of size nedges x 1, with the value for each edge
+%
+%    int_{e} [A dU/dn]^2
+%
+% This information must be then transferred to the adjacent elements
 
   patch(1) = interface.patch1;
   patch(2) = interface.patch2;
@@ -372,7 +400,7 @@ end
 
 
 function elem = reorder_elements (elem, interface, nel_dir)
-
+% Reorder elements of adjacent patches, to get a corresponding numbering
   ndim = numel (nel_dir) + 1;
   if (ndim == 2)
     if (interface.ornt == -1)
@@ -395,7 +423,7 @@ function elem = reorder_elements (elem, interface, nel_dir)
 end
 
 function field = reorder_quad_points (field, interface, nqn_dir)
-
+% Reorder quadrature points of adjacent patches, to get a corresponding numbering
   ndim = numel (nqn_dir) + 1;
   nqn = prod (nqn_dir);
 
