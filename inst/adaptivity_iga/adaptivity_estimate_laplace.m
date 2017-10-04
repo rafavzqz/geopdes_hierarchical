@@ -36,6 +36,7 @@
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -77,7 +78,7 @@ if (isfield (problem_data, 'grad_c_diff'))
 end
 aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
-switch adaptivity_data.flag
+switch lower (adaptivity_data.flag)
     case 'elements',
         w = [];
         h = [];
@@ -92,9 +93,12 @@ switch adaptivity_data.flag
         est = sqrt (sum (aux.*w));
         est = C0_est*h.*est(:);
         
+    % Jump terms, only computed for multipatch geometries
         if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-          warning ('Jump terms not computed for multipatch geometries when marking by elements')
+            jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
+%             est = est + coef1 .* jump_est;
         end
+%         est = C0_est * sqrt (est);
       
     case 'functions',
     % Compute the mesh size for each level
@@ -132,12 +136,12 @@ switch adaptivity_data.flag
         est = coef.^2 .* est;
 
     % Jump terms, only computed for multipatch geometries
-    if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
-      jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff);
-      est = est + coef1 .* jump_est;
-    end
-    est = C0_est * sqrt (est);
+        if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+            coef1 = ms(dof_level) .* hspace.coeff_pou(:);
+            jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
+            est = est + coef1 .* jump_est;
+        end
+        est = C0_est * sqrt (est);
 
 end
 
@@ -145,16 +149,22 @@ end
 
 
 % Compute the jump terms for multipatch geometries, when marking by functions
-function est = compute_jump_terms (u, hmsh, hspace, c_diff)
+function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 
-  est = zeros (hspace.ndof, 1);
+  if (strcmpi (flag, 'elements'))
+    est = zeros (hmsh.nel, 1);
+    compute_integral = @integral_term_by_elements;
+  elseif (strcmpi (flag, 'functions'))
+    est = zeros (hspace.ndof, 1);
+    compute_integral = @integral_term_by_functions;
+  end
 
   interfaces = hspace.space_of_level(1).interfaces;
 
   for iref = 1:numel(interfaces)
 % Generate an auxiliary hierarchical mesh, such that the elements on the
 %  interface coincide from each side. This is required for integration
-    [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfaces(iref));
+    [hmsh_aux, interface_elements, interface_active_elements] = generate_auxiliary_mesh (hmsh, interfaces(iref));
     if (hmsh.nel ~= hmsh_aux.nel)
       hspace_aux = hspace_in_finer_mesh (hspace, hmsh, hmsh_aux);
     else
@@ -162,7 +172,13 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff)
     end
 
 % Compute the integral of the jump of the normal derivative at the interface
-    est = est + compute_the_integral (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
+    if (strcmpi (flag, 'elements'))
+      adjacent_elements = get_adjacent_elements (hmsh, hmsh_aux, interfaces(iref), interface_elements);
+      est_edges = integral_term_by_elements (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
+      est = est + integral_term_by_elements (u, hmsh, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
+    elseif (strcmpi (flag, 'functions'))
+      est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
+    end
   end
 
 end
@@ -212,7 +228,10 @@ function [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfa
   end
 end
 
-function est = compute_the_integral (u, hmsh, hspace, interface, interface_elements, coeff)
+
+
+
+function est = integral_term_by_functions (u, hmsh, hspace, interface, interface_elements, coeff)
 
   est = zeros (hspace.ndof, 1);
 
@@ -266,6 +285,61 @@ function est = compute_the_integral (u, hmsh, hspace, interface, interface_eleme
   end
 
 end
+
+
+
+function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, interface_elements, coeff)
+
+  patch(1) = interface.patch1;
+  patch(2) = interface.patch2;
+  side(1) = interface.side1;
+  side(2) = interface.side2;
+
+  est_edges = [];
+  for lev = 1:hmsh.nlevels
+    if (~isempty (interface_elements{lev}{1}))
+      ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+      Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+      u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+
+      grad_dot_normal = cell (2, 1);
+      for ii = [2 1] % This ordering allows me to keep the variables from the first (master) side
+        gnum = hspace.space_of_level(lev).gnum{patch(ii)};
+        msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
+ 
+% Set of active elements on the patch that are adjacent to the interface
+% The numbering in interface_elements is already ordered to make them automatically coincide
+        element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
+
+        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
+
+        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
+        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
+ 
+        sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
+        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
+
+        grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+        grad_dot_normal{ii} = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+
+        for idim = 1:hmsh.rdim
+          x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+        end
+        coeffs = coeff (x{:});
+        grad_dot_normal{ii} = grad_dot_normal{ii} .* coeffs;
+      end
+
+      % Reorder quadrature points, to consider the relative orientation of the patches
+      reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
+      w = msh_side.quad_weights .* msh_side.jacdet;
+      dudn_jump = grad_dot_normal{1} + grad_dot_normal{2};
+      
+      est_edges = cat (2, est_edges, sum (w.*dudn_jump.^2));
+    end
+  end
+
+end
+
 
 
 function elem = reorder_elements (elem, interface, nel_dir)
