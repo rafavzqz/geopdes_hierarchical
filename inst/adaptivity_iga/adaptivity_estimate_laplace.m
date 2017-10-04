@@ -90,15 +90,15 @@ switch lower (adaptivity_data.flag)
         end
         h = h * sqrt (hmsh.ndim);
         
-        est = sqrt (sum (aux.*w));
-        est = C0_est*h.*est(:);
-        
+        est = sum (aux.*w);
+        est = h.^2 .* est(:);
+
     % Jump terms, only computed for multipatch geometries
         if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
             jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
-%             est = est + coef1 .* jump_est;
+            est = est + h .* jump_est;
         end
-%         est = C0_est * sqrt (est);
+        est = C0_est * sqrt (est);
       
     case 'functions',
     % Compute the mesh size for each level
@@ -153,10 +153,8 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
-    compute_integral = @integral_term_by_elements;
   elseif (strcmpi (flag, 'functions'))
     est = zeros (hspace.ndof, 1);
-    compute_integral = @integral_term_by_functions;
   end
 
   interfaces = hspace.space_of_level(1).interfaces;
@@ -173,9 +171,9 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 
 % Compute the integral of the jump of the normal derivative at the interface
     if (strcmpi (flag, 'elements'))
-      adjacent_elements = get_adjacent_elements (hmsh, hmsh_aux, interfaces(iref), interface_elements);
       est_edges = integral_term_by_elements (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
-      est = est + integral_term_by_elements (u, hmsh, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
+      est(interface_active_elements(1,:)) = est(interface_active_elements(1,:)) + est_edges;
+      est(interface_active_elements(2,:)) = est(interface_active_elements(2,:)) + est_edges;
     elseif (strcmpi (flag, 'functions'))
       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
     end
@@ -184,14 +182,16 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 end
 
 
-function [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interface)
+function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_auxiliary_mesh (hmsh, interface)
   patch(1) = interface.patch1;
   patch(2) = interface.patch2;
   side(1) = interface.side1;
   side(2) = interface.side2;
   
+  iedge = 0;
   hmsh_aux = hmsh;
   interface_elements = cell (hmsh.nlevels, 1);
+  
   for lev = 1:hmsh.nlevels
     marked = cell (hmsh.nlevels, 1);
     Nelem = cumsum ([0, hmsh_aux.mesh_of_level(lev).nel_per_patch]);
@@ -215,7 +215,7 @@ function [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfa
     elems{2} = reorder_elements (elems{2}, interface, nel_dir(ind2));
     [active_elements{1}, pos1] = ismember (elems{1}+Nelem(patch(1)), hmsh_aux.active{lev});
     [active_elements{2}, pos2] = ismember (elems{2}+Nelem(patch(2)), hmsh_aux.active{lev});
-
+    
     interface_indices = active_elements{1} & active_elements{2};
     interface_elements{lev}{1} = hmsh_aux.active{lev}(pos1(interface_indices));
     interface_elements{lev}{2} = hmsh_aux.active{lev}(pos2(interface_indices));
@@ -225,7 +225,35 @@ function [hmsh_aux, interface_elements] = generate_auxiliary_mesh (hmsh, interfa
     indices = union (pos1(indices1), pos2(indices2));
     marked{lev} = hmsh_aux.active{lev}(indices);
     hmsh_aux = hmsh_refine (hmsh_aux, marked);
-  end
+
+
+% For now I use many unnecessary loops
+    iedge_aux = iedge;
+    Nelem_level = cumsum ([0 hmsh.nel_per_level]);
+    for ii = 1:2
+      iedge = iedge_aux;
+      int_elems = interface_elements{lev}{ii};
+      for iel = 1:numel(int_elems)
+        elem_lev = int_elems(iel);
+        iedge = iedge + 1;
+        flag = 0;
+        levj = lev;
+        while (~flag)
+          [aa, pos] = ismember (elem_lev, hmsh.active{levj});
+          if (aa)
+            adjacent_elements_to_edge(ii,iedge) = Nelem_level(levj) + pos;
+            flag = 1;
+          else
+            elem_lev = hmsh_get_parent (hmsh, levj, elem_lev);
+            flag = 0;
+            levj = levj-1;
+          end
+        end
+      end
+    end
+    
+  end  
+
 end
 
 
@@ -337,6 +365,7 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
       est_edges = cat (2, est_edges, sum (w.*dudn_jump.^2));
     end
   end
+  est_edges = est_edges(:);
 
 end
 
