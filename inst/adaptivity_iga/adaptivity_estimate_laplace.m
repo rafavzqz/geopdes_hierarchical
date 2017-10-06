@@ -142,7 +142,7 @@ switch lower (adaptivity_data.flag)
       end
     end
     est = coef .* est;
-    est = 0;
+
     % Jump terms, only computed for multipatch geometries
     if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
       coef1 = ms(dof_level) .* hspace.coeff_pou(:);
