@@ -30,14 +30,15 @@ problem_data.graduex = @(x,y) cat (1, ...
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [4 4];        % Degree of the splines
-method_data.regularity  = [3 3];        % Regularity of the splines
-method_data.nsub_coarse = [8 8];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.degree      = [1 1];        % Degree of the splines
+method_data.regularity  = [0 0];        % Regularity of the splines
+method_data.nsub_coarse = [4 4];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_coarse = [4 4];% DEGREE 1
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
 method_data.nquad       = method_data.degree+1;        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 1;            % 0: False, 1: True
-method_data.bpx_dofs = 'Mod_dofs';
+method_data.bpx_dofs = 'Durkbin_dofs';
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
@@ -62,17 +63,17 @@ plot_data.print_info = true;
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
 [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
-% EXPORT VTK FILE
-npts = [51 51];
-output_file = 'laplace_adaptivity_square_ex1.vts';
-sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
-
-% Plot in Octave/Matlab
-[eu, F] = sp_eval (u, hspace, geometry, npts);
-figure; subplot (1,2,1)
-surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-subplot(1,2,2)
-surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));
+% % % % EXPORT VTK FILE
+% % % npts = [51 51];
+% % % output_file = 'laplace_adaptivity_square_ex1.vts';
+% % % sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'laplacian'}, {'value', 'gradient', 'laplacian'})
+% % % 
+% % % % Plot in Octave/Matlab
+% % % [eu, F] = sp_eval (u, hspace, geometry, npts);
+% % % figure; subplot (1,2,1)
+% % % surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+% % % subplot(1,2,2)
+% % % surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));
 
 
 %!test
