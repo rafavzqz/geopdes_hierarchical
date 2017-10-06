@@ -142,7 +142,7 @@ switch lower (adaptivity_data.flag)
       end
     end
     est = coef .* est;
-    
+    est = 0;
     % Jump terms, only computed for multipatch geometries
     if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
       coef1 = ms(dof_level) .* hspace.coeff_pou(:);
@@ -386,7 +386,7 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
       end
 
       % Reorder quadrature points, to consider the relative orientation of the patches
-      reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
+      grad_dot_normal{2} = reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
       w = msh_side.quad_weights .* msh_side.jacdet;
       dudn_jump = grad_dot_normal{1} + grad_dot_normal{2};
       
