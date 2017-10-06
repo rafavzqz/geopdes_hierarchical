@@ -90,29 +90,22 @@ plot_numerical_and_exact_solution(u,hspace,geometry,npts,problem_data.uex)
 %! plot_data.plot_discrete_sol = false;
 %! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 %! assert (solution_data.iter, 5)
-%! assert (solution_data.ndof, [40 65 94 111 140])
-%! assert (solution_data.nel, [3 12 33 54 81])
-%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.953714572484243e-02 2.528617719283998e-02 1.599316753263250e-02], 1e-15)
+%! assert (solution_data.ndof, [40 65 72 101 130])
+%! assert (solution_data.nel, [3 12 21 42 69])
+%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 4.12447742741663e-02 2.66625968468303e-02 1.68988634507316e-02], 1e-15)
 %!
 %! adaptivity_data.flag = 'elements';
 %! adaptivity_data.num_max_iter = 4;
 %! adaptivity_data.mark_param = .025;
 %! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 %! assert (solution_data.iter, 4)
-%! assert (solution_data.ndof, [40 65 133 169])
-%! assert (solution_data.nel, [3 12 48 96])
-%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.943112046124483e-02 2.493928379070583e-02], 1e-15)
-%!
-%! method_data.space_type  = 'standard';
-%! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
-%! assert (solution_data.iter, 4)
-%! assert (solution_data.ndof, [40 65 133 179])
-%! assert (solution_data.nel, [3 12 48 96])
-%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.943112046124483e-02 2.493693365346569e-02], 1e-15)
+%! assert (solution_data.ndof, [40 65 115 148])
+%! assert (solution_data.nel, [3 12 42 81])
+%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.94493778201285e-02 2.49674879398529e-02], 1e-15)
 %!
 %! method_data.truncated  = 1;
 %! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 %! assert (solution_data.iter, 4)
-%! assert (solution_data.ndof, [40 65 133 179])
-%! assert (solution_data.nel, [3 12 48 96])
-%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.943112046124483e-02 2.493693365346569e-02], 1e-15)
+%! assert (solution_data.ndof, [40 65 115 148])
+%! assert (solution_data.nel, [3 12 42 81])
+%! assert (solution_data.err_h1s, [7.541732495088888e-02 5.973332926167463e-02 3.94493778201285e-02 2.49674879398529e-02], 1e-15)
