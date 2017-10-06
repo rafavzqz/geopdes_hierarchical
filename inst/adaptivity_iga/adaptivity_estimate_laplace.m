@@ -322,7 +322,7 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
       end
 
       % Reorder quadrature points, to consider the relative orientation of the patches
-      reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
+      grad_dot_normal{2} = reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
       grad_dot_normal = grad_dot_normal{1} + grad_dot_normal{2};
 
 % XXXXX I should use a more local numbering, as in the branch localize_Csub
