@@ -1,11 +1,11 @@
 % PHYSICAL DATA OF THE PROBLEM
 clear problem_data  
 % Physical domain, defined as NURBS map given in a text file
-problem_data.geo_name = 'geo_Lshaped_C0.txt';
+problem_data.geo_name = 'geo_Lshaped_two_patches.txt';
 
 % Type of boundary conditions for each side of the domain
 problem_data.nmnn_sides   = [];
-problem_data.drchlt_sides = [1 2 3 4];
+problem_data.drchlt_sides = [1 2 3 4 5 6];
 
 % Physical parameters
 problem_data.c_diff  = @(x, y) ones(size(x));
@@ -41,7 +41,7 @@ adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 8;
+adaptivity_data.num_max_iter = 5;
 adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 1e-10;
 
@@ -60,9 +60,9 @@ sp_to_vtk (u, hspace, geometry, npts, output_file, {'solution', 'gradient', 'lap
 plot_numerical_and_exact_solution(u,hspace,geometry,npts,problem_data.uex)
 
 %!test
-%! problem_data.geo_name = 'geo_Lshaped_C0.txt';
+%! problem_data.geo_name = 'geo_Lshaped_two_patches.txt';
 %! problem_data.nmnn_sides   = [];
-%! problem_data.drchlt_sides = [1 2 3 4];
+%! problem_data.drchlt_sides = [1 2 3 4 5 6];
 %! problem_data.c_diff  = @(x, y) ones(size(x));
 %! k = 1; % Constant that characterizes the singularity
 %! problem_data.f = @(x, y) zeros (size (x));
@@ -90,6 +90,6 @@ plot_numerical_and_exact_solution(u,hspace,geometry,npts,problem_data.uex)
 %! plot_data.plot_discrete_sol = false;
 %! [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 %! assert (solution_data.iter, 5)
-%! assert (solution_data.ndof, [45 61 83 122 149])
-%! assert (solution_data.nel, [8 20 38 68 98])
-%! assert (solution_data.err_h1s, [1.089825381386800e-01 7.377184523296307e-02 4.889161568362813e-02 3.224320253959849e-02 2.133745968166025e-02], 1e-15)
+%! assert (solution_data.ndof, [45 61 83 104 149])
+%! assert (solution_data.nel, [8 20 38 62 98])
+%! assert (solution_data.err_h1s, [1.089825381386800e-01 7.377184523296307e-02 4.889161568362813e-02 3.25822537253584e-02 2.133745968166025e-02], 1e-15)
