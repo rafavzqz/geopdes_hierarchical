@@ -424,6 +424,14 @@ end
 
 function field = reorder_quad_points (field, interface, nqn_dir)
 % Reorder quadrature points of adjacent patches, to get a corresponding numbering
+% The indices for quadrature points are always in second-last position
+
+  field_size = size (field);
+  indices = cell (numel (field_size), 1);
+  for id = 1:numel(field_size)
+    indices{id} = 1:field_size(id);
+  end
+
   ndim = numel (nqn_dir) + 1;
   nqn = prod (nqn_dir);
 
@@ -450,6 +458,7 @@ function field = reorder_quad_points (field, interface, nqn_dir)
     qpoints = qpoints(:)';
   end
 
-  field = field(qpoints,:);
+  indices{end-1} = qpoints;
+  field = field(indices{:});
 
 end
