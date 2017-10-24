@@ -1,6 +1,5 @@
-% ADAPTIVITY_LAPLACE: solve the Poisson transient problem with an adaptive
-% isogeometric method based on hierarchical splines and an implicit time
-% integration scheme (backward Euler)
+% ADAPTIVITY_POISOON_TRANSIENT: solve the Poisson transient problem with an adaptive
+% isogeometric method based on (truncated) hierarchical splines.
 %
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_poisson_transient (problem_data, method_data, adaptivity_data, plot_data)
 %
@@ -90,8 +89,6 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 function  [geometry, hmsh, hspace, u, solution_data] = adaptivity_poisson_transient (problem_data, method_data, adaptivity_data, plot_data)
 
 if (nargin == 3)
@@ -120,66 +117,49 @@ end
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 % Initial solution
-number_ts = length(problem_data.time_discretization)-1;
+number_ts = length(problem_data.time_discretization);
 u = ones(hspace.ndof, 1)*problem_data.initial_temperature;
 u_last = u;
 
-
-%% BACKWARD EULER =========================================================
+%% TIME INTEGRATION ========================================================
 for itime = 1:number_ts
-    
     % Initialization of some auxiliary variables
     if ~(isempty(find(plot_data.time_steps_to_post_process==itime, 1)))
         if (plot_data.plot_hmesh)
             fig_mesh = figure(itime);
         end
     end
-    
     if (plot_data.print_info)
         fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d/%d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime,number_ts);
     end
-    
-    
     % ADAPTIVE LOOP
     for iter = 1:adaptivity_data.num_max_iter
         if (plot_data.print_info)
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Adaptivity iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
         end
-        
         if (~hspace_check_partition_of_unity (hspace, hmsh))
             disp('ERROR: The partition-of-the-unity property does not hold.')
             solution_data.flag = -1; break
         end
         
-        % Initialization of some auxiliary variables
-        if (~(isempty(find(plot_data.time_steps_to_post_process==itime, 1))) && plot_data.adaptivity)
-            if (plot_data.plot_hmesh)
-                fig_mesh = figure(1+adaptivity_data.num_max_iter*itime+iter);
-            end
+        % ESTIMATE ===============================================================
+        if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
+        est = adaptivity_estimate_poisson(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
+        gest(iter) = norm (est);
+        if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
+        if (isfield (problem_data, 'graduex'))
+            [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime+1), problem_data.uex, problem_data.graduex);
+            if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
         end
-        
-        
-        
-%         % ESTIMATE ===============================================================
-%         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
-%         est = adaptivity_estimate_poisson_nl(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
-%         %         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
-%         gest(iter) = norm (est);
-%         if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
-%         if (isfield (problem_data, 'graduex'))
-%             [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime+1), problem_data.uex, problem_data.graduex);
-%             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
-%         end
-        
         
         % STOPPING CRITERIA -------------------------------------------------------
         if (gest(iter) < adaptivity_data.tol && ~(itime < 2) && ~(iter < 2) && problem_data.non_linear_convergence_flag)
             if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
             hspace.dofs = u;
             break;
-        elseif (itime > 1 && iter > 1)
-            hspace.dofs = u;
-            break;
+%         elseif (itime > 1 && iter > 1)
+%             hspace.dofs = u;
+%             break;
         elseif (hspace.ndof > adaptivity_data.max_ndof)
             if (plot_data.print_info); disp('Warning: reached the maximum number of DOFs'); end;
             hspace.dofs = u;
@@ -200,17 +180,29 @@ for itime = 1:number_ts
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
         if ~isempty(intersect(adaptivity_data.timeToRefine, itime))
             [marked_ref, num_marked_ref] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-            
-            % Balancing
-            marked_ref = adaptivity_mark_balancing(hmsh, marked_ref, adaptivity_data.crp);
-            
+%             [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+           
             % REFINE
             if ~isempty(marked_ref)
                 if (plot_data.print_info)
                     fprintf('%d %s marked for refinement \n', num_marked_ref, adaptivity_data.flag);
                     disp('REFINE')
                 end
-                [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+                
+                % N.B. The class of admissibility are different for the two
+                % algorithm, in particular n_fsb corresponds to m + 1 and
+                % not to m! In general, the function support balancing is
+                % more conservative (generates a finer mesh) than the
+                % admissible mesh generator.
+                
+                if strcmp(adaptivity_data.adm_strategy, 'admissible')
+                    [hmsh, hspace, Cref] = adaptivity_refine_adm (hmsh, hspace, marked_ref, adaptivity_data);
+                elseif strcmp(adaptivity_data.adm_strategy, 'balancing')
+                    [hmsh, hspace, Cref] = adaptivity_refine_fsb(hmsh, hspace, marked_ref, adaptivity_data);
+                else
+                    [hmsh, hspace, Cref] = adaptivity_refine(hmsh, hspace, marked_ref, adaptivity_data);
+                end
+                
                 % Project the previous solution mesh onto the next refined mesh
                 if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
                 % project dof onto new mesh
@@ -222,74 +214,72 @@ for itime = 1:number_ts
                     est = Cref * est;
                 end;
             end
-            %% COARSENING =============================================================
-            % MARK COARSENING
-            if (plot_data.print_info); disp('MARK COARSENING:'); end
-            if (itime > 1 && adaptivity_data.doCoarsening)
-                [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-                
-                % Balancing
-                marked_coarse = adaptivity_mark_coarse_balancing(hmsh,marked_coarse,adaptivity_data.crp);
-                
-                % coarse only after the first time step if it also refines
-                % COARSE
-                if ~isempty(marked_coarse)
-                    if (plot_data.print_info)
-                        fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
-                        disp('COARSE')
-                    end
-                    % Project the previous solution mesh onto the next refined mesh
-                    if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
-                    % project dofs onto new mesh
+        end
+        %% COARSENING =============================================================
+        % MARK COARSENING
+        if (plot_data.print_info); disp('MARK COARSENING:'); end
+        if (itime > 1 && adaptivity_data.doCoarsening)
+            [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+%             [marked_coarse, num_marked_coarse] = adaptivity_mark_coarsening (est, hmsh, hspace, adaptivity_data);
+
+            % coarse only after the first time step if it also refines
+            % COARSE
+            if ~isempty(marked_coarse)
+                if (plot_data.print_info)
+                    fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
+                    disp('COARSE')
+                end
+                % Project the previous solution mesh onto the next refined mesh
+                if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
+                % project dofs onto new mesh
+                if strcmp(adaptivity_data.adm_strategy, 'balancing')
                     hspace.dofs = u;
-                    [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-                    
+                    [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen_fsb(hmsh, hspace, marked_coarse, adaptivity_data);
                     if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
-                    
                     % project last time step solution onto new mesh
                     hspace.dofs = u_last;
-                    [~, ~, u_last] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
+                    [~, ~, u_last] = adaptivity_coarsen_fsb (hmsh, hspace, marked_coarse, adaptivity_data);
+                    hmsh = hmsh_coarse;
+                    hspace = hspace_coarse;
+                    hspace.dofs = u;
+                else
+                    hspace.dofs = u;
+                    [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+                    if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
+                    % project last time step solution onto new mesh
+                    hspace.dofs = u_last;
+                    [~, ~, u_last] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
                     hmsh = hmsh_coarse;
                     hspace = hspace_coarse;
                     hspace.dofs = u;
                 end
             end
-        end
-        
-        
+        end        
         %% SOLVE ==================================================================
         if (plot_data.print_info)
             disp('SOLVE:')
             fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
         end
-        
         hspace.dofs = u;
         if ~problem_data.flag_nl
-            u = adaptivity_solve_poisson_transient (hmsh, hspace, itime, problem_data, u_last);
+            u = adaptivity_solve_generalized_alphaMethod (hmsh, hspace, itime, problem_data, u_last);
         else
-            [u, problem_data] = adaptivity_solve_poisson_transient_nl (hmsh, hspace, itime, problem_data, plot_data, u_last);
+            [u, problem_data] = adaptivity_solve_nonlinear_generalized_alphaMethod (hmsh, hspace, itime, problem_data, plot_data, u_last);
         end
-        
         hspace.dofs = u;
         nel(iter) = hmsh.nel;
         ndof(iter) = hspace.ndof;
-        
     end % END ADAPTIVITY LOOP
-    
     %update last time step solution
-    hspace.dofs = u;
     u_last = u;
-    
+    hspace.dofs = u;
     if (fid < 0)
         error ('could not open file %s', plot_data.file_name_dofs);
     end
-    
     fprintf (fid, num2str(hspace.ndof));
     fprintf (fid, '\t');
     fprintf (fid, num2str(hmsh.nel));
     fprintf (fid, '\n');
-    
-    
     solution_data.iter = iter;
     solution_data.gest = gest(1:iter);
     solution_data.ndof = ndof(1:iter);
@@ -346,8 +336,9 @@ for itime = 1:number_ts
     end
     if ~problem_data.non_linear_convergence_flag && problem_data.flag_nl
         disp('ERROR: No Convergence !!!');
-        break;
+        return;
     end
 end % END BACKWARD EULER LOOP
 fclose(fid);
+
 end

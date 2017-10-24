@@ -1,6 +1,6 @@
-% ADAPTIVITY_SOLVE_LAPLACE: assemble and solve the linear system for
-% Poisson problem, using hierarchical spaces and implicit time integartion
-% scheme (backward Euler)
+% adaptivity_solve_generalized_alphaMethod: assemble and solve the linear system for
+% Poisson transient problem, using hierarchical spaces and generlized alpha-method
+% time integartion scheme
 %
 % The function solves the diffusion problem
 %
@@ -10,7 +10,7 @@
 %
 % USAGE:
 %
-% u = adaptivity_solve_poisson_transient (hmsh, hspace, method_data)
+% u = adaptivity_solve_generalized_alphaMethod (hmsh, hspace, method_data)
 %
 % INPUT:
 %
@@ -45,20 +45,28 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u] = adaptivity_solve_poisson_transient (hmsh, hspace, itime, problem_data, u_prev)
+function [u] = adaptivity_solve_generalized_alphaMethod (hmsh, hspace, itime, problem_data, u_prev)
 %Assume homogeneous time discretization
-delta_t = problem_data.time_discretization(itime+1) - problem_data.time_discretization(itime);
+if itime < numel(problem_data.time_discretization)
+    delta_t = problem_data.time_discretization(itime+1) - problem_data.time_discretization(itime);
+else
+    delta_t = problem_data.time_discretization(itime) - problem_data.time_discretization(itime-1);
+end
 %Assembly linear system
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 mass_mat = op_u_v_hier(hspace, hspace, hmsh, problem_data.c_cap);
 %lumped mass matrix
 if problem_data.lumped
+    warning('Lumping the Mass Matrix might decrease the approximation quality !!!');
     mass_mat = diag(sum(mass_mat));
 end
-rhs = op_f_v_time_hier (hspace, hmsh, problem_data, itime);
+f = op_f_v_time_hier (hspace, hmsh, problem_data, itime);
+if itime > 1
+    f_prev = op_f_v_time_hier (hspace, hmsh, problem_data, itime-1);
+else
+    f_prev = f;
+end
 u = zeros(size(u_prev));
-disp(size(mass_mat));
-
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
     for iside = problem_data.nmnn_sides
@@ -66,7 +74,7 @@ if (~isfield (struct (hmsh), 'npatch')) % Single patch case
             % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
             gside = @(varargin) problem_data.g(varargin{:},iside);
             dofs = hspace.boundary(iside).dofs;
-            rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
+            f(dofs) = f(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
         else
             if (iside == 1)
                 x = hmsh.mesh_of_level(1).breaks{1}(1);
@@ -74,7 +82,7 @@ if (~isfield (struct (hmsh), 'npatch')) % Single patch case
                 x = hmsh.mesh_of_level(1).breaks{1}(end);
             end
             sp_side = hspace.boundary(iside);
-            rhs(sp_side.dofs) = rhs(sp_side.dofs) + problem_data.g(x,iside);
+            f(sp_side.dofs) = f(sp_side.dofs) + problem_data.g(x,iside);
         end
     end
 else % Multipatch case
@@ -84,52 +92,24 @@ else % Multipatch case
         iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
         gref = @(varargin) problem_data.g(varargin{:},iref);
         rhs_nmnn = op_f_v_hier (hspace.boundary, hmsh.boundary, gref, iref_patch_list);
-        rhs(hspace.boundary.dofs) = rhs(hspace.boundary.dofs) + rhs_nmnn;
+        f(hspace.boundary.dofs) = f(hspace.boundary.dofs) + rhs_nmnn;
     end
 end
 
-% Apply convection boundary conditions
-for iside = problem_data.convection_sides
-    % Restrict the function handle to the specified side, in any dimension, cside = @(x,y,z) conv(x,y,z,iside)
-    cside = @(varargin) problem_data.conv_fun(varargin{:},iside);
-    cside_rhs = @(varargin) problem_data.conv_fun_rhs(varargin{:},iside);
-    dofs = hspace.boundary(iside).dofs;
-    mass_mat(dofs,dofs) = mass_mat(dofs,dofs) + ...
-        op_u_v_hier(hspace.boundary(iside), hspace.boundary(iside), hmsh.boundary(iside), cside);
-    rhs(dofs) = rhs(dofs) + op_conv_v_hier (hspace.boundary(iside), hmsh.boundary(iside), cside_rhs, u);
-end
-
-% Apply radiation boundary conditions
-for iside = problem_data.radiation_sides
-    % Restrict the function handle to the specified side, in any dimension, rside = @(x,y,z) rad(x,y,z,iside)
-    rtside = @(varargin) problem_data.rad_tilda_fun(varargin{:},iside);
-    rside_rhs = @(varargin) problem_data.rad_fun(varargin{:},iside);
-
-    dofs = hspace.boundary(iside).dofs;
-    mass_mat(dofs,dofs) = mass_mat(dofs,dofs) + ...
-        op_u_v_hier(hspace.boundary(iside), hspace.boundary(iside), hmsh.boundary(iside), rtside);
-    rhs(dofs) = rhs(dofs) + op_rad_v_hier (hspace.boundary(iside), hmsh.boundary(iside), rside_rhs, u);
-end
-
 % Apply Dirichlet boundary conditions
-if ~isempty(problem_data.drchlt_sides)
-    [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
-    u(dirichlet_dofs) = u_dirichlet;
-    int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
-    
-    rhs(int_dofs) = (rhs(int_dofs)  - stiff_mat(int_dofs,int_dofs) * u_prev(int_dofs)) * delta_t  -...
-        (mass_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs) + stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs)* delta_t);
-    
-    % Solve the linear system
-    lhs = mass_mat(int_dofs, int_dofs) + stiff_mat(int_dofs, int_dofs) * delta_t;
-    u(int_dofs) =  lhs\ rhs(int_dofs) + u_prev(int_dofs);
-    
+[u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
+u(dirichlet_dofs) = u_dirichlet;
+int_dofs = setdiff(1:hspace.ndof, dirichlet_dofs);
+
+% Solve the linear system using generalized trapezoidal rule
+alpha = problem_data.alpha;
+if ~isempty(dirichlet_dofs)
+    rhs = (alpha * f(int_dofs)  - stiff_mat(int_dofs,int_dofs) * u_prev(int_dofs) + (1 - alpha) * f_prev(int_dofs)) * delta_t  -...
+        (mass_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs) + alpha * stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs)* delta_t);
 else
-    rhs = (rhs  - stiff_mat * u_prev) * delta_t ;
-    
-    % Solve the linear system
-    lhs = mass_mat + stiff_mat * delta_t;
-    u =  lhs\ rhs + u_prev;
+    rhs = (alpha * f(int_dofs)  - stiff_mat(int_dofs,int_dofs) * u_prev(int_dofs) + (1 - alpha) * f_prev(int_dofs)) * delta_t;
 end
+lhs = mass_mat(int_dofs, int_dofs) + alpha * stiff_mat(int_dofs, int_dofs) * delta_t;
+u(int_dofs) =  lhs\rhs + u_prev(int_dofs);
 
 end

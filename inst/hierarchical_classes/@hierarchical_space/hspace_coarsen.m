@@ -80,7 +80,7 @@ if (boundary)
                 reactivated_cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, reactivated_cell{lev});
             end
             hspace.boundary(iside) = hspace_coarsen (hspace.boundary(iside), hmsh.boundary(iside),...
-            FtR_boundary, cells_boundary, reactivated_cells_boundary);
+                FtR_boundary, cells_boundary, reactivated_cells_boundary);
             
             nlevels_aux = hspace.boundary(iside).nlevels;
         elseif (hmsh.ndim == 1)
@@ -94,7 +94,7 @@ if (boundary)
         end
         hspace.boundary(iside).dofs = dofs;
     end
-   
+    
 else
     hspace.boundary = [];
 end
@@ -139,40 +139,41 @@ function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_rea
 % deactivated = hspace.deactivated;
 % active_funs_support = cell(1, hspace.nlevels);                      % cell array with the active cells supporting reactivated functions
 % Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);                % n-dimensional cell array to cache Bézier extraction matrices of each level
-% 
+%
 % % initialize the cell array to store the coarsened dofs u_coarse
 % u_coarse = cell(1, hspace.nlevels);
 % ndof_per_level_prev = cellfun (@numel, hspace.active);
 % ndof_until_lev = sum (ndof_per_level_prev(1:hspace.nlevels-1));
 % ndof_above_lev = sum (ndof_per_level_prev(1:hspace.nlevels));
 % u_coarse{hspace.nlevels} = hspace.Csub{hspace.nlevels}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
-% 
+%
 % funs2remove = sp_get_basis_functions (hspace.space_of_level(hspace.nlevels), hmsh.mesh_of_level(hspace.nlevels), removed_cells{hspace.nlevels});
 % active{hspace.nlevels} = setdiff(active{hspace.nlevels}, funs2remove);
-% 
+%
 % for lev = hspace.nlevels-1:-1:1
 %     ndof_until_lev = sum (ndof_per_level_prev(1:lev-1));
 %     ndof_above_lev = sum (ndof_per_level_prev(1:lev));
-%     
+%
 %     u_coarse{lev} = hspace.Csub{lev}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
-%     
+%
 %     [reactivated_funs_support, ~] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), funs_to_reactivate{lev});
-%     
+%
 %     funs2remove = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
 %     active{lev} = setdiff(active{lev}, funs2remove);
 %     active{lev} = union (active{lev}, funs_to_reactivate{lev});
-%     
+%
 %     deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
-%     
+%
 %     % active cells in projection
 %     active_reactivated_funs_support = intersect(hmsh.active{lev}, reactivated_funs_support);         % active cells of the support of reactivated functions
 %     active_funs_support{lev} = union(reactivated_cell{lev}, active_reactivated_funs_support);        % cells active in projection
-%     
+%
 % end
 active = hspace.active;
 deactivated = hspace.deactivated;
 active_funs_support = cell(1, hspace.nlevels);                      % cell array with the active cells supporting reactivated functions
 Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);                % n-dimensional cell array to cache Bézier extraction matrices of each level
+reactivated_support = [];
 
 u_coarse = cell(1, hspace.nlevels);
 ndof_per_level = cellfun (@numel, hspace.active);
@@ -180,15 +181,15 @@ ndof_until_lev = sum (ndof_per_level(1:hspace.nlevels-1));
 ndof_above_lev = sum (ndof_per_level(1:hspace.nlevels));
 u_coarse{hspace.nlevels} = hspace.Csub{hspace.nlevels}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
 
-        
+
 for lev = hspace.nlevels:-1:2
     ndof_until_lev = sum (ndof_per_level(1:lev-2));
     ndof_above_lev = sum (ndof_per_level(1:lev-1));
     
     u_coarse{lev-1} = hspace.Csub{lev-1}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
     
-    [reactivated_funs_support, ~] = sp_get_cells (hspace.space_of_level(lev-1), hmsh.mesh_of_level(lev-1), funs_to_reactivate{lev-1});
-    
+    [reactivated_funs_support, reactivated_support_lev] = sp_get_cells (hspace.space_of_level(lev-1), hmsh.mesh_of_level(lev-1), funs_to_reactivate{lev-1});
+
     if (strcmpi (hspace.type, 'standard') && ~isempty (removed_cells{lev}))
         removed_funs = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
         active{lev} = setdiff (active{lev}, removed_funs);
@@ -208,105 +209,197 @@ for lev = hspace.nlevels:-1:2
     
     % active cells in projection
     active_reactivated_funs_support = intersect(hmsh.active{lev-1}, reactivated_funs_support);         % active cells of the support of reactivated functions
-    active_funs_support{lev-1} = union(reactivated_cell{lev-1}, active_reactivated_funs_support);        % cells active in projection
+    active_funs_support{lev-1} = union(reactivated_cell{lev-1}, active_reactivated_funs_support);      % cells active in projection
     
 end
 
-if (~hspace.truncated)
-    disp('ERROR: THB-spline are required for coarsening !!!');
-end
-
-%% Computation of the matrix to pass from the original to the coarsened space
 if (nargout == 2)
-    % Bèzier extraction of the finest level
-    knots = hspace.space_of_level(hspace.nlevels).knots;
-    degree = hspace.space_of_level(hspace.nlevels).degree;
-    nel_dir = cell(1, hspace.nlevels);
-    nel_dir{hspace.nlevels} = zeros(1, hmsh.ndim);
-    % loop over dimensions
-    for idim=1:hmsh.ndim
-        Bzr_ext_container{idim, hspace.nlevels} = bzrextr(knots{idim}, degree(idim));
-        nel_dir{hspace.nlevels}(idim) = numel(knots{idim})-2*degree(idim)-1;
-    end
-    
-    % loop over levels from n-1 to 1
-    for lev = hspace.nlevels-1:-1:1
-        % Bèzier extraction of level lev
-        knots = hspace.space_of_level(lev).knots;
+    if (~hspace.truncated)
+        % Bèzier extraction of the finest level
+        knots = hspace.space_of_level(hspace.nlevels).knots;
+        degree = hspace.space_of_level(hspace.nlevels).degree;
+        nel_dir = cell(1, hspace.nlevels);
+        nel_dir{hspace.nlevels} = zeros(1, hmsh.ndim);
+        % loop over dimensions
         for idim=1:hmsh.ndim
-            Bzr_ext_container{idim, lev} = bzrextr(knots{idim}, degree(idim));
-            nel_dir{lev}(idim) = numel(knots{idim})-2*degree(idim)-1;
+            Bzr_ext_container{idim, hspace.nlevels} = bzrextr(knots{idim}, degree(idim));
+            nel_dir{hspace.nlevels}(idim) = numel(knots{idim})-2*degree(idim)-1;
         end
-        % if level contains elements to be coarsened...
-        if  ~isempty (reactivated_cell{lev})
-            % express active_funs_supported as linear combination of funs of
-            % level lev+1
-            ndof_above_lev = sum (ndof_per_level(1:lev+1));
-            % express lower levels funs as linear combination of funs of
-            % level lev
-            active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
-            % get cells to be activated in projection
-            cells_activated_in_proj = active_funs_support{lev};
-            % initialize temporary coarse dofs vector
-            u_coarse_temp = cell(1, max(cells_activated_in_proj));
-            % element dimensional scaling parameter
-            htarget_el = hmsh.msh_lev{lev}.element_size(1);
-            
-            % loop over elements involved in projection
-            for el = 1:numel(cells_activated_in_proj)
-                % get children of the cell
-                children_cells = hmsh_get_children(hmsh, lev, cells_activated_in_proj(el));
-                % get indeces of functions to be activated in projection
-                funs_projected = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), cells_activated_in_proj(el));
-                % initialize u_coarse_temp of the element el
-                u_coarse_temp{cells_activated_in_proj(el)} = zeros(hspace.space_of_level(lev).ndof, 1);
-                % functions with support on children cells to be
-                % projected
-                funs_supported = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), children_cells);
-                % initialize projection tensor
-                C = 1;
-                B_extr_temp = 1;
-                % get indeces for projection
-                [I,J,K] = ind2sub(nel_dir{lev+1}, children_cells);
-                children_cells_unidim_indeces = [I, J, K];
-                % check size of cells_activated_in_proj
-                if (size(cells_activated_in_proj,2) < size(cells_activated_in_proj, 1))
-                    cells_activated_in_proj = cells_activated_in_proj';
-                end
-                [I,J,K] = ind2sub(nel_dir{lev}, cells_activated_in_proj);
-                cells_activated_in_proj_dir = [I; J; K];
-                
-                % loop over dimensions
-                for idim = 1:hmsh.ndim
-                    hsource_el = htarget_el/hmsh.nsub(idim);
-                    source_cell_indeces = unique(children_cells_unidim_indeces(:,idim));
-                    % get local Bézier projector
-                    B_el_proj = bzrproj_el_hcoarse( hspace.space_of_level(lev).degree(idim),...
-                        Bzr_ext_container{idim, lev+1}, inv(Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el))),...
-                        hsource_el, htarget_el, source_cell_indeces);
-                    % assembly the operators of each sub-element
-                    B_target_el = zeros(hspace.space_of_level(lev).degree(idim)+1, numel(source_cell_indeces) + hspace.space_of_level(lev).degree(idim));
-                    for j=1:numel(source_cell_indeces)
-                        B_target_el(:,j:j+hspace.space_of_level(lev).degree(idim)) = B_target_el(:,j:j+hspace.space_of_level(lev).degree(idim)) + B_el_proj(:,:,j);
-                    end
-                    % kronecker product
-                    C = kron (B_target_el, C);
-                    B_extr_temp = kron (Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el)), B_extr_temp);
-                end
-                % end loop over dimensions
-                Bzr_ext(:,:,cells_activated_in_proj(el)) = B_extr_temp;
-                
-                %project
-                u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
+        
+        % loop over levels from n-1 to 1
+        for lev = hspace.nlevels-1:-1:1
+            % Bèzier extraction of level lev
+            knots = hspace.space_of_level(lev).knots;
+            for idim=1:hmsh.ndim
+                Bzr_ext_container{idim, lev} = bzrextr(knots{idim}, degree(idim));
+                nel_dir{lev}(idim) = numel(knots{idim})-2*degree(idim)-1;
             end
-            % end elements loop
-            
-            % smoothing of active functions with support on reactiveted cells
-            u_coarse{lev}(funs_to_reactivate{lev}) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_to_reactivate{lev}, lev, Bzr_ext);
+            % if level contains elements to be coarsened...
+            if  ~isempty (reactivated_cell{lev})
+                % express active_funs_supported as linear combination of funs of
+                % level lev+1
+                ndof_above_lev = sum (ndof_per_level(1:lev+1));
+                % express lower levels funs as linear combination of funs of
+                % level lev
+                active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
+                % get cells to be activated in projection
+                cells_activated_in_proj =  active_funs_support{lev};
+                % initialize temporary coarse dreactivated_funs_supportofs vector
+                u_coarse_temp = cell(1, max(cells_activated_in_proj));
+                % element dimensional scaling parameter
+                htarget_el = hmsh.msh_lev{lev}.element_size(1);
+                
+                funs_projected_total = [];
+                % loop over elements involved in projection
+                for el = 1:numel(cells_activated_in_proj)
+                    % get children of the cell
+                    children_cells = hmsh_get_children(hmsh, lev, cells_activated_in_proj(el));
+                    % get indeces of functions to be activated in projection
+                    funs_projected = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), cells_activated_in_proj(el));
+                    
+                    funs_projected_total = [funs_projected_total; funs_projected];
+                    % initialize u_coarse_temp of the element el
+                    u_coarse_temp{cells_activated_in_proj(el)} = zeros(hspace.space_of_level(lev).ndof, 1);
+                    % functions with support on children cells to be
+                    % projected
+                    funs_supported = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), children_cells);
+                    % initialize projection tensor
+                    C = 1;
+                    B_extr_temp = 1;
+                    % get indeces for projection
+                    [I,J,K] = ind2sub(nel_dir{lev+1}, children_cells);
+                    children_cells_unidim_indeces = [I, J, K];
+                    % check size of cells_activated_in_proj
+                    if (size(cells_activated_in_proj,2) < size(cells_activated_in_proj, 1))
+                        cells_activated_in_proj = cells_activated_in_proj';
+                    end
+                    [I,J,K] = ind2sub(nel_dir{lev}, cells_activated_in_proj);
+                    cells_activated_in_proj_dir = [I; J; K];
+                    
+                    % loop over dimensions
+                    for idim = 1:hmsh.ndim
+                        hsource_el = htarget_el/hmsh.nsub(idim);
+                        source_cell_indeces = unique(children_cells_unidim_indeces(:,idim));
+                        % get local Bézier projector
+                        B_el_proj = bzrproj_el_hcoarse( hspace.space_of_level(lev).degree(idim),...
+                            Bzr_ext_container{idim, lev+1}, inv(Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el))),...
+                            hsource_el, htarget_el, source_cell_indeces);
+                        % assembly the operators of each sub-element
+                        B_target_el = zeros(hspace.space_of_level(lev).degree(idim)+1, numel(source_cell_indeces) + hspace.space_of_level(lev).degree(idim));
+                        for j=1:numel(source_cell_indeces)
+                            B_target_el(:,j:j+hspace.space_of_level(lev).degree(idim)) = B_target_el(:,j:j+hspace.space_of_level(lev).degree(idim)) + B_el_proj(:,:,j);
+                        end
+                        % kronecker product
+                        C = kron (B_target_el, C);
+                        B_extr_temp = kron (Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el)), B_extr_temp);
+                    end
+                    % end loop over dimensions
+                    Bzr_ext(:,:,cells_activated_in_proj(el)) = B_extr_temp;
+                    
+                    %project
+                    u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
+                end
+                % end elements loop
+                
+                % smoothing of active functions with support on reactiveted cells
+                u_coarse{lev}(funs_projected_total) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_projected_total, lev, Bzr_ext);
+            end
+            % end if
         end
-        % end if
+        % end loop over levels
+        
+        %% Computation of the matrix to pass from the original to the coarsened space
+    else
+        % Bèzier extraction of the finest level
+        knots = hspace.space_of_level(hspace.nlevels).knots;
+        degree = hspace.space_of_level(hspace.nlevels).degree;
+        nel_dir = cell(1, hspace.nlevels);
+        nel_dir{hspace.nlevels} = zeros(1, hmsh.ndim);
+        % loop over dimensions
+        for idim=1:hmsh.ndim
+            Bzr_ext_container{idim, hspace.nlevels} = bzrextr(knots{idim}, degree(idim));
+            nel_dir{hspace.nlevels}(idim) = numel(knots{idim})-2*degree(idim)-1;
+        end
+        
+        % loop over levels from n-1 to 1
+        for lev = hspace.nlevels-1:-1:1
+            % Bèzier extraction of level lev
+            knots = hspace.space_of_level(lev).knots;
+            for idim=1:hmsh.ndim
+                Bzr_ext_container{idim, lev} = bzrextr(knots{idim}, degree(idim));
+                nel_dir{lev}(idim) = numel(knots{idim})-2*degree(idim)-1;
+            end
+            % if level contains elements to be coarsened...
+            if  ~isempty (reactivated_cell{lev})
+                % express active_funs_supported as linear combination of funs of
+                % level lev+1
+                ndof_above_lev = sum (ndof_per_level(1:lev+1));
+                % express lower levels funs as linear combination of funs of
+                % level lev
+                active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
+                % get cells to be activated in projection
+                cells_activated_in_proj = active_funs_support{lev};
+                % initialize temporary coarse dofs vector
+                u_coarse_temp = cell(1, max(cells_activated_in_proj));
+                % element dimensional scaling parameter
+                htarget_el = hmsh.msh_lev{lev}.element_size(1);
+                
+                % loop over elements involved in projection
+                for el = 1:numel(cells_activated_in_proj)
+                    % get children of the cell
+                    children_cells = hmsh_get_children(hmsh, lev, cells_activated_in_proj(el));
+                    % get indeces of functions to be activated in projection
+                    funs_projected = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), cells_activated_in_proj(el));
+                    % initialize u_coarse_temp of the element el
+                    u_coarse_temp{cells_activated_in_proj(el)} = zeros(hspace.space_of_level(lev).ndof, 1);
+                    % functions with support on children cells to be
+                    % projected
+                    funs_supported = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), children_cells);
+                    % initialize projection tensor
+                    C = 1;
+                    B_extr_temp = 1;
+                    % get indeces for projection
+                    [I,J,K] = ind2sub(nel_dir{lev+1}, children_cells);
+                    children_cells_unidim_indeces = [I, J, K];
+                    % check size of cells_activated_in_proj
+                    if (size(cells_activated_in_proj,2) < size(cells_activated_in_proj, 1))
+                        cells_activated_in_proj = cells_activated_in_proj';
+                    end
+                    [I,J,K] = ind2sub(nel_dir{lev}, cells_activated_in_proj);
+                    cells_activated_in_proj_dir = [I; J; K];
+                    
+                    % loop over dimensions
+                    for idim = 1:hmsh.ndim
+                        hsource_el = htarget_el/hmsh.nsub(idim);
+                        source_cell_indeces = unique(children_cells_unidim_indeces(:,idim));
+                        % get local Bézier projector
+                        B_el_proj = bzrproj_el_hcoarse( hspace.space_of_level(lev).degree(idim),...
+                            Bzr_ext_container{idim, lev+1}, inv(Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el))),...
+                            hsource_el, htarget_el, source_cell_indeces);
+                        % assembly the operators of each sub-element
+                        B_target_el = zeros(hspace.space_of_level(lev).degree(idim)+1, numel(source_cell_indeces) + hspace.space_of_level(lev).degree(idim));
+                        for j=1:numel(source_cell_indeces)
+                            B_target_el(:,j:j+hspace.space_of_level(lev).degree(idim)) = B_target_el(:,j:j+hspace.space_of_level(lev).degree(idim)) + B_el_proj(:,:,j);
+                        end
+                        % kronecker product
+                        C = kron (B_target_el, C);
+                        B_extr_temp = kron (Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el)), B_extr_temp);
+                    end
+                    % end loop over dimensions
+                    Bzr_ext(:,:,cells_activated_in_proj(el)) = B_extr_temp;
+                    
+                    %project
+                    u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
+                end
+                % end elements loop
+                
+                % smoothing of active functions with support on reactiveted cells
+                u_coarse{lev}(funs_to_reactivate{lev}) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_to_reactivate{lev}, lev, Bzr_ext);
+            end
+            % end if
+        end
+        % end loop over levels
     end
-    % end loop over levels
 end
 
 hspace.active = active(1:hspace.nlevels);

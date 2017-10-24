@@ -1,6 +1,6 @@
-%% EX_ADAPTIVITY_THBCOARSENING1D
+%% EX_ADAPTIVITY_THBCOARSENING
 % Test for THB-spline coarsening algorithm:
-% An initial truncated hierarchical 1D mesh is considered.
+% An initialtruncated hierarchical 2D mesh is considered.
 % The method works ONLY if THB-splines are used.
 %
 %
@@ -114,7 +114,7 @@ hmsh.msh_lev{hmsh.nlevels} = [];
 % Third level
 marked_ref = cell(1, hspace.nlevels);
 marked_ref{1} = [];
-marked_ref{2} = [4 5 6];
+marked_ref{2} = [4 5];
 marked_ref{3} = [];
 [hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, 1 );
@@ -130,7 +130,7 @@ hmsh.msh_lev{hmsh.nlevels} = [];
 
 
 % assign dofs
-hspace.dofs = [0 0.5 1.2 0.8 0.3 1.6 0.75 0.3 0.25 0.0]';
+hspace.dofs = [0 0.5 1.2 0.8 0.3 1.6 0.75 0.3 0.0]';
 initial_values = hspace.dofs;
 
 % plot initial state
@@ -145,7 +145,7 @@ marked_ref{3} = [8 9];
 marked_ref{4} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(2)));
-hspace.dofs = Cref*hspace.dofs;
+hspace.dofs = Cref*initial_values;
 
 % plot refined state
 npts = [plot_data.npoints_x];
@@ -157,11 +157,18 @@ figure(5); plot (squeeze(F(1,:,:)), eu)
 marked_coarse{1} = [];
 marked_coarse{2} = [];
 marked_coarse{3} = [5 6];
-marked_coarse{4} = [15 16 17 18];
+marked_coarse{4} = [];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(3)));
 hspace.dofs = u;
 
+marked_coarse{1} = [];
+marked_coarse{2} = [];
+marked_coarse{3} = [];
+marked_coarse{4} = [15 16 17 18];
+[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(3)));
+hspace.dofs = u;
 
 % plot coarse state
 npts = [plot_data.npoints_x];
@@ -174,8 +181,5 @@ figure(6); plot (squeeze(F(1,:,:)), eu)
 for i=1:numel(u)
     if (u(i) < initial_values(i)-eps(single(1/2)) || u(i) > initial_values(i)+eps(single(1/2)))
         disp('is not a projector !');
-        break;
-    else
-        disp('O.K.');
     end
 end

@@ -10,8 +10,8 @@ el_dir = zeros(3, 1);
 marked_element_index = cell(hmsh.nlevels, 1);
 for lev=1:hmsh.nlevels
     % get local points coordinates
-    local_vertex_left = mapGlobalToLocal(vertex - adaptivity_data.radius * adaptivity_data.crp, msh_finer_lev);
-    local_vertex_right = mapGlobalToLocal(vertex + adaptivity_data.radius * adaptivity_data.crp, msh_finer_lev);
+    local_vertex_left = mapGlobalToLocal(vertex - adaptivity_data.radius, msh_finer_lev);
+    local_vertex_right = mapGlobalToLocal(vertex + adaptivity_data.radius, msh_finer_lev);
     % LOOP OVER ACTIVE DOFS OF THE LEVEL
     for el = 1:hmsh.nel_per_level(lev)
         isMarked=0;

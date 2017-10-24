@@ -64,7 +64,7 @@ dernum = ders{1};
 der2num = ders{2};
 
 x = cell (hmsh.rdim, 1);
-for idim = 1:hmsh.rdim;
+for idim = 1:hmsh.rdim
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
 end
 
@@ -78,7 +78,7 @@ end
 aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
 switch adaptivity_data.flag
-    case 'elements',
+    case 'elements'
         w = [];
         h = [];
         for ilev = 1:hmsh.nlevels
@@ -92,7 +92,7 @@ switch adaptivity_data.flag
         est = sqrt (sum (aux.*w));
         est = C0_est*h.*est(:);
         
-    case 'functions',
+    case 'functions'
         ms = zeros (hmsh.nlevels, 1);
         for ilev = 1:hmsh.nlevels
             if (hmsh.msh_lev{ilev}.nel ~= 0)
