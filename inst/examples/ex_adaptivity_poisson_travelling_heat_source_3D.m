@@ -6,7 +6,7 @@ clc
 % Physical domain, defined as NURBS map given in a text file
 problem_data.geo_name = 'geo_3DPrintingLayer.txt';
 % Generate Output folder
-problem_output.folder = '~/workspace/GeoPDEs_AM.git/trunk/output';
+problem_output.folder = 'output';
 mkdir(problem_output.folder);
 
 % Set non-linear flag
