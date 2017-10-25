@@ -4,6 +4,7 @@ close all
 % Physical domain, defined as NURBS map given in a text file
 ndim = 2;
 problem_data.geo_name = 'geo_square.txt';
+mkdir('MinimalOutput');
 
 % Type of boundary conditions for each side of the domain
 problem_data.nmnn_sides   = [];
@@ -41,7 +42,7 @@ adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.coarse_flag = 'bezier';
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.mark_param_coarsening = .8;
+adaptivity_data.mark_param_coarsening = .2;
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 10;
@@ -81,9 +82,8 @@ while iter < adaptivity_data.num_max_iter
     % COARSEN
     switch(adaptivity_data.coarse_flag)
         case 'bezier'
-            %     [hmsh, hspace] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
-            [hmsh, hspace, u] = adaptivity_coarsen_fsb(hmsh, hspace, marked, adaptivity_data);
-            hspace.dofs = u;
+            [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
+%             [hmsh, hspace, u] = adaptivity_coarsen_fsb(hmsh, hspace, marked, adaptivity_data);
         case 'MS_all'
             [hmsh, hspace, C_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
             u = C_coarse * u;
@@ -92,15 +92,20 @@ while iter < adaptivity_data.num_max_iter
             u = C_coarse * u;
     end
     
-    iter = iter + 1;
     
     npts = [21 21];
     [eu, F] = sp_eval (u, hspace, geometry, npts);
     %     [eu, F] = sp_eval (u, hspace, geometry, npts);
     figure(iter); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu);
+    title = sprintf('MinimalOutput/MinimalSolutionCoarseningError20_%d.png',iter);
+    saveas(gcf,title);
     fig_mesh = hmsh_plot_cells (hmsh, 20, figure(iter+100) );
+    title = sprintf('MinimalOutput/MinimalMeshCoarseningError20_%d.png',iter);
+    saveas(fig_mesh,title);
+
     % sp_plot_solution (u_Massimo, hspace, geometry, [101 101]);
     shading interp
     
-    
+    iter = iter + 1;
+
 end
