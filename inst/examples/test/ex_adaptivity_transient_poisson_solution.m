@@ -48,7 +48,7 @@ problem_data.initial_temperature = 0;                  % [°C]
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [5 5];                     % Degree of the splines
+method_data.degree      = [3 3];                     % Degree of the splines
 method_data.regularity  = method_data.degree-1;      % Regularity of the splines
 method_data.nsub_coarse = [2 2];                     % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];                     % Number of subdivisions for each refinement
