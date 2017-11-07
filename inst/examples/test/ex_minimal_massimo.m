@@ -82,8 +82,8 @@ while iter < adaptivity_data.num_max_iter
     % COARSEN
     switch(adaptivity_data.coarse_flag)
         case 'bezier'
-            [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
-%             [hmsh, hspace, u] = adaptivity_coarsen_fsb(hmsh, hspace, marked, adaptivity_data);
+%             [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
+            [hmsh, hspace, u] = adaptivity_coarsen_fsb(hmsh, hspace, marked, adaptivity_data);
         case 'MS_all'
             [hmsh, hspace, C_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
             u = C_coarse * u;
@@ -97,10 +97,10 @@ while iter < adaptivity_data.num_max_iter
     [eu, F] = sp_eval (u, hspace, geometry, npts);
     %     [eu, F] = sp_eval (u, hspace, geometry, npts);
     figure(iter); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu);
-    title = sprintf('MinimalOutput/MinimalSolutionCoarseningError20_%d.png',iter);
+    title = sprintf('MinimalOutput/MinimalSolutionCoarseningFSBError20_%d.png',iter);
     saveas(gcf,title);
     fig_mesh = hmsh_plot_cells (hmsh, 20, figure(iter+100) );
-    title = sprintf('MinimalOutput/MinimalMeshCoarseningError20_%d.png',iter);
+    title = sprintf('MinimalOutput/MinimalMeshCoarseningFSBError20_%d.png',iter);
     saveas(fig_mesh,title);
 
     % sp_plot_solution (u_Massimo, hspace, geometry, [101 101]);

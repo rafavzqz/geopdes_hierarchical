@@ -173,14 +173,18 @@ for itime = 1:number_ts
             fprintf('non-convergence flag: %d \n', problem_data.non_linear_convergence_flag);
             hspace.dofs = u;
             break;
+%         elseif (hspace.nlevels > adaptivity_data.max_level)
+%             if (plot_data.print_info); disp('Warning: reached the maximum number of level'); end;
+%             hspace.dofs = u;
+%             break;
         end
         
         %% REFINEMENT =============================================================
         % MARK REFINEMENT
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
         if ~isempty(intersect(adaptivity_data.timeToRefine, itime))
-            [marked_ref, num_marked_ref] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-%             [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+%             [marked_ref, num_marked_ref] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+            [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
            
             % REFINE
             if ~isempty(marked_ref)
@@ -219,8 +223,8 @@ for itime = 1:number_ts
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
         if (itime > 1 && adaptivity_data.doCoarsening)
-            [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-%             [marked_coarse, num_marked_coarse] = adaptivity_mark_coarsening (est, hmsh, hspace, adaptivity_data);
+%             [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+            [marked_coarse, num_marked_coarse] = adaptivity_mark_coarsening (est, hmsh, hspace, adaptivity_data);
 
             % coarse only after the first time step if it also refines
             % COARSE
@@ -317,7 +321,8 @@ for itime = 1:number_ts
         % Plot Mesh
         if (plot_data.plot_hmesh)
             fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
-            saveas((fig_mesh), sprintf(plot_data.file_name_mesh, itime),'m');
+            title = sprintf(plot_data.file_name_mesh, itime);
+            saveas(fig_mesh,title);
         end
         
         % Plot in Octave/Matlab
@@ -327,10 +332,14 @@ for itime = 1:number_ts
                 npts = [plot_data.npoints_x];
                 [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); plot (squeeze(F(1,:,:)), eu)
+                title = sprintf(plot_data.file_name, itime);
+                saveas(gcf,title);
             elseif hmsh.ndim == 2
                 npts = [plot_data.npoints_x plot_data.npoints_y];
                 [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+                title = sprintf(plot_data.file_name, itime);
+                saveas(gcf,title);
             end
         end
     end

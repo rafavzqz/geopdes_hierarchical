@@ -44,13 +44,13 @@ problem_data.path = [x_path', y_path'];
 % Source and boundary terms
 problem_data.f = gaussian_bubble_source; %gaussian_bubble_source;
 problem_data.h = @(x, y, ind) ones(size(x))*0.0;
-problem_data.initial_temperature = 0;                  % [°C]
+problem_data.initial_temperature = 20;                  % [°C]
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
 method_data.degree      = [3 3];                     % Degree of the splines
 method_data.regularity  = method_data.degree-1;      % Regularity of the splines
-method_data.nsub_coarse = [2 2];                     % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_coarse = [1 1];                     % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];                     % Number of subdivisions for each refinement
 method_data.nquad       = method_data.degree+1;      % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';                % 'simplified' (only children functions) or 'standard' (full basis)
@@ -59,32 +59,33 @@ method_data.truncated   = 1;                         % 0: False, 1: True
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
 adaptivity_data.flag = 'elements';
-adaptivity_data.doCoarsening = false;
+adaptivity_data.doCoarsening = true;
 adaptivity_data.C0_est = 1.0;
-adaptivity_data.mark_param = 0.75;
+adaptivity_data.mark_param = 0.25;
 adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.adm_strategy = 'balancing'; % 'admissible' or 'balancing'
 adaptivity_data.adm = 1;
 adaptivity_data.radius = [1, 1];
+adaptivity_data.coarse_flag = 'bezier';
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.max_level = 5;
+adaptivity_data.max_level = 6;
 adaptivity_data.max_ndof = 100000;
-adaptivity_data.num_max_iter = 5; %10;
+adaptivity_data.num_max_iter = 8; %10;
 adaptivity_data.max_nel = 100000;
-adaptivity_data.tol = 1.0e-02;
+adaptivity_data.tol = 1.0e-01;
 adaptivity_data.timeToRefine = linspace(1, n_time_steps+1, n_time_steps+1); 
    
 % GRAPHICS
-problem_output.folder = 'output';
+problem_output.folder = 'PoissonTransientBalancing';
 mkdir(problem_output.folder);
 plot_data.plot_hmesh = true;
-plot_data.adaptivity = false;
+plot_data.adaptivity = true;
 plot_data.print_info = true;
 plot_data.plot_matlab = true; %false;
 plot_data.time_steps_to_post_process = linspace(1,n_time_steps+1,n_time_steps+1);  
-plot_data.file_name = strcat(problem_output.folder, '/travelling_heat_source_2D_coarsening_%d.vts');
-plot_data.file_name_mesh = strcat(problem_output.folder, '/travelling_heat_source_2D_coarsening_%d');
-plot_data.file_name_dofs = strcat(problem_output.folder, '/travelling_heat_source_2D_coarsening_dofs');
+plot_data.file_name = strcat(problem_output.folder, '/travelling_heat_source_2D_%d.png');
+plot_data.file_name_mesh = strcat(problem_output.folder, '/travelling_heat_source_2D_mesh_%d.png');
+plot_data.file_name_dofs = strcat(problem_output.folder, '/travelling_heat_source_2D_dofs');
 
 plot_data.npoints_x = 101;        %number of points x-direction in post-processing
 plot_data.npoints_y = 101;        %number of points y-direction in post-processing
