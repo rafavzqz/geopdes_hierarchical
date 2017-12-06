@@ -66,7 +66,7 @@ adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.adm_strategy = 'balancing'; % 'admissible' or 'balancing'
 adaptivity_data.adm = 1;
 adaptivity_data.radius = [1, 1];
-adaptivity_data.coarse_flag = 'bezier';
+adaptivity_data.coarse_flag = 'L2_global';
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 6;
 adaptivity_data.max_ndof = 100000;
@@ -76,7 +76,7 @@ adaptivity_data.tol = 1.0e-01;
 adaptivity_data.timeToRefine = linspace(1, n_time_steps+1, n_time_steps+1); 
    
 % GRAPHICS
-problem_output.folder = 'PoissonTransientBalancing';
+problem_output.folder = 'PoissonTransientUnbalanced';
 mkdir(problem_output.folder);
 plot_data.plot_hmesh = true;
 plot_data.adaptivity = true;

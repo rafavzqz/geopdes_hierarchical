@@ -63,7 +63,7 @@ ndimA = length( sizeA );
 
 %Set default resolution to isotropic distances
 if nargin < 3
-    res =ones(1, length( sizeA) );
+    res = ones(1, length( sizeA) );
 else
     if length(res) < ndimA
         errstr = sprintf('\nError in %s.\n The length of the resolution array (%d) must equal the number of matrix dimensions (%d)\n', length(res)  , ndimA  );

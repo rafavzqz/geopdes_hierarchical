@@ -40,8 +40,8 @@ function [ w ] = wgheval( C, fun_index, el_index, fnc_sup_el_index_vec )
 
 c_num  = 0.0;
 c_den = 0.0;
-
 % loop over control values...
+
 for i=1:size(C,2)
     c_num = c_num + C(fun_index(fnc_sup_el_index_vec==el_index), i, el_index);
 end
@@ -56,15 +56,16 @@ for i_el=1:numel(fnc_sup_el_index_vec)
 end
 
 if (c_den==0)
-   disp('ERROR: Weight is not a number !!!') 
+    disp('ERROR: Weight is not a number !!!')
 elseif (c_den==0 && c_num==0)
-   disp('ERROR: Weight is zero !!!') 
+    disp('ERROR: Weight is zero !!!')
 end
 w = c_num/c_den;
 
+
 end
 
-%! test: 
+%! test:
 %! p = 2;
 %! knots = [0 0 0 1/3 2/3 1 1 1];
 %! C = bzrextr(knots, p);

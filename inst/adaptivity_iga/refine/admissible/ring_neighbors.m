@@ -35,7 +35,7 @@ res = [res n_rb];
 end
 [neigh, ~, ~] = neighbourND( parent, mhs.nel_dir, res );
 
-balance_element_list =  hmsh_get_parent (hmsh, lev-1, neigh);
+balance_element_list =  neigh; %hmsh_get_parent (hmsh, lev-1, neigh);
 
 end
 

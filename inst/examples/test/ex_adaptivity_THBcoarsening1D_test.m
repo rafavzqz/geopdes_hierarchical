@@ -55,7 +55,7 @@ method_data.nsub_coarse = 3;                % Number of subdivisions of the coar
 method_data.nsub_refine = 2;                % Number of subdivisions for each refinement
 method_data.nquad       = 3;                % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';       % 'simplified' (only children functions) or 'standard' (full basis)
-method_data.truncated   = 1;                % 0: False, 1: True
+method_data.truncated   = 0;                % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
@@ -64,7 +64,9 @@ adaptivity_data.flag = 'elements';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = 0.75;
 adaptivity_data.mark_param_coarsening = 0.01;
-adaptivity_data.mark_strategy = 'MS';
+adaptivity_data.adm_strategy = 'balancing'; % 'admissible' or 'balancing'
+adaptivity_data.adm = 1;
+adaptivity_data.coarse_flag = 'bezier';
 adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 15000;
 adaptivity_data.num_max_iter = 20;
@@ -94,13 +96,20 @@ space = sp_bspline (knots, method_data.degree, msh);
 hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
 hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);
 
+hspace.dofs = [1 2 3 4 5]';
+initial_values = hspace.dofs;
+
+
 %% Add second and third level using THB-refinement
 % Second level
 marked_ref = cell(1, hspace.nlevels);
-marked_ref{1} = [2 3];
+marked_ref{1} = [1 2];
 marked_ref{2} = [];
-[hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, 1 );
+[hmsh, hspace, C_ref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(1)) );
+
+hspace.dofs = C_ref*hspace.dofs;
+temp_dofs = hspace.dofs;
 
 % add new level
 
@@ -114,13 +123,16 @@ hmsh.msh_lev{hmsh.nlevels} = [];
 % Third level
 marked_ref = cell(1, hspace.nlevels);
 marked_ref{1} = [];
-marked_ref{2} = [4 5];
+marked_ref{2} = [1 2 3];
 marked_ref{3} = [];
-[hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, 1 );
+[hmsh, hspace, C_ref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(2)) );
+
+hspace.dofs = C_ref*hspace.dofs;
+temp_dofs2 = hspace.dofs;
+
 
 % add new level
-
 hmsh.nlevels = hmsh.nlevels + 1;
 hmsh.active{hmsh.nlevels} = [];
 hmsh.deactivated{hmsh.nlevels} = [];
@@ -129,10 +141,6 @@ hmsh.mesh_of_level(hmsh.nlevels) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels-1
 hmsh.msh_lev{hmsh.nlevels} = [];
 
 
-% assign dofs
-hspace.dofs = [0 0.5 1.2 0.8 0.3 1.6 0.75 0.3 0.0]';
-initial_values = hspace.dofs;
-
 % plot initial state
 npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
@@ -140,34 +148,48 @@ figure(4); plot (squeeze(F(1,:,:)), eu)
 
 %% Refinement =============================================================
 marked_ref{1} = [];
-marked_ref{2} = 3;
-marked_ref{3} = [8 9];
+marked_ref{2} = [];
+marked_ref{3} = [3 4];
 marked_ref{4} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(2)));
-hspace.dofs = Cref*initial_values;
+hmsh_plot_cells (hmsh, 20, (figure(3)));
+hspace.dofs = Cref*hspace.dofs;
 
 % plot refined state
 npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
 figure(5); plot (squeeze(F(1,:,:)), eu)
 
+L = trns_ref(hmsh, hspace, hspace.active,hspace.deactivated, 4, 6);
+values = L'*initial_values([1 2 3]);
+
+[C_ml, h] = mlbzrextr(hmsh, hspace,hspace.active, 4, 6);
+bzr_values = C_ml' * hspace.dofs(h);
+
+[K, h, C, L] = mlrcnst(hmsh, hspace,hspace.active,hspace.deactivated, 4, 6);
+hier_dof = K'*bzr_values;
+
 
 %% Coarsening back to the initial state ===================================
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = [5 6];
-marked_coarse{4} = [];
+marked_coarse{3} = [];
+marked_coarse{4} = [5 6 7 8];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(3)));
 hspace.dofs = u;
 
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = [];
-marked_coarse{4} = [15 16 17 18];
+marked_coarse{3} = [1 2 3 4 5 6];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(3)));
+hmsh_plot_cells (hmsh, 20, (figure(4)));
+hspace.dofs = u;
+
+marked_coarse{1} = [];
+marked_coarse{2} = [1 2 3 4];
+[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(5)));
 hspace.dofs = u;
 
 % plot coarse state
@@ -176,10 +198,11 @@ npts = [plot_data.npoints_x];
 figure(6); plot (squeeze(F(1,:,:)), eu)
 
 
+
 %% Check
 
 for i=1:numel(u)
-    if (u(i) < initial_values(i)-eps(single(1/2)) || u(i) > initial_values(i)+eps(single(1/2)))
+    if (u(i) < initial_values(i)-1e-08 || u(i) > initial_values(i)+1e-08)
         disp('is not a projector !');
     end
 end
