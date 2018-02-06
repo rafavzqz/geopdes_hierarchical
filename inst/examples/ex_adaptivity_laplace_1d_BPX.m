@@ -21,8 +21,8 @@ problem_data.graduex = @(x) 2*pi*cos(2*pi*x);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = 6;            % Degree of the splines
-method_data.regularity  = 5;            % Regularity of the splines
+method_data.degree      = 3;            % Degree of the splines
+method_data.regularity  = 2;            % Regularity of the splines
 method_data.nsub_coarse = 16;            % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = 2;            % Number of subdivisions for each refinement
 method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
@@ -39,7 +39,7 @@ adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'GR';
 adaptivity_data.max_level = 11;
 adaptivity_data.max_ndof = 5000;
-adaptivity_data.num_max_iter = 9;
+adaptivity_data.num_max_iter = 5;
 adaptivity_data.max_nel = 5000;
 adaptivity_data.tol = 1e-19;
 
@@ -47,8 +47,8 @@ adaptivity_data.tol = 1e-19;
 plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
 
-[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
-% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
+[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
 % Plot
 [eu, F] = sp_eval (u, hspace, geometry, 101);
