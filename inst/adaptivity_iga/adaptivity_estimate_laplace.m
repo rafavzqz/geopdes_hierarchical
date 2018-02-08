@@ -156,6 +156,7 @@ end
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 % Compute the jump terms for multipatch geometries, when marking by functions
 
@@ -190,6 +191,7 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_auxiliary_mesh (hmsh, interface)
 % Generate an auxiliary (refined) hierarchical mesh, such that two adjacent elements
 %  on the interface are active on both patches
@@ -273,6 +275,7 @@ function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_au
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est = integral_term_by_functions (u, hmsh, hspace, interface, interface_elements, coeff)
 % Compute the edge integrals for the estimator by functions
 %
@@ -336,6 +339,7 @@ end
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, interface_elements, coeff)
 % Compute the edge integrals for the estimator by elements
 %
@@ -399,6 +403,7 @@ end
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function elem = reorder_elements (elem, interface, nel_dir)
 % Reorder elements of adjacent patches, to get a corresponding numbering
   ndim = numel (nel_dir) + 1;
@@ -422,6 +427,7 @@ function elem = reorder_elements (elem, interface, nel_dir)
   end
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function field = reorder_quad_points (field, interface, nqn_dir)
 % Reorder quadrature points of adjacent patches, to get a corresponding numbering
 % The indices for quadrature points are always in second-last position
