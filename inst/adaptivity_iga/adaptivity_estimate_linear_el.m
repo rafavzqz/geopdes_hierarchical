@@ -103,8 +103,8 @@ switch adaptivity_data.flag
         end
         h = h * sqrt (hmsh.ndim);
         
-        est = sqrt (sum (aux.*w));
-        est = C0_est*h.*est(:);
+        est = sum (aux.*w);
+        est = h.^2 .* est(:);
 
     % Jump terms, only computed for multipatch geometries
         if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
