@@ -7,7 +7,7 @@ if (lev_Q == lev_s)
     funs = sp_get_basis_functions (hspace.space_of_level(lev_Q), hmsh.mesh_of_level(lev_Q), Q_ind);
     list_of_cells = sp_get_cells (hspace.space_of_level(lev_Q), hmsh.mesh_of_level(lev_Q), funs);
 else
-    ancestors = get_ancestors(hmsh, Q_ind, lev_Q, lev_s);
+    ancestors = get_ancestors (hmsh, Q_ind, lev_Q, lev_s);
     list_of_cells = support_ext (hmsh, hspace, ancestors, lev_s, lev_s);
 end
 
