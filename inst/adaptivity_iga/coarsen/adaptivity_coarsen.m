@@ -54,6 +54,7 @@ if (nargout == 3)
   M = op_u_v_hier (hspace, hspace, hmsh);
   G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
   Ccoar = M \ G; Ccoar(abs(Ccoar) < 1e-12) = 0;
+%   [hspace,Ccoar] = hspace_coarsen_massimo3 (hspace, hmsh, reactivated_fun, removed_cells);
 else
   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
 end
