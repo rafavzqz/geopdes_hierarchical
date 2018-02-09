@@ -40,9 +40,9 @@ function [new_marked] = hrefine_rec(hmsh, hspace, Q_ind, lev_Q, m)
 
 new_marked = cell (1,hmsh.nlevels);
 lev_i=lev_Q-m+1;
-neighbours = neigh (hmsh,hspace, Q_ind, lev_Q, m);
-if numel(neighbours)>0
-    new_new_marked = hrefine_rec (hmsh, hspace, neighbours, lev_i, m);
+neighbors = get_neighborhood (hmsh,hspace, Q_ind, lev_Q, m);
+if numel(neighbors)>0
+    new_new_marked = hrefine_rec (hmsh, hspace, neighbors, lev_i, m);
     for k=1:lev_i
         new_marked{k} = union (new_marked{k}, new_new_marked{k});
     end

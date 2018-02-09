@@ -1,9 +1,9 @@
-function [list_of_cells] = support_ext (hmsh, hspace, Q_ind, lev_Q, lev_s)
+function [list_of_cells] = support_extension (hmsh, hspace, Q_ind, lev_Q, lev_s)
 
-% SUPPORT_EXT: compute the support extension of a given element, also with
+% SUPPORT_EXTENSION: compute the support extension of a given element, also with
 %   respect to a different level
 %
-%   [list_of_cells] = support_ext (hmsh, hspace, Q_ind, lev_Q, lev_s)
+%   [list_of_cells] = support_extension (hmsh, hspace, Q_ind, lev_Q, lev_s)
 %
 % INPUT:
 %
@@ -42,7 +42,7 @@ if (lev_Q == lev_s)
     list_of_cells = sp_get_cells (hspace.space_of_level(lev_Q), hmsh.mesh_of_level(lev_Q), funs);
 else
     ancestors = get_ancestors (hmsh, Q_ind, lev_Q, lev_s);
-    list_of_cells = support_ext (hmsh, hspace, ancestors, lev_s, lev_s);
+    list_of_cells = support_extension (hmsh, hspace, ancestors, lev_s, lev_s);
 end
 
 end

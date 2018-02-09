@@ -1,8 +1,8 @@
-function [ list_of_cells ] = neigh (hmsh, hspace, Q_ind, lev_Q, m)
+function [ list_of_cells ] = get_neighborhood (hmsh, hspace, Q_ind, lev_Q, m)
 
-% NEIGH: compute the neighborhood of the cells of a hierarchical mesh
+% GET_NEIGHBORHOOd: compute the neighborhood of the cells of a hierarchical mesh
 %
-%   [list_of_cells] = neigh (hmsh, hspace, Q_ind, Q_lev, m)
+%   [list_of_cells] = get_neighborhood (hmsh, hspace, Q_ind, Q_lev, m)
 %
 % INPUT:
 %
@@ -46,7 +46,7 @@ if lev_s <= 1
 else
     all_el_lev = 1:hmsh.mesh_of_level(lev_s).nel;
     inactive_el = setdiff (all_el_lev, hmsh.active{lev_s});
-    el = intersect (inactive_el, support_ext(hmsh,hspace,Q_ind,lev_Q, lev_s));
+    el = intersect (inactive_el, support_extension(hmsh,hspace,Q_ind,lev_Q, lev_s));
     anc = get_ancestors (hmsh,el, lev_s, lev_s-1);
     list_of_cells = union (list_of_cells, intersect(anc,hmsh.active{lev_s-1}));
 end
