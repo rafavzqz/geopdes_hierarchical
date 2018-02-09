@@ -8,13 +8,13 @@ if m<2
     error('class of admissibility m<2')
 end
 
-marked=cell(1,hmsh.nlevels);
+marked = cell (1,hmsh.nlevels);
 for l=1:hmsh.nlevels
-    Q_ind=intersect(toberef{l},hmsh.active{l});
+    Q_ind = intersect (toberef{l},hmsh.active{l});
     if numel(Q_ind)>0
-        new_marked=hrefine_rec(hmsh, hspace, Q_ind, l, m);
+        new_marked = hrefine_rec (hmsh, hspace, Q_ind, l, m);
         for k=1:l
-            marked{k}=union(marked{k}, new_marked{k});
+            marked{k} = union (marked{k}, new_marked{k});
         end
     end
 end
