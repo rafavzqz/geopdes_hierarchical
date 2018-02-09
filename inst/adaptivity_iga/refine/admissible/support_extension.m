@@ -33,10 +33,6 @@ function [list_of_cells] = support_extension (hmsh, hspace, Q_ind, lev_Q, lev_s)
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-%SUPPORT_EXT returns the list of indices of the cells of tensor-product mesh
-%of level lev_s which belong to the support extension of the cell(s) of index 
-%Q_ind and level lev_Q
-
 if (lev_Q == lev_s)
     funs = sp_get_basis_functions (hspace.space_of_level(lev_Q), hmsh.mesh_of_level(lev_Q), Q_ind);
     list_of_cells = sp_get_cells (hspace.space_of_level(lev_Q), hmsh.mesh_of_level(lev_Q), funs);
