@@ -1,14 +1,14 @@
 % ADAPTIVITY_ESTIMATE_LINEAR_EL: Computation of a posteriori error indicators for linear elasticity problem, using globally smooth (C^1) hierarchical spaces.
 %
-% We consider the diffusion problem
+% We consider the linear elasticity problem
 %
-%    - div ( epsilon(x) grad (u)) = f    in Omega = F((0,1)^n)
-%                epsilon(x) du/dn = g    on Gamma_N
-%                               u = h    on Gamma_D
+%      - div (sigma(u)) = f    in Omega = F((0,1)^n)
+%      sigma(u) \cdot n = g    on Gamma_N
+%                     u = h    on Gamma_D
 %
 % USAGE:
 %
-%   est = adaptivity_estimate_lINEAR_EL (u, hmsh, hspace, problem_data, adaptivity_data)
+%   est = adaptivity_estimate_linear_el (u, hmsh, hspace, problem_data, adaptivity_data)
 %
 % INPUT:
 %
@@ -16,8 +16,7 @@
 %   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh)
 %   hspace:       object representing the space of hierarchical splines (see hierarchical_space)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
-%    - c_diff:        diffusion coefficient (epsilon in the equation), assumed to be a smooth (C^1) function
-%    - grad_c_diff:   gradient of the diffusion coefficient (equal to zero if not present)
+%    - lambda_lame, mu_lame: function handles of the Lame parameters
 %    - f:             function handle of the source term
 %   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
 %    - flag:          'elements' or 'functions', depending on the refinement strategy.
@@ -103,7 +102,7 @@ switch adaptivity_data.flag
             end
         end
         h = h * sqrt (hmsh.ndim);
-        
+
         aux = reshape (sum (aux), [], hmsh.nel);
         est = sum (aux.*w);
         est = h.^2 .* est(:);
