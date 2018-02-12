@@ -1,7 +1,7 @@
-% ADAPTIVITY_linear_elasticity: solve the linear elasticity problem with an adaptive isogeometric method based on hierarchical splines.
+% ADAPTIVITY_linear_elasticity: solve the linear elasticity problem with an adaptive isogeometric method based on hierarchical splines (mixed formulation).
 %
 
-function [geometry, hmsh, hspace, u, hspace_press, press, solution_data] = adaptivity_linear_elasticity_mixed_adma2 (problem_data, method_data, adaptivity_data, plot_data, savename_txt)
+function [geometry, hmsh, hspace, u, hspace_press, press, solution_data] = adaptivity_linear_elasticity_mixed (problem_data, method_data, adaptivity_data, plot_data)
 
 
 if (nargin == 3)
