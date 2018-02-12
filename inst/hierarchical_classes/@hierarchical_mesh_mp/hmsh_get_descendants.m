@@ -1,8 +1,8 @@
-function descendants = hmsh_get_descendants (hmsh, Q_ind, lev_Q, lev)
+function [descendants, descendants_of_cell] = hmsh_get_descendants (hmsh, Q_ind, lev_Q, lev)
 
 % HMSH_GET_DESCENDANTS: compute the descendants of a given list of elements of a hierarchical mesh
 %
-%   descendants = hmsh_get_descendants (hmsh, Q_ind, lev_Q, lev)
+%   [descendants, descendants_of_cell] = hmsh_get_descendants (hmsh, Q_ind, lev_Q, lev)
 %
 % INPUT:
 %
@@ -14,6 +14,7 @@ function descendants = hmsh_get_descendants (hmsh, Q_ind, lev_Q, lev)
 % OUTPUT:
 %
 %   descendants: indices of the descendants of level lev
+%   descendants_of_cell: indices of the descendants (rows) for each cell in ind (column)
 %           
 % Copyright (C) 2017, 2018 Cesare Bracco, Rafael Vazquez
 %
@@ -42,9 +43,21 @@ if (lev > hmsh.nlevels)
   error ('The level of the descendants is higher than the finest level of the mesh')
 end
   
-if (lev == lev_Q+1)
-  descendants = hmsh_get_children (hmsh, lev_Q, Q_ind);
+if (nargout == 2)
+  if (lev == lev_Q+1)
+    [descendants,~,descendants_of_cell] = hmsh_get_children (hmsh, lev_Q, Q_ind);
+  else
+    [~,~,children_of_cell] = hmsh_get_children (hmsh, lev_Q, Q_ind);
+    [descendants, descendants_of_children] = hmsh_get_descendants (hmsh, children_of_cell(:), lev_Q+1, lev);
+    descendants_of_cell = reshape (descendants_of_children, [], numel(Q_ind));
+  end  
 else
-  descendants = hmsh_get_descendants (hmsh, hmsh_get_children(hmsh, lev_Q, Q_ind), lev_Q+1, lev);
+  if (lev == lev_Q+1)
+    descendants = hmsh_get_children (hmsh, lev_Q, Q_ind);
+  else
+    children = hmsh_get_children (hmsh, lev_Q, Q_ind);
+    descendants = hmsh_get_descendants (hmsh, children, lev_Q+1, lev);
+  end
 end
+
 end
