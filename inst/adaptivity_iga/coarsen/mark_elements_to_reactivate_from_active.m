@@ -53,8 +53,9 @@ for lev = hmsh.nlevels-1:-1:1
     elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
 % To reactivate one cell, all the children must be marked
       ind2 = all (ismember (children_per_cell, marked{lev+1}));
-      deact_marked{lev} = parents(ind2);
+      parents = parents(ind2);
       children_per_cell = children_per_cell(:,ind2);
+      deact_marked{lev} = parents;
     else
       error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
     end
@@ -67,15 +68,15 @@ for lev = hmsh.nlevels-1:-1:1
       else
         active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
 % This must be done for each element
-        support_extension (hmsh, hspace, children_per_cell, lev+1, lev_s);
-        descendants = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
-        
-        intersect (descendants, active_and_deact)
-        if (~isempty)
-          remove parent
-        else
-          keep parent
+        keep_inds = [];
+        for iel = 1:numel(deact_marked{lev})
+          supp_ext = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
+          descendants = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
+          if (isempty (intersect (descendants, active_and_deact)))
+            keep_inds = [keep_inds, iel];
+          end
         end
+        deact_marked{lev} = deact_marked{lev}(keep_inds);
       end
     end
     
