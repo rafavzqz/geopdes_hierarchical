@@ -32,16 +32,6 @@ nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [hmsh, hspace, hspace_press, geometry] = adaptivity_initialize_TH (problem_data, method_data);
 
-global outputfile file;
-%outputfile = sprintf('exm02bD2adm0.txt');
-%outputfile = sprintf('exm02bD2adm2.txt');
-%outputfile = sprintf('exm02bD2adm3.txt');
-outputfile = sprintf(savename_txt);
-file = fopen(outputfile,'w');
-fprintf(file,'%%--------------------------------------------------------------------------------------------------------------------%%\n');
-fprintf(file,'%% iter l(space)  DOFs elem    H1-err        EST     EI(EST/H1-err)   EI_min       EI_max\n      sparsity       bandwidth      conditioning');
-fprintf(file,'%%--------------------------------------------------------------------------------------------------------------------%%\n');
-fclose(file);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ADAPTIVE LOOP
@@ -64,16 +54,13 @@ while (iter < adaptivity_data.num_max_iter)
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %% SOLVE
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  curr_lev(iter)=hspace.nlevels;
-  curr_dof(iter)=hspace.ndof;
-  curr_el(iter)=hmsh.nel;  
   if (plot_data.print_info)
     disp('SOLVE:')
     fprintf('Number of levels: %d \n', hspace.nlevels)
     fprintf('Number of levels (mesh): %d \n', hmsh.nlevels)
     fprintf('Number of elements: %d. Total DOFs (space 1): %d. Total DOFs (space 2): %d \n', hmsh.nel, hspace.ndof, hspace_press.ndof);
   end
-  [u,press,condnum(iter),sparsity(iter,:),bandwidth(iter)] = adaptivity_solve_linear_elasticity_mixed_plus (hmsh, hspace, hspace_press, problem_data);  %add outputs for condition number, sparsity e bandwidth?
+  [u,press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_press, problem_data);  %add outputs for condition number, sparsity e bandwidth?
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;  ndof2(iter) = hspace_press.ndof;
   
   displ = sp_eval (u, hspace, geometry, {1-eps, 1-eps});
@@ -124,12 +111,6 @@ while (iter < adaptivity_data.num_max_iter)
        fprintf('Min efficiency (elements) = %g\n', min(efficiency_elem{iter}));
        fprintf('Max efficiency (elements) = %g\n', max(efficiency_elem{iter}));
      end
-     
-     file = fopen(outputfile,'a');
-     fprintf(file,'%5d & %5d & %5d & %5d & %5e & %5e & %e & %e & %e \\ \n',...
-     iter, hspace.nlevels, hspace.ndof, hmsh.nel, err_h1s(iter), gest(iter),...
-     efficiency(iter), min(efficiency_elem{iter}), max(efficiency_elem{iter}), sparsity(iter), bandwidth(iter), condnum(iter));
-     fclose(file);   
    end
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
@@ -166,11 +147,6 @@ while (iter < adaptivity_data.num_max_iter)
   if (plot_data.print_info); disp('MARK:'); end
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
 
-%   for i=1:hmsh.nlevels-1
-%       marked{i}=[];
-%   end
-%   marked{hmsh.nlevels}=1:hmsh.nel_per_level(hmsh.nlevels);
-%   num_marked=hmsh.nel;
   if (plot_data.print_info); 
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
@@ -188,26 +164,5 @@ solution_data.ndof = ndof(1:iter);
 solution_data.ndof2 = ndof2(1:iter);
 solution_data.nel  = nel(1:iter);
 solution_data.displace = displace(1:iter);
-if (exist ('condnum', 'var')) 
-  solution_data.condnum  = condnum(1:iter);
-end
-if (exist ('sparsity', 'var')) 
-  solution_data.sparsity  = sparsity(1:iter,:);
-end
-if (exist ('bandwidth', 'var')) 
-  solution_data.bandwidth = bandwidth(1:iter);
-end
-if (exist ('err_h1s', 'var')) 
-  solution_data.err_h1s = err_h1s(1:iter);
-  solution_data.err_h1s_elem=err_h1s_elem;
-end
-if (exist('gest','var'))
-  solution_data.est=gest(1:iter);
-  solution_data.est_elem=est_elem;
-end
-if (exist('efficiency','var'))
-  solution_data.efficiency=efficiency(1:iter);
-  solution_data.efficiency_elem=efficiency_elem;
-end
 
 end
