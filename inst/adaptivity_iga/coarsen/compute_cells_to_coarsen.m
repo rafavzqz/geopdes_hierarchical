@@ -13,15 +13,13 @@
 % OUTPUT:
 %
 %   marked_elem: cell array with the indices, in the tensor Cartesian grid, of the elements
-%                 to be refined for each level
+%                 to be coarsened for each level
 %   indices:     relative position of the marked elements in the numbering of the hierarchical mesh
 %                 within the level, that is, in hmsh.active{lev}
 %
 % From the list of (active) marked functions, we mark the (active) cells of
 %  its same level within the support, and such that they are not contained
 %  in the support of any function that has not been marked.
-% The cells to be coarsened are active cells in the support of the marked
-%  basis functions, such that they do not 
 %
 % Copyright (C) 2015, 2017 Eduardo M. Garau, Rafael Vazquez
 %

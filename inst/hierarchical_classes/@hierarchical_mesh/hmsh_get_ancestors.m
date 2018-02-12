@@ -1,8 +1,8 @@
-function [ genealogy ] = get_ancestors (hmsh, Q_ind, lev_Q, lev)
+function genealogy = hmsh_get_ancestors (hmsh, Q_ind, lev_Q, lev)
 
 % GET_ANCESTORS: compute the ancestors of a given list of elements of a hierarchcial mesh
 %
-%   [ancestors] = get_ancestors (hmsh, Q_ind, lev_Q, lev)
+%   ancestors = get_ancestors (hmsh, Q_ind, lev_Q, lev)
 %
 % INPUT:
 %
@@ -36,8 +36,8 @@ if lev >= lev_Q
 end
   
 if lev == lev_Q-1
-    [genealogy, ~] = hmsh_get_parent (hmsh, lev_Q, Q_ind);
+    genealogy = hmsh_get_parent (hmsh, lev_Q, Q_ind);
 else
-    genealogy = get_ancestors (hmsh, hmsh_get_parent(hmsh, lev_Q, Q_ind), lev_Q-1, lev);
+    genealogy = hmsh_get_ancestors (hmsh, hmsh_get_parent(hmsh, lev_Q, Q_ind), lev_Q-1, lev);
 end
 end
