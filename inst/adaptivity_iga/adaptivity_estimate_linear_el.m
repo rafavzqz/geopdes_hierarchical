@@ -151,7 +151,7 @@ switch adaptivity_data.flag
         if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
           coef1 = ms(dof_level) .* hspace.coeff_pou(:);
           jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.lambda_lame, problem_data.mu_lame, adaptivity_data.flag);
-          est = est;% + coef1 .* jump_est;
+          est = est + coef1 .* jump_est;
         end
         est = C0_est * sqrt (est);
 end
