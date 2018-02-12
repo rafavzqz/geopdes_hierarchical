@@ -1,8 +1,8 @@
 function genealogy = hmsh_get_ancestors (hmsh, Q_ind, lev_Q, lev)
 
-% GET_ANCESTORS: compute the ancestors of a given list of elements of a hierarchcial mesh
+% HMSH_GET_ANCESTORS: compute the ancestors of a given list of elements of a hierarchical mesh
 %
-%   ancestors = get_ancestors (hmsh, Q_ind, lev_Q, lev)
+%   ancestors = hmsh_get_ancestors (hmsh, Q_ind, lev_Q, lev)
 %
 % INPUT:
 %

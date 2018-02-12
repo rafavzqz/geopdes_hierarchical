@@ -34,7 +34,7 @@ function [deact_marked, num] = mark_elements_to_reactivate_from_active (marked, 
 
 deact_marked = cell (hmsh.nlevels, 1);
 
-for lev = 1:hmsh.nlevels-1
+for lev = hmsh.nlevels-1:-1:1
   if (~isempty(marked{lev+1}))
     [parents, flag] = hmsh_get_parent (hmsh, lev+1, marked{lev+1});
     if (flag ~= 1)
@@ -45,17 +45,42 @@ for lev = 1:hmsh.nlevels-1
 
     ind = all (ismember (children_per_cell, hmsh.active{lev+1}));
     parents = parents(ind);
+    children_per_cell = children_per_cell(:,ind);
 
     if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
 % To reactivate one cell, only one child needs to be marked
       deact_marked{lev} = parents;
     elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
 % To reactivate one cell, all the children must be marked
-      ind2 = all (ismember (children_per_cell(:,ind), marked{lev+1}));
-      deact_marked{lev} = parents(ind2);
+      ind2 = all (ismember (children_per_cell, marked{lev+1}));
+      parents = parents(ind2);
+      children_per_cell = children_per_cell(:,ind2);
+      deact_marked{lev} = parents;
     else
       error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
     end
+    
+% Algorithm to recover admissible meshes
+    if (isfield (adaptivity_data, 'adm') && adaptivity_data.adm > 1)
+      lev_s = lev + adaptivity_data.adm;
+      if (lev_s > hmsh.nlevels)
+        continue
+      else
+        active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
+        supp_ext = support_extension (hmsh, hspace, children_per_cell(:), lev+1, lev+1);
+        [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
+        keep_inds = [];
+        for iel = 1:numel(deact_marked{lev})
+          supp_ext_local = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
+          [~,ia,~] = intersect (supp_ext, supp_ext_local);
+          if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
+            keep_inds = [keep_inds, iel];
+          end          
+        end
+        deact_marked{lev} = deact_marked{lev}(keep_inds);
+      end
+    end
+    
   end
 end
   
