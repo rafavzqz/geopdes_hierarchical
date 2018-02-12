@@ -67,14 +67,15 @@ for lev = hmsh.nlevels-1:-1:1
         continue
       else
         active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
-% This must be done for each element
+        supp_ext = support_extension (hmsh, hspace, children_per_cell(:), lev+1, lev+1);
+        [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
         keep_inds = [];
         for iel = 1:numel(deact_marked{lev})
-          supp_ext = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
-          descendants = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
-          if (isempty (intersect (descendants, active_and_deact)))
+          supp_ext_local = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
+          [~,ia,~] = intersect (supp_ext, supp_ext_local);
+          if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
             keep_inds = [keep_inds, iel];
-          end
+          end          
         end
         deact_marked{lev} = deact_marked{lev}(keep_inds);
       end
