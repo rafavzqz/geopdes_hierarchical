@@ -124,7 +124,8 @@ switch adaptivity_data.flag
         end
         est = C0_est * sqrt (est1(:) + est2(:));
         
-    case 'functions',
+    case 'functions'
+        error ('The estimator for the mixed formulation is not implemented for functions: decide the output')
         ms = zeros (hmsh.nlevels, 1);
         for ilev = 1:hmsh.nlevels
             if (hmsh.msh_lev{ilev}.nel ~= 0)
@@ -135,27 +136,50 @@ switch adaptivity_data.flag
         end
         ms = ms * sqrt (hmsh.ndim);
         
-        Nf = cumsum ([0; hspace.ndof_per_level(:)]);
-        dof_level = zeros (hspace.ndof, 1);
-        for lev = 1:hspace.nlevels
+        Nf = cumsum ([0; hspace_u.ndof_per_level(:)]);
+        Nfp = cumsum ([0; hspace_p.ndof_per_level(:)]);
+        dof_level = zeros (hspace_u.ndof, 1);
+        dof_level_p = zeros (hspace_p.ndof, 1);
+        for lev = 1:hspace_u.nlevels
             dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
+            dof_level_p(Nfp(lev)+1:Nfp(lev+1)) = lev;
         end
-        coef = ms(dof_level).*sqrt(hspace.coeff_pou(:));
+        coef = ms(dof_level).^2 .*hspace_u.coeff_pou(:);
+        coef_p = ms(dof_level_p).^2 .* hspace_p.coeff_pou(:);
         
-        est = zeros(hspace.ndof,1);
-        ndofs = 0;
+        est1 = zeros (hspace_u.ndof,1);
+        est2 = zeros (hspace_p.ndof,1);
+        ndofs = 0; ndofs_p = 0;
         Ne = cumsum([0; hmsh.nel_per_level(:)]);
         for ilev = 1:hmsh.nlevels
-            ndofs = ndofs + hspace.ndof_per_level(ilev);
+            ndofs = ndofs + hspace_u.ndof_per_level(ilev);
+            ndofs_p = ndofs_p + hspace_p.ndof_per_level(ilev);
             if (hmsh.nel_per_level(ilev) > 0)
                 ind_e = (Ne(ilev)+1):Ne(ilev+1);
-                sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
+                sp_lev = sp_evaluate_element_list (hspace_u.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux1(:,:,ind_e));
                 dofs = 1:ndofs;
-                est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
+                est1(dofs) = est1(dofs) + hspace_u.Csub{ilev}.' * b_lev;
+
+                sp_lev = sp_evaluate_element_list (hspace_p.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux2(:,ind_e));
+                dofs = 1:ndofs_p;
+                est2(dofs) = est2(dofs) + hspace_p.Csub{ilev}.' * b_lev;
             end
         end
-        est = C0_est * coef .* sqrt(est);
+        est1 = coef .* est1;
+        est2 = coef_p .* est2;
+
+    % Jump terms, only computed for multipatch geometries
+        if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+          coef1 = ms(dof_level) .* hspace_u.coeff_pou(:);
+          jump_est = compute_jump_terms (u, press, hmsh, hspace_u, hspace_p, problem_data.mu_lame, adaptivity_data.flag);
+          est1 = est1 + coef1 .* jump_est(1:hspace_u.ndof);
+        end
+% I have to decide what to give as the output. We have estimators for
+% functions of two different spaces
+        est1 = C0_est * sqrt (est1);
+        est2 = C0_est * sqrt (est2);
 end
 
 end
@@ -168,8 +192,8 @@ function est = compute_jump_terms (u, press, hmsh, hspace, hspace_p, mu_lame, fl
 
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
-%   elseif (strcmpi (flag, 'functions'))
-%     est = zeros (hspace.ndof, 1);
+  elseif (strcmpi (flag, 'functions'))
+    est = zeros (hspace.ndof + hspace_p.ndof, 1);
   end
 
   interfaces = hspace.space_of_level(1).interfaces;
@@ -190,8 +214,8 @@ function est = compute_jump_terms (u, press, hmsh, hspace, hspace_p, mu_lame, fl
       est_edges = integral_term_by_elements (u, press, hmsh_aux, hspace_aux, hspace_p_aux, interfaces(iref), interface_elements, mu_lame);
       est(interface_active_elements(1,:)) = est(interface_active_elements(1,:)) + est_edges;
       est(interface_active_elements(2,:)) = est(interface_active_elements(2,:)) + est_edges;
-%     elseif (strcmpi (flag, 'functions'))
-%       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
+    elseif (strcmpi (flag, 'functions'))
+      est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
     end
   end
 
@@ -279,6 +303,80 @@ function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_au
     end
 
   end  
+
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function est = integral_term_by_functions (u, press, hmsh, hspace, hspace_p, interface, interface_elements, coeff_mu)
+% Compute the edge integrals for the estimator by functions
+%
+% OUTPUT
+%    est: an array of size hspace.ndof x 1, with the value for each function of
+%
+%    int_{I \cap supp B} [A dU/dn]^2 B
+%
+  est = zeros (hspace.ndof, 1);
+
+  patch(1) = interface.patch1;
+  patch(2) = interface.patch2;
+  side(1) = interface.side1;
+  side(2) = interface.side2;
+
+  for lev = 1:hmsh.nlevels
+    if (~isempty (interface_elements{lev}{1}))
+      ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+      ndofp_until_lev = sum (hspace_p.ndof_per_level(1:lev));
+      Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+      u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+      press_lev = hspace_p.Csub{lev} * press(1:ndofp_until_lev);
+
+      grad_dot_normal = cell (2, 1);
+      for ii = [2 1] % This ordering allows me to keep the variables from the first (master) side
+        gnum = hspace.space_of_level(lev).gnum{patch(ii)};
+        gnum_p = hspace_p.space_of_level(lev).gnum{patch(ii)};
+        msh_patch_lev = hmsh.mesh_of_level(lev).msh_patch{patch(ii)};
+ 
+% Set of active elements on the patch that are adjacent to the interface
+% The numbering in interface_elements is already ordered to make them automatically coincide
+        element_list = get_boundary_indices (side(ii), msh_patch_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
+
+        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
+
+        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
+        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
+ 
+        sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
+        spu = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
+        sp_bnd = hspace_p.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
+        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'value', true);
+
+        grad = sp_eval_msh (u_lev(gnum), spu, msh_side_aux, 'gradient');
+        gradt = permute (grad, [2 1 3 4]);
+        normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
+        eps_normal = reshape (sum (bsxfun (@times, grad + gradt, normal), 2), [], msh_side.nqn, msh_side.nel);
+
+        press_val = reshape (sp_eval_msh (press_lev(gnum_p), spp, msh_side_aux, 'value'), 1, msh_side.nqn, msh_side.nel);
+        p_normal = reshape (bsxfun (@times, press_val, msh_side.normal), [], msh_side.nqn, msh_side.nel);
+
+        for idim = 1:hmsh.rdim
+          x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+        end
+        coeffs = reshape (coeff_mu (x{:}), 1, msh_side.nqn, msh_side.nel);
+        grad_dot_normal{ii} = bsxfun (@times, eps_normal, coeffs) + p_normal;
+      end
+
+      % Reorder quadrature points, to consider the relative orientation of the patches
+      grad_dot_normal{2} = reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
+      grad_dot_normal = grad_dot_normal{1} + grad_dot_normal{2};
+
+% XXXXX I should use a more local numbering, as in the branch localize_Csub
+      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
+      b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
+      est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
+    end
+  end
 
 end
 
