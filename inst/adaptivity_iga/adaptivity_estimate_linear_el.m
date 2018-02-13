@@ -114,7 +114,7 @@ switch adaptivity_data.flag
         end
         est = C0_est * sqrt (est);
         
-    case 'functions',
+    case 'functions'
         ms = zeros (hmsh.nlevels, 1);
         for ilev = 1:hmsh.nlevels
             if (hmsh.msh_lev{ilev}.nel ~= 0)
