@@ -55,7 +55,7 @@ for iLev = 1:hmsh.nlevels-lev
     all_children = [];
     for index = 1:numel(indices)
         cells_sub = cell (ndim, 1);
-        [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).nel_dir, 1], indices(index)); % The extra 1 makes it work in any dimension
+        [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev+iLev-1).nel_dir, 1], indices(index)); % The extra 1 makes it work in any dimension
         
         for ii = 1:numel(cells_sub{1})
             for idim = 1:ndim

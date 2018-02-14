@@ -48,13 +48,13 @@ problem_data.initial_temperature = 20;                  % [°C]
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [3 3];                     % Degree of the splines
+method_data.degree      = [2 2];                     % Degree of the splines
 method_data.regularity  = method_data.degree-1;      % Regularity of the splines
 method_data.nsub_coarse = [1 1];                     % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];                     % Number of subdivisions for each refinement
 method_data.nquad       = method_data.degree+1;      % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';                % 'simplified' (only children functions) or 'standard' (full basis)
-method_data.truncated   = 1;                         % 0: False, 1: True
+method_data.truncated   = 0;                         % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
@@ -64,9 +64,9 @@ adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = 0.25;
 adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.adm_strategy = 'balancing'; % 'admissible' or 'balancing'
-adaptivity_data.adm = 1;
+adaptivity_data.adm = 1+method_data.truncated;
 adaptivity_data.radius = [1, 1];
-adaptivity_data.coarse_flag = 'L2_global';
+adaptivity_data.coarse_flag = 'bezier'; % 'bezier', 'MS_all', 'MS_old', 'L2_global'
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 6;
 adaptivity_data.max_ndof = 100000;

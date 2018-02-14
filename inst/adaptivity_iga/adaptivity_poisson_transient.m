@@ -137,7 +137,7 @@ for itime = 1:number_ts
         if (plot_data.print_info)
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Adaptivity iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
         end
-        if (~hspace_check_partition_of_unity (hspace, hmsh))
+        if (~hspace_check_partition_of_unity (hspace, hmsh) && method_data.truncated)
             disp('ERROR: The partition-of-the-unity property does not hold.')
             solution_data.flag = -1; break
         end
@@ -154,22 +154,22 @@ for itime = 1:number_ts
         
         % STOPPING CRITERIA -------------------------------------------------------
         if (gest(iter) < adaptivity_data.tol && ~(itime < 2) && ~(iter < 2) && problem_data.non_linear_convergence_flag)
-            if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
+            if (plot_data.print_info); disp('Success: The solution converge!!!'); end
             hspace.dofs = u;
             break;
-%         elseif (itime > 1 && iter > 1)
-%             hspace.dofs = u;
-%             break;
+        elseif (itime > 1 && iter > 1)
+            hspace.dofs = u;
+            break;
         elseif (hspace.ndof > adaptivity_data.max_ndof)
-            if (plot_data.print_info); disp('Warning: reached the maximum number of DOFs'); end;
+            if (plot_data.print_info); disp('Warning: reached the maximum number of DOFs'); end
             hspace.dofs = u;
             break;
         elseif (hmsh.nel > adaptivity_data.max_nel)
-            if (plot_data.print_info); disp('Warning: reached the maximum number of elements'); end;
+            if (plot_data.print_info); disp('Warning: reached the maximum number of elements'); end
             hspace.dofs = u;
             break;
         elseif (iter > adaptivity_data.num_max_iter)
-            if (plot_data.print_info); disp('Warning: reached the maximum number of iterations'); end;
+            if (plot_data.print_info); disp('Warning: reached the maximum number of iterations'); end
             fprintf('non-convergence flag: %d \n', problem_data.non_linear_convergence_flag);
             hspace.dofs = u;
             break;
@@ -216,7 +216,7 @@ for itime = 1:number_ts
                 % project error estimation onto new mesh
                 if strcmp(adaptivity_data.flag, 'functions')
                     est = Cref * est;
-                end;
+                end
             end
         end
         %% COARSENING =============================================================

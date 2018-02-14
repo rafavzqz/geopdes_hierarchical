@@ -38,10 +38,13 @@ function [hspace, u] = hspace_coarsen (hspace, hmsh, FtR, removed_cells, reactiv
 boundary = ~isempty (hspace.boundary);
 
 % Update active functions
-if(nargout < 2)
+if(nargout < 2 && ~isempty(find(~cellfun(@isempty,removed_cells),1)))
     hspace = update_active_functions (hspace, hmsh, FtR, reactivated_cell, removed_cells);
 else
     [hspace, u_coarse] = update_active_functions (hspace, hmsh, FtR, reactivated_cell, removed_cells);
+    if(isempty(find(~cellfun(@isempty,removed_cells),1)))
+        u = hspace.dofs;
+    end
 end
 
 % Update the matrices for changing basis
@@ -50,7 +53,7 @@ hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
 % Reconstruct the hierachical dofs structure
 ndof_per_level = cellfun (@numel, hspace.active);
 
-if(nargout >= 2 && hspace.truncated)
+if(nargout >= 2 && hspace.truncated && ~isempty(find(~cellfun(@isempty,removed_cells),1)))
     ndof_lev = cumsum (ndof_per_level(1:hspace.nlevels));
     u = zeros(hspace.ndof, 1);
     % loop over levels
@@ -61,7 +64,7 @@ if(nargout >= 2 && hspace.truncated)
         end
     end
     u(1:ndof_lev(1)) = hspace.Csub{1}(:,1:ndof_lev(1))'*u_coarse{1};
-elseif (nargout >= 2 && ~ hspace.truncated)
+elseif (nargout >= 2 && ~hspace.truncated && ~isempty(find(~cellfun(@isempty,removed_cells),1)))
     u = zeros(sum (ndof_per_level), 1);
     weights = cell(1, hspace.nlevels);
     for lev = hspace.nlevels:-1:1
@@ -83,13 +86,7 @@ elseif (nargout >= 2 && ~ hspace.truncated)
             % function supports activated in projection
             index2smoothVec = funs_support{iFun};
             hier_func_index = ndof_until_lev+find(ismember(hspace.active{lev},hspace.active{lev}(iFun)));
-            % indeces of functions
-            nel_funs_support = numel(index2smoothVec);
-            fun_index = zeros(1, nel_funs_support);
-            for j=1:nel_funs_support
-                fun_index(j) = find(sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev),...
-                    index2smoothVec(j))==hspace.active{lev}(iFun));
-            end
+
             % loop over function supports
             for j=1:numel(index2smoothVec)
                 % if active
@@ -317,7 +314,7 @@ for lev = hspace.nlevels:-1:2
     
 end
 
-if (nargout >= 2)
+if (nargout >= 2 && ~isempty(find(~cellfun(@isempty,removed_cells),1)))
     if (~hspace.truncated)
         clear u_coarse
         u_coarse_temp = cell(1, hspace.nlevels-1);
@@ -359,15 +356,10 @@ if (nargout >= 2)
                     
                 end
             end
-
-
             % end loop over active functions of level
-            
         end
-        % end loop over levels
-       
-        u_coarse = u_coarse_temp;
-        
+        % end loop over levels      
+        u_coarse = u_coarse_temp;        
         
         %% Computation of the matrix to pass from the original to the coarsened space
     else

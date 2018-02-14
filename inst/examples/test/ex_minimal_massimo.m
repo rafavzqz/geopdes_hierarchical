@@ -26,7 +26,7 @@ problem_data.graduex = @(x,y) cat (1, ...
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
 method_data.degree      = 3*ones(1,ndim);       % Degree of the splines
-method_data.regularity  = 1*ones(1,ndim);       % Regularity of the splines
+method_data.regularity  = 2*ones(1,ndim);       % Regularity of the splines
 method_data.nsub_coarse = 2*ones(1,ndim);       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = 2*ones(1,ndim);       % Number of subdivisions for each refinement
 method_data.nquad       = 4*ones(1,ndim);       % Points for the Gaussian quadrature rule
@@ -44,8 +44,8 @@ adaptivity_data.coarse_flag = 'bezier';
 adaptivity_data.adm_strategy = ''; % 'admissible' or 'balancing'
 adaptivity_data.adm = 1;
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.mark_param_coarsening = .05;
-adaptivity_data.max_level = 5;
+adaptivity_data.mark_param_coarsening = .25;
+adaptivity_data.max_level = 4;
 adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 1;
 adaptivity_data.max_nel = 5000;
