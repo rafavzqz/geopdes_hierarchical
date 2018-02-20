@@ -35,7 +35,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [children, flag] = hspace_get_children (hspace, lev, ind)
+function [children, flag, children_of_function] = hspace_get_children (hspace, lev, ind)
 
 
 children = [];
