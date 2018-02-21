@@ -92,12 +92,16 @@ elseif (nargin <= 4)
     sub_coarse = cell (ndim, 1);
     cumsum_ndof_coarse = hspace.space_of_level(lev-1).cumsum_ndof;  
     cumsum_ndof_fine = hspace.space_of_level(lev).cumsum_ndof;  
+    index_global = 0; counter_comp = cell(1,ncomp_param);
     for icomp = 1:ncomp_param
-      ind_comp = ind_coarse(ind_coarse>cumsum_ndof_coarse(icomp) & ...
-                            ind_coarse<=cumsum_ndof_coarse(icomp+1)) - cumsum_ndof_coarse(icomp);
+      ind_comp_global{icomp} = ind_coarse(ind_coarse>cumsum_ndof_coarse(icomp) & ...
+                            ind_coarse<=cumsum_ndof_coarse(icomp+1));  
+      ind_comp = ind_comp_global{icomp} - cumsum_ndof_coarse(icomp);
+      index_global = [index_global, numel(ind_comp)];
+      index_cumsum = cumsum(index_global);
       [sub_coarse{:}] = ind2sub ([hspace.space_of_level(lev-1).ndof_dir(icomp,:), 1], ind_comp);
 
-      rows_c = zeros (prod (hspace.space_of_level(lev).scalar_spaces{icomp}.degree+1)*numel(ind_comp), 1); cols_c = rows_c; vals_c = rows_c;
+      rows_c{icomp} = zeros (prod (hspace.space_of_level(lev).scalar_spaces{icomp}.degree+1)*numel(ind_comp), 1); vals_c{icomp} = rows_c{icomp};
       ncounter = 0;
       for ii = 1:numel(ind_comp)
         Caux = 1;
@@ -105,12 +109,38 @@ elseif (nargin <= 4)
           Caux = kron (hspace.Proj{lev-1,icomp,idim}(:,sub_coarse{idim}(ii)), Caux);
         end
         [ir, ic, iv] = find (Caux);
-        rows_c(ncounter+(1:numel(ir))) = ir + cumsum_ndof_fine(icomp);
-        cols_c(ncounter+(1:numel(ir))) = ind_comp(ii) + cumsum_ndof_coarse(icomp);
-        vals_c(ncounter+(1:numel(ir))) = iv;
-        ncounter = ncounter + numel (ir);
+        if (nargin < 4)
+            rows_c{icomp}(ncounter+(1:numel(ir))) = ir + cumsum_ndof_fine(icomp);
+            cols_c{icomp}(ncounter+(1:numel(ir))) = ind_comp(ii) + cumsum_ndof_coarse(icomp);
+            vals_c{icomp}(ncounter+(1:numel(ir))) = iv;
+            ncounter = ncounter + numel (ir);
+        elseif (nargin == 4)
+            [~,IA,IB] = intersect(ir + cumsum_ndof_fine(icomp),ind_fine);
+            counter_comp{icomp} = [counter_comp{icomp}, numel(IB)];
+            rows_c{icomp}(ncounter+(1:numel(IB))) = IB;
+            vals_c{icomp}(ncounter+(1:numel(IB))) = iv(IA);
+            ncounter = ncounter + numel (IB);
+        end
       end
-      rows = [rows; rows_c(1:ncounter)]; cols = [cols; cols_c(1:ncounter)]; vals = [vals; vals_c(1:ncounter)];
+%       rows = [rows; rows_c(1:ncounter)]; cols = [cols; cols_c(1:ncounter)]; vals = [vals; vals_c(1:ncounter)];  
+      rows_c{icomp} = rows_c{icomp}(1:ncounter);
+      vals_c{icomp} = vals_c{icomp}(1:ncounter);
+    end
+    i_counter = zeros(1,ncomp_param);
+    ii = 1;
+    for ind = ind_coarse'
+        for icomp = 1:ncomp_param
+            ind_c = find(ind==ind_comp_global{icomp}, 1);
+            if(~isempty(ind_c))
+                step = counter_comp{icomp}(ind_c);
+                range = i_counter(icomp)+1:(i_counter(icomp)+step);
+                cols_i(1:step,1) = ii;
+                rows = [rows; rows_c{icomp}(range)]; vals = [vals; vals_c{icomp}(range)];
+                i_counter(icomp) = i_counter(icomp) + step; ii = ii + 1; 
+                cols = [cols; cols_i]; cols_i = [];
+                break;
+            end
+        end
     end
   end
   if (nargin < 4)
@@ -123,8 +153,10 @@ end
 % Computation for NURBS spaces
 if (is_scalar)
   if (strcmpi (hspace.space_of_level(1).space_type, 'NURBS'))
-    Wlev = spdiags (hspace.space_of_level(lev-1).weights(:), 0, hspace.space_of_level(lev-1).ndof, hspace.space_of_level(lev-1).ndof);
-    Wlev_fine = spdiags (1./hspace.space_of_level(lev).weights(:), 0, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev).ndof);
+%     Wlev = spdiags (hspace.space_of_level(lev-1).weights(:), 0, hspace.space_of_level(lev-1).ndof, hspace.space_of_level(lev-1).ndof);
+%     Wlev_fine = spdiags (1./hspace.space_of_level(lev).weights(:), 0, hspace.space_of_level(lev).ndof, hspace.space_of_level(lev).ndof);
+    Wlev = spdiags (hspace.space_of_level(lev-1).weights(ind_coarse), 0, numel(ind_coarse), numel(ind_coarse));
+    Wlev_fine = spdiags (1./hspace.space_of_level(lev).weights(ind_fine), 0, numel(ind_fine), numel(ind_fine));
     C = Wlev_fine * C * Wlev;
   end
 else
@@ -132,18 +164,26 @@ else
   for icomp = 1:hspace.space_of_level(1).ncomp_param
     if (strcmpi (hspace.space_of_level(lev-1).scalar_spaces{icomp}.space_type, 'NURBS'))
       flag = 1;
-      Wlev{icomp} = spdiags (hspace.space_of_level(lev-1).scalar_spaces{icomp}.weights(:), 0, ...
-          hspace.space_of_level(lev-1).scalar_spaces{icomp}.ndof, hspace.space_of_level(lev-1).scalar_spaces{icomp}.ndof);
-      Wlev_fine{icomp} = spdiags (1./hspace.space_of_level(lev).scalar_spaces{icomp}.weights(:), 0, ...
-          hspace.space_of_level(lev).scalar_spaces{icomp}.ndof, hspace.space_of_level(lev).scalar_spaces{icomp}.ndof);
+%       Wlev{icomp} = spdiags (hspace.space_of_level(lev-1).scalar_spaces{icomp}.weights(:), 0, ...
+%           hspace.space_of_level(lev-1).scalar_spaces{icomp}.ndof, hspace.space_of_level(lev-1).scalar_spaces{icomp}.ndof);
+%       Wlev_fine{icomp} = spdiags (1./hspace.space_of_level(lev).scalar_spaces{icomp}.weights(:), 0, ...
+%           hspace.space_of_level(lev).scalar_spaces{icomp}.ndof, hspace.space_of_level(lev).scalar_spaces{icomp}.ndof);
+      ind_comp_local_fine =  ind_fine(ind_fine>cumsum_ndof_fine(icomp) & ...
+                              ind_fine<=cumsum_ndof_fine(icomp+1)) - cumsum_ndof_fine(icomp);
+      ind_comp_local_coarse = ind_comp_global{icomp} - cumsum_ndof_coarse(icomp);  
+      
+      Wlev{icomp} = spdiags (hspace.space_of_level(lev-1).scalar_spaces{icomp}.weights(ind_comp_local_coarse), 0, ...
+                    numel(ind_comp_global{icomp}), numel(ind_comp_global{icomp}));
+      Wlev_fine{icomp} = spdiags (1./hspace.space_of_level(lev).scalar_spaces{icomp}.weights(ind_comp_local_fine), 0, ...
+          numel(ind_comp_local_fine), numel(ind_comp_local_fine));
     else
       Wlev{icomp} = speye (hspace.space_of_level(lev-1).scalar_spaces{icomp}.ndof);
       Wlev_fine{icomp} = speye (hspace.space_of_level(lev).scalar_spaces{icomp}.ndof);
     end
   end
   if (flag)
-    Wlev = blkdiag (Wlev);
-    Wlev_fine = blkdiag (Wlev_fine);
+    Wlev = blkdiag (Wlev{:});
+    Wlev_fine = blkdiag (Wlev_fine{:});
     C = Wlev_fine * C * Wlev;
   end
 end
