@@ -46,8 +46,8 @@ problem_data.graduex = @(x,y) -2*C*cat (1, ...
 clear method_data
 method_data.degree      = [2 2];        % Degree of the splines
 method_data.regularity  = [0 0];        % Regularity of the splines
-method_data.nsub_coarse = [4 4];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
-method_data.nsub_coarse = [4 4];% DEGREE 1
+method_data.nsub_coarse = [9 9];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+% method_data.nsub_coarse = [4 4];% DEGREE 1
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
 method_data.nquad       = method_data.degree+1;        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
@@ -56,15 +56,15 @@ method_data.bpx_dofs = 'All_dofs';
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-% adaptivity_data.flag = 'elements';
-adaptivity_data.flag = 'functions';
+adaptivity_data.flag = 'elements';
+% adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .25;
-adaptivity_data.mark_strategy = 'GR';
+adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
-adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 6;
-adaptivity_data.max_nel = 15000;
+adaptivity_data.max_ndof = 35000;
+adaptivity_data.num_max_iter = 8;
+adaptivity_data.max_nel = 35000;
 adaptivity_data.tol = 1e-10;
 
 % GRAPHICS
@@ -74,8 +74,36 @@ plot_data.print_info = true;
 
 % [geometry, hmsh, hspace, u0, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 
-[geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
-% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+for ideg = 4:-1:1
+method_data.degree      = ideg * [1 1];            % Degree of the splines
+method_data.regularity  = method_data.degree-1;
+method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
+
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
+% % [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+
+method_data.truncated   = 1;            % 0: False, 1: True
+method_data.bpx_dofs = 'All_dofs';
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
+[geometry, hmsh, hspace, u, sol_data_truncated_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+
+method_data.bpx_dofs = 'New_dofs';
+[geometry, hmsh, hspace, u, sol_data_truncated_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+
+method_data.bpx_dofs = 'Mod_dofs';
+[geometry, hmsh, hspace, u, sol_data_truncated_mod(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+
+method_data.truncated   = 0;            % 0: False, 1: True
+method_data.bpx_dofs = 'All_dofs';
+[geometry, hmsh, hspace, u, sol_data_hierarchical_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+
+method_data.bpx_dofs = 'New_dofs';
+[geometry, hmsh, hspace, u, sol_data_hierarchical_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+
+end
+
+save results_2d sol_data_truncated_all sol_data_truncated_new sol_data_truncated_mod sol_data_hierarchical_all sol_data_hierarchical_new
+
 
 % % % % EXPORT VTK FILE
 % % % npts = [51 51];
