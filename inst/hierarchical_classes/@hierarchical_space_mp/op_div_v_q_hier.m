@@ -59,7 +59,7 @@ function varargout = op_div_v_q_hier (hspv, hspq, hmsh, patch_list)
         end
         spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), msh_lev, 'value', false, 'divergence', true);
         spq_lev = sp_evaluate_element_list (hspq.space_of_level(ilev), msh_lev);
-        M_lev = op_u_v (spv_lev, spq_lev, msh_lev, coeff (x{:}));
+        M_lev = op_div_v_q (spv_lev, spq_lev, msh_lev);
 
         dofs_v = 1:ndofs_v;
         dofs_q = 1:ndofs_q;
