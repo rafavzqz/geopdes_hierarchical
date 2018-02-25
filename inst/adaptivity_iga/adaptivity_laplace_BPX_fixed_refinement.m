@@ -139,7 +139,7 @@ while (1)
     disp('SOLVE:')
     fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   end
-  [u, bpx, CJA(iter), CA(iter)] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+  [u, bpx, CJA(iter), CGSA(iter), CA(iter)] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
@@ -223,5 +223,9 @@ if (exist ('err_h1s', 'var'))
   solution_data.err_h1 = err_h1(1:iter);
   solution_data.err_l2 = err_l2(1:iter);
 end
+
+solution_data.CondA = CA;
+solution_data.Cond_BPX_jac = CJA;
+solution_data.Cond_BPX_gs = CGSA;
 
 end
