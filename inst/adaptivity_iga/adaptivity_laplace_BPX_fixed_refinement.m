@@ -195,8 +195,17 @@ while (1)
     elseif (hmsh.ndim == 2)
       nel_elems = sqrt (numel(hmsh.active{end})); % Non funziona in generale
       nel_dir = hmsh.mesh_of_level(end).nel_dir;
+      
+      [ix, iy] = ind2sub(nel_dir, hmsh.active{end});
+      nel_elems = [max(ix), max(iy)];
+
       indx = 1:nel_elems-method_data.degree(1);
       indy = 1:nel_elems-method_data.degree(2);
+%       indy = 1:nel_dir(2);
+%       indx = 1:nel_elems-2*method_data.degree(1);
+%       indy = 1:nel_elems-2*method_data.degree(2);
+%       indx = 1:4;
+%       indy = 1:4;
       [IX,IY] = ndgrid (indx, indy);
       indices = sub2ind (nel_dir, IX, IY);
       marked{end} = indices(:);

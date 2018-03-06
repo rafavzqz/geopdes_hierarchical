@@ -63,7 +63,7 @@ adaptivity_data.mark_param = .25;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 35000;
-adaptivity_data.num_max_iter = 8;
+adaptivity_data.num_max_iter = 5;
 adaptivity_data.max_nel = 35000;
 adaptivity_data.tol = 1e-10;
 
@@ -73,8 +73,10 @@ plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
 
 % [geometry, hmsh, hspace, u0, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
-
-for ideg = 4:-1:1
+% nsub = [9 9 12 16];
+for ideg = 1:4 %4:-1:1
+  
+% method_data.nsub = nsub(ideg)*[1 1];
 method_data.degree      = ideg * [1 1];            % Degree of the splines
 method_data.regularity  = method_data.degree-1;
 method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
@@ -87,22 +89,23 @@ method_data.bpx_dofs = 'All_dofs';
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
 [geometry, hmsh, hspace, u, sol_data_truncated_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
-method_data.bpx_dofs = 'New_dofs';
-[geometry, hmsh, hspace, u, sol_data_truncated_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+% % method_data.bpx_dofs = 'New_dofs';
+% % [geometry, hmsh, hspace, u, sol_data_truncated_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
 method_data.bpx_dofs = 'Mod_dofs';
 [geometry, hmsh, hspace, u, sol_data_truncated_mod(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
-method_data.truncated   = 0;            % 0: False, 1: True
-method_data.bpx_dofs = 'All_dofs';
-[geometry, hmsh, hspace, u, sol_data_hierarchical_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+% method_data.truncated   = 0;            % 0: False, 1: True
+% method_data.bpx_dofs = 'All_dofs';
+% [geometry, hmsh, hspace, u, sol_data_hierarchical_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
-method_data.bpx_dofs = 'New_dofs';
-[geometry, hmsh, hspace, u, sol_data_hierarchical_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
+% % method_data.bpx_dofs = 'New_dofs';
+% % [geometry, hmsh, hspace, u, sol_data_hierarchical_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
 end
 
-save results_2d sol_data_truncated_all sol_data_truncated_new sol_data_truncated_mod sol_data_hierarchical_all sol_data_hierarchical_new
+% save results_2d sol_data_truncated_all sol_data_truncated_new sol_data_truncated_mod sol_data_hierarchical_all sol_data_hierarchical_new
+% save results_2d_one_direction sol_data_truncated_all sol_data_truncated_mod sol_data_hierarchical_all
 
 
 % % % % EXPORT VTK FILE
