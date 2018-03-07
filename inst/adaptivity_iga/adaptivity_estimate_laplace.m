@@ -180,6 +180,27 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
       if (hmsh.ndim > 1)
 % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
         gside = @(varargin) problem_data.g(varargin{:},iside);
+        hmsh_side = hmsh_boundary_side_from_interior (hmsh, iside);
+
+        
+
+        for lev = 1:hmsh.boundary(iside).nlevels
+          ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
+          Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
+          u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+
+          msh_lev = hmsh.mesh_of_level(lev);
+ % Set of active elements on the patch that are adjacent to the interface
+% The numbering in interface_elements is already ordered to make them automatically coincide
+          element_list = get_boundary_indices (iside, msh_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
+
+        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
+
+        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
+        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
+          
+        end
+        
         dofs = hspace.boundary(iside).dofs;
         rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
       else
