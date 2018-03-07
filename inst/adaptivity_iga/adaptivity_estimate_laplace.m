@@ -108,8 +108,15 @@ switch lower (adaptivity_data.flag)
       jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
       est = est + h .* jump_est;
     end
+
+    % Neumann boundary conditions
+    if (~isempty (problem_data.nmnn_sides))
+      nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+      est = est + h .* nmnn_est;
+    end
     est = C0_est * sqrt (est);
-      
+    
+
   case 'functions',
     % Compute the mesh size for each level
     ms = zeros (hmsh.nlevels, 1);
@@ -152,6 +159,39 @@ switch lower (adaptivity_data.flag)
     est = C0_est * sqrt (est);
     
 end
+
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
+% Compute the terms for boundary sides with Neumann conditions
+  
+  if (strcmpi (flag, 'elements'))
+    est = zeros (hmsh.nel, 1);
+  elseif (strcmpi (flag, 'functions'))
+    error ('Not implemented for functions, yet')
+    est = zeros (hspace.ndof, 1);
+  end
+  
+  if (~isfield (struct (hmsh), 'npatch')) % Single patch case
+    for iside = problem_data.nmnn_sides
+      if (hmsh.ndim > 1)
+% Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
+        gside = @(varargin) problem_data.g(varargin{:},iside);
+        dofs = hspace.boundary(iside).dofs;
+        rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
+      else
+%         if (iside == 1)
+%           x = hmsh.mesh_of_level(1).breaks{1}(1);
+%         else
+%           x = hmsh.mesh_of_level(1).breaks{1}(end);
+%         end
+      end
+    end
+  else % Multipatch case
+  end
 
 end
 
