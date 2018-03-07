@@ -156,6 +156,13 @@ switch lower (adaptivity_data.flag)
       jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
       est = est + coef1 .* jump_est;
     end
+    
+    % Neumann boundary conditions
+    if (~isempty (problem_data.nmnn_sides))
+      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
+      nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+      est = est + coef1 .* nmnn_est;
+    end
     est = C0_est * sqrt (est);
     
 end
@@ -171,44 +178,51 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
   elseif (strcmpi (flag, 'functions'))
-    error ('Not implemented for functions, yet')
     est = zeros (hspace.ndof, 1);
   end
   
   if (~isfield (struct (hmsh), 'npatch')) % Single patch case
     for iside = problem_data.nmnn_sides
       if (hmsh.ndim > 1)
-% Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
         gside = @(varargin) problem_data.g(varargin{:},iside);
-        hmsh_side = hmsh_boundary_side_from_interior (hmsh, iside);
+        hmsh_sfi = hmsh_boundary_side_from_interior (hmsh, iside);
+        shifting_indices = cumsum ([0 hmsh.boundary(iside).nel_per_level]);
+        vol_shifting_indices = cumsum ([0 hmsh.nel_per_level]);
+        last_dof = cumsum (hspace.ndof_per_level);
 
-        
+        for ilev = 1:hmsh.boundary(iside).nlevels
+          if (hmsh.boundary(iside).nel_per_level(ilev) > 0)
+            elements = shifting_indices(ilev)+1:shifting_indices(ilev+1);
+            msh_side = hmsh_eval_boundary_side (hmsh, iside, elements);
+            msh_side_from_interior = hmsh_sfi.mesh_of_level(ilev);
 
-        for lev = 1:hmsh.boundary(iside).nlevels
-          ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
-          Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-          u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+            sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
+            msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
+            sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', true, 'gradient', true);
 
-          msh_lev = hmsh.mesh_of_level(lev);
- % Set of active elements on the patch that are adjacent to the interface
-% The numbering in interface_elements is already ordered to make them automatically coincide
-          element_list = get_boundary_indices (iside, msh_lev.nel_dir, interface_elements{lev}{ii}-Nelem(patch(ii)));
+            grad = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
+           
+            grad_dot_n = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+            for idim = 1:hmsh.rdim
+              x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+            end
+            coeff = problem_data.c_diff (x{:});
+            coeff = (coeff .* grad_dot_n - gside(x{:})).^2;
 
-        msh_side_int = msh_boundary_side_from_interior (msh_patch_lev, side(ii));
-
-        msh_side = msh_eval_boundary_side (msh_patch_lev, side(ii), element_list);
-        msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
-          
+            if (strcmpi (flag, 'elements'))
+              est_level = sum (coeff, 1);
+              inds_level = get_volumetric_indices (iside, hmsh.mesh_of_level(ilev).nel_dir, hmsh_sfi.active{ilev});
+              [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
+              indices = vol_shifting_indices(ilev) + inds;
+              est(indices) = est_level;
+            elseif (strcmpi (flag, 'functions'))
+              est_level = op_f_v (sp_bnd_struct, msh_side, coeff);
+%               est(indices) = est_level;
+            end
+          end
         end
-        
-        dofs = hspace.boundary(iside).dofs;
-        rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
-      else
-%         if (iside == 1)
-%           x = hmsh.mesh_of_level(1).breaks{1}(1);
-%         else
-%           x = hmsh.mesh_of_level(1).breaks{1}(end);
-%         end
+      else%if hmsh.ndim == 1)
+        warning ('The Neumann part of the estimator is not implemented in the 1D case')
       end
     end
   else % Multipatch case
