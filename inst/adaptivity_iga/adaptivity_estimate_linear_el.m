@@ -56,39 +56,59 @@
 function est = adaptivity_estimate_linear_el (u, hmsh, hspace, problem_data, adaptivity_data)
 
 if (isfield(adaptivity_data, 'C0_est'))
-    C0_est = adaptivity_data.C0_est;
+  C0_est = adaptivity_data.C0_est;
 else
-    C0_est = 1;
+  C0_est = 1;
 end
 
-[ders2, F] = hspace_eval_hmsh (u, hspace, hmsh, 'hessian');
+est = compute_residual_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
 
-x = cell (hmsh.rdim, 1);
-for idim = 1:hmsh.rdim;  %rdim is the dimension of the physical domain
-    x{idim} = reshape (F(idim,:), [], hmsh.nel);
+if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+  jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.lambda_lame, problem_data.mu_lame, adaptivity_data.flag);
+else
+  jump_est = 0;
 end
 
-% Check whether lambda and mu are constants
-if (numel (unique (problem_data.lambda_lame (x{:}))) > 1) || ...
-  (numel (unique (problem_data.mu_lame (x{:}))) > 1)
-  warning ('We assume that the Lame coefficients are constants')
-end
+% if (~isempty (problem_data.nmnn_sides))
+%   nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+% else
+  nmnn_est = 0;
+% end
 
-lambda = problem_data.lambda_lame(1); %we assume that lambda and mu are constants
-mu = problem_data.mu_lame(1);
-
-valf = problem_data.f (x{1},x{2});
-for h = 1:hspace.ncomp
-    partials_a = 0;
-    partials_b = 0;
-    for t = 1:hspace.ncomp
-        if (t ~= h)
-            partials_a = partials_a + reshape (ders2(t,h,t,:,:), [], hmsh.nel); %mixed derivatives of all components (except h-th component)
-            partials_b = partials_b + reshape (ders2(h,t,t,:,:), [], hmsh.nel); %second derivatives of h-th component (except w.r.t. h-th variable)
-        end
+switch lower (adaptivity_data.flag)
+  case 'elements'
+    h = [];
+    for ilev = 1:hmsh.nlevels
+      if (hmsh.msh_lev{ilev}.nel ~= 0)
+        h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
+      end
     end
-    divergence(h,:,:) = (2*mu+lambda)*reshape(ders2(h,h,h,:,:), [], hmsh.nel) + (mu+lambda)*partials_a + mu*partials_b;
+    h = h * sqrt (hmsh.ndim);
+    
+    est = h.^2 .* est(:) + h.* (jump_est + nmnn_est);
+  case 'functions'
+    % Compute the mesh size for each level
+    ms = zeros (hmsh.nlevels, 1);
+    for ilev = 1:hmsh.nlevels
+      if (hmsh.msh_lev{ilev}.nel ~= 0)
+        ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
+      else
+        ms(ilev) = 0;
+      end
+    end
+    ms = ms * sqrt (hmsh.ndim);
+    
+    Nf = cumsum ([0; hspace.ndof_per_level(:)]);
+    dof_level = zeros (hspace.ndof, 1);
+    for lev = 1:hspace.nlevels
+      dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
+    end
+    coef = ms(dof_level).^2 .* hspace.coeff_pou(:);
+    coef1 = ms(dof_level) .* hspace.coeff_pou(:);
+    
+    est = coef .* est + coef1 .* (jump_est + nmnn_est);
 end
+<<<<<<< HEAD
 aux = (valf + divergence).^2;  %residual
 
 switch adaptivity_data.flag
@@ -154,11 +174,76 @@ switch adaptivity_data.flag
           est = est + coef1 .* jump_est;
         end
         est = C0_est * sqrt (est);
+=======
+est = C0_est * sqrt (est);
+
+>>>>>>> Reordered the file
 end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
+
+  if (strcmpi (flag, 'elements'))
+    est = zeros (hmsh.nel, 1);
+  elseif (strcmpi (flag, 'functions'))
+    est = zeros (hspace.ndof, 1);
+  end
+
+  [ders2, F] = hspace_eval_hmsh (u, hspace, hmsh, 'hessian');
+
+  x = cell (hmsh.rdim, 1);
+  for idim = 1:hmsh.rdim;
+    x{idim} = reshape (F(idim,:), [], hmsh.nel);
+  end
+
+% Check whether lambda and mu are constants
+  if (numel (unique (problem_data.lambda_lame (x{:}))) > 1) || ...
+    (numel (unique (problem_data.mu_lame (x{:}))) > 1)
+    warning ('We assume that the Lame coefficients are constants')
+  end
+  lambda = problem_data.lambda_lame(1); %we assume that lambda and mu are constants
+  mu = problem_data.mu_lame(1);
+
+  valf = problem_data.f (x{1},x{2});
+  for ii = 1:hspace.ncomp
+    partials_a = 0; partials_b = 0;
+    for jj = 1:hspace.ncomp
+      if (jj ~= ii)
+        partials_a = partials_a + reshape (ders2(jj,ii,jj,:,:), [], hmsh.nel); %mixed derivatives of all components (except ii-th component)
+        partials_b = partials_b + reshape (ders2(ii,jj,jj,:,:), [], hmsh.nel); %second derivatives of ii-th component (except w.r.t. ii-th variable)
+      end
+    end
+    divergence(ii,:,:) = (2*mu+lambda)*reshape(ders2(ii,ii,ii,:,:), [], hmsh.nel) + (mu+lambda)*partials_a + mu*partials_b;
+  end
+  aux = (valf + divergence).^2;  %residual
+
+  Ne = cumsum([0; hmsh.nel_per_level(:)]);
+  if (strcmpi (flag, 'elements'))
+    for ilev = 1:hmsh.nlevels
+      if (hmsh.msh_lev{ilev}.nel ~= 0)
+        ind_e = Ne(ilev)+1:Ne(ilev+1);
+        w = hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet;
+        aux_elems = reshape (sum (aux(:,:,ind_e)), [], numel(ind_e));
+        est(ind_e) = sum (w .* aux_elems);
+      end
+    end
+
+  elseif (strcmpi (flag, 'functions'))
+    ndofs = 0;
+    for ilev = 1:hmsh.nlevels
+      ndofs = ndofs + hspace.ndof_per_level(ilev);
+      if (hmsh.nel_per_level(ilev) > 0)
+        ind_e = (Ne(ilev)+1):Ne(ilev+1);
+        sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+        b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,:,ind_e));
+        dofs = 1:ndofs;
+        est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
+      end
+    end
+  end
+
 end
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est = compute_jump_terms (u, hmsh, hspace, lambda_lame, mu_lame, flag)

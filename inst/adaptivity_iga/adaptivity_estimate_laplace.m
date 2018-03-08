@@ -153,7 +153,7 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
         w = hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet;
         est(ind_e) = sum (w .* aux(:,ind_e));
       end
-    end    
+    end
   elseif (strcmpi (flag, 'functions'))
     ndofs = 0;
     for ilev = 1:hmsh.nlevels
