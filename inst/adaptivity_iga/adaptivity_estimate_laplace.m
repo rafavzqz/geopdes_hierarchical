@@ -108,8 +108,15 @@ switch lower (adaptivity_data.flag)
       jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
       est = est + h .* jump_est;
     end
+
+    % Neumann boundary conditions
+    if (~isempty (problem_data.nmnn_sides))
+      nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+      est = est + h .* nmnn_est;
+    end
     est = C0_est * sqrt (est);
-      
+    
+
   case 'functions',
     % Compute the mesh size for each level
     ms = zeros (hmsh.nlevels, 1);
@@ -149,16 +156,154 @@ switch lower (adaptivity_data.flag)
       jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
       est = est + coef1 .* jump_est;
     end
-    est = C0_est * sqrt (est);
     
+    % Neumann boundary conditions
+    if (~isempty (problem_data.nmnn_sides))
+      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
+      nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+      est = est + coef1 .* nmnn_est;
+    end
+    est = C0_est * sqrt (est);
+
 end
+
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
+% Compute the terms for boundary sides with Neumann conditions
+  
+  if (strcmpi (flag, 'elements'))
+    est = zeros (hmsh.nel, 1);
+  elseif (strcmpi (flag, 'functions'))
+    est = zeros (hspace.ndof, 1);
+  end
+  
+  if (~isfield (struct (hmsh), 'npatch')) % Single patch case
+    for iside = problem_data.nmnn_sides
+      if (hmsh.ndim > 1)
+        gside = @(varargin) problem_data.g(varargin{:},iside);
+        hmsh_sfi = hmsh_boundary_side_from_interior (hmsh, iside);
+        shifting_indices = cumsum ([0 hmsh.boundary(iside).nel_per_level]);
+        vol_shifting_indices = cumsum ([0 hmsh.nel_per_level]);
+        last_dof = cumsum (hspace.ndof_per_level);
+
+        ndofs = cumsum (hspace.boundary(iside).ndof_per_level);
+        for ilev = 1:hmsh.boundary(iside).nlevels
+          if (hmsh.boundary(iside).nel_per_level(ilev) > 0)
+            elements = shifting_indices(ilev)+1:shifting_indices(ilev+1);
+            msh_side = hmsh_eval_boundary_side (hmsh, iside, elements);
+            msh_side_from_interior = hmsh_sfi.mesh_of_level(ilev);
+
+            sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
+            msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
+            sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
+
+            grad = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
+           
+            grad_dot_n = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+            for idim = 1:hmsh.rdim
+              x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+            end
+            coeff = problem_data.c_diff (x{:});
+            coeff = (coeff .* grad_dot_n - gside(x{:})).^2;
+
+            if (strcmpi (flag, 'elements'))
+              est_level = sum (coeff, 1);
+              inds_level = get_volumetric_indices (iside, hmsh.mesh_of_level(ilev).nel_dir, hmsh_sfi.active{ilev});
+              [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
+              indices = vol_shifting_indices(ilev) + inds;
+              est(indices) = est_level;
+            elseif (strcmpi (flag, 'functions'))
+              msh_side = msh_evaluate_element_list (hmsh.boundary(iside).mesh_of_level(ilev), hmsh.boundary(iside).active{ilev});
+              sp_bnd = sp_evaluate_element_list (hspace.boundary(iside).space_of_level(ilev), msh_side, 'value', true);
+              est_level = op_f_v (sp_bnd, msh_side, coeff);
+              dofs = hspace.boundary(iside).dofs(1:ndofs(ilev));
+              est(dofs) = est(dofs) + hspace.boundary(iside).Csub{ilev}.' * est_level;
+            end
+          end
+        end
+      else%if hmsh.ndim == 1)
+        warning ('The Neumann part of the estimator is not implemented in the 1D case')
+      end
+    end
+  else % Multipatch case
+    boundaries = hmsh.mesh_of_level(1).boundaries;
+    Nbnd = cumsum ([0, boundaries.nsides]);
+    last_dof = cumsum (hspace.ndof_per_level);
+    
+    ndofs = cumsum (hspace.boundary.ndof_per_level);
+    for iref = problem_data.nmnn_sides
+      iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+      gside = @(varargin) problem_data.g(varargin{:},iref);
+      vol_shifting_indices = cumsum ([0 hmsh.nel_per_level]);
+      for ilev = 1:hmsh.boundary.nlevels
+        u_lev = hspace.Csub{ilev}*u(1:last_dof(ilev));
+        patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
+        patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
+        
+        for ii = 1:numel(iref_patch_list)
+          iptc_bnd = iref_patch_list(ii);
+          iptc = boundaries(iref).patches(ii);
+          iside = boundaries(iref).faces(ii);
+          elems_patch = patch_bnd_shifting(iptc_bnd)+1:patch_bnd_shifting(iptc_bnd+1);
+          [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
+          
+          if (~isempty (elements))
+            msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
+
+            msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
+            msh_side_from_interior = msh_boundary_side_from_interior (msh_patch, iside);
+
+            sp_bnd = hspace.space_of_level(ilev).sp_patch{iptc}.constructor (msh_side_from_interior);
+            msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
+            sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
+          
+            u_patch = u_lev(hspace.space_of_level(ilev).gnum{iptc});
+            grad = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
+
+            grad_dot_n = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
+
+            for idim = 1:hmsh.rdim
+              x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+            end
+            coeff = problem_data.c_diff (x{:});
+            coeff = (coeff .* grad_dot_n - gside(x{:})).^2;
+
+            if (strcmpi (flag, 'elements'))
+              est_level_patch = sum (coeff, 1);
+              inds_patch = get_volumetric_indices (iside, msh_patch.nel_dir, elements);
+              inds_level = patch_shifting(iptc) + inds_patch;
+              [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
+              indices = vol_shifting_indices(ilev) + inds;
+              est(indices) = est_level_patch;
+            elseif (strcmpi (flag, 'functions'))
+              msh_side = msh_evaluate_element_list (msh_patch.boundary(iside), elements);
+              sp_patch = hspace.space_of_level(ilev).sp_patch{iptc};
+              sp_bnd = sp_evaluate_element_list (sp_patch.boundary(iside), msh_side, 'value', true);
+              est_level = op_f_v (sp_bnd, msh_side, coeff);
+              dofs_bnd = hspace.boundary.space_of_level(ilev).gnum{iptc_bnd};
+              Csub = hspace.boundary.Csub{ilev}(dofs_bnd,:);
+              dofs = hspace.boundary.dofs(1:ndofs(ilev));
+              est(dofs) = est(dofs) + Csub.' * est_level;
+            end
+          end
+
+        end
+        
+      end
+    end
+
+  end
 
 end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
-% Compute the jump terms for multipatch geometries, when marking by functions
+% Compute the jump terms for multipatch geometries, marking either by elements or by functions.
 
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
@@ -170,15 +315,15 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
 
   for iref = 1:numel(interfaces)
 % Generate an auxiliary hierarchical mesh, such that the elements on the
-%  interface coincide from each side. This is required for integration
-    [hmsh_aux, interface_elements, interface_active_elements] = generate_auxiliary_mesh (hmsh, interfaces(iref));
+%  interface coincide from each side. This is required for integration.
+    [hmsh_aux, interface_elements, interface_active_elements] = hmsh_refined_mesh_for_interface (hmsh, interfaces(iref));
     if (hmsh.nel ~= hmsh_aux.nel)
       hspace_aux = hspace_in_finer_mesh (hspace, hmsh, hmsh_aux);
     else
       hspace_aux = hspace;
     end
 
-% Compute the integral of the jump of the normal derivative at the interface
+% Compute the integral of the jump of the normal derivative at the interface.
     if (strcmpi (flag, 'elements'))
       est_edges = integral_term_by_elements (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
       est(interface_active_elements(1,:)) = est(interface_active_elements(1,:)) + est_edges;
@@ -187,90 +332,6 @@ function est = compute_jump_terms (u, hmsh, hspace, c_diff, flag)
       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, c_diff);
     end
   end
-
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_auxiliary_mesh (hmsh, interface)
-% Generate an auxiliary (refined) hierarchical mesh, such that two adjacent elements
-%  on the interface are active on both patches
-%
-% OUTPUT
-%    hmsh_aux:           refined hierarchical mesh
-%    interface_elements: for each level, and for each side of the interface,
-%           indices of the adjacent active elements in hmsh_aux
-%    adjacent_elements_to_edge: array of size (2, nedges). For each edge of the interface,
-%           and for each side, global indices of the adjacent active elements (in hmsh)
-
-  patch(1) = interface.patch1;
-  patch(2) = interface.patch2;
-  side(1) = interface.side1;
-  side(2) = interface.side2;
-  
-  iedge = 0;
-  hmsh_aux = hmsh;
-  interface_elements = cell (hmsh.nlevels, 1);
-  
-  for lev = 1:hmsh.nlevels
-    marked = cell (hmsh.nlevels, 1);
-    Nelem = cumsum ([0, hmsh_aux.mesh_of_level(lev).nel_per_patch]);
-    for ii = 1:2
-      msh_patch_lev = hmsh_aux.mesh_of_level(lev).msh_patch{patch(ii)};
-      nel_dir = msh_patch_lev.nel_dir;
-%    ind = [1 1 2 2 3 3] in 3D, ind = [1 1 2 2] in 2D
-%    ind2 = [2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-      ind = ceil (side(ii)/2);
-      ind2 = setdiff (1:hmsh.ndim, ind);
-      subindices = arrayfun (@(x) 1:x, nel_dir, 'UniformOutput', false);
-      if (mod (side(ii), 2) == 1)
-        subindices{ind} = 1;
-      else
-        subindices{ind} = nel_dir(ind);
-      end
-      [subindices{:}] = ndgrid (subindices{:});
-      elems{ii} = reshape (sub2ind ([nel_dir, 1], subindices{:}), [nel_dir(ind2), 1]);
-    end
-    elems{1} = elems{1}(:)';
-    elems{2} = reorder_elements (elems{2}, interface, nel_dir(ind2));
-    [active_elements{1}, pos1] = ismember (elems{1}+Nelem(patch(1)), hmsh_aux.active{lev});
-    [active_elements{2}, pos2] = ismember (elems{2}+Nelem(patch(2)), hmsh_aux.active{lev});
-    
-    interface_indices = active_elements{1} & active_elements{2};
-    interface_elements{lev}{1} = hmsh_aux.active{lev}(pos1(interface_indices));
-    interface_elements{lev}{2} = hmsh_aux.active{lev}(pos2(interface_indices));
-
-    indices1 = (active_elements{1} & ~active_elements{2});
-    indices2 = (active_elements{2} & ~active_elements{1});
-    indices = union (pos1(indices1), pos2(indices2));
-    marked{lev} = hmsh_aux.active{lev}(indices);
-    hmsh_aux = hmsh_refine (hmsh_aux, marked);
-
-    iedge_aux = iedge;
-    Nelem_level = cumsum ([0 hmsh.nel_per_level]);
-    for ii = 1:2
-      iedge = iedge_aux;
-      int_elems = interface_elements{lev}{ii};
-      for iel = 1:numel(int_elems)
-        elem_lev = int_elems(iel);
-        iedge = iedge + 1;
-        flag = 0;
-        levj = lev;
-        while (~flag)
-          [is_active, pos] = ismember (elem_lev, hmsh.active{levj});
-          if (is_active)
-            adjacent_elements_to_edge(ii,iedge) = Nelem_level(levj) + pos;
-            flag = 1;
-          else
-            elem_lev = hmsh_get_parent (hmsh, levj, elem_lev);
-            flag = 0;
-            levj = levj-1;
-          end
-        end
-      end
-    end
-
-  end  
 
 end
 
@@ -402,30 +463,6 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
 end
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function elem = reorder_elements (elem, interface, nel_dir)
-% Reorder elements of adjacent patches, to get a corresponding numbering
-  ndim = numel (nel_dir) + 1;
-  if (ndim == 2)
-    if (interface.ornt == -1)
-      elem = fliplr (elem(:)');
-    else
-      elem = elem(:)';
-    end
-  elseif (ndim == 3)
-    if (interface.flag == -1)
-      elem = elem';
-    end
-    if (interface.ornt1 == -1)
-      elem = flipud (elem);
-    end
-    if (interface.ornt2 == -1)
-      elem = fliplr (elem);
-    end
-    elem = elem(:)';
-  end
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function field = reorder_quad_points (field, interface, nqn_dir)

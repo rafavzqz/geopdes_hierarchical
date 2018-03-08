@@ -175,7 +175,7 @@ function est = compute_jump_terms (u, hmsh, hspace, lambda_lame, mu_lame, flag)
   for iref = 1:numel(interfaces)
 % Generate an auxiliary hierarchical mesh, such that the elements on the
 %  interface coincide from each side. This is required for integration
-    [hmsh_aux, interface_elements, interface_active_elements] = generate_auxiliary_mesh (hmsh, interfaces(iref));
+    [hmsh_aux, interface_elements, interface_active_elements] = hmsh_refined_mesh_for_interface (hmsh, interfaces(iref));
     if (hmsh.nel ~= hmsh_aux.nel)
       hspace_aux = hspace_in_finer_mesh (hspace, hmsh, hmsh_aux);
     else
@@ -191,91 +191,6 @@ function est = compute_jump_terms (u, hmsh, hspace, lambda_lame, mu_lame, flag)
       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
     end
   end
-
-end
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [hmsh_aux, interface_elements, adjacent_elements_to_edge] = generate_auxiliary_mesh (hmsh, interface)
-% Generate an auxiliary (refined) hierarchical mesh, such that two adjacent elements
-%  on the interface are active on both patches
-%
-% OUTPUT
-%    hmsh_aux:           refined hierarchical mesh
-%    interface_elements: for each level, and for each side of the interface,
-%           indices of the adjacent active elements in hmsh_aux
-%    adjacent_elements_to_edge: array of size (2, nedges). For each edge of the interface,
-%           and for each side, global indices of the adjacent active elements (in hmsh)
-
-  patch(1) = interface.patch1;
-  patch(2) = interface.patch2;
-  side(1) = interface.side1;
-  side(2) = interface.side2;
-  
-  iedge = 0;
-  hmsh_aux = hmsh;
-  interface_elements = cell (hmsh.nlevels, 1);
-  
-  for lev = 1:hmsh.nlevels
-    marked = cell (hmsh.nlevels, 1);
-    Nelem = cumsum ([0, hmsh_aux.mesh_of_level(lev).nel_per_patch]);
-    for ii = 1:2
-      msh_patch_lev = hmsh_aux.mesh_of_level(lev).msh_patch{patch(ii)};
-      nel_dir = msh_patch_lev.nel_dir;
-%    ind = [1 1 2 2 3 3] in 3D, ind = [1 1 2 2] in 2D
-%    ind2 = [2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %ind = [2 2 1 1] in 2D;
-      ind = ceil (side(ii)/2);
-      ind2 = setdiff (1:hmsh.ndim, ind);
-      subindices = arrayfun (@(x) 1:x, nel_dir, 'UniformOutput', false);
-      if (mod (side(ii), 2) == 1)
-        subindices{ind} = 1;
-      else
-        subindices{ind} = nel_dir(ind);
-      end
-      [subindices{:}] = ndgrid (subindices{:});
-      elems{ii} = reshape (sub2ind ([nel_dir, 1], subindices{:}), [nel_dir(ind2), 1]);
-    end
-    elems{1} = elems{1}(:)';
-    elems{2} = reorder_elements (elems{2}, interface, nel_dir(ind2));
-    [active_elements{1}, pos1] = ismember (elems{1}+Nelem(patch(1)), hmsh_aux.active{lev});
-    [active_elements{2}, pos2] = ismember (elems{2}+Nelem(patch(2)), hmsh_aux.active{lev});
-    
-    interface_indices = active_elements{1} & active_elements{2};
-    interface_elements{lev}{1} = hmsh_aux.active{lev}(pos1(interface_indices));
-    interface_elements{lev}{2} = hmsh_aux.active{lev}(pos2(interface_indices));
-
-    indices1 = (active_elements{1} & ~active_elements{2});
-    indices2 = (active_elements{2} & ~active_elements{1});
-    indices = union (pos1(indices1), pos2(indices2));
-    marked{lev} = hmsh_aux.active{lev}(indices);
-    hmsh_aux = hmsh_refine (hmsh_aux, marked);
-
-    iedge_aux = iedge;
-    Nelem_level = cumsum ([0 hmsh.nel_per_level]);
-    for ii = 1:2
-      iedge = iedge_aux;
-      int_elems = interface_elements{lev}{ii};
-      for iel = 1:numel(int_elems)
-        elem_lev = int_elems(iel);
-        iedge = iedge + 1;
-        flag = 0;
-        levj = lev;
-        while (~flag)
-          [is_active, pos] = ismember (elem_lev, hmsh.active{levj});
-          if (is_active)
-            adjacent_elements_to_edge(ii,iedge) = Nelem_level(levj) + pos;
-            flag = 1;
-          else
-            elem_lev = hmsh_get_parent (hmsh, levj, elem_lev);
-            flag = 0;
-            levj = levj-1;
-          end
-        end
-      end
-    end
-
-  end  
 
 end
 
@@ -423,30 +338,6 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
 end
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function elem = reorder_elements (elem, interface, nel_dir)
-% Reorder elements of adjacent patches, to get a corresponding numbering
-  ndim = numel (nel_dir) + 1;
-  if (ndim == 2)
-    if (interface.ornt == -1)
-      elem = fliplr (elem(:)');
-    else
-      elem = elem(:)';
-    end
-  elseif (ndim == 3)
-    if (interface.flag == -1)
-      elem = elem';
-    end
-    if (interface.ornt1 == -1)
-      elem = flipud (elem);
-    end
-    if (interface.ornt2 == -1)
-      elem = fliplr (elem);
-    end
-    elem = elem(:)';
-  end
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function field = reorder_quad_points (field, interface, nqn_dir)
