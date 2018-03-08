@@ -27,27 +27,24 @@
 % OUTPUT:
 %
 %   est: computed a posteriori error indicators
-%           - When adaptivity_data.flag == 'elements': for an element Q, (Buffa and Giannelli, 2016)
-%                          est_Q := C0_est * h_Q * (int_Q |f + div(epsilon(x) grad(U))|^2)^(1/2),
-%           where h_Q is the local meshsize and U is the Galerkin solution
+%        - When adaptivity_data.flag == 'elements': for an element Q, (Buffa and Giannelli, 2016)
+%             est_Q := C0_est * (h_Q^2 * int_Q |f + div(epsilon(x) grad(U))|^2 +  
+%                                h_Q  *  int_{\partial Q \cap Gamma_N} |epsilon(x) du/dn - g|^2 + 
+%                                h_Q  *  int_{\partial Q \cap Gamma_I} [epsilon(x) du/dn]^2)^(1/2),
+%
+%     where h_Q is the local meshsize, U is the Galerkin solution, Gamma_I is the interface 
+%      between patches and [*] denotes the jump at the interface
+%           
 %           - When adaptivity_data.flag == 'functions': for a B-spline basis function b, (Buffa and Garau, 2016)
-%                          est_b := C0_est * h_b * (a_b * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b)^(1/2),
-%           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity, and U is the Galerkin solution
+%                          est_b := C0_est * a_b * (h_b^2 * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b +
+%                                                   h_b * int_{\partial supp b \cap Gamma_N} |epsilon(x) du/dn - g|^2 * b + 
+%                                                   h_b * int_{\partial supp b \cap Gamma_I} [epsilon(x) du/dn]^2 * b)^(1/2),
 %
-% For multipatch domains, with C^0 continuity, jump terms between patches are also considered
-%
-%        est_Q := C0_est * (h_Q^2 * int_Q |f + div(epsilon(x) grad(U))|^2 + h_Q int_I [epsilon dU/dn]^2 )^(1/2),
-% where I is the intersection of the boundary of the element with the interface, 
-% and [*] denotes the jump at the interface
-%
-%        est_b := C0_est * (h_b^2 a_b * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b + h_b * a_b * int_I [epsilon dU/dn]^2 * b)^(1/2),
-% where I is the intersection of the support of the function with the interface
-%  
-%
+%     where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2017, 2018 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -95,7 +92,7 @@ switch lower (adaptivity_data.flag)
     end
     h = h * sqrt (hmsh.ndim);
     
-    est = h.^2 .* est(:) + h.* jump_est + h.* nmnn_est;
+    est = h.^2 .* est(:) + h.* (jump_est + nmnn_est);
   case 'functions'
     % Compute the mesh size for each level
     ms = zeros (hmsh.nlevels, 1);
@@ -114,7 +111,7 @@ switch lower (adaptivity_data.flag)
     coef = ms(dof_level).^2 .* hspace.coeff_pou(:);
     coef1 = ms(dof_level) .* hspace.coeff_pou(:);
     
-    est = coef .* est + coef1 .* jump_est + coef1 .* nmnn_est;
+    est = coef .* est + coef1 .* (jump_est + nmnn_est);
 end
 est = C0_est * sqrt (est);
 
