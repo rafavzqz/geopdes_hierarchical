@@ -70,11 +70,11 @@ else
   jump_est = 0;
 end
 
-% if (~isempty (problem_data.nmnn_sides))
-%   nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
-% else
+if (~isempty (problem_data.nmnn_sides))
+  nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+else
   nmnn_est = 0;
-% end
+end
 
 switch lower (adaptivity_data.flag)
   case 'elements'
@@ -177,6 +177,66 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
   end
 
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
+% Compute the terms for boundary sides with Neumann conditions
+  
+  if (strcmpi (flag, 'elements'))
+    est = zeros (hmsh.nel, 1);
+  elseif (strcmpi (flag, 'functions'))
+    est = zeros (hspace.ndof, 1);
+  end
+
+  if (~isfield (struct (hmsh), 'npatch')) % Single patch case
+    for iside = problem_data.nmnn_sides
+      gside = @(varargin) problem_data.g(varargin{:},iside);
+      hmsh_sfi = hmsh_boundary_side_from_interior (hmsh, iside);
+      shifting_indices = cumsum ([0 hmsh.boundary(iside).nel_per_level]);
+      vol_shifting_indices = cumsum ([0 hmsh.nel_per_level]);
+      last_dof = cumsum (hspace.ndof_per_level);
+
+      ndofs = cumsum (hspace.boundary(iside).ndof_per_level);
+      for ilev = 1:hmsh.boundary(iside).nlevels
+        if (hmsh.boundary(iside).nel_per_level(ilev) > 0)
+          elements = shifting_indices(ilev)+1:shifting_indices(ilev+1);
+          msh_side = hmsh_eval_boundary_side (hmsh, iside, elements);
+          msh_side_from_interior = hmsh_sfi.mesh_of_level(ilev);
+
+          sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
+          msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
+          sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'divergence', true);
+
+          stress = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'stress', ...
+            problem_data.lambda_lame, problem_data.mu_lame);
+           
+          normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
+          stress_normal = reshape (sum (bsxfun (@times, stress, normal), 2), [], msh_side.nqn, msh_side.nel);
+          for idim = 1:hmsh.rdim
+            x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+          end
+          coeff = (stress_normal - gside(x{:})).^2;
+          
+          if (strcmpi (flag, 'elements'))
+            est_level = sum (reshape (sum (coeff, 1), msh_side.nqn, msh_side.nel));
+            inds_level = get_volumetric_indices (iside, hmsh.mesh_of_level(ilev).nel_dir, hmsh_sfi.active{ilev});
+            [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
+            indices = vol_shifting_indices(ilev) + inds;
+            est(indices) = est_level;
+          elseif (strcmpi (flag, 'functions'))
+            msh_side = msh_evaluate_element_list (hmsh.boundary(iside).mesh_of_level(ilev), hmsh.boundary(iside).active{ilev});
+            sp_bnd = sp_evaluate_element_list (hspace.boundary(iside).space_of_level(ilev), msh_side, 'value', true);
+            est_level = op_f_v (sp_bnd, msh_side, coeff);
+            dofs = hspace.boundary(iside).dofs(1:ndofs(ilev));
+            est(dofs) = est(dofs) + hspace.boundary(iside).Csub{ilev}.' * est_level;
+          end
+        end
+      end
+    end
+  end
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est = compute_jump_terms (u, hmsh, hspace, lambda_lame, mu_lame, flag)
