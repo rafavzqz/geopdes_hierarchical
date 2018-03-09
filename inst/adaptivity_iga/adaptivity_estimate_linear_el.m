@@ -87,6 +87,7 @@ switch lower (adaptivity_data.flag)
     h = h * sqrt (hmsh.ndim);
     
     est = h.^2 .* est(:) + h.* (jump_est + nmnn_est);
+
   case 'functions'
     % Compute the mesh size for each level
     ms = zeros (hmsh.nlevels, 1);
