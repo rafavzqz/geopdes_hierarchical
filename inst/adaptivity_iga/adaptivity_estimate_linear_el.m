@@ -306,6 +306,67 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
     boundaries = hmsh.mesh_of_level(1).boundaries;
     Nbnd = cumsum ([0, boundaries.nsides]);
     last_dof = cumsum (hspace.ndof_per_level);
+    
+    ndofs = cumsum (hspace.boundary.ndof_per_level);
+    for iref = problem_data.nmnn_sides
+      iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+      gside = @(varargin) problem_data.g(varargin{:},iref);
+      vol_shifting_indices = cumsum ([0 hmsh.nel_per_level]);
+      for ilev = 1:hmsh.boundary.nlevels
+        u_lev = hspace.Csub{ilev}*u(1:last_dof(ilev));
+        patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
+        patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
+
+        for ii = 1:numel(iref_patch_list)
+          iptc_bnd = iref_patch_list(ii);
+          iptc = boundaries(iref).patches(ii);
+          iside = boundaries(iref).faces(ii);
+          elems_patch = patch_bnd_shifting(iptc_bnd)+1:patch_bnd_shifting(iptc_bnd+1);
+          [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
+          
+          if (~isempty (elements))
+            msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
+
+            msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
+            msh_side_from_interior = msh_boundary_side_from_interior (msh_patch, iside);
+
+            sp_bnd = hspace.space_of_level(ilev).sp_patch{iptc}.constructor (msh_side_from_interior);
+            msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
+            sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'divergence', true);
+
+            u_patch = u_lev(hspace.space_of_level(ilev).gnum{iptc});
+            stress = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_from_interior_struct, 'stress', ...
+              problem_data.lambda_lame, problem_data.mu_lame);
+
+            normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
+            stress_normal = reshape (sum (bsxfun (@times, stress, normal), 2), [], msh_side.nqn, msh_side.nel);
+
+            for idim = 1:hmsh.rdim
+              x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+            end
+            coeff = (stress_normal - gside(x{:})).^2;
+
+            if (strcmpi (flag, 'elements'))
+              est_level_patch = sum (reshape (sum (coeff, 1), msh_side.nqn, msh_side.nel));
+              inds_patch = get_volumetric_indices (iside, msh_patch.nel_dir, elements);
+              inds_level = patch_shifting(iptc) + inds_patch;
+              [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
+              indices = vol_shifting_indices(ilev) + inds;
+              est(indices) = est_level_patch;
+            elseif (strcmpi (flag, 'functions'))
+              msh_side = msh_evaluate_element_list (msh_patch.boundary(iside), elements);
+              sp_patch = hspace.space_of_level(ilev).sp_patch{iptc};
+              sp_bnd = sp_evaluate_element_list (sp_patch.boundary(iside), msh_side, 'value', true);
+              est_level = op_f_v (sp_bnd, msh_side, coeff);
+              dofs_bnd = hspace.boundary.space_of_level(ilev).gnum{iptc_bnd};
+              Csub = hspace.boundary.Csub{ilev}(dofs_bnd,:);
+              dofs = hspace.boundary.dofs(1:ndofs(ilev));
+              est(dofs) = est(dofs) + Csub.' * est_level;
+            end
+          end
+        end          
+      end
+    end
   end
 end
 
