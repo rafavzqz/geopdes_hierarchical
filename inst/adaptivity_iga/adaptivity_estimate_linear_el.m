@@ -508,21 +508,11 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true, 'divergence', true);
 
-        [grad_and_div] = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, {'gradient', 'divergence'});
-        [grad, div] = deal (grad_and_div{:});
-        gradt = permute (grad, [2 1 3 4]);
+        stress = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
         normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
-        eps_normal = reshape (sum (bsxfun (@times, grad + gradt, normal), 2), [], msh_side.nqn, msh_side.nel);
-        
-        div = reshape (div, 1, msh_side.nqn, msh_side.nel);
-        div_normal = reshape (bsxfun (@times, div, msh_side.normal), [], msh_side.nqn, msh_side.nel);
+        stress_normal = reshape (sum (bsxfun (@times, stress, normal), 2), [], msh_side.nqn, msh_side.nel);
 
-        for idim = 1:hmsh.rdim
-          x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
-        end
-        coeffs = reshape (coeff_mu (x{:}), 1, msh_side.nqn, msh_side.nel);
-        coeffs_lambda = reshape (coeff_lambda (x{:}), 1, msh_side.nqn, msh_side.nel);
-        grad_dot_normal{ii} = bsxfun (@times, eps_normal, coeffs) + bsxfun (@times, div_normal, coeffs_lambda);
+        grad_dot_normal{ii} = stress_normal;
       end
 
       % Reorder quadrature points, to consider the relative orientation of the patches
