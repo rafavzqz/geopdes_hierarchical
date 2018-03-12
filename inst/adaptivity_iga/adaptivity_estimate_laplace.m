@@ -27,27 +27,24 @@
 % OUTPUT:
 %
 %   est: computed a posteriori error indicators
-%           - When adaptivity_data.flag == 'elements': for an element Q, (Buffa and Giannelli, 2016)
-%                          est_Q := C0_est * h_Q * (int_Q |f + div(epsilon(x) grad(U))|^2)^(1/2),
-%           where h_Q is the local meshsize and U is the Galerkin solution
+%        - When adaptivity_data.flag == 'elements': for an element Q, (Buffa and Giannelli, 2016)
+%             est_Q := C0_est * (h_Q^2 * int_Q |f + div(epsilon(x) grad(U))|^2 +  
+%                                h_Q  *  int_{\partial Q \cap Gamma_N} |epsilon(x) du/dn - g|^2 + 
+%                                h_Q  *  int_{\partial Q \cap Gamma_I} [epsilon(x) du/dn]^2)^(1/2),
+%
+%     where h_Q is the local meshsize, U is the Galerkin solution, Gamma_I is the interface 
+%      between patches and [*] denotes the jump at the interface
+%           
 %           - When adaptivity_data.flag == 'functions': for a B-spline basis function b, (Buffa and Garau, 2016)
-%                          est_b := C0_est * h_b * (a_b * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b)^(1/2),
-%           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity, and U is the Galerkin solution
+%                          est_b := C0_est * a_b * (h_b^2 * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b +
+%                                                   h_b * int_{\partial supp b \cap Gamma_N} |epsilon(x) du/dn - g|^2 * b + 
+%                                                   h_b * int_{\partial supp b \cap Gamma_I} [epsilon(x) du/dn]^2 * b)^(1/2),
 %
-% For multipatch domains, with C^0 continuity, jump terms between patches are also considered
-%
-%        est_Q := C0_est * (h_Q^2 * int_Q |f + div(epsilon(x) grad(U))|^2 + h_Q int_I [epsilon dU/dn]^2 )^(1/2),
-% where I is the intersection of the boundary of the element with the interface, 
-% and [*] denotes the jump at the interface
-%
-%        est_b := C0_est * (h_b^2 a_b * int_{supp b} |f + div(epsilon(x) grad(U))|^2 * b + h_b * a_b * int_I [epsilon dU/dn]^2 * b)^(1/2),
-% where I is the intersection of the support of the function with the interface
-%  
-%
+%     where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2017, 2018 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -71,53 +68,33 @@ else
   C0_est = 1;
 end
 
-[ders, F] = hspace_eval_hmsh (u, hspace, hmsh, {'gradient', 'laplacian'});
-dernum = ders{1};
-der2num = ders{2};
+est = compute_residual_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
 
-x = cell (hmsh.rdim, 1);
-for idim = 1:hmsh.rdim;
-  x{idim} = reshape (F(idim,:), [], hmsh.nel);
+if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
+  jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
+else
+  jump_est = 0;
 end
 
-aux = 0;
-valf = problem_data.f (x{:});
-val_c_diff = problem_data.c_diff(x{:});
-if (isfield (problem_data, 'grad_c_diff'))
-  val_grad_c_diff  = feval (problem_data.grad_c_diff, x{:});
-  aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
+if (~isempty (problem_data.nmnn_sides))
+  nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
+else
+  nmnn_est = 0;
 end
-aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
 
 switch lower (adaptivity_data.flag)
-  case 'elements',
-    w = []; h = [];
+  case 'elements'
+    h = [];
     for ilev = 1:hmsh.nlevels
       if (hmsh.msh_lev{ilev}.nel ~= 0)
-        w = cat (2, w, hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet);
         h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
       end
     end
     h = h * sqrt (hmsh.ndim);
-        
-    est = sum (aux.*w);
-    est = h.^2 .* est(:);
     
-    % Jump terms, only computed for multipatch geometries
-    if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-      jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
-      est = est + h .* jump_est;
-    end
+    est = h.^2 .* est(:) + h.* (jump_est + nmnn_est);
 
-    % Neumann boundary conditions
-    if (~isempty (problem_data.nmnn_sides))
-      nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
-      est = est + h .* nmnn_est;
-    end
-    est = C0_est * sqrt (est);
-    
-
-  case 'functions',
+  case 'functions'
     % Compute the mesh size for each level
     ms = zeros (hmsh.nlevels, 1);
     for ilev = 1:hmsh.nlevels
@@ -133,11 +110,53 @@ switch lower (adaptivity_data.flag)
       dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
     end
     coef = ms(dof_level).^2 .* hspace.coeff_pou(:);
+    coef1 = ms(dof_level) .* hspace.coeff_pou(:);
+    
+    est = coef .* est + coef1 .* (jump_est + nmnn_est);
+end
+est = C0_est * sqrt (est);
 
-    % Residual terms, a_B * h_B^2 * \int_{supp B} |div(epsilon * grad u) + f|^2 B
-    est = zeros (hspace.ndof,1);
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
+
+  if (strcmpi (flag, 'elements'))
+    est = zeros (hmsh.nel, 1);
+  elseif (strcmpi (flag, 'functions'))
+    est = zeros (hspace.ndof, 1);
+  end
+  
+  [ders, F] = hspace_eval_hmsh (u, hspace, hmsh, {'gradient', 'laplacian'});
+  dernum = ders{1}; der2num = ders{2};
+
+  x = cell (hmsh.rdim, 1);
+  for idim = 1:hmsh.rdim;
+    x{idim} = reshape (F(idim,:), [], hmsh.nel);
+  end
+
+  aux = 0;
+  valf = problem_data.f (x{:});
+  val_c_diff = problem_data.c_diff(x{:});
+  if (isfield (problem_data, 'grad_c_diff'))
+    val_grad_c_diff  = feval (problem_data.grad_c_diff, x{:});
+    aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
+  end
+  aux = (valf + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
+  
+  Ne = cumsum([0; hmsh.nel_per_level(:)]);
+  if (strcmpi (flag, 'elements'))
+    for ilev = 1:hmsh.nlevels
+      if (hmsh.msh_lev{ilev}.nel ~= 0)
+        ind_e = Ne(ilev)+1:Ne(ilev+1);
+        w = hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet;
+        est(ind_e) = sum (w .* aux(:,ind_e));
+      end
+    end
+  elseif (strcmpi (flag, 'functions'))
     ndofs = 0;
-    Ne = cumsum([0; hmsh.nel_per_level(:)]);
     for ilev = 1:hmsh.nlevels
       ndofs = ndofs + hspace.ndof_per_level(ilev);
       if (hmsh.nel_per_level(ilev) > 0)
@@ -148,28 +167,10 @@ switch lower (adaptivity_data.flag)
         est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
       end
     end
-    est = coef .* est;
-
-    % Jump terms, only computed for multipatch geometries
-    if (isa (hmsh, 'hierarchical_mesh_mp') && hmsh.npatch > 1)
-      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
-      jump_est = compute_jump_terms (u, hmsh, hspace, problem_data.c_diff, adaptivity_data.flag);
-      est = est + coef1 .* jump_est;
-    end
-    
-    % Neumann boundary conditions
-    if (~isempty (problem_data.nmnn_sides))
-      coef1 = ms(dof_level) .* hspace.coeff_pou(:);
-      nmnn_est = compute_neumann_terms (u, hmsh, hspace, problem_data, adaptivity_data.flag);
-      est = est + coef1 .* nmnn_est;
-    end
-    est = C0_est * sqrt (est);
-
+  end
+  
+  
 end
-
-end
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
