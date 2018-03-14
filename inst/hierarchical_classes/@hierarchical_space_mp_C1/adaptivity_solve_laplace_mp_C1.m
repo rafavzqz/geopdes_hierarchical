@@ -49,8 +49,8 @@ for iopt  = 1:numel (data_names)
 end
 
 % Compute and assemble the matrices 
-stiff_mat = op_gradu_gradv_mp_hier (hspace, hspace, hmsh, c_diff);
-rhs = op_f_v_mp_hier (hspace, hmsh, f);
+stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, c_diff);
+rhs = op_f_v_hier (hspace, hmsh, f);
 
 % Apply Neumann boundary conditions
 ndofs=0;
@@ -64,7 +64,7 @@ for ilev = 1:hmsh.nlevels
 
             msh_side = hmsh.mesh_of_level(ilev).msh_patch{iptc}.boundary(iside);
             sp_side = hspace.space_of_level(ilev).sp_patch{iptc}.boundary(iside);
-            rhs_nmnn = op_f_v_mp_hier (sp_side, msh_side, gref);
+            rhs_nmnn = op_f_v_tp (sp_side, msh_side, gref);
             
             dofs = 1:ndofs;
             
@@ -77,16 +77,16 @@ end
 
 % Apply Dirichlet boundary conditions in weak form, by Nitsche's method
 if (exist ('weak_drchlt_sides', 'var'))
-    ndofs=0;
-    for ilev = 1:hmsh.nlevels
-        ndofs = ndofs + hspace.ndof_per_level(ilev);
-        [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), weak_drchlt_sides, h, c_diff, Cpen); 
+ilev = hmsh.nlevels;
+
+        if (exist ('Cpen', 'var'))
+            [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hsphace.space_of_level(ilev), hmsh.mesh_of_level(ilev), weak_drchlt_sides, h, c_diff, Cpen); 
+        else
+            [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), weak_drchlt_sides, h, c_diff);
+        end
         
-        dofs = 1:ndofs;
-        
-        stiff_mat(dofs) = stiff_mat(dofs) - hspace.Csub{ilev}.' * N_mat;
-        rhs(dofs) = rhs(dofs) + hspace.Csub{ilev}.' * N_rhs;
-    end
+        stiff_mat = stiff_mat - hspace.Csub{ilev}.' * N_mat *hspace.Csub{ilev};
+        rhs = rhs + hspace.Csub{ilev}.' * N_rhs;
 end
 
 % Solve the linear system

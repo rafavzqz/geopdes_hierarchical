@@ -31,6 +31,14 @@ elseif (isa (hspace, 'hierarchical_space_mp'))
     sp_aux = hspace.space_of_level(1).sp_patch{1}.scalar_spaces{1};
     is_vector = true;
   end
+elseif (isa (hspace, 'hierarchical_space_mp_C1'))
+  if (isa (hspace.space_of_level(1).sp_patch{1}, 'sp_scalar'))
+    sp_aux = hspace.space_of_level(1).sp_patch{1};
+    is_vector = false;
+  elseif (isa (hspace.space_of_level(1).sp_patch{1}, 'sp_vector'))
+    sp_aux = hspace.space_of_level(1).sp_patch{1}.scalar_spaces{1};
+    is_vector = true;
+  end
 end
 ndim = numel (sp_aux.knots);
 first_knot = cellfun (@(x) x(1), sp_aux.knots);

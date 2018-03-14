@@ -134,32 +134,32 @@ while (1)
 % SOLVE AND PLOT
   if (plot_data.print_info)
     disp('SOLVE:')
-    fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
+    fprintf('Number of elements: %d. Total DOFs: %d. Numer of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
   u = adaptivity_solve_laplace_mp_C1 (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
-%   if (plot_data.plot_hmesh)
-%     fig_mesh = hmsh_plot_cells (hmsh, 10, fig_mesh);
-%   end
-%   if (plot_data.plot_discrete_sol)
-%     npts = 51 * ones (1, hmsh.ndim);
-%     fig_sol = plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex, fig_sol); 
-%   end
-%   if (plot_data.plot_hmesh || plot_data.plot_discrete_sol)
-%    disp('Paused. Type "dbcont" to continue')
-%    keyboard
-%   end
+  if (plot_data.plot_hmesh)
+    fig_mesh = hmsh_plot_cells (hmsh, 10, fig_mesh);
+  end
+  if (plot_data.plot_discrete_sol)
+    npts = 51 * ones (1, hmsh.ndim);
+    fig_sol = plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex, fig_sol); 
+  end
+  if (plot_data.plot_hmesh || plot_data.plot_discrete_sol)
+   disp('Paused. Type "dbcont" to continue')
+   keyboard
+  end
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
-%   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
-%   if (isfield (problem_data, 'graduex'))
-%     [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
-%     if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
-%   end
+  if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
+  if (isfield (problem_data, 'graduex'))
+    [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
+    if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
+  end
 
 % STOPPING CRITERIA
   if (gest(iter) < adaptivity_data.tol)
@@ -181,6 +181,11 @@ while (1)
   
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
+%   for ilev=1:hmsh.nlevels-1  %uniform refinement
+%       marked{ilev}=[];
+%   end
+%   marked{hmsh.nlevels}=1:hmsh.mesh_of_level(hmsh.nlevels).nel;
+%   num_marked=numel(marked{hmsh.nlevels});
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   if (plot_data.print_info)
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
