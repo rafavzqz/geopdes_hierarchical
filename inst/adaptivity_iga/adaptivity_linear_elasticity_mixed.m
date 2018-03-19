@@ -63,8 +63,8 @@ while (iter < adaptivity_data.num_max_iter)
   [u,press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_press, problem_data);  %add outputs for condition number, sparsity e bandwidth?
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;  ndof2(iter) = hspace_press.ndof;
   
-  displ = sp_eval (u, hspace, geometry, {1-eps, 1-eps});
-  displace(iter) = displ(2);
+%  displ = sp_eval (u, hspace, geometry, {1-eps, 1-eps});
+%  displace(iter) = displ(2);
   
   if (plot_data.plot_hmesh)
     hmsh_plot_cells (hmsh, 10, fig_mesh);
@@ -90,11 +90,10 @@ while (iter < adaptivity_data.num_max_iter)
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %% ESTIMATE
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   disp('ESTIMATE:')
    if (plot_data.print_info); disp('ESTIMATE:'); end
-     est = adaptivity_estimate_linear_el_mixed(u, press, hmsh, hspace, hspace_press, problem_data, adaptivity_data);
-     est_elem{iter} = est.';
-     gest(iter) = norm (est);
+   est = adaptivity_estimate_linear_el_mixed(u, press, hmsh, hspace, hspace_press, problem_data, adaptivity_data);
+   est_elem{iter} = est.';
+   gest(iter) = norm (est);
    if (plot_data.print_info); fprintf('Computed estimate: %e \n', gest(iter)); end
    if (isfield (problem_data, 'uex'))
      [~, errl2(iter), err_h1s(iter),~,errl2_elem{iter},err_h1s_elem{iter}] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
@@ -163,6 +162,6 @@ solution_data.gest = gest(1:iter);
 solution_data.ndof = ndof(1:iter);
 solution_data.ndof2 = ndof2(1:iter);
 solution_data.nel  = nel(1:iter);
-solution_data.displace = displace(1:iter);
+%solution_data.displace = displace(1:iter);
 
 end
