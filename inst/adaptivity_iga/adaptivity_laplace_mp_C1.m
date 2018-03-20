@@ -118,7 +118,7 @@ if (isfield (problem_data, 'graduex'))
 end
   
 % Initialization of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
 
 
 % ADAPTIVE LOOP
@@ -153,7 +153,7 @@ while (1)
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
-  est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
+  est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))

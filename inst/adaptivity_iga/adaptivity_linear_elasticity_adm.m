@@ -65,7 +65,7 @@ while (iter < adaptivity_data.num_max_iter)
     fprintf('Number of levels (mesh): %d \n', hmsh.nlevels)
     fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   end
-  u = adaptivity_solve_linear_elasticity_plus (hmsh, hspace, problem_data);  %add outputs for condition number, sparsity e bandwidth?
+  u = adaptivity_solve_linear_elasticity (hmsh, hspace, problem_data);  
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
   
   displ = sp_eval (u, hspace, geometry, {1-eps, 1-eps});
