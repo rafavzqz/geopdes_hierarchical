@@ -50,7 +50,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, bpx, CondNum_PrecA_jac, CondA] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data)
+function [u, bpx, CondNum_PrecA_jac, CondNum_PrecA_gs, CondA] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
@@ -221,6 +221,7 @@ end
 % Solve the linear system
 % u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
   tol = 1e-10 / 2^(hmsh.nlevels*method_data.degree(1));
+  tol = 1e-10;
   
   A = bpx(end).Ai(int_dofs, int_dofs);
   b = bpx(end).rhs(int_dofs);
@@ -232,6 +233,17 @@ end
   lambda_max_jac = eigest_j(2);
   CondNum_PrecA_jac = eigest_j(2) / eigest_j(1)
   disp(eigest_j)
+
+% % Condition number of the Jacobi method
+%   for ii = 2:hmsh.nlevels
+%     A = bpx(ii).Ai(bpx(ii).new_dofs,bpx(ii).new_dofs);
+%     Adiag = spdiags (spdiags(A,0), 0, size(A,1), size(A,2));
+%     disp (ii)
+%     disp (eigs (Adiag\A, 1, 'LM'))
+%     disp (eigs (Adiag\A, 1, 'SM'))
+%   end
+
+  CondNum_PrecA_gs = 0;
 
 % CondA = 0;
    CondA = eigs(A,1,'LM')/eigs(A,1,'SM')
