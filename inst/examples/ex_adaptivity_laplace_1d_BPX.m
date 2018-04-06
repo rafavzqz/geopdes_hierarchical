@@ -47,7 +47,7 @@ adaptivity_data.tol = 1e-19;
 plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
 
-for ideg = 1:4
+for ideg = 2:4
 method_data.degree      = ideg;            % Degree of the splines
 method_data.regularity  = method_data.degree-1;
 method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
