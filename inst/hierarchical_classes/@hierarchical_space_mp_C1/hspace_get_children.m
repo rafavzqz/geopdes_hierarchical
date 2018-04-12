@@ -44,7 +44,7 @@ children_of_function = cell (numel(ind), 1);
 
     ref_matrix = matrix_basis_change__ (hspace, lev+1);
     for ii = 1:numel(ind)
-        auxI = find(ref_matrix(:,ind(ii)));
+        [auxI,~]= find(ref_matrix(:,ind(ii)));
         children = union (children, auxI);
         children_of_function{ii} = auxI;  
     end
