@@ -51,7 +51,7 @@ end
 % Computation of indices of functions of level lev that will become
 % nonactive when removing the functions or elements in marked{lev}
 if (isfield (adaptivity_data, 'adm'))
-  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, 'elements');
+  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked_elements, 'elements');
 else
   marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag);
 end
