@@ -43,15 +43,18 @@ switch (adaptivity_data.flag)
     marked_elements = marked;
 end
 
-  if adaptivity_data.adm>1
-    adm_marked = hrefine( hmsh, hspace, marked_elements, adaptivity_data.adm);
-  else
-    adm_marked=marked_elements;
-  end
+if (isfield (adaptivity_data, 'adm'))
+  marked_elements = mark_admissible (hmsh, hspace, marked_elements, adaptivity_data.adm);
+end
+[hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
-[hmsh, new_cells] = hmsh_refine (hmsh, adm_marked);
-adaptivity_data.flag='elements';
-marked_functions = compute_functions_to_deactivate (hmsh, hspace, adm_marked, adaptivity_data.flag);
+% Computation of indices of functions of level lev that will become
+% nonactive when removing the functions or elements in marked{lev}
+if (isfield (adaptivity_data, 'adm'))
+  marked_functions = compute_functions_to_deactivate (hmsh, hspace, adm_marked, 'elements');
+else
+  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag);
+end
 
 if (nargout == 3)
   [hspace, Cref] = hspace_refine (hspace, hmsh, marked_functions, new_cells);
