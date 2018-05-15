@@ -95,21 +95,21 @@ if (nargin < 3)
 %     end    
     
     %get interf_dir=1,2 according to the interface being horizontal or vertical
-    all_dir=1:ndim; % possible directions
+    all_dir = 1:ndim; % possible directions
     side = hspace.space_of_level(lev-1).interfaces.side1;
     interf_dir_orthogonal = ceil (side/2);  %direction orthogonal to the interface
     interf_dir_parallel = setdiff (all_dir, interf_dir_orthogonal);  %direction(s) parallel to the interface
     interf_dir = interf_dir_parallel;
-    degree=hspace.space_of_level(lev-1).sp_patch{ipatch}.degree(interf_dir); %degree
+    degree = hspace.space_of_level(lev-1).sp_patch{ipatch}.degree(interf_dir); %degree
     
     %define the 1D B-spline space parallel to the interface: spn (p,r)
     %(actually it is enough to know the number of degrees of freedom of this space)
-    ndof_dir_spn=hspace.space_of_level(lev-1).sp_patch{ipatch}.ndof_dir;
-    ndof_spn=ndof_dir_spn(interf_dir);  
-    ndof_Bsp=prod(ndof_dir_spn);  %dimension of bivariate space
-    ndof_dir_spn_ref=hspace.space_of_level(lev).sp_patch{ipatch}.ndof_dir; %same for the finer level 
-    ndof_spn_ref=ndof_dir_spn_ref(interf_dir);     %same for the finer level
-    ndof_Bsp_ref=prod(ndof_dir_spn_ref);   %same for the finer level
+    ndof_dir_spn = hspace.space_of_level(lev-1).sp_patch{ipatch}.ndof_dir;
+    ndof_spn = ndof_dir_spn(interf_dir);  
+    ndof_Bsp = prod(ndof_dir_spn);  %dimension of bivariate space
+    ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ipatch}.ndof_dir; %same for the finer level 
+    ndof_spn_ref = ndof_dir_spn_ref(interf_dir);     %same for the finer level
+    ndof_Bsp_ref = prod(ndof_dir_spn_ref);   %same for the finer level
     
     %get the indices ind0 and ind1, corresponding, in the matrix CC (see sp_multipatch_C1), 
     %to the B-splines of patch iptc used in the
@@ -139,9 +139,9 @@ if (nargin < 3)
     
     %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
     %(actually it is enough to know the number of degrees of freedom of these two spaces)
-    ndof_0_C1=length(hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir})-degree-1;
+    ndof_0_C1 = length(hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir})-degree-1;
     %ndof_1_C1=length(hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir})-degree-1;
-    ndof_0_C1_ref=length(hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir})-degree-1; %same for the finer level
+    ndof_0_C1_ref = length(hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir})-degree-1; %same for the finer level
     %ndof_1_C1_ref=length(hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir})-degree-1; %same for the finer level   
     
     %get the number of internal knots points (of spn):
@@ -155,10 +155,10 @@ if (nargin < 3)
     %(interior) B-splines (all patches),
     %sp.ndof_interior+1:sp.ndof_interior+sp0.ndof represent \phi_{0,i}
     %sp.ndof_interior+sp0.ndof+1:sp.ndof represent \phi_{1,i}
-    ndof_interior_C1=hspace.space_of_level(lev-1).ndof_interior;
-    ndof_interior_C1_ref=hspace.space_of_level(lev).ndof_interior; %same for the finer level
+    ndof_interior_C1 = hspace.space_of_level(lev-1).ndof_interior;
+    ndof_interior_C1_ref = hspace.space_of_level(lev).ndof_interior; %same for the finer level
     
-    Cpatch=hspace.space_of_level(lev-1).Cpatch;
+    Cpatch = hspace.space_of_level(lev-1).Cpatch;
     
     %in Cpatch{iptc}, rows interior_dofs_per_patch{itpc} represent the interior B-spline
     %ndof_interior=hspace.space_of_level(lev-1).interior_dofs_per_patch{ipatch};
@@ -173,19 +173,20 @@ if (nargin < 3)
 %     eta{ipatch}=degree*(k+1)*(A0-A1);
 %     theta{ipatch}=degree*(k+1)*hA1;
 
-   Aux=Lambda{ipatch}*Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
-    
+   Aux = Lambda{ipatch}*Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
+
+% RAFA: replace these lines by a smart use of cumsum
     %Taking care of the parts corresponding to Lemma 1 (Mario's notes on refinement) 
-    ind_start_int_dofs_patch=0; %computing the (starting) global index for the interior dofs of the patch of level lev-1
-    ind_start_int_dofs_patch_ref=0; %same for the finer level (lev-1)
-    for i=1:ipatch-1;
-        ind_start_int_dofs_patch=ind_start_int_dofs_patch+numel(hspace.space_of_level(lev-1).interior_dofs_per_patch{i});
-        ind_start_int_dofs_patch_ref=ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{i});
+    ind_start_int_dofs_patch = 0; %computing the (starting) global index for the interior dofs of the patch of level lev-1
+    ind_start_int_dofs_patch_ref = 0; %same for the finer level (lev-1)
+    for i = 1:ipatch-1;
+        ind_start_int_dofs_patch = ind_start_int_dofs_patch+numel(hspace.space_of_level(lev-1).interior_dofs_per_patch{i});
+        ind_start_int_dofs_patch_ref = ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{i});
     end
-    ind_start_int_dofs_patch=ind_start_int_dofs_patch+1;
-    ind_start_int_dofs_patch_ref=ind_start_int_dofs_patch_ref+1;
-    ind_end_int_dofs_patch=ind_start_int_dofs_patch+numel(hspace.space_of_level(lev-1).interior_dofs_per_patch{ipatch})-1;
-    ind_end_int_dofs_patch_ref=ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{ipatch})-1;
+    ind_start_int_dofs_patch = ind_start_int_dofs_patch + 1;
+    ind_start_int_dofs_patch_ref = ind_start_int_dofs_patch_ref + 1;
+    ind_end_int_dofs_patch = ind_start_int_dofs_patch+numel(hspace.space_of_level(lev-1).interior_dofs_per_patch{ipatch})-1;
+    ind_end_int_dofs_patch_ref = ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{ipatch})-1;
 
     C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ind_start_int_dofs_patch:ind_end_int_dofs_patch)=...
         Lambda{ipatch}(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),setdiff(1:ndof_Bsp,union(ind0,ind1)));  %not all Lambda
@@ -208,6 +209,7 @@ if (nargin < 3)
 
 % We have to change all this part following Mario's notes, and using Proj, Proj0 and Proj1
 elseif (nargin == 3)
+  error ('Not implemented yet')
   nrows = hspace.space_of_level(lev).ndof; ncols = hspace.space_of_level(lev-1).ndof;
   size_alloc = numel (ind_coarse) * prod (hspace.space_of_level(lev).sp_patch{1}.degree + 1);
   rows = zeros (size_alloc, 1); cols = rows; vals = rows;
