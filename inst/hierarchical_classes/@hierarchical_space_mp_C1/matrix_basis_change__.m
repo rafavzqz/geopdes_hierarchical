@@ -59,7 +59,6 @@ else
 end
 
 npatch = hspace.space_of_level(1).npatch;
-ndim = size (hspace.Proj{1}, 2);
 
 % For now we only use B-splines, and scalar spaces
 
@@ -78,18 +77,18 @@ if (nargin < 3)
   for ipatch = 1:npatch  
       
     %first we construct the matrices containing the coefficients lambda, mu, nu (usual refinement coefficients for B-splines)  
-    Lambda{ipatch} = 1;
+    Lambda = 1;
     Proj = hspace.Proj{lev-1, ipatch};
     for idim = 1:ndim
-      Lambda{ipatch} = kron (Proj{idim}, Lambda{ipatch});
+      Lambda = kron (Proj{idim}, Lambda);
     end
-%     Mu{ipatch} = 1;
     Proj0 = hspace.Proj0{lev-1, ipatch};
+    Proj1 = hspace.Proj1{lev-1, ipatch};
+%     Mu{ipatch} = 1;
 %     for idim = 1:ndim
 %       Mu{ipatch} = kron (Proj0{idim}, Mu{ipatch});
 %     end   
 %     Nu{ipatch} = 1;
-    Proj1 = hspace.Proj1{lev-1, ipatch};
 %     for idim = 1:ndim
 %       Nu{ipatch} = kron (Proj1{idim}, Nu{ipatch});
 %     end    
@@ -105,9 +104,9 @@ if (nargin < 3)
     %define the 1D B-spline space parallel to the interface: spn (p,r)
     %(actually it is enough to know the number of degrees of freedom of this space)
     ndof_dir_spn = hspace.space_of_level(lev-1).sp_patch{ipatch}.ndof_dir;
-    ndof_spn = ndof_dir_spn(interf_dir);  
+    ndof_spn = ndof_dir_spn(interf_dir);
     ndof_Bsp = prod(ndof_dir_spn);  %dimension of bivariate space
-    ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ipatch}.ndof_dir; %same for the finer level 
+    ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ipatch}.ndof_dir; %same for the finer level
     ndof_spn_ref = ndof_dir_spn_ref(interf_dir);     %same for the finer level
     ndof_Bsp_ref = prod(ndof_dir_spn_ref);   %same for the finer level
     
@@ -115,34 +114,34 @@ if (nargin < 3)
     %to the B-splines of patch iptc used in the
     %sums of (12) and (13) of Mario's notes (use sub2ind with spn)
     %(needs to be fixed and checked)
-      if (side == 1)
-        ind0 = sub2ind (ndof_dir_spn, ones(1,ndof_spn), 1:ndof_spn);
-        ind1 = sub2ind (ndof_dir_spn, 2*ones(1,ndof_spn), 1:ndof_spn);
-        ind0_ref = sub2ind (ndof_dir_spn_ref, ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
-        ind1_ref = sub2ind (ndof_dir_spn_ref, 2*ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level       
-      elseif (side == 2)
-        ind0 = sub2ind (ndof_dir_spn, ndof_dir_spn(1) * ones(1,ndof_spn), 1:ndof_spn);
-        ind1 = sub2ind (ndof_dir_spn, (ndof_dir_spn(1)-1) * ones(1,ndof_spn), 1:ndof_spn);
-        ind0_ref = sub2ind (ndof_dir_spn_ref, ndof_dir_spn_ref(1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
-        ind1_ref = sub2ind (ndof_dir_spn_ref, (ndof_dir_spn_ref(1)-1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level       
-      elseif (side == 3)
-        ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ones(1,ndof_spn));
-        ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, 2*ones(1,ndof_spn));
-        ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ones(1,ndof_spn_ref));  %same for the finer level
-        ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, 2*ones(1,ndof_spn_ref));  %same for the finer level        
-      elseif (side == 4)
-        ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ndof_dir_spn(2) * ones(1,ndof_spn));
-        ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, (ndof_dir_spn(2)-1) * ones(1,ndof_spn));
-        ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ndof_dir_spn_ref(2) * ones(1,ndof_spn_ref));  %same for the finer level
-        ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, (ndof_dir_spn_ref(2)-1) * ones(1,ndof_spn_ref));  %same for the finer level       
-      end      
+    if (side == 1)
+      ind0 = sub2ind (ndof_dir_spn, ones(1,ndof_spn), 1:ndof_spn);
+      ind1 = sub2ind (ndof_dir_spn, 2*ones(1,ndof_spn), 1:ndof_spn);
+      ind0_ref = sub2ind (ndof_dir_spn_ref, ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
+      ind1_ref = sub2ind (ndof_dir_spn_ref, 2*ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level       
+    elseif (side == 2)
+      ind0 = sub2ind (ndof_dir_spn, ndof_dir_spn(1) * ones(1,ndof_spn), 1:ndof_spn);
+      ind1 = sub2ind (ndof_dir_spn, (ndof_dir_spn(1)-1) * ones(1,ndof_spn), 1:ndof_spn);
+      ind0_ref = sub2ind (ndof_dir_spn_ref, ndof_dir_spn_ref(1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
+      ind1_ref = sub2ind (ndof_dir_spn_ref, (ndof_dir_spn_ref(1)-1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level       
+    elseif (side == 3)
+      ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ones(1,ndof_spn));
+      ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, 2*ones(1,ndof_spn));
+      ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ones(1,ndof_spn_ref));  %same for the finer level
+      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, 2*ones(1,ndof_spn_ref));  %same for the finer level        
+    elseif (side == 4)
+      ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ndof_dir_spn(2) * ones(1,ndof_spn));
+      ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, (ndof_dir_spn(2)-1) * ones(1,ndof_spn));
+      ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ndof_dir_spn_ref(2) * ones(1,ndof_spn_ref));  %same for the finer level
+      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, (ndof_dir_spn_ref(2)-1) * ones(1,ndof_spn_ref));  %same for the finer level       
+    end
     
     %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
     %(actually it is enough to know the number of degrees of freedom of these two spaces)
-    ndof_0_C1 = length(hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir})-degree-1;
-    %ndof_1_C1=length(hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir})-degree-1;
-    ndof_0_C1_ref = length(hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir})-degree-1; %same for the finer level
-    %ndof_1_C1_ref=length(hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir})-degree-1; %same for the finer level   
+    ndof_0_C1 = length (hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir})-degree-1;
+    ndof_0_C1_ref = length (hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir})-degree-1; %same for the finer level
+    %ndof_1_C1 = length (hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir})-degree-1;
+    %ndof_1_C1_ref = length (hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir})-degree-1; %same for the finer level   
     
     %get the number of internal knots points (of spn):
     %k=ndof_spn-degree-1;   %must be divide by (degree-r)
@@ -173,7 +172,7 @@ if (nargin < 3)
 %     eta{ipatch}=degree*(k+1)*(A0-A1);
 %     theta{ipatch}=degree*(k+1)*hA1;
 
-   Aux = Lambda{ipatch}*Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
+    Aux = Lambda*Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
 
 % RAFA: replace these lines by a smart use of cumsum
     %Taking care of the parts corresponding to Lemma 1 (Mario's notes on refinement) 
@@ -189,17 +188,17 @@ if (nargin < 3)
     ind_end_int_dofs_patch_ref = ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{ipatch})-1;
 
     C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ind_start_int_dofs_patch:ind_end_int_dofs_patch)=...
-        Lambda{ipatch}(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),setdiff(1:ndof_Bsp,union(ind0,ind1)));  %not all Lambda
+        Lambda(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),setdiff(1:ndof_Bsp,union(ind0,ind1)));  %not all Lambda
     
    %Taking care of the parts corresponding to Lemma 2 (Mario's notes on refinement)
-   C(ndof_interior_C1_ref+1:ndof_interior_C1_ref+ndof_0_C1_ref,ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1)=Proj0{interf_dir_parallel};  %first term of refinement formula in Lemma 2
-   C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1)=...
+    C(ndof_interior_C1_ref+1:ndof_interior_C1_ref+ndof_0_C1_ref,ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1) = Proj0{interf_dir_parallel};  %first term of refinement formula in Lemma 2
+    C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1) = ...
        Aux(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1);   %second term of refinement formula in Lemma 2
     
    %Taking care of the parts corresponding to Lemma 3 (Mario's notes on refinement)
    
-   C(ndof_interior_C1_ref+ndof_0_C1_ref+1:end,ndof_interior_C1+ndof_0_C1+1:end)=Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3
-   C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ndof_interior_C1+ndof_0_C1+1:end)=...
+    C(ndof_interior_C1_ref+ndof_0_C1_ref+1:end,ndof_interior_C1+ndof_0_C1+1:end) = Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3
+    C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ndof_interior_C1+ndof_0_C1+1:end) = ...
        Aux(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),ndof_interior_C1+ndof_0_C1+1:end);   %second term of refinement formula in Lemma 3
     
   end
