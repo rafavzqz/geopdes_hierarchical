@@ -74,6 +74,14 @@ if (nargin < 3)
   % the right palce in the big matrix, according to the global numbering of
   % the dofs of the patch.
   % What does Proj (and Proj0, Proj1) contain in our case?
+
+% Shifting indices for interior degrees of freedom
+  shift_inds = cumsum ([0 cellfun(@numel, hspace.space_of_level(lev-1).interior_dofs_per_patch)]);
+  shift_inds_ref = cumsum ([0 cellfun(@numel, hspace.space_of_level(lev).interior_dofs_per_patch)]);
+
+  interfaces = hspace.space_of_level(lev-1).interfaces;
+  side_on_int(1) = interfaces.side1;
+  side_on_int(2) = interfaces.side2;
   for ipatch = 1:npatch  
       
     %first we construct the matrices containing the coefficients lambda, mu, nu (usual refinement coefficients for B-splines)  
@@ -84,18 +92,10 @@ if (nargin < 3)
     end
     Proj0 = hspace.Proj0{lev-1, ipatch};
     Proj1 = hspace.Proj1{lev-1, ipatch};
-%     Mu{ipatch} = 1;
-%     for idim = 1:ndim
-%       Mu{ipatch} = kron (Proj0{idim}, Mu{ipatch});
-%     end   
-%     Nu{ipatch} = 1;
-%     for idim = 1:ndim
-%       Nu{ipatch} = kron (Proj1{idim}, Nu{ipatch});
-%     end    
     
     %get interf_dir=1,2 according to the interface being horizontal or vertical
     all_dir = 1:ndim; % possible directions
-    side = hspace.space_of_level(lev-1).interfaces.side1;
+    side = side_on_int(ipatch);
     interf_dir_orthogonal = ceil (side/2);  %direction orthogonal to the interface
     interf_dir_parallel = setdiff (all_dir, interf_dir_orthogonal);  %direction(s) parallel to the interface
     interf_dir = interf_dir_parallel;
@@ -110,50 +110,40 @@ if (nargin < 3)
     ndof_spn_ref = ndof_dir_spn_ref(interf_dir);     %same for the finer level
     ndof_Bsp_ref = prod(ndof_dir_spn_ref);   %same for the finer level
     
-    %get the indices ind0 and ind1, corresponding, in the matrix CC (see sp_multipatch_C1), 
-    %to the B-splines of patch iptc used in the
-    %sums of (12) and (13) of Mario's notes (use sub2ind with spn)
-    %(needs to be fixed and checked)
+    % Get the indices ind0 and ind1, corresponding, in the matrix CC (see sp_multipatch_C1),
+    %  to the B-splines of patch iptc used in the sums of (12) and (13) of Mario's notes (use sub2ind with spn)
+    %  (needs to be fixed and checked)
     if (side == 1)
       ind0 = sub2ind (ndof_dir_spn, ones(1,ndof_spn), 1:ndof_spn);
       ind1 = sub2ind (ndof_dir_spn, 2*ones(1,ndof_spn), 1:ndof_spn);
       ind0_ref = sub2ind (ndof_dir_spn_ref, ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, 2*ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level       
+      ind1_ref = sub2ind (ndof_dir_spn_ref, 2*ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level
     elseif (side == 2)
       ind0 = sub2ind (ndof_dir_spn, ndof_dir_spn(1) * ones(1,ndof_spn), 1:ndof_spn);
       ind1 = sub2ind (ndof_dir_spn, (ndof_dir_spn(1)-1) * ones(1,ndof_spn), 1:ndof_spn);
       ind0_ref = sub2ind (ndof_dir_spn_ref, ndof_dir_spn_ref(1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, (ndof_dir_spn_ref(1)-1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level       
+      ind1_ref = sub2ind (ndof_dir_spn_ref, (ndof_dir_spn_ref(1)-1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level
     elseif (side == 3)
       ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ones(1,ndof_spn));
       ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, 2*ones(1,ndof_spn));
       ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ones(1,ndof_spn_ref));  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, 2*ones(1,ndof_spn_ref));  %same for the finer level        
+      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, 2*ones(1,ndof_spn_ref));  %same for the finer level
     elseif (side == 4)
       ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ndof_dir_spn(2) * ones(1,ndof_spn));
       ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, (ndof_dir_spn(2)-1) * ones(1,ndof_spn));
       ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ndof_dir_spn_ref(2) * ones(1,ndof_spn_ref));  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, (ndof_dir_spn_ref(2)-1) * ones(1,ndof_spn_ref));  %same for the finer level       
+      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, (ndof_dir_spn_ref(2)-1) * ones(1,ndof_spn_ref));  %same for the finer level
     end
     
     %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
     %(actually it is enough to know the number of degrees of freedom of these two spaces)
-    ndof_0_C1 = length (hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir})-degree-1;
-    ndof_0_C1_ref = length (hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir})-degree-1; %same for the finer level
-    %ndof_1_C1 = length (hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir})-degree-1;
-    %ndof_1_C1_ref = length (hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir})-degree-1; %same for the finer level   
-    
-    %get the number of internal knots points (of spn):
-    %k=ndof_spn-degree-1;   %must be divide by (degree-r)
-    
-    %REMARK: in CC{iptc}, columns 1:sp0.ndof correspond to \phi_{0,i} and
-    %sp0.ndof+1:sp0.ndof+sp1.ndof correspond to \phi_{1,i} 
-    %(functions on the interface, which live and have same coefficients in both patches)
+    ndof_0_C1 = length (hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir}) - degree - 1;
+    ndof_0_C1_ref = length (hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir}) - degree - 1; %same for the finer level
+    ndof_1_C1 = length (hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir}) - degree ;
+    ndof_1_C1_ref = length (hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir}) - degree; %same for the finer level
     
     %in Cpatch{iptc}, columns 1:sp.ndof_interior represent the regular
     %(interior) B-splines (all patches),
-    %sp.ndof_interior+1:sp.ndof_interior+sp0.ndof represent \phi_{0,i}
-    %sp.ndof_interior+sp0.ndof+1:sp.ndof represent \phi_{1,i}
     ndof_interior_C1 = hspace.space_of_level(lev-1).ndof_interior;
     ndof_interior_C1_ref = hspace.space_of_level(lev).ndof_interior; %same for the finer level
     
@@ -164,48 +154,34 @@ if (nargin < 3)
     %ndof_interior_ref=hspace.space_of_level(lev).interior_dofs_per_patch{ipatch}; %same for the finer level
     %ind0 correspond to N_0^(p,r) in (12) and ind1 to N_1^(p,r) in (12)-(13) 
     
-%     A0=Cpatch{ipatch}(ind0,(ndof_interior_C1+1):(ndof_interior_C1+ndof_0_C1));% contains the coefficients a_{i,0,j}
-%     A1=Cpatch{ipatch}(ind1,(ndof_interior_C1+1):(ndof_interior_C1+ndof_0_C1));% contains the coefficients a_{i,1,j}
-%     hA1=Cpatch{ipatch}(ind1,(ndof_interior_C1+ndof_0_C1+1):(hspace.space_of_level(lev-1).ndof));% contains the coefficients \hat a_{i,1,j}
-%     
-%     zeta{ipatch}=A0;
-%     eta{ipatch}=degree*(k+1)*(A0-A1);
-%     theta{ipatch}=degree*(k+1)*hA1;
+    Aux = Lambda * Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
 
-    Aux = Lambda*Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
-
-% RAFA: replace these lines by a smart use of cumsum
-    %Taking care of the parts corresponding to Lemma 1 (Mario's notes on refinement) 
-    ind_start_int_dofs_patch = 0; %computing the (starting) global index for the interior dofs of the patch of level lev-1
-    ind_start_int_dofs_patch_ref = 0; %same for the finer level (lev-1)
-    for i = 1:ipatch-1;
-        ind_start_int_dofs_patch = ind_start_int_dofs_patch+numel(hspace.space_of_level(lev-1).interior_dofs_per_patch{i});
-        ind_start_int_dofs_patch_ref = ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{i});
-    end
-    ind_start_int_dofs_patch = ind_start_int_dofs_patch + 1;
-    ind_start_int_dofs_patch_ref = ind_start_int_dofs_patch_ref + 1;
-    ind_end_int_dofs_patch = ind_start_int_dofs_patch+numel(hspace.space_of_level(lev-1).interior_dofs_per_patch{ipatch})-1;
-    ind_end_int_dofs_patch_ref = ind_start_int_dofs_patch_ref+numel(hspace.space_of_level(lev).interior_dofs_per_patch{ipatch})-1;
-
-    C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ind_start_int_dofs_patch:ind_end_int_dofs_patch)=...
-        Lambda(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),setdiff(1:ndof_Bsp,union(ind0,ind1)));  %not all Lambda
+    %Taking care of the parts corresponding to Lemma 1 (Mario's notes on refinement)
+    Bsp_indices_coarse = setdiff (1:ndof_Bsp, union (ind0, ind1));
+    Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, union (ind0_ref, ind1_ref));
+    interior_inds_coarse = shift_inds(ipatch)+1:shift_inds(ipatch+1);
+    interior_inds_fine = shift_inds_ref(ipatch)+1:shift_inds_ref(ipatch+1);
     
+    C(interior_inds_fine,interior_inds_coarse) = Lambda(Bsp_indices_fine, Bsp_indices_coarse);  %not all Lambda
+
    %Taking care of the parts corresponding to Lemma 2 (Mario's notes on refinement)
-    C(ndof_interior_C1_ref+1:ndof_interior_C1_ref+ndof_0_C1_ref,ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1) = Proj0{interf_dir_parallel};  %first term of refinement formula in Lemma 2
-    C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1) = ...
-       Aux(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),ndof_interior_C1+1:ndof_interior_C1+ndof_0_C1);   %second term of refinement formula in Lemma 2
+    indices0_coarse = ndof_interior_C1 + (1:ndof_0_C1);
+    indices0_fine = ndof_interior_C1_ref + (1:ndof_0_C1_ref);
+    if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
+      C(indices0_fine,indices0_coarse) = Proj0{interf_dir_parallel};  %first term of refinement formula in Lemma 2
+    end
+    C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
     
    %Taking care of the parts corresponding to Lemma 3 (Mario's notes on refinement)
-   
-    C(ndof_interior_C1_ref+ndof_0_C1_ref+1:end,ndof_interior_C1+ndof_0_C1+1:end) = Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3
-    C(ind_start_int_dofs_patch_ref:ind_end_int_dofs_patch_ref,ndof_interior_C1+ndof_0_C1+1:end) = ...
-       Aux(setdiff(1:ndof_Bsp_ref,union(ind0_ref,ind1_ref)),ndof_interior_C1+ndof_0_C1+1:end);   %second term of refinement formula in Lemma 3
-    
+    indices1_coarse = ndof_interior_C1 + ndof_0_C1 + (1:ndof_1_C1);
+    indices1_fine = ndof_interior_C1_ref + ndof_0_C1_ref + (1:ndof_1_C1_ref);
+    if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
+      C(indices1_fine,indices1_coarse) = Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3
+    end
+    C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
+
   end
   
-%What's exactly the meaning of the 3rd input? Specifying only some
-%functions to be expressed in the new basis? Yes, but we'll take care of it later
-
 % We have to change all this part following Mario's notes, and using Proj, Proj0 and Proj1
 elseif (nargin == 3)
   error ('Not implemented yet')
