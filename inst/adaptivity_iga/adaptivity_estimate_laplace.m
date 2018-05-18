@@ -212,7 +212,8 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
             coeff = (coeff .* grad_dot_n - gside(x{:})).^2;
 
             if (strcmpi (flag, 'elements'))
-              est_level = sum (coeff, 1);
+              w = msh_side.quad_weights .* msh_side.jacdet;
+              est_level = sum (w .* coeff, 1);
               inds_level = get_volumetric_indices (iside, hmsh.mesh_of_level(ilev).nel_dir, hmsh_sfi.active{ilev});
               [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
               indices = vol_shifting_indices(ilev) + inds;
