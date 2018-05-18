@@ -240,7 +240,8 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
           coeff = (bsxfun (@times, eps_normal, coeff) + p_normal - gside(x{:})).^2;
 
           if (strcmpi (flag, 'elements'))
-            est_level = sum (reshape (sum (coeff, 1), msh_side.nqn, msh_side.nel));
+            w = msh_side.quad_weights .* msh_side.jacdet;
+            est_level = sum (reshape (sum (coeff, 1), msh_side.nqn, msh_side.nel) .* w);
             inds_level = get_volumetric_indices (iside, hmsh.mesh_of_level(ilev).nel_dir, hmsh_sfi.active{ilev});
             [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
             indices = vol_shifting_indices(ilev) + inds;
@@ -310,7 +311,8 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
             coeff = (bsxfun (@times, eps_normal, coeff) + p_normal - gside(x{:})).^2;
 
             if (strcmpi (flag, 'elements'))
-              est_level_patch = sum (reshape (sum (coeff, 1), msh_side.nqn, msh_side.nel));
+              w = msh_side.quad_weights .* msh_side.jacdet;
+              est_level_patch = sum (reshape (sum (coeff, 1), msh_side.nqn, msh_side.nel) .* w);
               inds_patch = get_volumetric_indices (iside, msh_patch.nel_dir, elements);
               inds_level = patch_shifting(iptc) + inds_patch;
               [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
