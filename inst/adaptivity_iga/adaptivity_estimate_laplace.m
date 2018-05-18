@@ -275,7 +275,8 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
             coeff = (coeff .* grad_dot_n - gside(x{:})).^2;
 
             if (strcmpi (flag, 'elements'))
-              est_level_patch = sum (coeff, 1);
+              w = msh_side.quad_weights .* msh_side.jacdet;
+              est_level_patch = sum (w .* coeff, 1);
               inds_patch = get_volumetric_indices (iside, msh_patch.nel_dir, elements);
               inds_level = patch_shifting(iptc) + inds_patch;
               [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
