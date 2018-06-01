@@ -42,7 +42,14 @@ function [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data,
 
 npatch = numel (geometry);
 for iptc = 1:npatch
-  [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
+  if ~isfield(geometry(iptc),'knots')
+    [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, ...
+        method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
+  else % G+smo geometry
+    assert(numel(geometry(iptc).knots)==1); % there should be only one level in the geometry at that point
+    [knots, zeta] = kntrefine (geometry(iptc).knots{1}, ...
+         method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
+  end
   
   rule     = msh_gauss_nodes (method_data.nquad);
   [qn, qw] = msh_set_quad_nodes (zeta, rule);
@@ -63,3 +70,4 @@ else
 end
 
 end
+
