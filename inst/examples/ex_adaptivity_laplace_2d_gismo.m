@@ -1,9 +1,3 @@
-addpath('/Users/ondine/Documents/gismo/plugins/gsMex/m');
-addpath('/Users/ondine/Documents/gismo/build/plugins/gsMex');
-addpath( genpath('/Users/ondine/Documents/MATLAB/GeoPDEs-full/nurbs') );
-addpath( genpath('/Users/ondine/Documents/geopdes') );
-addpath( genpath('/Users/ondine/Documents/geopdes_hierarchical') );
-
 % PHYSICAL DATA OF THE PROBLEM
 clear problem_data  
 % Physical domain, defined as NURBS map given in a text file
