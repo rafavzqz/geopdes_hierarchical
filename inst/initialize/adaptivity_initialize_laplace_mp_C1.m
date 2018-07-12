@@ -36,7 +36,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data)
+function [hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data)
 
 [geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
 
