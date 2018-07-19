@@ -31,18 +31,23 @@ balance_element_list = cell(hmsh.nlevels,1);
 for iLevel = hmsh.nlevels:-1:2
     active =  hmsh.active{iLevel};
     anchestor_level = iLevel - n_fsb - 1;
-        % loop over all active element of the ith level
-        for el = 1:hmsh.nel_per_level(iLevel)
-            if anchestor_level > 0
-                active_supp = intersect( hmsh.active{anchestor_level}, support_ext(hmsh, hspace, active(el), iLevel, anchestor_level ) );
-                balance_element_list{anchestor_level} = [balance_element_list{anchestor_level}; active_supp]; 
+    % loop over all active element of the ith level
+    for el = 1:hmsh.nel_per_level(iLevel)
+        if anchestor_level > 0
+            active_supp = intersect( hmsh.active{anchestor_level}, support_extension( hmsh, hspace, active(el), iLevel, anchestor_level ) );
+            balance_element_list{anchestor_level} = [balance_element_list{anchestor_level}; active_supp];
+            balance_element_list{anchestor_level} = unique( balance_element_list{anchestor_level} );
+        end
+        if ( n_fsb > 1 && iLevel > 2 )
+            ring_neighbours = ring_neighbors( hmsh, active(el), iLevel, 1 );
+            ring_neighbours = intersect( hmsh.active{iLevel-2}, ring_neighbours);
+            if  size(ring_neighbours,2)~=1
+                ring_neighbours = ring_neighbours';
             end
-            if ( n_fsb > 1 && iLevel > 2 )
-                ring_neighbours = ring_neighbors( hmsh, active(el), iLevel, 1 );
-                ring_neighbours = intersect( hmsh.active{iLevel-2}, ring_neighbours);
-                balance_element_list{iLevel - 2} = [balance_element_list{iLevel - 2}; ring_neighbours];
-            end
-        end    
+            balance_element_list{iLevel - 2} = [balance_element_list{iLevel - 2}; ring_neighbours];
+            balance_element_list{anchestor_level} = unique( balance_element_list{anchestor_level} );
+        end
+    end
 end
 
 end

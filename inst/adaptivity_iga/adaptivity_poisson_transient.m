@@ -104,7 +104,36 @@ if (~isfield (plot_data, 'plot_discrete_sol'))
     plot_data.plot_discrete_sol = false;
 end
 
-fid = fopen (plot_data.file_name_dofs, 'w');
+fid = fopen (plot_data.file_name_results, 'w');
+if (fid < 0)
+    error ('could not open file %s', plot_data.file_name_results);
+end
+fprintf (fid, 'Time Step,');
+fprintf (fid, '\t');
+fprintf (fid, 'DOFs,');
+fprintf (fid, '\t');
+fprintf (fid, 'Elements,');
+fprintf (fid, '\t');
+fprintf (fid, 'CPU Time,');
+fprintf (fid, '\t');
+fprintf (fid, 'Sparsity,');
+fprintf (fid, '\t');
+fprintf (fid, 'Strain_Energy');
+fprintf (fid, '\n');
+
+fiL2 = fopen (plot_data.file_name_L2, 'w');
+if (fiL2 < 0)
+    error ('could not open file %s', plot_data.file_name_L2);
+end
+fprintf (fiL2, 'L2');
+fprintf (fiL2, '\n');
+
+fiH1 = fopen (plot_data.file_name_H1, 'w');
+if (fiH1 < 0)
+    error ('could not open file %s', plot_data.file_name_h1);
+end
+fprintf (fiH1, 'H1');
+fprintf (fiH1, '\n');
 
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+NaN;
 
@@ -132,15 +161,16 @@ for itime = 1:number_ts
     if (plot_data.print_info)
         fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d/%d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime,number_ts);
     end
+    cpu_temp = cputime;
     % ADAPTIVE LOOP
     for iter = 1:adaptivity_data.num_max_iter
         if (plot_data.print_info)
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Adaptivity iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
         end
-        if (~hspace_check_partition_of_unity (hspace, hmsh) && method_data.truncated)
-            disp('ERROR: The partition-of-the-unity property does not hold.')
-            solution_data.flag = -1; break
-        end
+        %         if (~hspace_check_partition_of_unity (hspace, hmsh) && method_data.truncated)
+        %             disp('ERROR: The partition-of-the-unity property does not hold.')
+        %             solution_data.flag = -1; break
+        %         end
         
         % ESTIMATE ===============================================================
         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
@@ -157,9 +187,6 @@ for itime = 1:number_ts
             if (plot_data.print_info); disp('Success: The solution converge!!!'); end
             hspace.dofs = u;
             break;
-        elseif (itime > 1 && iter > 1)
-            hspace.dofs = u;
-            break;
         elseif (hspace.ndof > adaptivity_data.max_ndof)
             if (plot_data.print_info); disp('Warning: reached the maximum number of DOFs'); end
             hspace.dofs = u;
@@ -173,19 +200,20 @@ for itime = 1:number_ts
             fprintf('non-convergence flag: %d \n', problem_data.non_linear_convergence_flag);
             hspace.dofs = u;
             break;
-%         elseif (hspace.nlevels > adaptivity_data.max_level)
-%             if (plot_data.print_info); disp('Warning: reached the maximum number of level'); end;
-%             hspace.dofs = u;
-%             break;
+            %         elseif ( ~(itime < 2) && ~(iter < 2) )
+            %             if( (gest(iter-1)-gest(iter))/gest(iter) < adaptivity_data.tol)
+            %                 hspace.dofs = u;
+            %                 break;
+            %             end
         end
         
         %% REFINEMENT =============================================================
         % MARK REFINEMENT
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
         if ~isempty(intersect(adaptivity_data.timeToRefine, itime))
-%             [marked_ref, num_marked_ref] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+            %             [marked_ref, num_marked_ref] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
             [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
-           
+            
             % REFINE
             if ~isempty(marked_ref)
                 if (plot_data.print_info)
@@ -219,46 +247,8 @@ for itime = 1:number_ts
                 end
             end
         end
-        %% COARSENING =============================================================
-        % MARK COARSENING
-        if (plot_data.print_info); disp('MARK COARSENING:'); end
-        if (itime > 1 && adaptivity_data.doCoarsening)
-%             [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-            [marked_coarse, num_marked_coarse] = adaptivity_mark_coarsening (est, hmsh, hspace, adaptivity_data);
-
-            % coarse only after the first time step if it also refines
-            % COARSE
-            if ~isempty(marked_coarse)
-                if (plot_data.print_info)
-                    fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
-                    disp('COARSE')
-                end
-                % Project the previous solution mesh onto the next refined mesh
-                if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
-                % project dofs onto new mesh
-                if strcmp(adaptivity_data.adm_strategy, 'balancing')
-                    hspace.dofs = u;
-                    [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen_fsb(hmsh, hspace, marked_coarse, adaptivity_data);
-                    if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
-                    % project last time step solution onto new mesh
-                    hspace.dofs = u_last;
-                    [~, ~, u_last] = adaptivity_coarsen_fsb (hmsh, hspace, marked_coarse, adaptivity_data);
-                    hmsh = hmsh_coarse;
-                    hspace = hspace_coarse;
-                    hspace.dofs = u;
-                else
-                    hspace.dofs = u;
-                    [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-                    if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
-                    % project last time step solution onto new mesh
-                    hspace.dofs = u_last;
-                    [~, ~, u_last] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-                    hmsh = hmsh_coarse;
-                    hspace = hspace_coarse;
-                    hspace.dofs = u;
-                end
-            end
-        end        
+        
+        
         %% SOLVE ==================================================================
         if (plot_data.print_info)
             disp('SOLVE:')
@@ -266,7 +256,7 @@ for itime = 1:number_ts
         end
         hspace.dofs = u;
         if ~problem_data.flag_nl
-            u = adaptivity_solve_generalized_alphaMethod (hmsh, hspace, itime, problem_data, u_last);
+            [u] = adaptivity_solve_generalized_alphaMethod (hmsh, hspace, itime, problem_data, u_last);
         else
             [u, problem_data] = adaptivity_solve_nonlinear_generalized_alphaMethod (hmsh, hspace, itime, problem_data, plot_data, u_last);
         end
@@ -274,25 +264,103 @@ for itime = 1:number_ts
         nel(iter) = hmsh.nel;
         ndof(iter) = hspace.ndof;
     end % END ADAPTIVITY LOOP
+    
+    %% COARSENING =============================================================
+    % MARK COARSENING
+    if (plot_data.print_info); disp('MARK COARSENING:'); end
+    if (itime > 1 && adaptivity_data.doCoarsening)
+        %             [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+        [marked_coarse, num_marked_coarse] = adaptivity_mark_coarsening (est, hmsh, hspace, adaptivity_data);
+        
+        % coarse only after the first time step if it also refines
+        % COARSE
+        if ~isempty(marked_coarse)
+            if (plot_data.print_info)
+                fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
+                disp('COARSE')
+            end
+            % Project the previous solution mesh onto the next refined mesh
+            if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
+            % project dofs onto new mesh
+            if strcmp(adaptivity_data.adm_strategy, 'balancing')
+                hspace.dofs = u;
+                [hmsh_coarse, hspace_coarse, C_coar] = adaptivity_coarsen_fsb(hmsh, hspace, marked_coarse, adaptivity_data);
+                u = C_coar * u;
+                u_last = C_coar * u_last;
+                %                     if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
+                %                     % project last time step solution onto new mesh
+                %                     hspace.dofs = u_last;
+                %                     [~, ~, u_last] = adaptivity_coarsen_fsb (hmsh, hspace, marked_coarse, adaptivity_data);
+                hmsh = hmsh_coarse;
+                hspace = hspace_coarse;
+                hspace.dofs = u;
+            else
+                hspace.dofs = u;
+                [hmsh_coarse, hspace_coarse, C_coar] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+                u = C_coar * u;
+                u_last = C_coar * u_last;
+                %                     if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
+                %                     % project last time step solution onto new mesh
+                %                     hspace.dofs = u_last;
+                %                     [~, ~, u_last] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+                hmsh = hmsh_coarse;
+                hspace = hspace_coarse;
+                hspace.dofs = u;
+            end
+        end
+    end
     %update last time step solution
+    tcpu = cputime - cpu_temp;
     u_last = u;
     hspace.dofs = u;
-    if (fid < 0)
-        error ('could not open file %s', plot_data.file_name_dofs);
-    end
-    fprintf (fid, num2str(hspace.ndof));
-    fprintf (fid, '\t');
-    fprintf (fid, num2str(hmsh.nel));
-    fprintf (fid, '\n');
+    
     solution_data.iter = iter;
     solution_data.gest = gest(1:iter);
     solution_data.ndof = ndof(1:iter);
     solution_data.nel  = nel(1:iter);
+    
     if (exist ('err_h1s', 'var'))
         solution_data.err_h1s = err_h1s(1:iter);
         solution_data.err_h1 = err_h1(1:iter);
         solution_data.err_l2 = err_l2(1:iter);
     end
+    
+    K = op_gradu_gradv_hier(hspace, hspace, hmsh, problem_data.c_diff);
+    strainEnergy = u'*K*u;
+    
+    npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
+    if hmsh.ndim == 2
+        npts = [plot_data.npoints_x plot_data.npoints_y];
+    end
+    [eu, ~] = sp_eval (u, hspace, geometry, npts, {'value', 'gradient'});
+    
+    value = reshape(eu{1}, plot_data.npoints_x * plot_data.npoints_y, 1);
+    gradient = reshape(eu{2}, 2 * plot_data.npoints_x * plot_data.npoints_y, 1, 1);
+    
+    fprintf (fid, num2str(itime));
+    fprintf (fid, ',');
+    fprintf (fid, num2str(hspace.ndof));
+    fprintf (fid, ',');
+    fprintf (fid, num2str(hmsh.nel));
+    fprintf (fid, ',');
+    fprintf (fid, num2str(tcpu));
+    fprintf (fid, ',');
+    fprintf (fid, num2str(numel(nonzeros(K))));
+    fprintf (fid, ',');
+    fprintf (fid, num2str(strainEnergy));
+    fprintf (fid, '\n');
+    
+    for i=1:numel(value)
+        fprintf (fiL2, num2str(value(i)));
+        fprintf (fiL2, ',');
+    end
+    fprintf (fiL2, '\n');
+    
+    for i=1:numel(gradient)
+        fprintf (fiH1, num2str(gradient(i)));
+        fprintf (fiH1, ',');
+    end
+    fprintf (fiH1, ',\n');
     
     if ~(isempty(find(plot_data.time_steps_to_post_process==itime, 1)))
         % ==POST-PROCESSING====================================================
@@ -308,9 +376,7 @@ for itime = 1:number_ts
         end
         output_file = sprintf(plot_data.file_name, itime);
         [eu, F] = sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
-        %% TODO: make it nicer %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        eu{2} = eu{2}*29;
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         msh_to_vtk (F, eu, output_file, {'value', 'gradient'})
         
         if strcmp(adaptivity_data.flag, 'functions')

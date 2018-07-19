@@ -62,7 +62,7 @@ if (boundary)% && hmsh.ndim > 1)
       for lev = 1:numel (removed_cells)
         cells_boundary{lev} = get_boundary_indices (iside, hmsh.mesh_of_level(lev).nel_dir, removed_cells{lev});
       end
-      hspace.boundary(iside) = hspace_coarsen_MS_old_active (hspace.boundary(iside), hmsh.boundary(iside), FtR_boundary, cells_boundary);
+      hspace.boundary(iside) = hspace_coarsen (hspace.boundary(iside), hmsh.boundary(iside), FtR_boundary, cells_boundary);
 
       nlevels_aux = hspace.boundary(iside).nlevels;
     elseif (hmsh.ndim == 1)

@@ -270,7 +270,7 @@ end
 if (hspace.truncated)
   hspace.coeff_pou = ones (hspace.ndof, 1);
 else
-  hspace.coeff_pou = Cref * hspace.coeff_pou;
+%   hspace.coeff_pou = Cref * hspace.coeff_pou;
 end
 
 end

@@ -10,7 +10,7 @@
 %   marked: cell array with the indices, in the tensor product space, of the marked elements/functions
 %            for each level
 %   adaptivity_data: a structure with the data for the adaptivity method.
-%                    In particular, it contains the field 'flag', that can take the value
+%                    It contains the field 'flag', that can take the value
 %                    'elements' or 'functions', depending on the refinement strategy.
 %
 % OUTPUT:
@@ -34,28 +34,28 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, Cref] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace_u, hspace_p] = adaptivity_refine_TH_adm (hmsh, hspace_u, hspace_p, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
   case 'functions'
-    marked_elements = compute_cells_to_refine (hspace, hmsh, marked);
+    marked_elements = compute_cells_to_refine (hspace_u, hmsh, marked);
   case 'elements'
     marked_elements = marked;
 end
 
   if adaptivity_data.adm>1
-    adm_marked = hrefine( hmsh, hspace, marked_elements, adaptivity_data.adm);
+    adm_marked = hrefine( hmsh, hspace_p, marked_elements, adaptivity_data.adm);
   else
     adm_marked=marked_elements;
   end
 
 [hmsh, new_cells] = hmsh_refine (hmsh, adm_marked);
-adaptivity_data.flag='elements';
-marked_functions = compute_functions_to_deactivate (hmsh, hspace, adm_marked, adaptivity_data.flag);
 
-if (nargout == 3)
-  [hspace, Cref] = hspace_refine (hspace, hmsh, marked_functions, new_cells);
-else
-  hspace = hspace_refine (hspace, hmsh, marked_functions, new_cells);
-end
+adaptivity_data.flag='elements';
+marked_functions_u = compute_functions_to_deactivate (hmsh, hspace_u, adm_marked, 'elements');
+marked_functions_p = compute_functions_to_deactivate (hmsh, hspace_p, adm_marked, 'elements');
+
+hspace_u = hspace_refine (hspace_u, hmsh, marked_functions_u, new_cells);
+hspace_p = hspace_refine (hspace_p, hmsh, marked_functions_p, new_cells);
+
 end

@@ -35,7 +35,6 @@ if (~isempty (hmsh.boundary))
   end
 end
 
-
 for ilev = hmsh.nlevels:-1:2
   if (isempty (hmsh.active{ilev}))
     hmsh.nlevels = hmsh.nlevels - 1;

@@ -117,6 +117,9 @@ marked_ref{3} = [];
 hmsh_plot_cells (hmsh, 20, (figure(2)));
 hspace.dofs = Cref*hspace.dofs;
 
+% L = trns_ref(hmsh, hspace, hspace.active, hspace.deactivated, 3, 1);
+% values = L'*initial_values([1 2 3 5 6 7 9 10 11]);
+
 ndof_per_level = cellfun (@numel, hspace.active);
 
 
@@ -144,7 +147,7 @@ figure(8); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 
 %% Check
 for i=1:numel(u)
-    if (u(i) < temp_dofs(i)-1.0e-08|| u(i) > temp_dofs(i)+1.0e-08)
+    if (u(i) < initial_values(i)-1.0e-08|| u(i) > initial_values(i)+1.0e-08)
         disp('is not a projector !');
     end
 end

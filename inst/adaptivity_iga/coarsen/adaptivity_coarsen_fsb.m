@@ -34,7 +34,7 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-function [hmsh, hspace, u_coarse] = adaptivity_coarsen_fsb (hmsh_fine, hspace, marked, adaptivity_data)
+function [hmsh, hspace, C_coarse] = adaptivity_coarsen_fsb (hmsh_fine, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
     case 'functions'
@@ -47,15 +47,14 @@ end
 
 [hmsh_coarse, removed_cells] = hmsh_coarsen (hmsh_fine, reactivated_elements);
 switch(adaptivity_data.coarse_flag)
-    case 'bezier'
-        [hspace_coarse] = hspace_coarsen (hspace, hmsh_coarse, reactivated_fun, removed_cells, reactivated_elements);
     case 'MS_all'
         [hspace_coarse] = hspace_coarsen_MS_all_active (hspace, hmsh_coarse, reactivated_fun, removed_cells);
     case 'MS_old'
         [hspace_coarse] = hspace_coarsen_MS_old_active (hspace, hmsh_coarse, reactivated_fun, removed_cells);
     case 'L2_global'
-        hspace_coarse = hspace_coarsen (hspace, hmsh_coarse, reactivated_fun, removed_cells, reactivated_elements);
+        hspace_coarse = hspace_coarsen (hspace, hmsh_coarse, reactivated_fun, removed_cells );
 end
+
 balanced_marked = function_balancing (hmsh_coarse, hspace_coarse, adaptivity_data.adm);
 reactivated_balanced_elements = cell(numel(marked), 1);
 for iLevel = 1:numel(marked)-1
@@ -71,33 +70,26 @@ reactivated_balanced_fun = functions_to_reactivate_from_cells (hmsh_fine, hspace
 
 if (nargout == 3)
     switch(adaptivity_data.coarse_flag)
-        case 'bezier'
-            [hspace, u_coarse] = hspace_coarsen (hspace, hmsh, reactivated_balanced_fun, removed_cells, reactivated_balanced_elements);
         case 'MS_all'
             [hspace, C_coarse] = hspace_coarsen_MS_all_active (hspace, hmsh, reactivated_balanced_fun, removed_cells);
-            u_coarse = C_coarse*hspace.dofs;
         case 'MS_old'
             [hspace, C_coarse] = hspace_coarsen_MS_old_active (hspace, hmsh, reactivated_balanced_fun, removed_cells);
-            u_coarse = C_coarse*hspace.dofs;
-
         case 'L2_global'
               hspace_fine = hspace;
-              hspace = hspace_coarsen (hspace, hmsh, reactivated_balanced_fun, removed_cells, reactivated_balanced_elements);
+              hspace = hspace_coarsen (hspace, hmsh, reactivated_balanced_fun, removed_cells );
               M = op_u_v_hier (hspace, hspace, hmsh);
               G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
-              Ccoar = M \ G; Ccoar(abs(Ccoar) < 1e-12) = 0;
-              u_coarse =  Ccoar*hspace.dofs;
+              C_coarse = M \ G; C_coarse(abs(C_coarse) < 1e-12) = 0;
+%               u_coarse =  Ccoar*hspace.dofs;
     end
 else
     switch(adaptivity_data.coarse_flag)
-        case 'bezier'
-            [hspace] = hspace_coarsen (hspace, hmsh, reactivated_balanced_fun, removed_cells, reactivated_balanced_elements);
         case 'MS_all'
             [hspace] = hspace_coarsen_MS_all_active (hspace, hmsh, reactivated_balanced_fun, removed_cells);
         case 'MS_old'
             [hspace] = hspace_coarsen_MS_old_active (hspace, hmsh, reactivated_balanced_fun, removed_cells);
         case 'L2_global'
-            hspace = hspace_coarsen (hspace, hmsh, reactivated_balanced_fun, removed_cells, reactivated_balanced_elements);
+            hspace = hspace_coarsen (hspace, hmsh, reactivated_balanced_fun, removed_cells );
     end
 end
 

@@ -43,14 +43,18 @@ switch (adaptivity_data.flag)
         marked_elements = marked;
 end
 
-[hmsh, ~] = hmsh_refine (hmsh, marked_elements);
+[hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 balanced_marked = function_balancing (hmsh, hspace, adaptivity_data.adm);
-[hmsh, new_cells] = hmsh_refine (hmsh, balanced_marked);
-adm_mark = cell(numel(marked), 1);
-for iLevel = 1:numel(marked)
-    if ~isempty(balanced_marked{iLevel})
-        adm_mark{iLevel} = [marked{iLevel}; balanced_marked{iLevel}];
+[hmsh, new_cells_balanced] = hmsh_refine (hmsh, balanced_marked);
+adm_mark = cell(numel(marked_elements), 1);
+for iLevel = 1:numel(marked_elements)
+    if (~isempty(balanced_marked{iLevel}) || ~isempty(marked_elements{iLevel}) )
+        adm_mark{iLevel} = [marked_elements{iLevel}; balanced_marked{iLevel}];
     end
+    if (~isempty(new_cells_balanced{iLevel}) || ~isempty(new_cells{iLevel}) )
+        new_cells{iLevel} = [new_cells{iLevel}; new_cells_balanced{iLevel}];
+    end
+
 end
 
 adaptivity_data.flag='elements';

@@ -74,16 +74,11 @@ marked_list = find (aux_marked);
 nmarked = numel (marked_list);
 
 marked = cell (hmsh.nlevels, 1);
-if hmsh.nlevels < adaptivity_data.max_level
-    maxlevel = hmsh.nlevels;
-else
-    maxlevel = adaptivity_data.max_level+1;
-end
 
 switch (lower (adaptivity_data.flag))
   case 'elements'
     aux = cumsum ([0, hmsh.nel_per_level]);
-    for lev = 1:maxlevel
+    for lev = 1:hmsh.nlevels
       elems = aux(lev)+1:aux(lev+1);
       [~,ind,~] = intersect (elems, marked_list);
       marked{lev} = hmsh.active{lev}(ind);

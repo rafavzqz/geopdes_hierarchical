@@ -40,8 +40,8 @@ adaptivity_data.flag = 'elements';
 adaptivity_data.coarsening_flag = 'all';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
-adaptivity_data.coarse_flag = 'bezier';
-adaptivity_data.adm_strategy = ''; % 'admissible' or 'balancing'
+adaptivity_data.coarse_flag = 'L2_global';
+adaptivity_data.adm_strategy = 'admissible'; % 'admissible' or 'balancing'
 adaptivity_data.adm = 1;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.mark_param_coarsening = .25;
@@ -99,7 +99,8 @@ while iter <= adaptivity_data.num_max_iter
             [hmsh, hspace, C_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
             u = C_coarse * u;
         case 'L2_global'
-            [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
+            [hmsh, hspace, C_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);
+            u = C_coarse * u;
     end
     
     
