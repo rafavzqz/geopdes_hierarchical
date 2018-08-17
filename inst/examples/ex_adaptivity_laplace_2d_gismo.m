@@ -2,7 +2,7 @@
 clear problem_data  
 % Physical domain, defined as NURBS map given in a text file
 problem_data.geo_name = 'geo_rectangle.txt';
-filename = '/Users/ondine/Documents/gismo/filedata/domain2d/squareTHB.xml';
+filename = '/Users/ondine/Documents/gismo/filedata/domain2d/rectangleTHB.xml';
 problem_data_gismo.geo_name = gsTHBSpline(filename);
 
 % Type of boundary conditions for each side of the domain
@@ -51,9 +51,9 @@ adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS'; %GERS
 adaptivity_data.max_level = 12;
-adaptivity_data.max_ndof = 100000;
-adaptivity_data.num_max_iter = 15;
-adaptivity_data.max_nel = 100000; 
+adaptivity_data.max_ndof = 10000;
+adaptivity_data.num_max_iter = 10;
+adaptivity_data.max_nel = 10000; 
 adaptivity_data.tol = 1e-3;
 
 % GRAPHICS
