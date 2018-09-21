@@ -56,6 +56,7 @@ for lev = hmsh.nlevels-1:-1:1
       parents = parents(ind2);
       children_per_cell = children_per_cell(:,ind2);
       deact_marked{lev} = parents;
+      marked{lev+1} = children_per_cell;
     else
       error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
     end
@@ -67,6 +68,7 @@ for lev = hmsh.nlevels-1:-1:1
         continue
       else
         active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
+        active_and_deact = setdiff (active_and_deact, marked{lev_s});
         supp_ext = support_extension (hmsh, hspace, children_per_cell(:), lev+1, lev+1);
         [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
         keep_inds = [];
