@@ -65,8 +65,8 @@ function varargout = op_laplaceu_laplacev_hier (hspu, hspv, hmsh, coeff, patch_l
         for idim = 1:hmsh.rdim
           x{idim} = reshape (msh_lev.geo_map(idim,:,:), msh_lev.nqn, msh_lev.nel);
         end
-        spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), msh_lev, 'value', false, 'hessian', true);
-        spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), msh_lev, 'value', false, 'hessian', true);
+        spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), msh_lev, 'value', false, 'laplacian', true);
+        spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), msh_lev, 'value', false, 'laplacian', true);
         K_lev = op_laplaceu_laplacev (spu_lev, spv_lev, msh_lev, coeff (x{:}));
 
         dofs_u = 1:ndofs_u;
