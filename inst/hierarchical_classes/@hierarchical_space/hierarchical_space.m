@@ -27,7 +27,7 @@
 %                   (hmsh.nlevels-1 x ncomp x ndim cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels
 %                                           Proj{l,i} is a matrix of size N_{l+1} x N_l where N_l is the number 
-%                                           of univariate functions of level l in the direction l, such that
+%                                           of univariate functions of level l in the direction i, such that
 %                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c^k_j = Proj{l,i}(j,k)
 %                                           For vectors, it takes the form Proj{l,c,i}, 
 %                                           where c is the component in the parametric domain

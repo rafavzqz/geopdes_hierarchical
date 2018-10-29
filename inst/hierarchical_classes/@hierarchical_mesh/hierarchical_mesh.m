@@ -6,6 +6,7 @@
 %
 %    msh:      the coarsest mesh (level 1), an object of the msh_cartesian class (see msh_cartesian)
 %    nsub:     number of subdivisions between two different levels (by default 2)
+%    cells:    (optional) cell array of active elements at each level
 %
 % OUTPUT:
 %  
@@ -34,6 +35,7 @@
 %    hmsh_remove_empty_level: remove the last level from the mesh, if it is empty
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+%               2018 Ondine Chanon
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -48,7 +50,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hmsh = hierarchical_mesh (msh, nsub)
+function hmsh = hierarchical_mesh (msh, nsub, cells)
 
 if (nargin < 2)
   nsub = 2 * ones (1, msh.ndim);
@@ -86,4 +88,14 @@ hmsh.mesh_of_level(1).boundary = [];
 
 hmsh = class (hmsh, 'hierarchical_mesh');
 
+% % Constructor part of a multi-level hierarchical mesh
+% if (nargin == 3)
+%     for lev = 1:numel(cells)-1
+%         marked_elements = cell (lev,1);
+%         marked_elements{lev} = setdiff(hmsh.active{lev},cells{lev});
+%         hmsh = hmsh_refine (hmsh, marked_elements);
+%     end
+% end
+
 end
+
