@@ -120,8 +120,11 @@ end
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
-
-decomp = {'All_dofs', 'New_dofs', 'Mod_dofs', 'Durkbin_dofs'};
+if (method_data.truncated)
+  decomp = {'All_dofs', 'New_dofs', 'Mod_dofs', 'Support_dofs'};
+else
+  decomp = {'All_dofs', 'New_dofs', 'Support_dofs'};
+end
 % ADAPTIVE LOOP
 iter = 0;
 while (1)
@@ -144,17 +147,17 @@ while (1)
   
   for ide = 1:numel(decomp)
     method_data.bpx_dofs = decomp{ide};
-    solution_data.dec(ide).others = [];
     if (iter > 1)
-    [u, bpx, CJA(iter), CGSA(iter), CA(iter), others(iter)] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
-    solution_data.dec(ide).others = others;
+    [u, bpx, CJA(iter), CGSA(iter), CA(iter), aux_others] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+%     solution_data.dec(ide).others(iter) = aux_others;
     else
     [u, bpx, CJA(iter), CGSA(iter), CA(iter)] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+%     solution_data.dec(ide).others = struct ('DA_eigmax',[], 'DA_eigmin',[], 'DA_cond',[], 'M_eigmax',[], 'M_eigmin',[], 'condM',[], 'D_eigmax',[], 'D_eigmin',[], 'condD',[]);
     end
     solution_data.dec(ide).name = decomp{ide};
     solution_data.dec(ide).CondA = CA;
-    solution_data.dec(ide).Cond_BPX_jac = CJA;
-    solution_data.dec(ide).Cond_BPX_gs = CGSA;
+    solution_data.dec(ide).Cond_BPX_jac(iter) = CJA(iter);
+    solution_data.dec(ide).Cond_BPX_gs(iter) = CGSA(iter);
 
   end
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
@@ -250,9 +253,9 @@ if (exist ('err_h1s', 'var'))
   solution_data.err_l2 = err_l2(1:iter);
 end
 
-solution_data.CondA = CA;
-solution_data.Cond_BPX_jac = CJA;
-solution_data.Cond_BPX_gs = CGSA;
-solution_data.others = others;
+% solution_data.CondA = CA;
+% solution_data.Cond_BPX_jac = CJA;
+% solution_data.Cond_BPX_gs = CGSA;
+% solution_data.others = others;
 
 end

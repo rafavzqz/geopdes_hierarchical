@@ -44,12 +44,12 @@ problem_data.graduex = @(x,y) -2*C*cat (1, ...
           
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [2 2];        % Degree of the splines
-method_data.regularity  = [0 0];        % Regularity of the splines
+% method_data.degree      = [2 2];        % Degree of the splines
+% method_data.regularity  = [0 0];        % Regularity of the splines
 method_data.nsub_coarse = [9 9];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 % method_data.nsub_coarse = [4 4];% DEGREE 1
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = method_data.degree+1;        % Points for the Gaussian quadrature rule
+% method_data.nquad       = method_data.degree+1;        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 1;            % 0: False, 1: True
 method_data.bpx_dofs = 'All_dofs';
@@ -63,7 +63,7 @@ adaptivity_data.mark_param = .25;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 35000;
-adaptivity_data.num_max_iter = 8;
+adaptivity_data.num_max_iter = 4;
 adaptivity_data.max_nel = 35000;
 adaptivity_data.tol = 1e-10;
 
@@ -74,8 +74,9 @@ plot_data.print_info = true;
 
 % [geometry, hmsh, hspace, u0, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data);
 % nsub = [9 9 12 16];
-for ideg = 3 %4:-1:1
-  
+for ideg = 1%4:-1:1
+
+disp (['%%%%%%%%%%%%%%%%% DEGREE ', num2str(ideg), ' %%%%%%%%%%%%%%%%%%'])
 % method_data.nsub = nsub(ideg)*[1 1];
 method_data.degree      = ideg * [1 1];            % Degree of the splines
 method_data.regularity  = method_data.degree-1;
@@ -95,16 +96,17 @@ method_data.truncated   = 1;            % 0: False, 1: True
 % method_data.bpx_dofs = 'Mod_dofs';
 % [geometry, hmsh, hspace, u, sol_data_truncated_mod(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
-[geometry, hmsh, hspace, u, sol_data_truncated] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
+% [geometry, hmsh, hspace, u, sol_data_truncated(ideg)] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
 
 
-% method_data.truncated   = 0;            % 0: False, 1: True
+method_data.truncated   = 0;            % 0: False, 1: True
 % method_data.bpx_dofs = 'All_dofs';
 % [geometry, hmsh, hspace, u, sol_data_hierarchical_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 % 
 % method_data.bpx_dofs = 'New_dofs';
 % [geometry, hmsh, hspace, u, sol_data_hierarchical_new(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 
+[geometry, hmsh, hspace, u, sol_data_nontruncated(ideg)] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
 end
 
 % save results_2d_jacobi_GR sol_data_truncated_all% sol_data_truncated_new sol_data_truncated_mod sol_data_hierarchical_all sol_data_hierarchical_new
