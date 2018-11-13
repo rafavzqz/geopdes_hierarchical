@@ -14,6 +14,7 @@
 %   hspace:    object representing the coarsened hierarchical space (see hierarchical_space)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Luca Coradello, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -59,11 +60,15 @@ if (boundary)% && hmsh.ndim > 1)
     end
       
     dofs = [];
+    adjacent_dofs = [];
     for lev = 1:nlevels_aux;
       [~,iact] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).dofs);
       dofs = union (dofs, Nf(lev) + iact);
+      [~,iact_adj] = intersect (hspace.active{lev}, hspace.space_of_level(lev).boundary(iside).adjacent_dofs);
+      adjacent_dofs = union (adjacent_dofs, Nf(lev) + iact_adj);
     end
     hspace.boundary(iside).dofs = dofs;
+    hspace.boundary(iside).adjacent_dofs = adjacent_dofs;
   end
   
 else
@@ -129,6 +134,19 @@ hspace.active = active(1:hspace.nlevels);
 hspace.deactivated = deactivated(1:hspace.nlevels);
 hspace.ndof_per_level = cellfun (@numel, hspace.active);
 hspace.ndof = sum (hspace.ndof_per_level);
+
+if (isa (hspace.space_of_level(1), 'sp_vector'))
+  shifting_indices = cumsum ([0 hspace.ndof_per_level]);
+  for iComponent = 1:hspace.ncomp_param
+    tmp_dofs = [];
+    for iLevel = 1:hspace.nlevels
+      [~, ~, ib] = intersect (hspace.space_of_level(iLevel).comp_dofs{iComponent}, hspace.active{iLevel});
+      tmp = shifting_indices(iLevel) + ib;
+      tmp_dofs = union (tmp_dofs, tmp);
+    end
+    hspace.comp_dofs{iComponent} = tmp_dofs;
+  end
+end
 
 if (hspace.truncated)
   hspace.coeff_pou = ones (hspace.ndof, 1);

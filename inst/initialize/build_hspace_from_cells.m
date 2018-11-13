@@ -38,7 +38,7 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 
-function [hmsh, hspace] = build_hspace_from_cells (dim, degree, initial_num_el, cells, space_type, truncated)
+function [hmsh, hspace] = build_hspace_from_cells (dim, degree, initial_num_el, cells, space_type, truncated, geo_name)
 
 if (nargin < 5 || isempty (space_type))
   space_type = 'standard';
@@ -47,10 +47,14 @@ if (nargin < 6 || isempty (truncated))
   truncated = false;
 end
 
-switch dim
-  case 1, problem_data.geo_name = nrbline ([0 0], [1 0]);
-  case 2, problem_data.geo_name = 'geo_square.txt';
-  case 3, problem_data.geo_name = 'geo_cube.txt';
+if (nargin < 7 || isempty (geo_name))
+  switch dim
+    case 1, problem_data.geo_name = nrbline ([0 0], [1 0]);
+    case 2, problem_data.geo_name = 'geo_square.txt';
+    case 3, problem_data.geo_name = 'geo_cube.txt';
+  end
+else
+  problem_data.geo_name = geo_name;
 end
 
 
@@ -72,7 +76,7 @@ adaptivity_data.flag = 'elements';
 
 for ref = 1:nlevels
     marked = cell (ref,1);
-    marked{ref} = cells{ref};
+    marked{ref} = setdiff (hmsh.active{ref}, cells{ref});
     
     [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);    
 end
