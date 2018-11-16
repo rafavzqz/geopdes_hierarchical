@@ -121,9 +121,11 @@ end
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 if (method_data.truncated)
-  decomp = {'All_dofs', 'New_dofs', 'Mod_dofs', 'Support_dofs'};
+%   decomp = {'All_dofs', 'New_dofs', 'Mod_dofs', 'Support_dofs'};
+  decomp = {'All_dofs', 'Mod_dofs', 'Support_dofs'};
 else
-  decomp = {'All_dofs', 'New_dofs', 'Support_dofs'};
+%   decomp = {'All_dofs', 'New_dofs', 'Support_dofs'};
+  decomp = {'All_dofs', 'Support_dofs'};
 end
 % ADAPTIVE LOOP
 iter = 0;
@@ -148,17 +150,19 @@ while (1)
   for ide = 1:numel(decomp)
     method_data.bpx_dofs = decomp{ide};
     if (iter > 1)
-    [u, bpx, CJA(iter), CGSA(iter), CA(iter), aux_others] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+    [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
 %     solution_data.dec(ide).others(iter) = aux_others;
     else
-    [u, bpx, CJA(iter), CGSA(iter), CA(iter)] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+    [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
 %     solution_data.dec(ide).others = struct ('DA_eigmax',[], 'DA_eigmin',[], 'DA_cond',[], 'M_eigmax',[], 'M_eigmin',[], 'condM',[], 'D_eigmax',[], 'D_eigmin',[], 'condD',[]);
     end
     solution_data.dec(ide).name = decomp{ide};
     solution_data.dec(ide).CondA = CA;
     solution_data.dec(ide).Cond_BPX_jac(iter) = CJA(iter);
     solution_data.dec(ide).Cond_BPX_gs(iter) = CGSA(iter);
-
+    solution_data.dec(ide).eig_A(iter,:) = eig_A;
+    solution_data.dec(ide).eig_jac(iter,:) = eig_jac;
+    solution_data.dec(ide).eig_gs(iter,:) = eig_gs;
   end
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
@@ -209,30 +213,37 @@ while (1)
   if (~strcmpi(adaptivity_data.mark_strategy, 'GR'))
     disp('Refining all the elements of the finest level, except a fixed number. The estimator is not used.')
     disp('Refinement is forced to be done BY ELEMENTS')
-    marked = cell (hmsh.nlevels, 1);
-    if (hmsh.ndim == 1)
-      marked{end} = hmsh.active{end}(1:end-(method_data.degree));
-    elseif (hmsh.ndim == 2)
-      nel_elems = sqrt (numel(hmsh.active{end})); % Non funziona in generale
-      nel_dir = hmsh.mesh_of_level(end).nel_dir;
-      
-      [ix, iy] = ind2sub(nel_dir, hmsh.active{end});
-      nel_elems = [max(ix), max(iy)];
-
-      indx = 1:nel_elems-method_data.degree(1);
-      indy = 1:nel_elems-method_data.degree(2);
-%       indy = 1:nel_dir(2);
-%       indx = 1:nel_elems-2*method_data.degree(1);
-%       indy = 1:nel_elems-2*method_data.degree(2);
-%       indx = 1:4;
-%       indy = 1:4;
-      [IX,IY] = ndgrid (indx, indy);
-      indices = sub2ind (nel_dir, IX, IY);
-      marked{end} = indices(:);
-    end
+    marked = mark_BPX_fixed_refinement (hmsh, method_data, adaptivity_data);
     adaptivity_data.flag = 'elements';
     num_marked = sum (cellfun (@numel, marked));
   end
+%   if (~strcmpi(adaptivity_data.mark_strategy, 'GR'))
+%     disp('Refining all the elements of the finest level, except a fixed number. The estimator is not used.')
+%     disp('Refinement is forced to be done BY ELEMENTS')
+%     marked = cell (hmsh.nlevels, 1);
+%     if (hmsh.ndim == 1)
+%       marked{end} = hmsh.active{end}(1:end-(method_data.degree));
+%     elseif (hmsh.ndim == 2)
+%       nel_elems = sqrt (numel(hmsh.active{end})); % Non funziona in generale
+%       nel_dir = hmsh.mesh_of_level(end).nel_dir;
+%       
+%       [ix, iy] = ind2sub(nel_dir, hmsh.active{end});
+%       nel_elems = [max(ix), max(iy)];
+% 
+%       indx = 1:nel_elems-method_data.degree(1);
+%       indy = 1:nel_elems-method_data.degree(2);
+% %       indy = 1:nel_dir(2);
+% %       indx = 1:nel_elems-2*method_data.degree(1);
+% %       indy = 1:nel_elems-2*method_data.degree(2);
+% %       indx = 1:4;
+% %       indy = 1:4;
+%       [IX,IY] = ndgrid (indx, indy);
+%       indices = sub2ind (nel_dir, IX, IY);
+%       marked{end} = indices(:);
+%     end
+%     adaptivity_data.flag = 'elements';
+%     num_marked = sum (cellfun (@numel, marked));
+%   end
   if (plot_data.print_info); 
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
