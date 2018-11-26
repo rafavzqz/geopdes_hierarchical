@@ -208,49 +208,27 @@ while (1)
   
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
-  [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   
-  if (~strcmpi(adaptivity_data.mark_strategy, 'GR'))
+  if (ismember (adaptivity_data.mark_strategy, {'GR', 'MS', 'GERS'}))
+    [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+  else
     disp('Refining all the elements of the finest level, except a fixed number. The estimator is not used.')
     disp('Refinement is forced to be done BY ELEMENTS')
     marked = mark_BPX_fixed_refinement (hmsh, method_data, adaptivity_data);
     adaptivity_data.flag = 'elements';
     num_marked = sum (cellfun (@numel, marked));
   end
-%   if (~strcmpi(adaptivity_data.mark_strategy, 'GR'))
-%     disp('Refining all the elements of the finest level, except a fixed number. The estimator is not used.')
-%     disp('Refinement is forced to be done BY ELEMENTS')
-%     marked = cell (hmsh.nlevels, 1);
-%     if (hmsh.ndim == 1)
-%       marked{end} = hmsh.active{end}(1:end-(method_data.degree));
-%     elseif (hmsh.ndim == 2)
-%       nel_elems = sqrt (numel(hmsh.active{end})); % Non funziona in generale
-%       nel_dir = hmsh.mesh_of_level(end).nel_dir;
-%       
-%       [ix, iy] = ind2sub(nel_dir, hmsh.active{end});
-%       nel_elems = [max(ix), max(iy)];
-% 
-%       indx = 1:nel_elems-method_data.degree(1);
-%       indy = 1:nel_elems-method_data.degree(2);
-% %       indy = 1:nel_dir(2);
-% %       indx = 1:nel_elems-2*method_data.degree(1);
-% %       indy = 1:nel_elems-2*method_data.degree(2);
-% %       indx = 1:4;
-% %       indy = 1:4;
-%       [IX,IY] = ndgrid (indx, indy);
-%       indices = sub2ind (nel_dir, IX, IY);
-%       marked{end} = indices(:);
-%     end
-%     adaptivity_data.flag = 'elements';
-%     num_marked = sum (cellfun (@numel, marked));
-%   end
   if (plot_data.print_info); 
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
   end
 
 % REFINE
-  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+  if (isfield (adaptivity_data, 'adm'))
+    [hmsh, hspace] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data);
+  else
+    [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+  end
 end
 
 

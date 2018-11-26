@@ -36,7 +36,7 @@ adaptivity_data.flag = 'elements';
 % adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
-adaptivity_data.mark_strategy = 'MS';
+adaptivity_data.mark_strategy = 'Leave_p'; %'All_from_level2'; %'Leave_p'
 adaptivity_data.max_level = 11;
 adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 11;
@@ -47,13 +47,19 @@ adaptivity_data.tol = 1e-19;
 plot_data.plot_hmesh = false;
 plot_data.plot_discrete_sol = false;
 
-for ideg = 2
+for ideg = 1:4
+  method_data.nsub_coarse = 2*ideg + 1;
 method_data.degree      = ideg;            % Degree of the splines
 method_data.regularity  = method_data.degree-1;
 method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
 
 method_data.truncated   = 1;            % 0: False, 1: True
 [geometry, hmsh, hspace, u, sol_data_truncated(ideg)] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
+
+method_data.truncated   = 0;            % 0: False, 1: True
+[geometry, hmsh, hspace, u, sol_data_nontruncated(ideg)] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
+
+save results_1D_admissible sol_data_truncated sol_data_nontruncated adaptivity_data method_data problem_data
 
 % method_data.bpx_dofs = 'All_dofs';
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_BPX (problem_data, method_data, adaptivity_data, plot_data);
@@ -65,8 +71,6 @@ method_data.truncated   = 1;            % 0: False, 1: True
 % method_data.bpx_dofs = 'Mod_dofs';
 % [geometry, hmsh, hspace, u, sol_data_truncated_mod(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 % 
-method_data.truncated   = 0;            % 0: False, 1: True
-[geometry, hmsh, hspace, u, sol_data_nontruncated(ideg)] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
 % method_data.bpx_dofs = 'All_dofs';
 % [geometry, hmsh, hspace, u, sol_data_hierarchical_all(ideg)] = adaptivity_laplace_BPX_fixed_refinement (problem_data, method_data, adaptivity_data, plot_data);
 % 

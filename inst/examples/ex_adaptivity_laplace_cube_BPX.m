@@ -61,7 +61,7 @@ adaptivity_data.mark_param = .25;
 adaptivity_data.mark_strategy = 'Leave_p'; %'All_from_level2'; %'Leave_p'
 adaptivity_data.max_level = 7;
 adaptivity_data.max_ndof = 75000;
-adaptivity_data.num_max_iter = 9;
+adaptivity_data.num_max_iter = 2;
 adaptivity_data.max_nel = 75000;
 adaptivity_data.tol = 1e-10;
 

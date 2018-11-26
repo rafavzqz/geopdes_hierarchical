@@ -72,7 +72,7 @@ plot_data.print_info = true;
 for ideg = 4:-1:1
 
 disp (['%%%%%%%%%%%%%%%%% DEGREE ', num2str(ideg), ' %%%%%%%%%%%%%%%%%%'])
-% method_data.nsub = nsub(ideg)*[1 1];
+method_data.nsub_coarse = (2*ideg+1)*[1 1];
 method_data.degree      = ideg * [1 1];            % Degree of the splines
 method_data.regularity  = method_data.degree-1;
 method_data.nquad       = method_data.degree+1;            % Points for the Gaussian quadrature rule
@@ -86,6 +86,7 @@ method_data.truncated   = 1;            % 0: False, 1: True
 method_data.truncated   = 0;            % 0: False, 1: True
 [geometry, hmsh, hspace, u, sol_data_nontruncated(ideg)] = adaptivity_laplace_BPX_fixed_refinement_all_decomp (problem_data, method_data, adaptivity_data, plot_data);
 
+save results_2D_admissible sol_data_truncated sol_data_nontruncated adaptivity_data method_data problem_data
 
 % method_data.truncated   = 1;            % 0: False, 1: True
 % method_data.bpx_dofs = 'All_dofs';
