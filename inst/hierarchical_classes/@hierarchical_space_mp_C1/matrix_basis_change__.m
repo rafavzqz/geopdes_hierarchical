@@ -176,7 +176,7 @@ if (nargin < 3)
     indices1_coarse = ndof_interior_C1 + ndof_0_C1 + (1:ndof_1_C1);
     indices1_fine = ndof_interior_C1_ref + ndof_0_C1_ref + (1:ndof_1_C1_ref);
     if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-      C(indices1_fine,indices1_coarse) = Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3
+      C(indices1_fine,indices1_coarse) = (1/2)*Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
     end
     C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
 
