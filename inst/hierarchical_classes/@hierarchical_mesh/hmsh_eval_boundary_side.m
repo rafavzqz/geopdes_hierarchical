@@ -99,7 +99,9 @@ for ilev = 1:hmsh_bnd.nlevels
     msh_side.quad_weights(:,input_indices) = msh_aux.quad_weights;
     msh_side.geo_map(:,:,input_indices) = msh_aux.geo_map;
     msh_side.geo_map_jac(:,:,:,input_indices) = msh_aux.geo_map_jac;
-    msh_side.geo_map_der2(:,:,:,:,input_indices) = msh_aux.geo_map_der2;
+    if isfield(msh_aux,'geo_map_der2')
+        msh_side.geo_map_der2(:,:,:,:,input_indices) = msh_aux.geo_map_der2;
+    end
     msh_side.jacdet(:,input_indices) = msh_aux.jacdet;
     msh_side.element_size(:,input_indices) = msh_aux.element_size;
     msh_side.normal(:,:,input_indices) = msh_aux.normal;

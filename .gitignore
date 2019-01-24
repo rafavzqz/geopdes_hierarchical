@@ -9,3 +9,7 @@
 *.log
 *.out
 *.swp
+*.DS_Store
+
+# Other
+set_path.m
