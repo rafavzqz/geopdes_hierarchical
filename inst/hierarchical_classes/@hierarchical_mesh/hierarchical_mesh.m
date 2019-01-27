@@ -1,12 +1,12 @@
 % HIERARCHICAL_MESH: constructor of the class for hierarchical meshes.
 %
-%    hmsh = hierarchical_mesh (msh, [nsub=2*ones(1,msh.ndim)])
+%    hmsh = hierarchical_mesh (msh, [nsub=2*ones(1,msh.ndim)], [cells])
 %
 % INPUT:
 %
 %    msh:      the coarsest mesh (level 1), an object of the msh_cartesian class (see msh_cartesian)
 %    nsub:     number of subdivisions between two different levels (by default 2)
-%    cells:    (optional) cell array of active elements at each level
+%    cells:    (optional) cell array of active elements at each level (with local indices)
 %
 % OUTPUT:
 %  
@@ -52,7 +52,7 @@
 
 function hmsh = hierarchical_mesh (msh, nsub, cells)
 
-if (nargin < 2)
+if (nargin < 2 || isempty(nsub))
   nsub = 2 * ones (1, msh.ndim);
 end
 
@@ -88,14 +88,14 @@ hmsh.mesh_of_level(1).boundary = [];
 
 hmsh = class (hmsh, 'hierarchical_mesh');
 
-% % Constructor part of a multi-level hierarchical mesh
-% if (nargin == 3)
-%     for lev = 1:numel(cells)-1
-%         marked_elements = cell (lev,1);
-%         marked_elements{lev} = setdiff(hmsh.active{lev},cells{lev});
-%         hmsh = hmsh_refine (hmsh, marked_elements);
-%     end
-% end
+% Constructor part of a multi-level hierarchical mesh
+if (nargin == 3)
+    for lev = 1:numel(cells)
+        marked_elements = cell (lev, 1);
+        marked_elements{lev} = setdiff (hmsh.active{lev}, cells{lev});
+        hmsh = hmsh_refine (hmsh, marked_elements);
+    end
+end
 
 end
 
