@@ -1,6 +1,6 @@
 % ADAPTIVITY_INITIALIZE_LAPLACE: initialize a hierarchical mesh and a hierarchical space with one-single level.
 %
-% [hmsh, hspace] = adaptivity_initialize_laplace (problem_data, method_data)
+% [hmsh, hspace, geometry, (method_data)] = adaptivity_initialize_laplace (problem_data, method_data)
 %
 % INPUT:
 %
@@ -15,19 +15,25 @@
 %    - nquad:       number of points for Gaussian quadrature rule
 %    - space_type:  'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
 %    - truncated:   false (classical basis) or true (truncated basis)
+%   If problem_data.geo_name is a G+smo geometry object (gsTHBSpline), the only strictly required field is 
+%       nquad. Otherwise, the information is read in the geometry. 
 %
 % OUTPUT:
 %    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh and hierarchical_mesh_mp)
 %    hspace:   object representing the space of hierarchical splines (see hierarchical_space and hierarchical_space_mp)
 %    geometry: geometry structure (see geo_load and mp_geo_load)
+%    method_data: structure with discretization data coming from the geometry, returned only if 
+%       problem_data.geo_name is a G+smo geometry object (gsTHBSpline)
+%    
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+%               2019 Ondine Chanon
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
 %    the Free Software Foundation, either version 3 of the License, or
 %    (at your option) any later version.
-
+%
 %    This program is distributed in the hope that it will be useful,
 %    but WITHOUT ANY WARRANTY; without even the implied warranty of
 %    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -36,38 +42,37 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data)
+function [hmsh, hspace, geometry, method_data] = adaptivity_initialize_laplace (problem_data, method_data)
 
 [geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
 
-npatch = numel (geometry);
-for iptc = 1:npatch
-  if ~isfield(geometry(iptc),'knots')
+if ~isfield(geometry, 'gismo')
+  npatch = numel (geometry);
+  for iptc = 1:npatch
     [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, ...
         method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
-  else % G+smo geometry
-    assert(numel(geometry(iptc).knots)==1); % there should be only one level in the geometry at that point
-    [knots, zeta] = kntrefine (geometry(iptc).knots{1}, ...
-         method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
+  
+    rule     = msh_gauss_nodes (method_data.nquad);
+    [qn, qw] = msh_set_quad_nodes (zeta, rule);
+    msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc));
+    space{iptc} = sp_bspline (knots, method_data.degree, msh{iptc});
   end
   
-  rule     = msh_gauss_nodes (method_data.nquad);
-  [qn, qw] = msh_set_quad_nodes (zeta, rule);
-  msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc));
-  space{iptc} = sp_bspline (knots, method_data.degree, msh{iptc});
-end
+  if (npatch == 1)
+    msh   = msh{1};
+    space = space{1};
+    hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
+    hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+  else
+    msh   = msh_multipatch (msh, boundaries);
+    space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
+    hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
+    hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+  end
 
-if (npatch == 1)
-  msh   = msh{1};
-  space = space{1};
-  hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
-else
-  msh   = msh_multipatch (msh, boundaries);
-  space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
-  hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+else % G+smo geometry
+  [hmsh, hspace, method_data] = build_hmsh_hspace_from_gismo_geom (geometry, method_data);
 end
-
+  
 end
 
