@@ -87,15 +87,15 @@ hspace = hierarchical_space (hmsh, space, method_data.space_type, ...
 
 % Refine hmsh and hspace given the active cells of each level
 adaptivity_data.flag = 'elements';
-for lev = 1:numel(cells)
-    marked_elements = cell(lev,1);
-    marked_elements{lev} = setdiff(hmsh.active{lev},cells{lev});
+for lev = 1:numel (cells)
+    marked_elements = cell (lev,1);
+    marked_elements{lev} = setdiff (hmsh.active{lev}, cells{lev});
     [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked_elements, ...
         adaptivity_data); 
 end
 
 % Update mappings
-hmsh = update_mappings(hmsh, geometry);
+hmsh = update_mappings (hmsh, geometry);
 
 end
 
