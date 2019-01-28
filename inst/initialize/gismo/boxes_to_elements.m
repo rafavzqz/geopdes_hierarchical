@@ -6,10 +6,9 @@
 % INPUT
 %   lowpts: [n x ndim] left bottom corners of boxes, with n = number of
 %       boxes. The corners are described by their parametric index 
-%       coordinates starting from 0.
+%       coordinates starting from 1.
 %	uppts:	[n x ndim] right upper corners of boxes.
-%	lev_boxes: [n x 1] corresponding levels in which the boxes lie
-%       (starting from 1).
+%	lev_boxes: [n x 1] corresponding levels in which the boxes lie.
 %   nsub: [ndim x 1] number of sub-elements to be added at each refinement 
 %       step in each parametric direction (2 for dyadic).
 %   nel_dirL1: [ndim x 1] number of elements in each parametric direction 
@@ -41,8 +40,8 @@ nel_dir_allL = nel_dirL1 .* (repmat(nsub, 1, maxLev) .^ ((0:maxLev-1)))';
 nel_dir_allL = [nel_dir_allL ones(size(nel_dir_allL,1),1)];
 
 nbox = length(lev_boxes);
-lowpts_lev = lowpts ./ (repmat(nsub, 1, nbox)' .^ (maxLev - lev_boxes)) + 1; 
-uppts_lev = uppts ./ (repmat(nsub, 1, nbox)' .^ (maxLev - lev_boxes));
+lowpts_lev = (lowpts - 1) ./ (repmat(nsub, 1, nbox)' .^ (maxLev - lev_boxes)) + 1; 
+uppts_lev = (uppts - 1) ./ (repmat(nsub, 1, nbox)' .^ (maxLev - lev_boxes));
 
 for box = 1:nbox % loop over all the boxes
     lev = lev_boxes(box);
