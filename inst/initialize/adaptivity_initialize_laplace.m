@@ -1,6 +1,6 @@
 % ADAPTIVITY_INITIALIZE_LAPLACE: initialize a hierarchical mesh and a hierarchical space with one-single level.
 %
-% [hmsh, hspace, geometry, (method_data)] = adaptivity_initialize_laplace (problem_data, method_data)
+% [hmsh, hspace, geometry, (method_data)] = adaptivity_initialize_laplace (problem_data, method_data, embedInR3=false)
 %
 % INPUT:
 %
@@ -17,6 +17,9 @@
 %    - truncated:   false (classical basis) or true (truncated basis)
 %   If problem_data.geo_name is a G+smo geometry object (gsTHBSpline), the only strictly required field is 
 %       nquad. Otherwise, the information is read in the geometry. 
+%   
+%   embedInR3: boolean (default: false), true if the input geometry has to
+%     be considered in R^3 in any case.
 %
 % OUTPUT:
 %    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh and hierarchical_mesh_mp)
@@ -42,9 +45,13 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, geometry, method_data] = adaptivity_initialize_laplace (problem_data, method_data)
+function [hmsh, hspace, geometry, method_data] = adaptivity_initialize_laplace (problem_data, method_data, embedInR3)
 
-[geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
+if nargin < 3
+  embedInR3 = false;
+end
+
+[geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name, embedInR3);
 
 if ~isfield(geometry, 'gismo')
   npatch = numel (geometry);
