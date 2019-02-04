@@ -16,7 +16,7 @@
 
 function msh = update_mappings (msh, geometry, rdim)
 
-if nargin == 2
+if nargin < 3
     rdim = geometry.rdim;
 end
 if isa (msh, 'msh_cartesian')
@@ -32,11 +32,13 @@ if isa (msh, 'msh_cartesian')
 
         for ibd = 1:length (geometry.boundary)
             msh.boundary(ibd).rdim = rdim;
-            msh.boundary(ibd).map = geometry.boundary(ibd).map;
-            msh.boundary(ibd).map_der = geometry.boundary(ibd).map_der;
+            if msh.boundary(ibd).ndim > 0
+                msh.boundary(ibd).map = geometry.boundary(ibd).map;
+                msh.boundary(ibd).map_der = geometry.boundary(ibd).map_der;
 
-            if isfield (geometry.boundary(ibd), 'map_der2')
-                msh.boundary(ibd).map_der2 = geometry.boundary(ibd).map_der2;
+                if isfield (geometry.boundary(ibd), 'map_der2')
+                    msh.boundary(ibd).map_der2 = geometry.boundary(ibd).map_der2;
+                end
             end
         end
     end
@@ -53,18 +55,20 @@ elseif isa (msh, 'hierarchical_mesh')
     end
     for ibd = 1:length (msh.boundary)
         msh.boundary(ibd).rdim = rdim;
-        for ilev = 1:msh.boundary(ibd).nlevels
-            msh.boundary(ibd).mesh_of_level(ilev).rdim = rdim;
-            msh.boundary(ibd).mesh_of_level(ilev).map = ...
-                geometry.boundary(ibd).map;
-            msh.boundary(ibd).mesh_of_level(ilev).map_der = ...
-                geometry.boundary(ibd).map_der;
-            if isfield(geometry.boundary(ibd), 'map_der2')
-                msh.boundary(ibd).mesh_of_level(ilev).map_der2 = ...
-                    geometry.boundary(ibd).map_der2;
+        if msh.boundary(ibd).ndim > 0
+            for ilev = 1:msh.boundary(ibd).nlevels
+                msh.boundary(ibd).mesh_of_level(ilev).rdim = rdim;
+                msh.boundary(ibd).mesh_of_level(ilev).map = ...
+                    geometry.boundary(ibd).map;
+                msh.boundary(ibd).mesh_of_level(ilev).map_der = ...
+                    geometry.boundary(ibd).map_der;
+                if isfield(geometry.boundary(ibd), 'map_der2')
+                    msh.boundary(ibd).mesh_of_level(ilev).map_der2 = ...
+                        geometry.boundary(ibd).map_der2;
+                end
+                msh.boundary(ibd).msh_lev{ilev} = msh_evaluate_element_list ...
+                    (msh.boundary(ibd).mesh_of_level(ilev), msh.boundary(ibd).active{ilev});
             end
-            msh.boundary(ibd).msh_lev{ilev} = msh_evaluate_element_list ...
-                (msh.boundary(ibd).mesh_of_level(ilev), msh.boundary(ibd).active{ilev});
         end
     end
         
