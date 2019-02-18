@@ -43,13 +43,10 @@ switch (adaptivity_data.flag)
     marked_elements = marked;
 end
 
-  if adaptivity_data.adm>1
-    adm_marked = hrefine( hmsh, hspace_p, marked_elements, adaptivity_data.adm);
-  else
-    adm_marked=marked_elements;
-  end
-
-[hmsh, new_cells] = hmsh_refine (hmsh, adm_marked);
+if (isfield (adaptivity_data, 'adm_class'))
+  marked_elements = mark_admissible (hmsh, hspace_p, marked_elements, adaptivity_data);
+end
+[hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
 
 adaptivity_data.flag='elements';
 marked_functions_u = compute_functions_to_deactivate (hmsh, hspace_u, adm_marked, 'elements');
