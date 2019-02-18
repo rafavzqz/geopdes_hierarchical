@@ -48,6 +48,8 @@ if (strcmpi (adm_type, 'T-admissible'))
   lev_s = lev_Q-m+2; 
 elseif (strcmpi (adm_type, 'H-admissible'))
   lev_s = lev_Q-m+1;
+else
+  error ('get_neighborhood: unknown type of admissibility')
 end
 lev_n=lev_Q-m+1;  %level of the elements in the neighborhood
 
