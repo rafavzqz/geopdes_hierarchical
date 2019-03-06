@@ -1,29 +1,35 @@
-function [ list_of_cells ] = get_neighborhood (hmsh, hspace, Q_ind, lev_Q, m)
+function [ list_of_cells ] = get_neighborhood (hmsh, hspace, Q_ind, lev_Q, m, adm_type)
 
 % GET_NEIGHBORHOOd: compute the neighborhood of the cells of a hierarchical mesh
 %
-%   [list_of_cells] = get_neighborhood (hmsh, hspace, Q_ind, Q_lev, m)
+%   [list_of_cells] = get_neighborhood (hmsh, hspace, Q_ind, Q_lev, m, adm_type)
 %
 % INPUT:
 %
-%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the space of hierarchical splines (see hierarchical_space)
-%   Q_ind:  indices of the input elements, all of the same level
-%   Q_lev:  level of the elements in Q_ind
-%   m:      admissibility class of the hierarchical mesh
+%   hmsh:     object representing the hierarchical mesh (see hierarchical_mesh)
+%   hspace:   object representing the space of hierarchical splines (see hierarchical_space)
+%   Q_ind:    indices of the input elements, all of the same level
+%   Q_lev:    level of the elements in Q_ind
+%   m:        admissibility class of the hierarchical mesh, an integer number
+%   adm_type: admissibility type, either 'T-admissible' or 'H-admissible'
 %
 % OUTPUT:
 %
 %   list_of_cells: cell array with the indices, in the tensor product space,
 %      of the active elements in the neighborhood of the elements in Q_ind
 %           
-%  The definition of the neighborhood is from the paper: 
+%  The definition of the neighborhood is from the papers: 
 %      A. Buffa and C. Giannelli
 %      Adaptive isogeometric methods with hierarchical splines: error
 %       estimator and convergence
 %      Math. Models Meth. Appl. Sci., 2016
 %
-% Copyright (C) 2017, 2018 Cesare Bracco, Rafael Vazquez
+%      C. Bracco, C. Giannelli, R. Vazquez
+%      Refinement algorithms for adaptive isogeometric methods with
+%      hierarchical splines, Axioms, 2018
+%
+%
+% Copyright (C) 2017, 2018, 2019 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -38,16 +44,25 @@ function [ list_of_cells ] = get_neighborhood (hmsh, hspace, Q_ind, lev_Q, m)
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-lev_s = lev_Q-m+2;
-if lev_s <= 1
-    list_of_cells = [];
+if (strcmpi (adm_type, 'T-admissible'))
+  lev_s = lev_Q-m+2; 
+elseif (strcmpi (adm_type, 'H-admissible'))
+  lev_s = lev_Q-m+1;
 else
-    all_el_lev = 1:hmsh.mesh_of_level(lev_s).nel;
-    inactive_el = setdiff (all_el_lev, union (hmsh.active{lev_s}, hmsh.deactivated{lev_s}));
-    el = intersect (inactive_el, support_extension(hmsh,hspace,Q_ind,lev_Q, lev_s));
-    ancestors = hmsh_get_parent (hmsh, lev_s, el);
-    list_of_cells = intersect (ancestors, hmsh.active{lev_s-1});
+  error ('get_neighborhood: unknown type of admissibility')
+end
+lev_n=lev_Q-m+1;  %level of the elements in the neighborhood
+
+if (lev_n < 1)
+  list_of_cells = [];
+else
+  supp_ext = support_extension (hmsh, hspace, Q_ind, lev_Q, lev_s);
+  if (strcmpi (adm_type, 'T-admissible'))
+    ancestors = hmsh_get_parent (hmsh, lev_s, supp_ext);
+    list_of_cells = intersect (ancestors, hmsh.active{lev_n});
+  else
+    list_of_cells = intersect (supp_ext, hmsh.active{lev_n});
+  end
 end
 
 end

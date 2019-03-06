@@ -1,13 +1,15 @@
 % MARK_ADMISSIBLE: marking algorithm to guarantee admissible meshes.
 %
-%   [marked_adm] = mark_admissible (hmsh, hspace, marked, m)
+%   [marked_adm] = mark_admissible (hmsh, hspace, marked, adaptivity_data)
 %
 % INPUT:
 %
-%   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
-%   marked: cell array with the indices, in the tensor product space, of the marked elements for each level
-%   m:      admissibility class of the refined mesh. If m<2, there is no additional refinement.
+%   hmsh:      object representing the coarse hierarchical mesh (see hierarchical_mesh)
+%   hspace:    object representing the coarse space of hierarchical splines (see hierarchical_space)
+%   marked:    cell array with the indices, in the tensor product space, of the marked elements for each level
+%   adaptivity_data: struct that contains the following two fields
+%    adm_class: admissibility class of the refined mesh. If m<2, there is no additional refinement.
+%    adm_type:  admissibility type, either 'T-admissible' (default) or 'H-admissible'.
 %
 % OUTPUT:
 %
@@ -20,7 +22,14 @@
 %       estimator and convergence
 %      Math. Models Meth. Appl. Sci., 2016
 %
-% Copyright (C) 2017, 2018 Cesare Bracco, Rafael Vazquez
+% The algorithm is the same as Algorithms 5-6 in the paper
+%      C. Bracco, C. Giannelli, R. Vazquez
+%      Refinement algorithms for adaptive isogeometric methods with
+%      hierarchical splines, Axioms, 2018
+% with a loop from the fine to the coarse level, to avoid recursive calls
+% to the function.
+%
+% Copyright (C) 2017, 2018, 2019 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -35,42 +44,27 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [marked] = mark_admissible (hmsh, hspace, marked, m)
+function [marked] = mark_admissible (hmsh, hspace, marked, adaptivity_data)
 
-if (m < 2)
+if (~isfield(adaptivity_data,'adm_class') || adaptivity_data.adm_class < 2)
   return
+else
+  m = adaptivity_data.adm_class;  
 end
 
-for lev = 1:hmsh.nlevels
-  marked = mark_admissible_recursive (hmsh, hspace, marked, lev, m);
+if (~isfield(adaptivity_data,'adm_type') || isempty (adaptivity_data.adm_type))
+  adm_type = 'T-admissible';
+else
+  adm_type = adaptivity_data.adm_type;
 end
 
-end
-
-
-% MARK_ADMISSIBLE_recursive: recursive marking algorithm to guarantee admissible meshes.
-%
-%   [marked_adm] = mark_admissible_recursive (hmsh, hspace, marked, lev, m)
-%
-% INPUT:
-%
-%   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
-%   marked: cell array with the indices, in the tensor product space, of the marked elements for each level
-%   lev:    level of the cells for which we compute the neighborhood and support extension
-%   m:      admissibility class of the refined mesh
-%
-% OUTPUT:
-%
-%   marked_adm: cell array with the indices, in the tensor product space, of the marked elements for each level
-%                such that the final mesh is admissible of class m
-
-function marked = mark_admissible_recursive (hmsh, hspace, marked, lev, m)
-  neighbors = get_neighborhood (hmsh, hspace, marked{lev}, lev, m);
+for lev = hmsh.nlevels:-1:1
+  neighbors = get_neighborhood (hmsh, hspace, marked{lev}, lev, m, adm_type);
   if (numel(neighbors) > 0)
     lev_m = lev - m + 1;
     new_marked = intersect (neighbors, hmsh.active{lev_m});
     marked{lev_m} = union (marked{lev_m}, new_marked);
-    marked = mark_admissible_recursive (hmsh, hspace, marked, lev_m, m);
   end
+end
+
 end
