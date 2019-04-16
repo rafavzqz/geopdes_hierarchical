@@ -32,6 +32,19 @@
 
 function C = matrix_basis_change__ (hspace, lev, ind_coarse)
 
+npatch = hspace.space_of_level(1).npatch;
+
+sp_coarse = hspace.space_of_level(lev-1);
+sp_fine = hspace.space_of_level(lev);
+Proj = hspace.Proj(lev-1,:);
+
+for iptc = 1:npatch
+  spc_patch = sp_coarse.sp_patch{iptc};
+  spf_patch = sp_fine.sp_patch{iptc};
+  matrix_change_two_levels__ (spc_patch, spf_patch
+end
+
+
 if (isa (hspace.space_of_level(1).sp_patch{1}, 'sp_scalar'))
   is_scalar = true;
   ndim = size (hspace.Proj{1}, 2);
