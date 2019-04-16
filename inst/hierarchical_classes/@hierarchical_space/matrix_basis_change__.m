@@ -32,7 +32,7 @@
 
 function C = matrix_basis_change__ (hspace, lev, ind_coarse)
 
-Proj = hspace.Proj(lev-1,:,:);
+Proj = hspace.Proj{lev-1};
 if (nargin == 3)
   C = matrix_change_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj, ind_coarse);
 else

@@ -23,13 +23,13 @@
 %    [comp_dofs]    (1 x ncomp_param cell array) indices of the degrees of freedom for each component
 %    nlevels        (scalar)                the number of levels
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
-%    Proj           (hmsh.nlevels-1 x ndim cell-array)
-%                   (hmsh.nlevels-1 x ncomp x ndim cell-array) 
+%    Proj           (hmsh.nlevels-1 x 1 cell-array) each level contains a second cell array
+%      (for level)  (ncomp_param x ndim cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels
-%                                           Proj{l,i} is a matrix of size N_{l+1} x N_l where N_l is the number 
+%                                           Proj{l}{i} is a matrix of size N_{l+1} x N_l where N_l is the number 
 %                                           of univariate functions of level l in the direction l, such that
 %                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c^k_j = Proj{l,i}(j,k)
-%                                           For vectors, it takes the form Proj{l,c,i}, 
+%                                           For vectors, it takes the form Proj{l}{c,i}, 
 %                                           where c is the component in the parametric domain
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
@@ -73,7 +73,7 @@
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -120,11 +120,11 @@ hspace.deactivated{1} = [];
 
 hspace.coeff_pou = ones (space.ndof, 1);
 if (is_scalar)
-  hspace.Proj = cell (0, hmsh.ndim);
+  hspace.Proj = cell (0, 1);
   hspace.ncomp_param = 1;
   hspace.comp_dofs = [];
 else
-  hspace.Proj = cell (0, numel (space.scalar_spaces), hmsh.ndim);
+  hspace.Proj = cell (0, 1);
   hspace.ncomp_param = space.ncomp_param;
   aux = 0;
   for icomp = 1:space.ncomp_param

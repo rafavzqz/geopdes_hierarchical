@@ -34,14 +34,13 @@ function varargout = matrix_change_two_levels__ (sp_coarse, sp_fine, Proj, ind_c
 
 if (isa (sp_coarse, 'sp_scalar'))
   is_scalar = true;
-  ndim = size (Proj, 2);
 elseif (isa (sp_coarse, 'sp_vector'))
   is_scalar = false;
-  ndim = size (Proj, 3);
   ncomp_param = sp_coarse.ncomp_param;
 else
   error ('Unknown space type')
 end
+ndim = size (Proj, 2);
 
 
 if (nargin < 4)
@@ -61,8 +60,7 @@ if (nargin < 4)
     for icomp = 1:ncomp_param
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      Proj_scalar = reshape (Proj(1,icomp,:), [1, ndim]);
-      Caux{icomp} = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj_scalar);
+      Caux{icomp} = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:));
     end
     C = blkdiag (Caux{:});
   end
@@ -105,8 +103,7 @@ elseif (nargin == 4)
 
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      Proj_scalar = reshape (Proj(1,icomp,:), [1, ndim]);
-      [rows_c, cols_c, vals_c] = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj_scalar, ind_comp);
+      [rows_c, cols_c, vals_c] = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp);
       rows = [rows; rows_c]; cols = [cols; cols_c]; vals = [vals; vals_c];
     end
   end
