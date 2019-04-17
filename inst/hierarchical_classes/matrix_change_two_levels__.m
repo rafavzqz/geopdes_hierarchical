@@ -16,6 +16,7 @@
 %   C:    matrix to change basis from level lev-1 to level lev
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -96,6 +97,7 @@ elseif (nargin == 4)
   else
     rows = []; cols = []; vals = [];
     cumsum_ndof_coarse = sp_coarse.cumsum_ndof;  
+    cumsum_ndof_fine = sp_fine.cumsum_ndof;  
     
     for icomp = 1:ncomp_param
       ind_comp = ind_coarse(ind_coarse>cumsum_ndof_coarse(icomp) & ...
@@ -104,7 +106,9 @@ elseif (nargin == 4)
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
       [rows_c, cols_c, vals_c] = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp);
-      rows = [rows; rows_c]; cols = [cols; cols_c]; vals = [vals; vals_c];
+      rows = [rows; rows_c+cumsum_ndof_fine(icomp)]; 
+      cols = [cols; cols_c+cumsum_ndof_coarse(icomp)]; 
+      vals = [vals; vals_c];
     end
   end
   if (nargout == 1)
