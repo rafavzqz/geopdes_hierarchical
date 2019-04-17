@@ -118,51 +118,6 @@ if (isfield (problem_data, 'graduex'))
 end
   
 % Initialization of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
-marked{1}=[33,34,37,38,41,42,57,58,61,62,65,66]+1;
-[hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-marked{1}=[];
-marked{2}=[331,332,339,340,347,348,355,356,...
-           426,427,428,429,434,435,436,437,442,443,444,445,450,451,452,453,...
-           522,523,524,525,530,531,532,533,538,539,540,541,546,547,548,549]+1;
-[hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-marked{1}=[];
-marked{2}=[];
-marked{3}=[3255,3256,3271,3272,3287,3288,3303,3304,3319,3320,3335,3336,...
-         3638,3639,3640,3641,3654,3655,3656,3657,3670,3671,3672,3673,3686,3687,3688,3689,3702,3703,3704,3705,3718,3719,3720,3721,...
-         4021,4022,4023,4024,4025,4026,4037,4038,4039,4040,4041,4042,4053,4054,4057,4058,4069,4070,4073,4074,...
-         4085,4086,4087,4088,4089,4090,4101,4102,4103,4104,4105,4106,...
-         4405,4406,4407,4408,4409,4410,4421,4422,4423,4424,4425,4426,4437,4438,...
-         4441,4442,4453,4454,4457,4458,4469,4470,4471,4472,4473,4474,4485,4486,4487,4488,4489,4490]+1;
-[hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-
-%%%%%%%%%%%%%%%%%%%%%%%%% igatools testing
-% geometry = geo_load (problem_data.analytical_map);
-% mesh_helper = geo_load (problem_data.geo_name);
-% 
-% [knots, zeta] = kntrefine (mesh_helper.nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
-% 
-% rule     = msh_gauss_nodes (method_data.nquad);
-% [qn, qw] = msh_set_quad_nodes (zeta, rule);
-% msh   = msh_cartesian (zeta, qn, qw, geometry);
-% space = sp_bspline (knots, method_data.degree, msh);
-% hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
-% hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
-% 
-% marked{1} = [1 2 5 6 7 8 10 11 14];
-% [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-% 
-% marked{1} = [];
-% marked{2} = [19 20 21 27 28 29 30 36 37];
-% [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-% 
-% marked{1} = [];
-% marked{2} = [];
-% marked{3} = [87 88 89 103 104 105 119 120 121];
-% [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-%%%%%%%%%%%%%%%%%%%%%%%%% end igatools testing
-
-
 % ADAPTIVE LOOP
 iter = 0;
 while (1)
@@ -208,29 +163,28 @@ while (1)
   end
 
 % STOPPING CRITERIA
-%   if (gest(iter) < adaptivity_data.tol)
-%     disp('Success: The error estimation reached the desired tolerance'); 
-%     solution_data.flag = 1; break
-%   elseif (iter == adaptivity_data.num_max_iter)
-%     disp('Warning: reached the maximum number of iterations')
-%     solution_data.flag = 2; break
-%   elseif (hmsh.nlevels >= adaptivity_data.max_level)
-%     disp('Warning: reached the maximum number of levels')
-%     solution_data.flag = 3; break
-%   elseif (hspace.ndof > adaptivity_data.max_ndof)
-%     disp('Warning: reached the maximum number of DOFs')
-%     solution_data.flag = 4; break
-%   elseif (hmsh.nel > adaptivity_data.max_nel)
-%     disp('Warning: reached the maximum number of elements')
-%     solution_data.flag = 5; break
-%   end
+  if (gest(iter) < adaptivity_data.tol)
+    disp('Success: The error estimation reached the desired tolerance'); 
+    solution_data.flag = 1; break
+  elseif (iter == adaptivity_data.num_max_iter)
+    disp('Warning: reached the maximum number of iterations')
+    solution_data.flag = 2; break
+  elseif (hmsh.nlevels >= adaptivity_data.max_level)
+    disp('Warning: reached the maximum number of levels')
+    solution_data.flag = 3; break
+  elseif (hspace.ndof > adaptivity_data.max_ndof)
+    disp('Warning: reached the maximum number of DOFs')
+    solution_data.flag = 4; break
+  elseif (hmsh.nel > adaptivity_data.max_nel)
+    disp('Warning: reached the maximum number of elements')
+    solution_data.flag = 5; break
+  end
   
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
-%   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
-    marked{1} = 1;    
+    [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   if (plot_data.print_info); 
-%     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
+    fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
   end
 % REFINE
