@@ -144,8 +144,6 @@ if (nargin < 4)
       C = kron (Proj{1,idim}, C);
     end
     if (strcmpi (sp_coarse.space_type, 'NURBS'))
-%       Wlev = spdiags (sp_coarse.weights((ind_coarse), 0, numel(ind_coarse), numel(ind_coarse)));
-%       Wlev_fine = spdiags (1./sp_fine.weights(ind_fine), 0, numel(ind_fine), numel(ind_fine));
       Wlev = spdiags (sp_coarse.weights(:), 0, sp_coarse.ndof, sp_coarse.ndof);
       Wlev_fine = spdiags (1./sp_fine.weights(:), 0, sp_fine.ndof, sp_fine.ndof);
       C = Wlev_fine * C * Wlev;
@@ -174,10 +172,6 @@ elseif (nargin == 5)
         Caux = kron (Proj{1,idim}(:,sub_coarse{idim}(ii)), Caux);
       end
       [ir, ~, iv] = find (Caux);
-%       rows(ncounter+(1:numel(ir))) = ir;
-%       cols(ncounter+(1:numel(ir))) = ind_coarse(ii);
-%       vals(ncounter+(1:numel(ir))) = iv;
-%       ncounter = ncounter + numel (ir);
       [~,IA,IB] = intersect(ir,ind_fine);
       rows(ncounter+(1:numel(IB))) = IB;
       cols(ncounter+(1:numel(IB))) = ii;
@@ -212,7 +206,6 @@ elseif (nargin == 5)
     end
   end
   if (nargout == 1)
-%     C = sparse (rows, cols, vals, sp_fine.ndof, sp_coarse.ndof);
     C = sparse (rows, cols, vals, numel(ind_fine), numel(ind_coarse));
   end
 else

@@ -37,13 +37,17 @@ function C = matrix_basis_change__ (hspace, lev, ind_coarse, ind_fine)
 Proj = hspace.Proj{lev-1};
 if (nargin == 4)
   C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj, ind_coarse, ind_fine);
+  if (hspace.truncated)
+    indices = union (hspace.active{lev}, hspace.deactivated{lev});
+    [~, loc] = ismember(indices,ind_fine);  
+    C(loc,:) = 0;
+  end
 else
   C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj);
-end
-
-if (hspace.truncated)
-  indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  C(indices,:) = 0;
+  if (hspace.truncated)
+    indices = union (hspace.active{lev}, hspace.deactivated{lev});
+    C(indices,:) = 0;
+  end
 end
 
 end
