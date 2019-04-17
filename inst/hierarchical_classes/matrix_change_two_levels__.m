@@ -91,7 +91,7 @@ elseif (nargin == 4)
     if (strcmpi (sp_coarse.space_type, 'NURBS'))
       weights_coarse = sp_coarse.weights(:);
       weights_fine = sp_fine.weights(:);
-      vals = weights_fine(rows) .* vals .* weights_coarse(cols);
+      vals = vals .* weights_coarse(cols) ./ weights_fine(rows);
     end
 
   else
