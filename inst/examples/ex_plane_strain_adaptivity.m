@@ -50,8 +50,8 @@ method_data.degree      = [3 3];        % Degree of the splines
 method_data.regularity  = [2 2];        % Regularity of the splines
 method_data.nsub_coarse = [2 2];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rule
-method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
+method_data.nquad       = [3 3];        % Points for the Gaussian quadrature rule
+method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 
 adaptivity_data.flag = 'elements';

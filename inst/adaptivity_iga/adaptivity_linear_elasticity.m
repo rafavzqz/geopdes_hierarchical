@@ -115,6 +115,13 @@ while (1)
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+%     if(iter == 1)
+%         marked{1} = [1];
+%     elseif(iter == 2)
+%         marked{1} = [];
+%         marked{2} = [1];
+%     end
+%     num_marked = numel(marked{:});
   if (plot_data.print_info); 
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
