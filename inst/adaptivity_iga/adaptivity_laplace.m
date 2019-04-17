@@ -191,12 +191,7 @@ while (1)
     disp('REFINE:')
   end
 % REFINE
-%%%% In the future, there should be only one function, and this check be performed inside
-  if (isfield (adaptivity_data, 'adm'))
-    [hmsh, hspace] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data);
-  else
-    [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-  end
+  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
 end
 
 solution_data.iter = iter;

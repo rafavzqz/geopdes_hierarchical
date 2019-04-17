@@ -1,14 +1,15 @@
 % HIERARCHICAL_SPACE: constructor of the class for hierarchical spaces.
 %
-%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated])
+%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated, regularity])
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh (see hierarchical_mesh)
-%    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar)
+%    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar or sp_vector)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
 %                - 'simplified', a simplified basis, were only children of removed functions are activated
-%    truncated:  decide whether the basis will be truncated or not
+%    truncated:  decide whether the basis will be truncated or not (not truncated by default)
+%    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus one
 %
 % OUTPUT:
 %    hspace: hierarchical_space object, which contains the following fields and methods
@@ -22,13 +23,13 @@
 %    [comp_dofs]    (1 x ncomp_param cell array) indices of the degrees of freedom for each component
 %    nlevels        (scalar)                the number of levels
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
-%    Proj           (hmsh.nlevels-1 x ndim cell-array)
-%                   (hmsh.nlevels-1 x ncomp x ndim cell-array) 
+%    Proj           (hmsh.nlevels-1 x 1 cell-array) each level contains a second cell array
+%      (for level)  (ncomp_param x ndim cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels
-%                                           Proj{l,i} is a matrix of size N_{l+1} x N_l where N_l is the number 
+%                                           Proj{l}{i} is a matrix of size N_{l+1} x N_l where N_l is the number 
 %                                           of univariate functions of level l in the direction l, such that
 %                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c^k_j = Proj{l,i}(j,k)
-%                                           For vectors, it takes the form Proj{l,c,i}, 
+%                                           For vectors, it takes the form Proj{l}{c,i}, 
 %                                           where c is the component in the parametric domain
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
@@ -38,6 +39,8 @@
 %                                            as linear combinations of splines (active and inactive) of the current level
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %    dofs          (1 x ndof array)         only for boundary spaces, degrees of freedom that do not vanish on the boundary
+%    regularity    (1 x ndim array)         the regularity of the space, used during refinement to add a new level 
+%               or (1 x ncomp cell-array)
 %
 %    METHODS
 %    Methods for post-processing, which require a computed vector of degrees of freedom
@@ -70,6 +73,7 @@
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -88,15 +92,19 @@ function hspace = hierarchical_space (hmsh, space, varargin)
 
 if (isa (space, 'sp_scalar'))
   is_scalar = true;
+  regularity = space.degree - 1;
 elseif (isa (space, 'sp_vector'))
   is_scalar = false;
+  for icomp = 1:space.ncomp_param
+    regularity{icomp} = space.scalar_spaces{icomp}.degree-1;
+  end
 else
   error ('Unknown space type')
 end
 
-default_values = {'standard', false};
+default_values = {'standard', false, regularity};
 default_values(1:numel(varargin)) = varargin;
-[space_type, truncated] = default_values{:};
+[space_type, truncated, regularity] = default_values{:};
 
 hspace.ncomp = space.ncomp;
 hspace.type = space_type;
@@ -112,11 +120,11 @@ hspace.deactivated{1} = [];
 
 hspace.coeff_pou = ones (space.ndof, 1);
 if (is_scalar)
-  hspace.Proj = cell (0, hmsh.ndim);
+  hspace.Proj = cell (0, 1);
   hspace.ncomp_param = 1;
   hspace.comp_dofs = [];
 else
-  hspace.Proj = cell (0, numel (space.scalar_spaces), hmsh.ndim);
+  hspace.Proj = cell (0, 1);
   hspace.ncomp_param = space.ncomp_param;
   aux = 0;
   for icomp = 1:space.ncomp_param
@@ -129,10 +137,28 @@ hspace.Csub{1} = speye (space.ndof);
 hspace.dofs = [];
 hspace.adjacent_dofs = [];
 
+transform = hspace.space_of_level(1).transform;
 if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
   if (hmsh.ndim > 1)
     for iside = 1:numel (hmsh.boundary)
-      boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated);
+% This check is necessary for the regularity
+      ind = setdiff (1:hmsh.ndim, ceil(iside/2));
+      if (is_scalar)
+        bnd_regularity = regularity(ind);
+      else
+        if (strcmpi (transform, 'grad-preserving'))
+          comps = 1:space.ncomp;
+          bnd_regularity = cellfun (@(x) x(ind), regularity(comps), 'UniformOutput', false);
+        elseif (strcmpi (transform, 'curl-preserving'))
+          comps = setdiff (1:hmsh.ndim, ceil(iside/2)); % comps =[2 3; 2 3; 1 3; 1 3; 1 2; 1 2] in 3D, %comps = [2 2 1 1] in 2D;
+          bnd_regularity = cellfun (@(x) x(ind), regularity(comps), 'UniformOutput', false);
+%         elseif (strcmpi (transform, 'div-preserving'))
+%           comps = ceil (iside/2); % comps =[1, 1, 2, 2, 3, 3] in 3D, %comps = [1, 1, 2, 2] in 2D;
+%           bnd_regularity = regularity{comps}(ind);
+        end
+      end
+
+      boundary = hierarchical_space (hmsh.boundary(iside), space.boundary(iside), space_type, truncated, bnd_regularity);
       boundary.dofs = space.boundary(iside).dofs;
       if (is_scalar)
         boundary.adjacent_dofs = space.boundary(iside).adjacent_dofs;
@@ -148,6 +174,8 @@ if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
 else
   hspace.boundary = [];
 end
+
+hspace.regularity = regularity;
 
 hspace = class (hspace, 'hierarchical_space');
 

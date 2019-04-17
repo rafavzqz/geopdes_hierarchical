@@ -57,7 +57,7 @@ function [u, dofs] = sp_drchlt_l2_proj (hspace, hmsh, h, drchlt_sides)
     end
   end
   
-  u = M(bnd_dofs,bnd_dofs) \ rhs(bnd_dofs);
+  u = M(bnd_dofs,bnd_dofs) \ rhs(bnd_dofs, 1);
   dofs = hspace.boundary.dofs(bnd_dofs);
 
 end

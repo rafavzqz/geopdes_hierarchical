@@ -1,4 +1,4 @@
-% ADAPTIVITY_SOLVE_LINEAR_ELASTICITY: Solve a linear elasticity problem with hierarchical splines.
+% ADAPTIVITY_SOLVE_LINEAR_ELASTICITY_MIXED: Solve a linear elasticity problem with hierarchical splines, using a mixed formulation.
 %
 % The function solves the linear elasticity problem
 %
@@ -15,12 +15,13 @@
 %
 % USAGE:
 %
-% u = adaptivity_solve_linear_elasticity (hmsh, hspace, method_data)
+% [u, press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_mul, method_data)
 %
 % INPUT:
 %
 %   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the vector-valued space of hierarchical splines (see hierarchical_space)
+%   hspace: object representing the vector-valued space of hierarchical splines for the displacement (see hierarchical_space)
+%   hspace_mul: object representing the scalar-valued space of hierarchical splines for the Lagrange multiplier (see hierarchical_space)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
 %    - drchlt_sides: sides with Dirichlet boundary condition
@@ -37,7 +38,7 @@
 %
 %   u: computed degrees of freedom
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015, 2017 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -52,10 +53,13 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function u = adaptivity_solve_linear_elasticity (hmsh, hspace, problem_data)
+function [vel, press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_mul, problem_data)
 
-mat    = op_su_ev_hier (hspace, hspace, hmsh, problem_data.lambda_lame, problem_data.mu_lame); 
-rhs    = op_f_v_hier (hspace, hmsh, problem_data.f);
+invlam = @(varargin) 1./problem_data.lambda_lame(varargin{:});
+A   = op_eu_ev_hier (hspace, hspace, hmsh, problem_data.mu_lame);
+B   = op_div_v_q_hier (hspace, hspace_mul, hmsh);
+M   = op_u_v_hier (hspace_mul, hspace_mul, hmsh, invlam);
+rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
@@ -65,7 +69,7 @@ if (~isfield (struct (hmsh), 'npatch')) % Single patch case
     dofs = hspace.boundary(iside).dofs;
     rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
   end
-else % Multipatch case
+else
   boundaries = hmsh.mesh_of_level(1).boundaries;
   Nbnd = cumsum ([0, boundaries.nsides]);
   for iref = problem_data.nmnn_sides
@@ -97,7 +101,8 @@ else % Multipatch case
 end
 
 % Apply symmetry conditions
-u = zeros (hspace.ndof, 1);
+vel   = zeros (hspace.ndof, 1);
+press = zeros (hspace_mul.ndof, 1);
 symm_dofs = [];
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
   for iside = problem_data.symm_sides
@@ -118,7 +123,7 @@ if (~isfield (struct (hmsh), 'npatch')) % Single patch case
       end
     end
     if (~parallel_to_axes)
-      error ('adaptivity_solve_linear_elasticity: We have only implemented the symmetry condition for boundaries parallel to the axes')
+      error ('adaptivity_solve_linear_elasticity_mixed: We have only implemented the symmetry condition for boundaries parallel to the axes')
     end
   end
 else % Multipatch case
@@ -158,14 +163,22 @@ else % Multipatch case
       end
     end
   end
-end  
+end
 
 % Apply Dirichlet boundary conditions
 [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
-u(dirichlet_dofs) = u_dirichlet;
+vel(dirichlet_dofs) = u_dirichlet;
 
 int_dofs = setdiff (1:hspace.ndof, union (dirichlet_dofs, symm_dofs));
-rhs(int_dofs) = rhs(int_dofs) - mat(int_dofs, dirichlet_dofs)*u_dirichlet;
+
+mat = [ A(int_dofs, int_dofs),  B(:,int_dofs).';
+        B(:,int_dofs),          -M];
+
+rhs(int_dofs) = rhs(int_dofs) - A(int_dofs, dirichlet_dofs)*u_dirichlet;
+rhs_tot = [rhs(int_dofs); B(:, dirichlet_dofs)*u_dirichlet];
 
 % Solve the linear system
-u(int_dofs) = mat(int_dofs, int_dofs) \ rhs(int_dofs);
+u = mat \ rhs_tot;
+
+press = u(numel(int_dofs)+1:end);
+vel(int_dofs) = u(1:numel(int_dofs));
