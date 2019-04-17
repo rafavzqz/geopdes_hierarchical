@@ -34,14 +34,13 @@ function C = matrix_basis_change_new__ (hspace, lev, ind_coarse, ind_fine)
 
 if (isa (hspace.space_of_level(1), 'sp_scalar'))
   is_scalar = true;
-  ndim = size (hspace.Proj, 2);
 elseif (isa (hspace.space_of_level(1), 'sp_vector'))
   is_scalar = false;
-  ndim = size (hspace.Proj, 3);
   ncomp_param = hspace.space_of_level(lev).ncomp_param;
 else
   error ('Unknown space type')
 end
+ndim = size (hspace.Proj{lev-1}, 2);
 
 
 if (nargin < 3)
@@ -70,7 +69,7 @@ elseif (nargin <= 4)
     for ii = 1:numel(ind_coarse)
       Caux = 1;
       for idim = 1:ndim
-        Caux = kron (hspace.Proj{lev-1,idim}(:,sub_coarse{idim}(ii)), Caux);
+        Caux = kron (hspace.Proj{lev-1}{idim}(:,sub_coarse{idim}(ii)), Caux);
       end
       [ir, ic, iv] = find (Caux);
       if (nargin < 4)
@@ -106,7 +105,7 @@ elseif (nargin <= 4)
       for ii = 1:numel(ind_comp)
         Caux = 1;
         for idim = 1:ndim
-          Caux = kron (hspace.Proj{lev-1,icomp,idim}(:,sub_coarse{idim}(ii)), Caux);
+          Caux = kron (hspace.Proj{lev-1}{icomp,idim}(:,sub_coarse{idim}(ii)), Caux);
         end
         [ir, ic, iv] = find (Caux);
         if (nargin < 4)
