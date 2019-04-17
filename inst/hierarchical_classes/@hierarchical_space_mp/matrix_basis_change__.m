@@ -1,7 +1,7 @@
 % MATRIX_BASIS_CHANGE__: compute the subdivision matrix between two consecutive levels.
 %        This method is intended to remain private.
 %
-% function C = matrix_basis_change__ (hspace, lev)
+% function C = matrix_basis_change__ (hspace, lev, [ind_coarse])
 %
 % Compute the new matrices to represent functions of level "lev-1"
 % as linear combinations of splines (active and inactive) of level "lev"
@@ -10,6 +10,7 @@
 %
 %   hspace: an object of the class hierarchical_space_mp
 %   lev:    the level for which we compute the matrix
+%   ind_coarse: column indices for which to compute the output matrix
 %
 % OUTPUT:
 %
@@ -46,14 +47,14 @@ if (nargin == 3)
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
     [~,local_indices,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
-    Cpatch = matrix_change_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices);
+    Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices);
     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
   end
 else
   for iptc = 1:npatch
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
-    Cpatch = matrix_change_two_levels__ (spc_patch, spf_patch, Proj{iptc});
+    Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc});
     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
   end
 end

@@ -1,19 +1,22 @@
-% MATRIX_BASIS_CHANGE__: compute the subdivision matrix between two consecutive levels.
+% SUBDIVION_MATRIX_TWO_LEVELS__: compute the subdivision matrix between two consecutive levels.
+%        It works for scalar-valued and vector-valued functions, single patch.
 %        This method is intended to remain private.
 %
-% function C = matrix_basis_change__ (hspace, lev)
+% function C = subdivision_matrix_two_levels__ (sp_coarse, sp_fine, Proj, [ind_coarse])
 %
 % Compute the new matrices to represent functions of level "lev-1"
 % as linear combinations of splines (active and inactive) of level "lev"
 %
 % INPUT:  
 %
-%   hspace: an object of the class hierarchical_space
-%   lev:    the level for which we compute the matrix
+%   sp_coarse:  a space object, either sp_scalar or sp_vector
+%   sp_fine:    a space object, obtained by refinement of sp_fine
+%   Proj:       univariate subdivision matrices, given by sp_refine
+%   ind_coarse: column indices for which to compute the output matrix
 %
 % OUTPUT:
 %
-%   C:    matrix to change basis from level lev-1 to level lev
+%   C:  subdivision matrix to change basis from level lev-1 to level lev
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017-2019 Rafael Vazquez
@@ -31,7 +34,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function varargout = matrix_change_two_levels__ (sp_coarse, sp_fine, Proj, ind_coarse)
+function varargout = subdivision_matrix_two_levels__ (sp_coarse, sp_fine, Proj, ind_coarse)
 
 if (isa (sp_coarse, 'sp_scalar'))
   is_scalar = true;
@@ -61,7 +64,7 @@ if (nargin < 4)
     for icomp = 1:ncomp_param
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      Caux{icomp} = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:));
+      Caux{icomp} = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:));
     end
     C = blkdiag (Caux{:});
   end
@@ -80,7 +83,7 @@ elseif (nargin == 4)
       for idim = 1:ndim
         Caux = kron (Proj{1,idim}(:,sub_coarse{idim}(ii)), Caux);
       end
-      [ir, ic, iv] = find (Caux);
+      [ir, ~, iv] = find (Caux);
       rows(ncounter+(1:numel(ir))) = ir;
       cols(ncounter+(1:numel(ir))) = ind_coarse(ii);
       vals(ncounter+(1:numel(ir))) = iv;
@@ -105,7 +108,7 @@ elseif (nargin == 4)
 
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      [rows_c, cols_c, vals_c] = matrix_change_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp);
+      [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp);
       rows = [rows; rows_c+cumsum_ndof_fine(icomp)]; 
       cols = [cols; cols_c+cumsum_ndof_coarse(icomp)]; 
       vals = [vals; vals_c];

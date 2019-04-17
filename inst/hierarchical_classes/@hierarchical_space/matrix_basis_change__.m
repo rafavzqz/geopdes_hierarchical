@@ -1,7 +1,7 @@
 % MATRIX_BASIS_CHANGE__: compute the subdivision matrix between two consecutive levels.
 %        This method is intended to remain private.
 %
-% function C = matrix_basis_change__ (hspace, lev)
+% function C = matrix_basis_change__ (hspace, lev, [ind_coarse])
 %
 % Compute the new matrices to represent functions of level "lev-1"
 % as linear combinations of splines (active and inactive) of level "lev"
@@ -10,12 +10,14 @@
 %
 %   hspace: an object of the class hierarchical_space
 %   lev:    the level for which we compute the matrix
+%   ind_coarse: column indices for which to compute the output matrix
 %
 % OUTPUT:
 %
 %   C:    matrix to change basis from level lev-1 to level lev
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -34,9 +36,9 @@ function C = matrix_basis_change__ (hspace, lev, ind_coarse)
 
 Proj = hspace.Proj{lev-1};
 if (nargin == 3)
-  C = matrix_change_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj, ind_coarse);
+  C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj, ind_coarse);
 else
-  C = matrix_change_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj);
+  C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj);
 end
 
 if (hspace.truncated)
