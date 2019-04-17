@@ -2,7 +2,7 @@
 %        It works for scalar-valued and vector-valued functions, single patch.
 %        This method is intended to remain private.
 %
-% function C = subdivision_matrix_two_levels__ (sp_coarse, sp_fine, Proj, [ind_coarse])
+% function C = subdivision_matrix_two_levels__ (sp_coarse, sp_fine, Proj, [ind_coarse, ind_fine])
 %
 % Compute the new matrices to represent functions of level "lev-1"
 % as linear combinations of splines (active and inactive) of level "lev"

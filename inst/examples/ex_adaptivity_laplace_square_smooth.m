@@ -37,14 +37,14 @@ method_data.truncated   = 0;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-% adaptivity_data.flag = 'elements';
-adaptivity_data.flag = 'functions';
+adaptivity_data.flag = 'elements';
+% adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
-adaptivity_data.mark_strategy = 'GR';
+adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 6;
+adaptivity_data.num_max_iter = 12;
 adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 1e-10;
 

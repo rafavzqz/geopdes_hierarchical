@@ -162,6 +162,9 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
       if (hmsh.nel_per_level(ilev) > 0)
         ind_e = (Ne(ilev)+1):Ne(ilev+1);
         sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+        
+        sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, hmsh, ilev);
+        
         b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
         dofs = 1:ndofs;
         est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
