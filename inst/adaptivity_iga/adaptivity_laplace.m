@@ -118,6 +118,7 @@ if (isfield (problem_data, 'graduex'))
 end
   
 % Initialization of the hierarchical mesh and space
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 % ADAPTIVE LOOP
 iter = 0;
 while (1)

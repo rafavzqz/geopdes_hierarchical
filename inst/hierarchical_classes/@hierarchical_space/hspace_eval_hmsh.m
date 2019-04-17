@@ -81,8 +81,11 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
         'value', value, 'gradient', gradient, 'hessian', hessian, 'curl', curl, 'divergence', divergence);
   else
+      % for higher order derivatives
+%     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
+%         'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian, 'bilaplacian', bilaplacian);
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
-        'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian, 'bilaplacian', bilaplacian);
+        'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian);
   end
   eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, options);
 
