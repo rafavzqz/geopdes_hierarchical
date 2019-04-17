@@ -32,11 +32,11 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function C = matrix_basis_change__ (hspace, lev, ind_coarse)
+function C = matrix_basis_change__ (hspace, lev, ind_coarse, ind_fine)
 
 Proj = hspace.Proj{lev-1};
-if (nargin == 3)
-  C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj, ind_coarse);
+if (nargin == 4)
+  C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj, ind_coarse, ind_fine);
 else
   C = subdivision_matrix_two_levels__ (hspace.space_of_level(lev-1), hspace.space_of_level(lev), Proj);
 end

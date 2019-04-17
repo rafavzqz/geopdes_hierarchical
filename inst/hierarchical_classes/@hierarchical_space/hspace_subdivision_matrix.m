@@ -60,7 +60,8 @@ if (strcmpi (option, 'reduced'))
     I_rows = IB; I_cols = 1:hspace.ndof_per_level(lev);
     I = sparse (I_rows, I_cols, ones(size(I_cols)), numel(fun_on_deact_finer_level), hspace.ndof_per_level(lev));
 
-    aux = matrix_basis_change_new__ (hspace, lev, fun_on_deact, fun_on_deact_finer_level);
+%     aux = matrix_basis_change_new__ (hspace, lev, fun_on_deact, fun_on_deact_finer_level);
+    aux = matrix_basis_change__ (hspace, lev, fun_on_deact, fun_on_deact_finer_level);
 
     fun_on_deact = fun_on_deact_finer_level;
     Csub{lev} = [aux*Csub{lev-1}, I];
