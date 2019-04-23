@@ -32,7 +32,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function C = matrix_basis_change__ (hspace, lev, ind_coarse)
+function C = matrix_basis_change__ (hspace, lev, ind_coarse, ind_fine)
 
 npatch = hspace.space_of_level(1).npatch;
 
@@ -42,12 +42,18 @@ Proj = hspace.Proj(lev-1,:);
 
 C = sparse (sp_fine.ndof, sp_coarse.ndof);
 
-if (nargin == 3)
+if (nargin == 4)
   for iptc = 1:npatch
+%     spc_patch = sp_coarse.sp_patch{iptc};
+%     spf_patch = sp_fine.sp_patch{iptc};
+%     [~,local_indices_coarse,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
+%     [~,local_indices_fine,~] = intersect (sp_fine.gnum{iptc}, ind_fine);
+%     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices_coarse, local_indices_fine);
+%     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
-    [~,local_indices,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
-    Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices);
+    [~,local_indices_coarse,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
+    Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc},local_indices_coarse);
     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
   end
 else
