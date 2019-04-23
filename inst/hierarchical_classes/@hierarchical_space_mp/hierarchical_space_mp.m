@@ -55,6 +55,7 @@
 %      hspace_refine:         refine the hierarchical space
 %      hspace_check_partition_of_unity: check whether the computed coefficients
 %                             for the partition of unity are correct (used for debugging)
+%      hspace_admissibility_class: check the admissibility class of the associated mesh.
 %      hspace_add_new_level:  add a new level, initialized without active functions
 %      hspace_remove_empty_level: remove the finest level, if it is empty
 %
