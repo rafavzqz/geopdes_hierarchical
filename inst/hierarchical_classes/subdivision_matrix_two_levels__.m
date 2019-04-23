@@ -190,20 +190,63 @@ elseif (nargin == 5)
     rows = []; cols = []; vals = [];
     cumsum_ndof_coarse = sp_coarse.cumsum_ndof;  
     cumsum_ndof_fine = sp_fine.cumsum_ndof;  
-    
-    for icomp = 1:ncomp_param
-      ind_comp_coarse = ind_coarse(ind_coarse>cumsum_ndof_coarse(icomp) & ...
-                            ind_coarse<=cumsum_ndof_coarse(icomp+1)) - cumsum_ndof_coarse(icomp);
-      ind_comp_fine = ind_fine(ind_fine>cumsum_ndof_fine(icomp) & ...
-                            ind_fine<=cumsum_ndof_fine(icomp+1)) - cumsum_ndof_fine(icomp);
+%%%%%%%%%%%%% To be checked if this part can be done recursively    
+%     for icomp = 1:ncomp_param
+%       ind_comp_coarse = ind_coarse(ind_coarse>cumsum_ndof_coarse(icomp) & ...
+%                             ind_coarse<=cumsum_ndof_coarse(icomp+1)) - cumsum_ndof_coarse(icomp);
+%       ind_comp_fine = ind_fine(ind_fine>cumsum_ndof_fine(icomp) & ...
+%                             ind_fine<=cumsum_ndof_fine(icomp+1)) - cumsum_ndof_fine(icomp);
+% 
+%       spc_scalar = sp_coarse.scalar_spaces{icomp};
+%       spf_scalar = sp_fine.scalar_spaces{icomp};
+%       [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp_coarse, ind_comp_fine);
+%       rows = [rows; rows_c+cumsum_ndof_fine(icomp)]; 
+%       cols = [cols; cols_c+cumsum_ndof_coarse(icomp)]; 
+%       vals = [vals; vals_c];
+% 
+%     end
 
-      spc_scalar = sp_coarse.scalar_spaces{icomp};
-      spf_scalar = sp_fine.scalar_spaces{icomp};
-      [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp_coarse, ind_comp_fine);
-      rows = [rows; rows_c+cumsum_ndof_fine(icomp)]; 
-      cols = [cols; cols_c+cumsum_ndof_coarse(icomp)]; 
-      vals = [vals; vals_c];
+    counter_comp = cell(1,ncomp_param); sub_coarse = cell (ndim, 1);
+    for icomp = 1:ncomp_param
+      ind_comp_global{icomp} = ind_coarse(ind_coarse>cumsum_ndof_coarse(icomp) & ...
+                            ind_coarse<=cumsum_ndof_coarse(icomp+1));  
+      ind_comp = ind_comp_global{icomp} - cumsum_ndof_coarse(icomp);
+      [sub_coarse{:}] = ind2sub ([sp_coarse.ndof_dir(icomp,:), 1], ind_comp);
+
+      rows_c{icomp} = zeros (prod (sp_fine.scalar_spaces{icomp}.degree+1)*numel(ind_comp), 1); vals_c{icomp} = rows_c{icomp};
+      ncounter = 0;
+      for ii = 1:numel(ind_comp)
+        Caux = 1;
+        for idim = 1:ndim
+          Caux = kron (Proj{icomp,idim}(:,sub_coarse{idim}(ii)), Caux);
+        end
+        [ir, ic, iv] = find (Caux);
+        [~,IA,IB] = intersect(ir + cumsum_ndof_fine(icomp),ind_fine);
+        counter_comp{icomp} = [counter_comp{icomp}, numel(IB)];
+        rows_c{icomp}(ncounter+(1:numel(IB))) = IB;
+        vals_c{icomp}(ncounter+(1:numel(IB))) = iv(IA);
+        ncounter = ncounter + numel (IB);
+      end
+      rows_c{icomp} = rows_c{icomp}(1:ncounter);
+      vals_c{icomp} = vals_c{icomp}(1:ncounter);
     end
+    i_counter = zeros(1,ncomp_param);
+    ii = 1;
+    for ind = ind_coarse'
+        for icomp = 1:ncomp_param
+            ind_c = find(ind==ind_comp_global{icomp}, 1);
+            if(~isempty(ind_c))
+                step = counter_comp{icomp}(ind_c);
+                range = i_counter(icomp)+1:(i_counter(icomp)+step);
+                cols_i(1:step,1) = ii;
+                rows = [rows; rows_c{icomp}(range)]; vals = [vals; vals_c{icomp}(range)];
+                i_counter(icomp) = i_counter(icomp) + step; ii = ii + 1; 
+                cols = [cols; cols_i]; cols_i = [];
+                break;
+            end
+        end
+    end
+
   end
   if (nargout == 1)
     C = sparse (rows, cols, vals, numel(ind_fine), numel(ind_coarse));
