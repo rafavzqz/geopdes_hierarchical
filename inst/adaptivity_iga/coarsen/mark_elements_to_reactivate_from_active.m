@@ -8,7 +8,11 @@
 %   marked:  cell-array with the indices of marked cells (or functions) for each level, in the tensor-product setting
 %   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
 %   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
-%   adaptivity_data: a structure with the data for the adaptivity method.
+%   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
+%     - coarsening_flag: either 'all' (default) or 'any', to decide how
+%                        many children must be marked to reactivate an element.
+%     - adm_class: admissibility class, an integer value, zero by default (no admissibility).
+%     - adm_type:  admissibility_type, either 'T-admissible' (default) or 'H-admissible'.
 %
 % OUTPUT:
 %
@@ -66,10 +70,8 @@ for lev = hmsh.nlevels-1:-1:1
     children_per_cell = children_per_cell(:,ind);
 
     if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
-% To reactivate one cell, only one child needs to be marked
       deact_marked{lev} = parents;
     elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
-% To reactivate one cell, all the children must be marked
       ind2 = all (ismember (children_per_cell, marked{lev+1}));
       parents = parents(ind2);
       children_per_cell = children_per_cell(:,ind2);
