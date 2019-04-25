@@ -47,27 +47,21 @@ end
 max_est = max (est);
 aux_marked = zeros (size (est));
 
-% est0 = [];
-% for lev = 1:hmsh.nlevels
-%   degree = min (hspace.space_of_level(lev).degree);
-%   est0 = [est0, hmsh.msh_lev{lev}.element_size.^degree];
-% end
-% est0 = 1e4 * est0(:);
-
 switch adaptivity_data.mark_strategy
-  case 'GR'
-    aux_marked = ones (size (est));
-  case {'MS', 'GERS'}
-%     aux_marked(est < adaptivity_data.mark_param_coarsening * max_est) = 1;
-    nn = round(adaptivity_data.mark_param_coarsening*numel(est));
-    [~, ind] = sort(est);
-    aux_marked(ind(1:nn)) = 1;
-%   case 'GERS'
-%     est_sum2 = sum (est.^2);
-%     [est2_ordered, perm] = sort (est.^2, 'ascend');
-%     index = find (cumsum (est2_ordered.^2) < adaptivity_data.mark_param^2 * est_sum2, 1, 'last');
-% %     index = find (est2_ordered < 1.001 * est2_ordered(index), 1, 'last');
-%     aux_marked(perm(1:index)) = 1;
+ case 'GR'
+  aux_marked = ones (size (est));
+ case {'MS', 'GERS'}
+  nn = round(adaptivity_data.mark_param_coarsening*numel(est));
+  [~, ind] = sort(est);
+  aux_marked(ind(1:nn)) = 1;
+% case 'MS'
+%  aux_marked(est < adaptivity_data.mark_param_coarsening * max_est) = 1;
+% case 'GERS'
+%  est_sum2 = sum (est.^2);
+%  [est2_ordered, perm] = sort (est.^2, 'ascend');
+%  index = find (cumsum (est2_ordered.^2) < adaptivity_data.mark_param^2 * est_sum2, 1, 'last');
+% %  index = find (est2_ordered < 1.001 * est2_ordered(index), 1, 'first');
+%  aux_marked(perm(1:index)) = 1;
 end
 
 marked_list = find (aux_marked);
