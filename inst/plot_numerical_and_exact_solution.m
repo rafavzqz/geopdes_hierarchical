@@ -42,10 +42,10 @@ else
 end
 
 if (isa (hspace, 'sp_scalar'))
-  sp_aux = space;
+  sp_aux = hspace;
   is_vector = false;
 elseif (isa (hspace, 'sp_vector'))
-  sp_aux = space.scalar_spaces{1};
+  sp_aux = hspace.scalar_spaces{1};
   is_vector = true;
 elseif (isa (hspace, 'hierarchical_space'))
   if (isa (hspace.space_of_level(1), 'sp_scalar'))
