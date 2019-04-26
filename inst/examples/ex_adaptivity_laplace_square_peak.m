@@ -16,15 +16,15 @@ problem_data.grad_c_diff = @(x, y) cat (1, ...
 % Source and boundary terms
 C = 100;
 normax2 = @(x,y) ((x-.5).^2+(y-.5).^2);
-problem_data.f = @(x,y) 4*C*(1-C*normax2(x,y)).*problem_data.uex(x,y);
+problem_data.f = @(x,y) 4*C*(1-C*normax2(x,y)).*exp(-C*normax2(x,y));
 problem_data.g = @(x, y, ind) zeros(size(x));
 problem_data.h = @(x, y, ind) problem_data.uex(x,y);
 
 % Exact solution (optional)
-problem_data.uex =@(x,y) exp(-C*normax2(x,y));
-problem_data.graduex = @(x,y) -2*C*cat (1, ...
-            reshape (problem_data.uex(x,y).*(x-.5), [1, size(x)]), ...
-            reshape (problem_data.uex(x,y).*(y-.5), [1, size(x)]));
+% problem_data.uex =@(x,y) exp(-C*normax2(x,y));
+% problem_data.graduex = @(x,y) -2*C*cat (1, ...
+%             reshape (problem_data.uex(x,y).*(x-.5), [1, size(x)]), ...
+%             reshape (problem_data.uex(x,y).*(y-.5), [1, size(x)]));
         
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
