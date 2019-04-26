@@ -19,6 +19,12 @@
 %    deact_marked:  cell-array with the indices of marked cells (or functions) for each level to be reactivated, in the tensor-product setting
 %    num         :  number of cells (or elements) to be reactivated
 %
+%    The coarsening algorithm is detailed in the paper
+%      M. Carraturo, C. Giannelli, A. Reali, R. Vazquez
+%      Suitably graded THB-spline refinement and coarsening: Towards 
+%      an adaptive isogeometric analysis of additive manufacturing processes. 
+%      Comput. Methods Appl. Mech. Engrg., 2019.
+%
 % Copyright (C) 2016, 2017, 2018 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2018, 2019 Massimo Carraturo, Rafael Vazquez
 %
