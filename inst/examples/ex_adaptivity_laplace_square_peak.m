@@ -21,10 +21,10 @@ problem_data.g = @(x, y, ind) zeros(size(x));
 problem_data.h = @(x, y, ind) exp(-C*normax2(x,y));
 
 % Exact solution (optional)
-% problem_data.uex =@(x,y) exp(-C*normax2(x,y));
-% problem_data.graduex = @(x,y) -2*C*cat (1, ...
-%             reshape (problem_data.uex(x,y).*(x-.5), [1, size(x)]), ...
-%             reshape (problem_data.uex(x,y).*(y-.5), [1, size(x)]));
+problem_data.uex =@(x,y) exp(-C*normax2(x,y));
+problem_data.graduex = @(x,y) -2*C*cat (1, ...
+            reshape (problem_data.uex(x,y).*(x-.5), [1, size(x)]), ...
+            reshape (problem_data.uex(x,y).*(y-.5), [1, size(x)]));
         
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
