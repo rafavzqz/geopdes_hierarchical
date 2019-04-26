@@ -18,7 +18,7 @@ C = 100;
 normax2 = @(x,y) ((x-.5).^2+(y-.5).^2);
 problem_data.f = @(x,y) 4*C*(1-C*normax2(x,y)).*exp(-C*normax2(x,y));
 problem_data.g = @(x, y, ind) zeros(size(x));
-problem_data.h = @(x, y, ind) problem_data.uex(x,y);
+problem_data.h = @(x, y, ind) exp(-C*normax2(x,y));
 
 % Exact solution (optional)
 % problem_data.uex =@(x,y) exp(-C*normax2(x,y));
