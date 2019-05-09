@@ -5,10 +5,12 @@
 % Compute the new indices and number of dofs related to the localized Csub
 %
 % INPUT:  
-%
+%   sp_lev:    object representing the current space of level (see space_scalar / space_vector)
+%   hspace:    object representing the hierarchical space (see hierarchical_space)
+%   hmsh:      object representing the hierarchical mesh (see hierarchical_mesh)
 %
 % OUTPUT:
-%
+%   sp_lev:    object representing the current space of level (see space_scalar / space_vector)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017-2019 Rafael Vazquez
@@ -28,11 +30,10 @@
 
 function sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, hmsh, ilev)
 
-indices = unique (sp_lev.connectivity);
-[~,position] = ismember (sp_lev.connectivity, indices);
 fun_on_active = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
 fun_on_deact = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
-fun_on_deact = union (fun_on_active, fun_on_deact);
+fun_on_deact = union (fun_on_active, fun_on_deact, 'stable');
+[~,position] = ismember (sp_lev.connectivity, fun_on_deact);
 sp_lev.ndof = numel (fun_on_deact);
 sp_lev.connectivity = position;
 

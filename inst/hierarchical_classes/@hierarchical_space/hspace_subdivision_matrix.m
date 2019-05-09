@@ -77,3 +77,5 @@ elseif (strcmpi (option, 'full'))
     clear aux I
   end
 end
+
+end

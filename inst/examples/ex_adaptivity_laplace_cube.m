@@ -30,25 +30,26 @@ problem_data.graduex = @(x, y, z) -2*C*cat (1, ...
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [2 2 2];      % Degree of the splines
-method_data.regularity  = [1 1 1];      % Regularity of the splines
-method_data.nsub_coarse = [4 6 3];      % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+d = 2;
+method_data.degree      = [d d d];      % Degree of the splines
+method_data.regularity  = [d-1 d-1 d-1];      % Regularity of the splines
+method_data.nsub_coarse = [2 2 2];      % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2 2];      % Number of subdivisions for each refinement
-method_data.nquad       = [3 3 3];      % Points for the Gaussian quadrature rule
+method_data.nquad       = [d+1 d+1 d+1];      % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
-method_data.truncated   = 0;            % 0: False, 1: True
+method_data.truncated   = 1;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-adaptivity_data.flag = 'elements';
-% adaptivity_data.flag = 'functions';
+% adaptivity_data.flag = 'elements';
+adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
-adaptivity_data.max_ndof = 5000;
+adaptivity_data.max_ndof = 6000;
 adaptivity_data.num_max_iter = 5;
-adaptivity_data.max_nel = 5000;
+adaptivity_data.max_nel = 6000;
 adaptivity_data.tol = 1e-5;
 
 % GRAPHICS

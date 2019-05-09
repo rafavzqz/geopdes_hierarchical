@@ -26,12 +26,13 @@ problem_data.graduex = @(x, y) cat (1, ...
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-m = 2;
-method_data.degree      = [2 2];        % Degree of the splines
-method_data.regularity  = [1 1];        % Regularity of the splines
+m = 1;
+d = 3;
+method_data.degree      = [d d];        % Degree of the splines
+method_data.regularity  = [d-1 d-1];        % Regularity of the splines
 method_data.nsub_coarse = [2 2].^m;        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rule
+method_data.nquad       = [d+1 d+1];        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 
@@ -43,9 +44,9 @@ adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
-adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 12;
-adaptivity_data.max_nel = 15000;
+adaptivity_data.max_ndof = 7000;
+adaptivity_data.num_max_iter = 16;
+adaptivity_data.max_nel = 7000;
 adaptivity_data.tol = 1e-10;
 
 % GRAPHICS
@@ -66,7 +67,6 @@ figure; subplot (1,2,1)
 surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 subplot(1,2,2)
 surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));
-
 
 %!test
 %! problem_data.geo_name = 'geo_square.txt';
