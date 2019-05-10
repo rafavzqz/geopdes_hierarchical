@@ -179,22 +179,25 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change__ (hspace, lev+1, fun_on_act_deact);
-
       [~,act_indices] = intersect (fun_on_act_deact, active{lev});
 
       elems = union (hmsh.active{lev+1}, hmsh.deactivated{lev+1});
       fun_on_act_deact_new = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), elems);
+      
+      active_and_deact = union (active{lev+1}, fun_on_act_deact_new);
 
+      Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev}, active_and_deact);
+      
       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
       ndof_until_lev = sum (ndof_per_level(1:lev));
 
       aux = sparse (ndof_until_lev + numel(fun_on_act_deact_new), size(Cref,2));
       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
       aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
-      aux(ndof_until_lev+(1:numel(fun_on_act_deact_new)),:) = ...
-        Cmat(fun_on_act_deact_new,fun_on_act_deact) * Cref(ndof_prev_levs+1:end,:);
 
+      aux(ndof_until_lev+(1:numel(fun_on_act_deact_new)),:) = ...
+        Cmat(1:numel(fun_on_act_deact_new),1:numel(fun_on_act_deact{lev})) * Cref(ndof_prev_levs+1:end,:); 
+    
       fun_on_act_deact = fun_on_act_deact_new;
       ndlev = hspace.ndof_per_level(lev+1);
       [~,indices] = intersect (fun_on_act_deact, hspace.active{lev+1});
@@ -220,11 +223,12 @@ if (nargout == 2 || ~hspace.truncated)
     Cref = Id;
 
     for lev = 1:hspace.nlevels-1
-      Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev});
 
       [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
       [~,act_indices] = intersect (active_and_deact, active{lev});
       active_and_deact = union (active{lev+1}, deactivated{lev+1});
+
+      Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev}, active_and_deact);
 
       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
       ndof_until_lev = sum (ndof_per_level(1:lev));
@@ -233,8 +237,8 @@ if (nargout == 2 || ~hspace.truncated)
       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
       aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
       aux(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
-        Cmat(active_and_deact,deactivated{lev}) * Cref(ndof_prev_levs+deact_indices,:); 
-
+        Cmat(1:numel(active_and_deact),1:numel(deactivated{lev})) * Cref(ndof_prev_levs+deact_indices,:);
+    
       ndlev = hspace.ndof_per_level(lev+1);
       [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
       Id = sparse (numel(active_and_deact), ndlev);

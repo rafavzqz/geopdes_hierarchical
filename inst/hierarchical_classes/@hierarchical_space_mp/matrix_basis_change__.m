@@ -40,22 +40,25 @@ sp_coarse = hspace.space_of_level(lev-1);
 sp_fine = hspace.space_of_level(lev);
 Proj = hspace.Proj(lev-1,:);
 
-C = sparse (sp_fine.ndof, sp_coarse.ndof);
+% C = sparse (sp_fine.ndof, sp_coarse.ndof);
 
 if (nargin == 4)
   for iptc = 1:npatch
-%     spc_patch = sp_coarse.sp_patch{iptc};
-%     spf_patch = sp_fine.sp_patch{iptc};
-%     [~,local_indices_coarse,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
-%     [~,local_indices_fine,~] = intersect (sp_fine.gnum{iptc}, ind_fine);
-%     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices_coarse, local_indices_fine);
-%     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
-    [~,local_indices_coarse,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
-    Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc},local_indices_coarse);
-    C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
+    
+    [~,local_indices_coarse, ind_c] = intersect (sp_coarse.gnum{iptc}, ind_coarse, 'stable');
+    [~,local_indices_fine, ind_f] = intersect (sp_fine.gnum{iptc}, ind_fine, 'stable');
+    Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices_coarse, local_indices_fine);
+ 
+    C(ind_f, ind_c) = Cpatch;
+
   end
+  if (hspace.truncated)
+    indices = union (hspace.active{lev}, hspace.deactivated{lev});
+    [~, loc] = ismember(indices,ind_fine);  
+    C(loc,:) = 0;
+  end  
 else
   for iptc = 1:npatch
     spc_patch = sp_coarse.sp_patch{iptc};
@@ -63,11 +66,11 @@ else
     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc});
     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
   end
-end
-
-if (hspace.truncated)
-  indices = union (hspace.active{lev}, hspace.deactivated{lev});
-  C(indices,:) = 0;
+  
+  if (hspace.truncated)
+    indices = union (hspace.active{lev}, hspace.deactivated{lev});
+    C(indices,:) = 0;
+  end
 end
 
 end

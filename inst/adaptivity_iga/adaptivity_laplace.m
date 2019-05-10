@@ -188,6 +188,7 @@ while (1)
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')
   end
+ 
 % REFINE
   [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
 end
