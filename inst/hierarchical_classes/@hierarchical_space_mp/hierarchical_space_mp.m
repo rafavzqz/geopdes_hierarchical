@@ -22,8 +22,8 @@
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
 %    Proj           (hmsh.nlevels-1 x npatch cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels for each patch
-%                                           Proj{l,i} is a cell-array of dimension ndim, with the information for
-%                                           the univariate Projectors on the patch (see also hierarchical_space)
+%                                           Proj{l,k} is a cell-array of dimension ndim, with the information for
+%                                           the univariate Projectors on the kth patch (see also hierarchical_space)
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
 %    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
