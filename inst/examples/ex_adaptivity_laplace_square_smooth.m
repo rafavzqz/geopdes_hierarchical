@@ -4,8 +4,8 @@ clear problem_data
 problem_data.geo_name = 'geo_square.txt';
 
 % Type of boundary conditions for each side of the domain
-problem_data.nmnn_sides   = [];
-problem_data.drchlt_sides = [1 2 3 4];
+problem_data.nmnn_sides   = [2 3 4];
+problem_data.drchlt_sides = [1];
 
 % Physical parameters
 problem_data.c_diff  = @(x, y) ones(size(x));
@@ -26,27 +26,25 @@ problem_data.graduex = @(x, y) cat (1, ...
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-m = 1;
-d = 3;
-method_data.degree      = [d d];        % Degree of the splines
-method_data.regularity  = [d-1 d-1];        % Regularity of the splines
-method_data.nsub_coarse = [2 2].^m;        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.degree      = [3 3];        % Degree of the splines
+method_data.regularity  = [2 2];        % Regularity of the splines
+method_data.nsub_coarse = [3 3];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = [d+1 d+1];        % Points for the Gaussian quadrature rule
-method_data.space_type  = 'standard'; % 'simplified' (only children functions) or 'standard' (full basis)
+method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rule
+method_data.space_type  = 'simplified'; % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 0;            % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-adaptivity_data.flag = 'elements';
-% adaptivity_data.flag = 'functions';
+% adaptivity_data.flag = 'elements';
+adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = .5;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
-adaptivity_data.max_ndof = 7000;
-adaptivity_data.num_max_iter = 16;
-adaptivity_data.max_nel = 7000;
+adaptivity_data.max_ndof = 15000;
+adaptivity_data.num_max_iter = 7;
+adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 1e-10;
 
 % GRAPHICS
