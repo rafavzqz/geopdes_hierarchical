@@ -46,7 +46,7 @@ function rhs = op_f_v_hier (hspace, hmsh, f)
       end
       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
       
-      sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, hmsh, ilev);
+      sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev);
       
       b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, f(x{:}));
 

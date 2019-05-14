@@ -54,8 +54,8 @@ function varargout = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu)
       spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true, 'divergence', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true, 'divergence', true);
 
-      spu_lev = change_connectivity_localized_Csub (spu_lev, hspu, hmsh, ilev);
-      spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, hmsh, ilev);
+      spu_lev = change_connectivity_localized_Csub (spu_lev, hspu, ilev);
+      spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
 
       M_lev = op_su_ev (spu_lev, spv_lev, hmsh.msh_lev{ilev}, lambda (x{:}), mu (x{:}));
 

@@ -58,13 +58,8 @@ for ilev = 1:hmsh.boundary(iside).nlevels
         x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
       end
       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true); %%%% find a smarter way here
-      indices = unique (sp_lev.connectivity);
-      [~,position] = ismember (sp_bnd_struct.connectivity, indices);
-      fun_on_active = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
-      fun_on_deact = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
-      fun_on_deact = union (fun_on_active, fun_on_deact);
-      sp_bnd_struct.ndof = numel (fun_on_deact);
-      sp_bnd_struct.connectivity = position;
+
+      sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev);
 
       b_lev = op_gradv_n_f (sp_bnd_struct, msh_side, f(x{:}, iside));
 

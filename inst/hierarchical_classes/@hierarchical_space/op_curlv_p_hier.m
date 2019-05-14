@@ -57,6 +57,10 @@ function varargout = op_curlv_p_hier (hspv, hspp, hmsh, coeff)
       end
       spp_lev = sp_evaluate_element_list (hspp.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'curl', true);
+
+      spp_lev = change_connectivity_localized_Csub (spp_lev, hspp, ilev);
+      spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
+
       M_lev = op_curlv_p (spv_lev, spp_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
 
       dofs_p = 1:ndofs_p;

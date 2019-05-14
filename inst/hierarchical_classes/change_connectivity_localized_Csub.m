@@ -1,16 +1,17 @@
 % CHANGE_CONNECTIVITY_LOCALIZED_CSUB: compute the new connectivity related to the localized Csub.
 %
-% function sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, hmsh)
+% function sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, level)
 %
 % Compute the new indices and number of dofs related to the localized Csub
 %
 % INPUT:  
-%   sp_lev:    object representing the current space of level (see space_scalar / space_vector)
-%   hspace:    object representing the hierarchical space (see hierarchical_space)
-%   hmsh:      object representing the hierarchical mesh (see hierarchical_mesh)
+%   sp_lev: object representing the current space of level (see space_scalar / space_vector)
+%   hspace: object representing the hierarchical space (see hierarchical_space)
+%   level:  level of the input space of fixed level
 %
 % OUTPUT:
-%   sp_lev:    object representing the current space of level (see space_scalar / space_vector)
+%   sp_lev: object representing the current space of level (see space_scalar / space_vector)
+%            with a modified connectivity
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017-2019 Rafael Vazquez
@@ -28,13 +29,11 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, hmsh, ilev)
+function sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev)
 
-fun_on_active = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
-fun_on_deact = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
-fun_on_deact = union (fun_on_active, fun_on_deact, 'stable');
-[~,position] = ismember (sp_lev.connectivity, fun_on_deact);
-sp_lev.ndof = numel (fun_on_deact);
+row_indices = hspace.Csub_row_indices{ilev};
+[~,position] = ismember (sp_lev.connectivity, row_indices);
+sp_lev.ndof = numel (row_indices);
 sp_lev.connectivity = position;
 
 end

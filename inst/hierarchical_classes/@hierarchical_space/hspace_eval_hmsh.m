@@ -97,8 +97,8 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
       msh_level = hmsh.msh_lev{ilev};
       sp_level = eval_element_list (hspace.space_of_level(ilev), msh_level);
       
-      u_lev = sparse (sp_level.ndof, 1);
-      u_lev(hspace.Csub_row_indices{ilev}) = hspace.Csub{ilev}*u(1:last_dof(ilev));
+      sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
+      u_lev = hspace.Csub{ilev}*u(1:last_dof(ilev));
       
       [eu_lev, F_lev] = eval_fun (u_lev, sp_level, msh_level);
       for iopt = 1:nopts
