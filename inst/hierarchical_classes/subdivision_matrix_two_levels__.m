@@ -213,7 +213,7 @@ else
     for icomp = 1:ncomp_param
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      Caux{icomp} = subdivision_matrix_two_levels_rafa__ (spc_scalar, spf_scalar, Proj(icomp,:));
+      Caux{icomp} = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:));
     end
     C = blkdiag (Caux{:});
     
@@ -228,7 +228,7 @@ else
 
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels_rafa__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp);
+      [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_comp);
       rows = [rows; rows_c+cumsum_ndof_fine(icomp)]; 
       cols = [cols; cols_c+cumsum_ndof_coarse(icomp)]; 
       vals = [vals; vals_c];
@@ -248,7 +248,7 @@ else
 
       spc_scalar = sp_coarse.scalar_spaces{icomp};
       spf_scalar = sp_fine.scalar_spaces{icomp};
-      [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels_rafa__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_scalar_coarse, ind_scalar_fine);
+      [rows_c, cols_c, vals_c] = subdivision_matrix_two_levels__ (spc_scalar, spf_scalar, Proj(icomp,:), ind_scalar_coarse, ind_scalar_fine);
       [~,rows_c] = ismember (ind_scalar_fine(rows_c)+cumsum_ndof_fine(icomp), ind_fine);
       [~,cols_c] = ismember (ind_scalar_coarse(cols_c)+cumsum_ndof_coarse(icomp), ind_coarse);
       rows = [rows; rows_c];
