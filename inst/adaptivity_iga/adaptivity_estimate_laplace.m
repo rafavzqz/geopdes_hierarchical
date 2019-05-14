@@ -163,7 +163,7 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
         ind_e = (Ne(ilev)+1):Ne(ilev+1);
         sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
         
-        sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, hmsh, ilev);
+        sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev);
         
         b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
         dofs = 1:ndofs;
@@ -204,7 +204,8 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
             sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
             msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
             sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
-
+            sp_bnd_struct = change_connectivity_localized_Csub (sp_bnd_struct, hspace, ilev);
+        
             grad = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
            
             grad_dot_n = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
@@ -224,6 +225,7 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
             elseif (strcmpi (flag, 'functions'))
               msh_side = msh_evaluate_element_list (hmsh.boundary(iside).mesh_of_level(ilev), hmsh.boundary(iside).active{ilev});
               sp_bnd = sp_evaluate_element_list (hspace.boundary(iside).space_of_level(ilev), msh_side, 'value', true);
+              sp_bnd = change_connectivity_localized_Csub (sp_bnd, hspace.boundary(iside), ilev);
               est_level = op_f_v (sp_bnd, msh_side, coeff);
               dofs = hspace.boundary(iside).dofs(1:ndofs(ilev));
               est(dofs) = est(dofs) + hspace.boundary(iside).Csub{ilev}.' * est_level;
@@ -352,6 +354,7 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
 %    int_{I \cap supp B} [A dU/dn]^2 B
 %
   est = zeros (hspace.ndof, 1);
+  Csub = hspace_subdivision_matrix (hspace);
 
   patch(1) = interface.patch1;
   patch(2) = interface.patch2;
@@ -362,7 +365,7 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
     if (~isempty (interface_elements{lev}{1}))
       ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
       Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-      u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
+      u_lev = Csub{lev} * u(1:ndof_until_lev);
 
       grad_dot_normal = cell (2, 1);
       for ii = [2 1] % This ordering allows me to keep the variables from the first (master) side
@@ -380,7 +383,7 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
  
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
-                
+
         grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
         grad_dot_normal{ii} = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
 
@@ -398,7 +401,7 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
 % XXXXX I should use a more local numbering, as in the branch localize_Csub
       b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
       b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
-      est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
+      est(1:ndof_until_lev) = est(1:ndof_until_lev) + Csub{lev}.' * b_lev;
     end
   end
 
