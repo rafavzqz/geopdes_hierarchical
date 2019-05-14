@@ -31,7 +31,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function Csub = hspace_subdivision_matrix (hspace, hmsh, option)
+function [Csub, row_indices] = hspace_subdivision_matrix (hspace, hmsh, option)
 
 if (nargin == 1)
   option = 'full';
@@ -42,6 +42,7 @@ elseif (~strcmpi (option, 'reduced') && ~strcmpi (option, 'full'))
 end
 
 Csub = cell (hspace.nlevels, 1);
+row_indices = cell (hspace.nlevels, 1);
 Csub{1} = speye (hspace.space_of_level(1).ndof);
 
 if (strcmpi (option, 'reduced'))
@@ -49,6 +50,7 @@ if (strcmpi (option, 'reduced'))
   fun_on_active = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.active{1});
   fun_on_deact = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.deactivated{1});
   fun_on_deact = union (fun_on_active, fun_on_deact, 'stable');
+  row_indices{1} = fun_on_deact;
 
   for lev = 2:hspace.nlevels % This allows to compute Csub for finer meshes
 
@@ -64,7 +66,7 @@ if (strcmpi (option, 'reduced'))
 
     fun_on_deact = fun_on_deact_finer_level;
     Csub{lev} = [aux*Csub{lev-1}, I];
-
+    row_indices{lev} = fun_on_deact;
   end
   
 elseif (strcmpi (option, 'full'))

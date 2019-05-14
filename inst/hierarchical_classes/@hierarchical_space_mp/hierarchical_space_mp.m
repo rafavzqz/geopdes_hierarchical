@@ -30,6 +30,8 @@
 %    deactivated   (1 x nlevels cell-array) List of deactivated functions on each level
 %    Csub          (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
 %                                            as linear combinations of splines (active and inactive) of the current level
+%    Csub_row_indices (1 x hmsh.nlevels cell-array) indices of the rows stored in Csub. 
+%                                            This allows to save memory space.
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
 %    METHOD NAME
@@ -117,6 +119,7 @@ hspace.deactivated{1} = [];
 hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = cell (0, hmsh.npatch);
 hspace.Csub{1} = speye (space.ndof);
+hspace.Csub_row_indices{1} = 1:space.ndof;
 
 hspace.dofs = [];
 

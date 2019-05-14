@@ -48,7 +48,7 @@ else
 end
 
 % Update the matrices for changing basis
-hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
+[hspace.Csub, hspace.Csub_row_indices] = hspace_subdivision_matrix (hspace, hmsh);
 
 % Fill the information for the boundaries
 if (boundary)% && hmsh.ndim > 1)
