@@ -97,15 +97,10 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
       msh_level = hmsh.msh_lev{ilev};
       sp_level = eval_element_list (hspace.space_of_level(ilev), msh_level);
       
-      indices = unique (sp_level.connectivity);
-      [~,position] = ismember (sp_level.connectivity, indices);
-      fun_on_active = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.active{ilev});
-      fun_on_deact = sp_get_basis_functions (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), hmsh.deactivated{ilev});
-      fun_on_deact = union (fun_on_active, fun_on_deact);
-      sp_level.ndof = numel (fun_on_deact);
-      sp_level.connectivity = position;
+      u_lev = sparse (sp_level.ndof, 1);
+      u_lev(hspace.Csub_row_indices{ilev}) = hspace.Csub{ilev}*u(1:last_dof(ilev));
       
-      [eu_lev, F_lev] = eval_fun (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
+      [eu_lev, F_lev] = eval_fun (u_lev, sp_level, msh_level);
       for iopt = 1:nopts
         eu{iopt} = cat (catdir(iopt), eu{iopt}, eu_lev{iopt});
       end
