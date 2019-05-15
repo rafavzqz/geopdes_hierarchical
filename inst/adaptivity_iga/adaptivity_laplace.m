@@ -101,6 +101,9 @@ end
 if (~isfield (plot_data, 'plot_discrete_sol'))
   plot_data.plot_discrete_sol = false;
 end
+if (~isfield (problem_data, 'uex'))
+  problem_data.uex = [];
+end
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)
@@ -116,7 +119,8 @@ if (isfield (problem_data, 'graduex'))
     err_l2 = gest;
     err_h1s = gest;
 end
-  
+
+
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 % ADAPTIVE LOOP

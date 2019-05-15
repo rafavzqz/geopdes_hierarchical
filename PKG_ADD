@@ -1,5 +1,6 @@
 dirlist        = {"examples", "initialize", "hierarchical_classes", ...
-          "adaptivity_iga", "adaptivity_iga/refine", "adaptivity_iga/coarsen"};
+          "adaptivity_iga", "adaptivity_iga/refine", "adaptivity_iga/coarsen", ...
+          "adaptivity_iga/refine/admissible"};
 
 dir = fileparts (mfilename ("fullpath"));
 

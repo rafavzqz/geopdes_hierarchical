@@ -19,6 +19,7 @@
 %   hspace: object representing the coarsened space of hierarchical splines (see hierarchical_space)
 %
 % Copyright (C) 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2018-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -51,10 +52,10 @@ reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_
 if (nargout == 3)
   hspace_fine = hspace;
   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+  warning ('Coarsening matrix computed with an expensive L^2 projection')
   M = op_u_v_hier (hspace, hspace, hmsh);
   G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
   Ccoar = M \ G; Ccoar(abs(Ccoar) < 1e-12) = 0;
-%   [hspace,Ccoar] = hspace_coarsen_massimo3 (hspace, hmsh, reactivated_fun, removed_cells);
 else
   hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
 end
