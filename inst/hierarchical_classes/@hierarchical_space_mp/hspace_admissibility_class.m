@@ -43,7 +43,7 @@ if (nargin == 3)
   end
   if (recompute)
     hspace.truncated = ~hspace.truncated;
-    hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
+    [hspace.Csub, hspace.Csub_row_indices] = hspace_subdivision_matrix (hspace, hmsh);
   end
 end
 
@@ -58,7 +58,8 @@ for lev = 1:hmsh.nlevels
   [~,funs] = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.active{lev});
   for iel = 1:hmsh.nel_per_level(lev)
     el_number = iel+shifting_index(lev);
-    [~,inds{el_number}] = find (hspace.Csub{lev}(funs{iel},:));
+    [~,position] = ismember (funs{iel}, hspace.Csub_row_indices{lev});
+    [~,inds{el_number}] = find (hspace.Csub{lev}(position,:));
     minimum_level(el_number) = find (min (inds{el_number}) < cumsum(hspace.ndof_per_level), 1);
     maximum_level(el_number) = find (max (inds{el_number}) <= cumsum(hspace.ndof_per_level), 1);
   end

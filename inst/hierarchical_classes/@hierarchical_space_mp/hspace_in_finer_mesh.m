@@ -64,6 +64,6 @@ for ilev = hspace.nlevels+1:hmsh_fine.nlevels
   hspace.ndof_per_level(ilev) = 0;
 end
 
-hspace.Csub = hspace_subdivision_matrix (hspace, hmsh_fine);
+[hspace.Csub, hspace.Csub_row_indices] = hspace_subdivision_matrix (hspace, hmsh_fine);
 
 end

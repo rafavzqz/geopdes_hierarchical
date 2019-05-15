@@ -67,8 +67,8 @@ function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff, patch_list)
         spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), msh_lev, 'value', false, 'gradient', true);
         spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), msh_lev, 'value', false, 'gradient', true);
         
-        spu_lev = change_connectivity_localized_Csub (spu_lev, hspu, hmsh, ilev);
-        spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, hmsh, ilev);
+        spu_lev = change_connectivity_localized_Csub (spu_lev, hspu, ilev);
+        spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
 
         K_lev = op_gradu_gradv (spu_lev, spv_lev, msh_lev, coeff (x{:}));
         
