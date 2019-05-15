@@ -15,6 +15,7 @@
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017-2019 Rafael Vazquez
+% Copyright (C) 2018-2019 Luca Coradello
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -33,6 +34,9 @@ function sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev)
 
 row_indices = hspace.Csub_row_indices{ilev};
 [~,position] = ismember (sp_lev.connectivity, row_indices);
+if (any (~position))
+  error ('The given indices do not contain all the functions.')
+end
 sp_lev.ndof = numel (row_indices);
 sp_lev.connectivity = position;
 
