@@ -17,6 +17,7 @@
 %                 hspace.space_of_level(lev).ndof  x  sum(hspace.ndof_per_level(1:lev))
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2018, 2019 Luca Coradello, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -46,17 +47,16 @@ row_indices = cell (hspace.nlevels, 1);
 Csub{1} = speye (hspace.space_of_level(1).ndof);
 
 if (strcmpi (option, 'reduced'))
-  Csub{1} = Csub{1}(:,1:numel(hspace.active{1}));
+  Csub{1} = Csub{1}(:,hspace.active{1});
   fun_on_active = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.active{1});
   fun_on_deact = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.deactivated{1});
-  fun_on_deact = union (fun_on_active, fun_on_deact, 'stable');
+  fun_on_deact = union (fun_on_active, fun_on_deact);
   row_indices{1} = fun_on_deact;
 
-  for lev = 2:hspace.nlevels % This allows to compute Csub for finer meshes
-
+  for lev = 2:hmsh.nlevels
     fun_on_active_finer_level = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.active{lev});
     fun_on_deact_finer_level = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.deactivated{lev});
-    fun_on_deact_finer_level = union (fun_on_active_finer_level, fun_on_deact_finer_level, 'stable');
+    fun_on_deact_finer_level = union (fun_on_active_finer_level, fun_on_deact_finer_level);
 
     [~,~,IB] = intersect(hspace.active{lev}, fun_on_deact_finer_level);
     I_rows = IB; I_cols = 1:hspace.ndof_per_level(lev);

@@ -259,6 +259,7 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
           [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
           
           if (~isempty (elements))
+            gnum = hspace.space_of_level(ilev).gnum{iptc};
             msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
 
             msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
@@ -267,8 +268,11 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
             sp_bnd = hspace.space_of_level(ilev).sp_patch{iptc}.constructor (msh_side_from_interior);
             msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
             sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
-          
-            u_patch = u_lev(hspace.space_of_level(ilev).gnum{iptc});
+
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+            [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{ilev});
+            u_patch = zeros (sp_bnd_struct.ndof, 1);
+            u_patch(pos_gnum) = u_lev(pos_Csub);
             grad = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
 
             grad_dot_n = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
@@ -292,10 +296,11 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
               sp_patch = hspace.space_of_level(ilev).sp_patch{iptc};
               sp_bnd = sp_evaluate_element_list (sp_patch.boundary(iside), msh_side, 'value', true);
               est_level = op_f_v (sp_bnd, msh_side, coeff);
-              dofs_bnd = hspace.boundary.space_of_level(ilev).gnum{iptc_bnd};
-              Csub = hspace.boundary.Csub{ilev}(dofs_bnd,:);
+              gnum_bnd = hspace.boundary.space_of_level(ilev).gnum{iptc_bnd};
+              [~,pos_gnum_bnd,pos_Csub_bnd] = intersect (gnum_bnd, hspace.boundary.Csub_row_indices{ilev});
+              Csub = hspace.boundary.Csub{ilev}(pos_Csub_bnd,:);
               dofs = hspace.boundary.dofs(1:ndofs(ilev));
-              est(dofs) = est(dofs) + Csub.' * est_level;
+              est(dofs) = est(dofs) + Csub.' * est_level(pos_gnum_bnd);              
             end
           end
 
@@ -354,7 +359,6 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
 %    int_{I \cap supp B} [A dU/dn]^2 B
 %
   est = zeros (hspace.ndof, 1);
-  Csub = hspace_subdivision_matrix (hspace);
 
   patch(1) = interface.patch1;
   patch(2) = interface.patch2;
@@ -365,7 +369,7 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
     if (~isempty (interface_elements{lev}{1}))
       ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
       Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
-      u_lev = Csub{lev} * u(1:ndof_until_lev);
+      u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
 
       grad_dot_normal = cell (2, 1);
       for ii = [2 1] % This ordering allows me to keep the variables from the first (master) side
@@ -384,7 +388,12 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
 
-        grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+        [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{lev});
+        u_patch = zeros (spp.ndof, 1);
+        u_patch(pos_gnum) = u_lev(pos_Csub);
+        
+        grad = sp_eval_msh (u_patch, spp, msh_side_aux, 'gradient');
         grad_dot_normal{ii} = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
 
         for idim = 1:hmsh.rdim
@@ -398,13 +407,13 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
       grad_dot_normal{2} = reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
       grad_dot_normal = grad_dot_normal{1} + grad_dot_normal{2};
 
-% XXXXX I should use a more local numbering, as in the branch localize_Csub
-      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
-      b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
-      est(1:ndof_until_lev) = est(1:ndof_until_lev) + Csub{lev}.' * b_lev;
+% Recover the correct numbering for the localized version of Csub
+      b_lev = zeros (numel(hspace.Csub_row_indices{lev}), 1);
+      b_loc = op_f_v (spp, msh_side, grad_dot_normal.^2);
+      b_lev(pos_Csub) = b_loc(pos_gnum);
+      est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
     end
   end
-
 end
 
 
@@ -426,14 +435,12 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
   side(2) = interface.side2;
 
   est_edges = [];
-  Csub = hspace_subdivision_matrix (hspace);
   for lev = 1:hmsh.nlevels
     if (~isempty (interface_elements{lev}{1}))
       ndof_until_lev = sum (hspace.ndof_per_level(1:lev));
       Nelem = cumsum ([0, hmsh.mesh_of_level(lev).nel_per_patch]);
       
-%       u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
-      u_lev = Csub{lev} * u(1:ndof_until_lev);
+      u_lev = hspace.Csub{lev} * u(1:ndof_until_lev);
 
       grad_dot_normal = cell (2, 1);
       for ii = [2 1] % This ordering allows me to keep the variables from the first (master) side
@@ -451,10 +458,13 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
  
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true);
+
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+        [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{lev});
+        u_patch = zeros (spp.ndof, 1);
+        u_patch(pos_gnum) = u_lev(pos_Csub);
         
-%         spp = change_connectivity_localized_Csub (spp, hspace, hmsh, lev);
-        
-        grad = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'gradient');
+        grad = sp_eval_msh (u_patch, spp, msh_side_aux, 'gradient');
         grad_dot_normal{ii} = reshape (sum (grad .* msh_side.normal, 1), msh_side.nqn, msh_side.nel);
 
         for idim = 1:hmsh.rdim
