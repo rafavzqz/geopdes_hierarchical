@@ -6,7 +6,7 @@
 %
 %   hspace:    object representing the coarse hierarchical space (see hierarchical_space)
 %   hmsh:      object representing the refined hierarchical mesh (see hierarchical_mesh)
-%   marked:    cell array with the indices, in the tensor product setting, of the marked elements/functions for each level
+%   marked:    cell array with the indices, in the tensor product setting, of the marked functions for each level
 %   new_cells: cell array with the global indices of the new active elements for each level
 %
 % OUTPUT:
