@@ -52,9 +52,9 @@ function varargout = gismo_map (pts, in, der)
     % geopdes dim: rdim x ndim x ndim x npts
     hess = zeros (rdim, ndim, ndim, npts);
     if ndim ~= 1
-      for dir = 1:rdim
-        hess(dir,:,:,:) = reshape (in.hess(pts, dir), ndim, ndim, npts);
-      end
+%       for dir = 1:rdim % TODO
+%         hess(dir,:,:,:) = reshape (in.hess(pts, dir), ndim, ndim, npts);
+%       end
     else
       % TODO Hessian in G+smo
       warning('Hessian not implemented yet in G+smo for geometries with parametric dimension 1')

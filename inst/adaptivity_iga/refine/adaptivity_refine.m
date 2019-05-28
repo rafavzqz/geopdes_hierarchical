@@ -34,7 +34,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace, Cref, actually_marked] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data)
 
 switch (adaptivity_data.flag)
   case 'functions'
@@ -47,12 +47,14 @@ if (isfield (adaptivity_data, 'adm_class'))
   marked_elements = mark_admissible (hmsh, hspace, marked_elements, adaptivity_data);
   [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
   marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked_elements, 'elements');
+  actually_marked = marked_elements;
 else
   [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
-  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag);  
+  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag); 
+  actually_marked = marked_functions;
 end
 
-if (nargout == 3)
+if (nargout >= 3)
   [hspace, Cref] = hspace_refine (hspace, hmsh, marked_functions, new_cells);
 else
   hspace = hspace_refine (hspace, hmsh, marked_functions, new_cells);
