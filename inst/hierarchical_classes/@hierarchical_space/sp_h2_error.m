@@ -38,6 +38,10 @@
 
 function [errh2, errh1, errl2, errh2s, errh1s, errh2_elem, errh1_elem, errl2_elem, errh2s_elem, errh1s_elem] = sp_h2_error (hspace, hmsh, u, uex, graduex, hessuex)
 
+if (numel(u) ~= hspace.ndof)
+  error ('Wrong size of the vector of degrees of freedom')
+end
+
 errh2s = 0; errh2 = 0; errh1 = 0; errl2 = 0; errh1s = 0;
 errh2_elem = zeros (1, hmsh.nel); errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh2s_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);
 

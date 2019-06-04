@@ -37,6 +37,10 @@
 
 function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
 
+if (numel(u) ~= hspace.ndof)
+  error ('Wrong size of the vector of degrees of freedom')
+end
+
 errh1 = 0; errl2 = 0; errh1s = 0;
 errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);
 

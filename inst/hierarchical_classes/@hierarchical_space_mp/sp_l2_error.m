@@ -32,6 +32,10 @@
 
 function [errl2, errl2_elem] = sp_l2_error (hspace, hmsh, u, uex)
 
+if (numel(u) ~= hspace.ndof)
+  error ('Wrong size of the vector of degrees of freedom')
+end
+
 errl2 = 0;
 errl2_elem = zeros (1, hmsh.nel);
 
