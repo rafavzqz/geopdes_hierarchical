@@ -122,7 +122,7 @@ end
 
 if (method_data.truncated)
 %   decomp = {'All_dofs', 'New_dofs', 'Mod_dofs', 'Support_dofs'};
-  decomp = {'All_dofs', 'Mod_dofs', 'Support_dofs'};
+  decomp = {'All_dofs', 'Mod_dofs', 'Support_dofs', 'New_dofs'};
 else
 %   decomp = {'All_dofs', 'New_dofs', 'Support_dofs'};
   decomp = {'All_dofs', 'Support_dofs'};
