@@ -1,20 +1,32 @@
 % HSPACE_SUBDIVISION_MATRIX: compute the matrices for changing basis, from
 %                 active functions to B-splines of the tensor product spaces.
 %
-%   Csub = hspace_subdivision_matrix (hspace, [hmsh])
+%   [Csub,row_indices] = hspace_subdivision_matrix (hspace, [hmsh], [option])
 %
-% If the hierarchical mesh is present, only the rows relative to functions
-%  on active and deactivated elements are computed. The matrix size is not affected.
+% If the hierarchical mesh is present, the function computes the submatrix 
+%  restricted to rows relative to functions on active and deactivated elements.
 %
 % INPUT:
 %
-%   hspace:    object representing the hierarchical space (see hierarchical_space_mp)
-%   hmsh:      object representing the hierarchical mesh, only needed for the 'reduced' version (see hierarchical_mesh_mp)
+%   hspace: object representing the hierarchical space (see hierarchical_space)
+%   hmsh:   object representing the hierarchical mesh, only needed for the 'reduced' version (see hierarchical_mesh)
+%   option: either 'full' or 'reduced'  
 %
 % OUTPUT:
 %
-%   Csub:      cell-array with the matrices for basis change. The size of the matrix Csub{lev} is
-%                 hspace.space_of_level(lev).ndof  x  sum(hspace.ndof_per_level(1:lev))
+%   Csub:        cell-array with the matrices for basis change. 
+%   row_indices: cell-array with indices in the rows of the Csub matrix (only in the 'reduced' case)
+%
+% For the 'full' version, the output matrix Csub{lev} contains the coefficients for
+%   all B-splines of level lev.
+% For the 'reduced' version, a submatrix is considered, with only the rows
+%   for B-splines of level lev in active and deactivated elements.
+% Therefore, the size of the matrix Csub{lev} for each case is: 
+%    'full': hspace.space_of_level(lev).ndof  x  sum(hspace.ndof_per_level(1:lev))
+%    'reduced': numel(row_indices{lev})  x  sum(hspace.ndof_per_level(1:lev))
+%
+% The 'full' matrix (Cfull) and the 'reduced' one (Cred) for level 'lev' are related by
+%    Cfull{lev}(row_indices{lev},:) = Cred{lev}(:,:);
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2018, 2019 Luca Coradello, Rafael Vazquez
