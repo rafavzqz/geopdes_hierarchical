@@ -1,4 +1,4 @@
-% EX_KIRCHHOFF_RECTANGULAR_PLATE_CLAMPED_ADAPTIVITY: solve bilaplacian in a clamped rectangular plate.
+% EX_KIRCHHOFF_RECTANGULAR_PLATE_SINGULAR: solve bilaplacian in a clamped rectangular plate.
 % PHYSICAL DATA OF THE PROBLEM
 clear problem_data
 % Geometry definition (unrefined geometry)
