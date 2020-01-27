@@ -38,7 +38,7 @@ function [hmsh, hspace, Ccoar] = adaptivity_coarsen (hmsh, hspace, marked, adapt
 
 switch (adaptivity_data.flag)
   case 'functions'
-    marked_elements = compute_cells_to_coarsen (hspace, hmsh, marked);
+    error ('Coarsening by functions is not implemented yet')
   case 'elements'
     marked_elements = marked;
 end
