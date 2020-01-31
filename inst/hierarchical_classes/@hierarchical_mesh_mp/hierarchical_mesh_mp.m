@@ -33,8 +33,10 @@
 %    hmsh_get_descendants:     get the descendants of a given set of cells
 %    hmsh_get_parent:          get the parent of a given set of cells
 %    hmsh_get_ancestors:       get the ancestors of a given set of cells
+%    hmsh_refined_mesh_for_interface: create an auxiliary intersection mesh
+%                              on the interface between patches 
 %    hmsh_add_new_level:       add a new level to the mesh, the set of active cells is initialized as empty
-%    hmsh_remove_empty_levels: remove the last level from the mesh, if it is empty
+%    hmsh_remove_empty_levels: remove the finest levels from the mesh, if they are empty
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 %
