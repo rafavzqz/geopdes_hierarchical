@@ -22,7 +22,6 @@ refine/admissible/get_neighborhood
 refine/admissible/mark_admissible
 refine/admissible/support_extension
 coarsen/adaptivity_coarsen
-coarsen/compute_cells_to_coarsen
 coarsen/functions_to_reactivate_from_cells
 coarsen/mark_elements_to_reactivate_from_active
 Initialize: function for initialization of a hierarchical mesh and space
@@ -50,6 +49,7 @@ hierarchical_mesh_mp/hmsh_get_descendants
 hierarchical_mesh_mp/hmsh_refine
 hierarchical_mesh_mp/hmsh_coarsen
 hierarchical_mesh_mp/hmsh_plot_cells
+hierarchical_mesh_mp/hmsh_refined_mesh_for_interface
 hierarchical_mesh_mp/hmsh_add_new_level
 hierarchical_mesh_mp/hmsh_remove_empty_levels
 hierarchical_space
@@ -73,6 +73,7 @@ hierarchical_space/sp_h1_error
 hierarchical_space/sp_eval
 hierarchical_space/sp_to_vtk
 hierarchical_space/sp_plot_solution
+hierarchical_space/sp_get_boundary_functions
 hierarchical_space_mp
 hierarchical_space_mp/hspace_get_children
 hierarchical_space_mp/hspace_get_parents
@@ -81,6 +82,7 @@ hierarchical_space_mp/hspace_refine
 hierarchical_space_mp/hspace_coarsen
 hierarchical_space_mp/hspace_add_new_level
 hierarchical_space_mp/hspace_remove_empty_levels
+hierarchical_space_mp/hspace_in_finer_mesh
 hierarchical_space_mp/hspace_check_partition_of_unity
 hierarchical_space_mp/hspace_admissibility_class
 hierarchical_space_mp/hspace_eval_hmsh
@@ -93,3 +95,4 @@ hierarchical_space_mp/sp_h1_error
 hierarchical_space_mp/sp_eval
 hierarchical_space_mp/sp_to_vtk
 hierarchical_space_mp/sp_plot_solution
+hierarchical_space_mp/sp_get_boundary_functions

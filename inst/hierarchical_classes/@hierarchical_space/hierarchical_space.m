@@ -48,6 +48,7 @@
 %    Methods for post-processing, which require a computed vector of degrees of freedom
 %      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
 %      sp_eval:               evaluate the solution in a Cartesian grid of points
+%      sp_plot_solution:      plot the computed solution, given the degrees of freedom
 %      hspace_eval_hmsh:      evaluate the solution in the quadrature points of the corresponding hierarchical mesh
 %      sp_l2_error:           compute the error in L2 norm
 %      sp_h1_error:           compute the error in H1 norm
@@ -65,12 +66,14 @@
 %
 %    Other methods
 %      hspace_refine:         refine the hierarchical space
+%      hspace_coarsen:        coarsen the hierarchical space
 %      hspace_add_new_level:  add a new level, initialized without active functions
-%      hspace_remove_empty_level: remove the finest level, if it is empty
+%      hspace_remove_empty_levels: remove the finest level, if it is empty
 %      hspace_in_finer_mesh:  compute the same space in a finer hierarchical mesh
 %      hspace_admissibility_class: check the admissibility class of the associated mesh.
 %      hspace_check_partition_of_unity: check whether the computed coefficients
 %                             for the partition of unity are correct (used for debugging)
+%      sp_get_boundary_functions: get the degrees of freedom of a given boundary
 %
 % For details about the 'simplified' hierarchical space:
 %    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
