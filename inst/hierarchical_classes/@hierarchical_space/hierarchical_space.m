@@ -73,6 +73,7 @@
 %      hspace_admissibility_class: check the admissibility class of the associated mesh.
 %      hspace_check_partition_of_unity: check whether the computed coefficients
 %                             for the partition of unity are correct (used for debugging)
+%      sp_get_boundary_functions: get the degrees of freedom of a given boundary
 %
 % For details about the 'simplified' hierarchical space:
 %    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
