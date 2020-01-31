@@ -48,6 +48,7 @@
 %    Methods for post-processing, which require a computed vector of degrees of freedom
 %      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
 %      sp_eval:               evaluate the solution in a Cartesian grid of points
+%      sp_plot_solution:      plot the computed solution, given the degrees of freedom
 %      hspace_eval_hmsh:      evaluate the solution in the quadrature points of the corresponding hierarchical mesh
 %      sp_l2_error:           compute the error in L2 norm
 %      sp_h1_error:           compute the error in H1 norm
