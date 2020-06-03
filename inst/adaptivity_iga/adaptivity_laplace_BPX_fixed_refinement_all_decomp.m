@@ -159,7 +159,7 @@ while (1)
 %     solution_data.dec(ide).others = struct ('DA_eigmax',[], 'DA_eigmin',[], 'DA_cond',[], 'M_eigmax',[], 'M_eigmin',[], 'condM',[], 'D_eigmax',[], 'D_eigmin',[], 'condD',[]);
     end
     solution_data.dec(ide).name = decomp{ide};
-    solution_data.dec(ide).CondA = CA;
+    solution_data.dec(ide).CondA(iter) = CA(iter);
     solution_data.dec(ide).Cond_BPX_jac(iter) = CJA(iter);
     solution_data.dec(ide).Cond_BPX_gs(iter) = CGSA(iter);
     solution_data.dec(ide).eig_A(iter,:) = eig_A;
