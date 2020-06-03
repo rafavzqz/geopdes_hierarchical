@@ -151,7 +151,7 @@ while (1)
     method_data.bpx_dofs = decomp{ide};
     if (iter > 1)
     [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs, niter_jac, niter_gs, ...
-      ndof_finest, ndof_biggest] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+      niter_A, ndof_finest, ndof_biggest] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
 %     solution_data.dec(ide).others(iter) = aux_others;
     else
     [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs, niter_jac, niter_gs, ...
@@ -167,7 +167,7 @@ while (1)
     solution_data.dec(ide).eig_gs(iter,:) = eig_gs;
     solution_data.dec(ide).niter_jac(iter,:) = niter_jac;
     solution_data.dec(ide).niter_gs(iter,:) = niter_gs;
-    solution_data.dec(ide).niter_A(iter,:) = niter_A;
+    solution_data.dec(ide).niter_A(iter) = niter_A;
     solution_data.dec(ide).ndof_finest(iter,:) = ndof_finest;
     solution_data.dec(ide).ndof_biggest(iter,:) = ndof_biggest;
   end
