@@ -127,6 +127,8 @@ else
 %   decomp = {'All_dofs', 'New_dofs', 'Support_dofs'};
   decomp = {'All_dofs', 'Support_dofs', 'New_dofs'};
 end
+
+solution_data = [];
 % ADAPTIVE LOOP
 iter = 0;
 while (1)
@@ -147,30 +149,32 @@ while (1)
     fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
   end
   
-  for ide = 1:numel(decomp)
-    method_data.bpx_dofs = decomp{ide};
-    if (iter > 1)
-    [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs, niter_jac, niter_gs, ...
-      niter_A, ndof_finest, ndof_biggest] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
-%     solution_data.dec(ide).others(iter) = aux_others;
-    else
-    [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs, niter_jac, niter_gs, ...
-      niter_A, ndof_finest, ndof_biggest] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
-%     solution_data.dec(ide).others = struct ('DA_eigmax',[], 'DA_eigmin',[], 'DA_cond',[], 'M_eigmax',[], 'M_eigmin',[], 'condM',[], 'D_eigmax',[], 'D_eigmin',[], 'condD',[]);
-    end
-    solution_data.dec(ide).name = decomp{ide};
-    solution_data.dec(ide).CondA(iter) = CA(iter);
-    solution_data.dec(ide).Cond_BPX_jac(iter) = CJA(iter);
-    solution_data.dec(ide).Cond_BPX_gs(iter) = CGSA(iter);
-    solution_data.dec(ide).eig_A(iter,:) = eig_A;
-    solution_data.dec(ide).eig_jac(iter,:) = eig_jac;
-    solution_data.dec(ide).eig_gs(iter,:) = eig_gs;
-    solution_data.dec(ide).niter_jac(iter,:) = niter_jac;
-    solution_data.dec(ide).niter_gs(iter,:) = niter_gs;
-    solution_data.dec(ide).niter_A(iter) = niter_A;
-    solution_data.dec(ide).ndof_finest(iter,:) = ndof_finest;
-    solution_data.dec(ide).ndof_biggest(iter,:) = ndof_biggest;
-  end
+%   for ide = 1:numel(decomp)
+%     method_data.bpx_dofs = decomp{ide};
+%     if (iter > 1)
+%     [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs, niter_jac, niter_gs, ...
+%       niter_A, ndof_finest, ndof_biggest] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+% %     solution_data.dec(ide).others(iter) = aux_others;
+%     else
+%     [u, bpx, CJA(iter), CGSA(iter), CA(iter), eig_A, eig_jac, eig_gs, niter_jac, niter_gs, ...
+%       niter_A, ndof_finest, ndof_biggest] = adaptivity_solve_laplace_BPX (hmsh, hspace, problem_data, method_data);
+% %     solution_data.dec(ide).others = struct ('DA_eigmax',[], 'DA_eigmin',[], 'DA_cond',[], 'M_eigmax',[], 'M_eigmin',[], 'condM',[], 'D_eigmax',[], 'D_eigmin',[], 'condD',[]);
+%     end
+    [u, bpx, solution_data] = adaptivity_solve_laplace_BPX_choose_decomp (hmsh, hspace, problem_data, method_data, decomp, solution_data);
+    
+%     solution_data.dec(ide).name = decomp{ide};
+%     solution_data.dec(ide).CondA(iter) = CA(iter);
+%     solution_data.dec(ide).Cond_BPX_jac(iter) = CJA(iter);
+%     solution_data.dec(ide).Cond_BPX_gs(iter) = CGSA(iter);
+%     solution_data.dec(ide).eig_A(iter,:) = eig_A;
+%     solution_data.dec(ide).eig_jac(iter,:) = eig_jac;
+%     solution_data.dec(ide).eig_gs(iter,:) = eig_gs;
+%     solution_data.dec(ide).niter_jac(iter,:) = niter_jac;
+%     solution_data.dec(ide).niter_gs(iter,:) = niter_gs;
+%     solution_data.dec(ide).niter_A(iter) = niter_A;
+%     solution_data.dec(ide).ndof_finest(iter,:) = ndof_finest;
+%     solution_data.dec(ide).ndof_biggest(iter,:) = ndof_biggest;
+%   end
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
