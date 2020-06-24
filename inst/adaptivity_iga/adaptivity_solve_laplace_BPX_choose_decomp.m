@@ -290,6 +290,8 @@ for ide = 1:numel(decomp)
   
   ndof_finest = numel (bpx(end).new_dofs);
   ndof_biggest = max (arrayfun (@(x) numel(x.new_dofs), bpx));
+  ndof_average = sum (arrayfun (@(x) numel(x.new_dofs), bpx)) / numel(bpx);
+  ndof_levels = arrayfun (@(x) numel(x.new_dofs), bpx);
 
   solution_data.dec(ide).name = decomp{ide};
   if (hmsh.nlevels == 1)
@@ -301,6 +303,8 @@ for ide = 1:numel(decomp)
     solution_data.dec(ide).niter_gs = niter_gs;
     solution_data.dec(ide).ndof_finest = ndof_finest;
     solution_data.dec(ide).ndof_biggest = ndof_biggest;
+    solution_data.dec(ide).ndof_average = ndof_average;
+    solution_data.dec(ide).ndof_levels{1} = ndof_levels;
   else
 %     solution_data.dec(ide).Cond_BPX_jac(end+1) = CondNum_PrecA_jac;
     solution_data.dec(ide).Cond_BPX_gs(end+1) = CondNum_PrecA_gs;
@@ -310,6 +314,8 @@ for ide = 1:numel(decomp)
     solution_data.dec(ide).niter_gs(end+1,:) = niter_gs;
     solution_data.dec(ide).ndof_finest(end+1,:) = ndof_finest;
     solution_data.dec(ide).ndof_biggest(end+1,:) = ndof_biggest;
+    solution_data.dec(ide).ndof_average(end+1,:) = ndof_average;
+    solution_data.dec(ide).ndof_levels{end+1} = ndof_levels;
   end
   
 end
@@ -332,6 +338,8 @@ end
     solution_data.dec(ide).eig_A(end+1,:) = eigest_A;
     solution_data.dec(ide).niter_A(end+1) = niter_A;
   end
+  
+  u(int_dofs) = A \ b;
 %   else
 % eigest_A = [0 0];
 %     CondA = cond(full(A))
