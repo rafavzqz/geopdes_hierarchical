@@ -274,12 +274,16 @@ for ide = 1:numel(decomp)
 %   niter_jac = iter;
 % %   CondNum_PrecA_jac = 0;
 
+% Remove fine empty levels (elements without active functions)
+  finest_level = find(hspace.ndof_per_level>0,1,'last');
+  bpx = bpx(1:finest_level);
+  
   eigest_j = [0 0]; CondNum_PrecA_jac = 0; niter_jac = 0;
 
 % % 1 is Jacobi, 2 is Gauss-Seidel, 4 is Richardson
 % % GAUSS-SEIDEL SMOOTHER
   [u(int_dofs), flag, relres, iter, resvec, eigest_gs] = ...
-    pcg_w_eigest (A, b, tol, numel (int_dofs), @prec_bpx_new, [], bpx, hmsh.nlevels, 2);
+    pcg_w_eigest (A, b, tol, numel (int_dofs), @prec_bpx_new, [], bpx, finest_level, 2);
   CondNum_PrecA_gs = eigest_gs(2) / eigest_gs(1);
   disp (['Condition number for BPX with Gauss-Seidel: ', num2str(CondNum_PrecA_gs)]);
   disp(['Eigenvalues: ', num2str(eigest_gs)])
