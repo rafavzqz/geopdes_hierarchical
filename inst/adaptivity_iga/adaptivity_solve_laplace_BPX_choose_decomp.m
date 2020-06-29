@@ -111,10 +111,10 @@ bpx(1).Qi = speye (hspace_bpx(1).ndof);
 Cref = speye (hspace_bpx(1).ndof);
 
 for ref = 1:hmsh.nlevels-1
-  bpx(ref).Ai = op_gradu_gradv_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
+  bpx(ref).Ai = op_gradu_gradv_hier_lowmem (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
   bpx(ref).rhs = op_f_v_hier (hspace_bpx(ref), hmsh_bpx(ref), problem_data.f);
   bpx(ref).ndof = hspace_bpx(ref).ndof;
-  bpx(ref).Mi = op_u_v_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
+  bpx(ref).Mi = op_u_v_hier_lowmem (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
   
   cumndof = cumsum ([0 hspace_bpx(ref).ndof_per_level]);
   [~, drchlt_dofs_lev] = sp_drchlt_l2_proj (hspace_bpx(ref), hmsh_bpx(ref), problem_data.h, problem_data.drchlt_sides);
