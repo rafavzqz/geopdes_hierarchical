@@ -54,10 +54,10 @@ function [u, bpx, solution_data] = adaptivity_solve_laplace_BPX_choose_decomp (h
 
 geometry = geo_load (problem_data.geo_name);
 
-stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
+stiff_mat = op_gradu_gradv_hier_lowmem (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 
-mass_mat = op_u_v_hier (hspace, hspace, hmsh);
+mass_mat = op_u_v_hier_lowmem (hspace, hspace, hmsh);
 
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
