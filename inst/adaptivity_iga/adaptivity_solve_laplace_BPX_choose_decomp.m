@@ -282,8 +282,10 @@ for ide = 1:numel(decomp)
 
 % % 1 is Jacobi, 2 is Gauss-Seidel, 4 is Richardson
 % % GAUSS-SEIDEL SMOOTHER
+tt = cputime;
   [u(int_dofs), flag, relres, iter, resvec, eigest_gs] = ...
     pcg_w_eigest (A, b, tol, numel (int_dofs), @prec_bpx_new, [], bpx, finest_level, 2);
+ttime = cputime - tt;
   CondNum_PrecA_gs = eigest_gs(2) / eigest_gs(1);
   disp (['Condition number for BPX with Gauss-Seidel: ', num2str(CondNum_PrecA_gs)]);
   disp(['Eigenvalues: ', num2str(eigest_gs)])
@@ -309,6 +311,7 @@ for ide = 1:numel(decomp)
     solution_data.dec(ide).ndof_biggest = ndof_biggest;
     solution_data.dec(ide).ndof_average = ndof_average;
     solution_data.dec(ide).ndof_levels{1} = ndof_levels;
+    solution_data.dec(ide).cpu_time = ttime;
   else
 %     solution_data.dec(ide).Cond_BPX_jac(end+1) = CondNum_PrecA_jac;
     solution_data.dec(ide).Cond_BPX_gs(end+1) = CondNum_PrecA_gs;
@@ -320,6 +323,7 @@ for ide = 1:numel(decomp)
     solution_data.dec(ide).ndof_biggest(end+1,:) = ndof_biggest;
     solution_data.dec(ide).ndof_average(end+1,:) = ndof_average;
     solution_data.dec(ide).ndof_levels{end+1} = ndof_levels;
+    solution_data.dec(ide).cpu_time(end+1,:) = ttime;
   end
   
 end
