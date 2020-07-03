@@ -190,20 +190,9 @@ while (1)
   end
 
 % ESTIMATE
-  if (plot_data.print_info); disp('ESTIMATE:'); end
-  est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
-  gest(iter) = norm (est);
-  if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
-  if (isfield (problem_data, 'graduex'))
-    [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
-    if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
-  end
 
 % STOPPING CRITERIA
-  if (gest(iter) < adaptivity_data.tol)
-    disp('Success: The error estimation reached the desired tolerance'); 
-    solution_data.flag = 1; break
-  elseif (iter == adaptivity_data.num_max_iter)
+  if (iter == adaptivity_data.num_max_iter)
     disp('Warning: reached the maximum number of iterations')
     solution_data.flag = 2; break
   elseif (hmsh.nlevels >= adaptivity_data.max_level)
@@ -215,6 +204,19 @@ while (1)
   elseif (hmsh.nel > adaptivity_data.max_nel)
     disp('Warning: reached the maximum number of elements')
     solution_data.flag = 5; break
+  end
+
+  if (plot_data.print_info); disp('ESTIMATE:'); end
+  est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
+  gest(iter) = norm (est);
+  if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
+  if (isfield (problem_data, 'graduex'))
+    [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
+    if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
+  end
+  if (gest(iter) < adaptivity_data.tol)
+    disp('Success: The error estimation reached the desired tolerance'); 
+    solution_data.flag = 1; break
   end
   
 % MARK
