@@ -237,11 +237,11 @@ while (1)
   end
 
 % REFINE
-  if (isfield (adaptivity_data, 'adm'))
-    [hmsh, hspace] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data);
-  else
+%   if (isfield (adaptivity_data, 'adm'))
+%     [hmsh, hspace] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data);
+%   else
     [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-  end
+%   end
 end
 
 
