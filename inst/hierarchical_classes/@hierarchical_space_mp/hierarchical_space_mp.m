@@ -22,20 +22,23 @@
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
 %    Proj           (hmsh.nlevels-1 x npatch cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels for each patch
-%                                           Proj{l,i} is a cell-array of dimension ndim, with the information for
-%                                           the univariate Projectors on the patch (see also hierarchical_space)
+%                                           Proj{l,k} is a cell-array of dimension ndim, with the information for
+%                                           the univariate Projectors on the kth patch (see also hierarchical_space)
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
 %    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
 %    deactivated   (1 x nlevels cell-array) List of deactivated functions on each level
 %    Csub          (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
 %                                            as linear combinations of splines (active and inactive) of the current level
+%    Csub_row_indices (1 x hmsh.nlevels cell-array) indices of the rows stored in Csub. 
+%                                            This allows to save memory space.
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %
 %    METHOD NAME
 %    Methods for post-processing, which require a computed vector of degrees of freedom
 %      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points on each patch
 %      sp_eval:               evaluate the solution in a Cartesian grid of points on each patch
+%      sp_plot_solution:      plot the computed solution, given the degrees of freedom
 %      hspace_eval_hmsh:      evaluate the solution in the quadrature points of the corresponding hierarchical mesh
 %      sp_l2_error:           compute the error in L2 norm
 %      sp_h1_error:           compute the error in H1 norm
@@ -53,10 +56,14 @@
 %
 %    Other methods
 %      hspace_refine:         refine the hierarchical space
+%      hspace_coarsen:        coarsen the hierarchical space
 %      hspace_check_partition_of_unity: check whether the computed coefficients
 %                             for the partition of unity are correct (used for debugging)
+%      hspace_in_finer_mesh:  compute the same space in a finer hierarchical mesh
+%      hspace_admissibility_class: check the admissibility class of the associated mesh.
 %      hspace_add_new_level:  add a new level, initialized without active functions
 %      hspace_remove_empty_level: remove the finest level, if it is empty
+%      sp_get_boundary_functions: get the degrees of freedom of a given boundary
 %
 % For details about the 'simplified' hierarchical space:
 %    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
@@ -117,6 +124,7 @@ hspace.deactivated{1} = [];
 hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = cell (0, hmsh.npatch);
 hspace.Csub{1} = speye (space.ndof);
+hspace.Csub_row_indices{1} = 1:space.ndof;
 
 hspace.dofs = [];
 

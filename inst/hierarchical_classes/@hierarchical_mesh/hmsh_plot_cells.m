@@ -30,7 +30,7 @@
 function nfig = hmsh_plot_cells (hmsh, npts, nfig)
 
 if (nargin == 3 && ishandle (nfig))
-  figure (nfig)
+  set (groot, 'CurrentFigure', nfig);
 elseif (nargout == 1)
   nfig = gcf;
 end

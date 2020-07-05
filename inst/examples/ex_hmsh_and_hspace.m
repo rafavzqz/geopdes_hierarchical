@@ -1,19 +1,18 @@
 % ex_hmsh_and_hspace
 %
-% Archivo de prueba, usa build_hspace_from_cells para construir una malla y
-% un espacio jerarquicos a partir de las celdas desactivadas de cada nivel
-% 
+% Test file. It uses build_hspace_from_cells to generate a hierarchical mesh
+%  and space from the set of refined cells of each level
 
-clear all
-close all
+dim = 2;    % number of parametric directions
+n = 6;      % number of initial elements in each direction, [6 6] is also valid
+degree = 2; % polynomial degree, [2 2] is also valid.
+simplified = false; % Use the reduced (simplified) space of HB-splines.
+truncated = true;   % Use the truncated space or not.
 
-n = 6; % number of initial elements in each direction
-degree = 2; % polynomial degree
-dim = 2; % number of parametric directions
+% Give either the list of 'refined' cells, or the list of 'active' cells
+cell_type = 'refined';
+cells{1} = [15 16 21 22];
+cells{2} = [53 54];
 
-%cells{1} = [3 3; 3 4; 4 3; 4 4];
-cells{1} = [15 16 21 22]';
-
-% [hmsh, hspace] = build_hspace_from_cells(dim, p, initial_num_el, cells,space_type, boundary, graficar_malla)
-[hmsh,hspace] = build_hspace_from_cells(dim,degree, n, cells, 1, true, true);
-
+[hmsh,hspace] = build_hspace_from_cells (dim, degree, n, cells, cell_type, simplified, truncated);
+hmsh_plot_cells (hmsh)

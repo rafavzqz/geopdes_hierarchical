@@ -58,6 +58,10 @@ function varargout = op_v_gradp_hier (hspv, hspp, hmsh, coeff)
       end
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
       spp_lev = sp_evaluate_element_list (hspp.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
+
+      spp_lev = change_connectivity_localized_Csub (spp_lev, hspp, ilev);
+      spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
+
       K_lev = op_v_gradp (spv_lev, spp_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
 
       dofs_p = 1:ndofs_p;

@@ -52,6 +52,10 @@ function varargout = op_div_v_q_hier (hspv, hspq, hmsh)
       end
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'divergence', true);
       spq_lev = sp_evaluate_element_list (hspq.space_of_level(ilev), hmsh.msh_lev{ilev});
+
+      spq_lev = change_connectivity_localized_Csub (spq_lev, hspq, ilev);
+      spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
+
       M_lev = op_div_v_q (spv_lev, spq_lev, hmsh.msh_lev{ilev});
 
       dofs_v = 1:ndofs_v;

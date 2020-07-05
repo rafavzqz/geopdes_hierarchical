@@ -1,6 +1,6 @@
-% SP_H1_ERROR: Evaluate the error in H^1 norm, for hierarchical splines.
+% SP_H2_ERROR: Evaluate the error in H^2 norm, for hierarchical splines.
 %
-%   [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
+%   [errh2, errh1, errl2, errh2s, errh1s, errh2_elem, errh1_elem, errl2_elem, errh2s_elem, errh1s_elem] = sp_h2_error (hspace, hmsh, u, uex, graduex, hessuex)
 %
 % INPUT:
 %
@@ -9,6 +9,7 @@
 %    u:       vector of dof weights
 %    uex:     function handle to evaluate the exact solution
 %    graduex: function handle to evaluate the gradient of the exact solution
+%    hessuex: function handle to evaluate the hessian of the exact solution
 %
 % OUTPUT:
 %
@@ -35,14 +36,14 @@
 % along with Octave; see the file COPYING.  If not, see
 % <http://www.gnu.org/licenses/>.
 
-function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
+function [errh2, errh1, errl2, errh2s, errh1s, errh2_elem, errh1_elem, errl2_elem, errh2s_elem, errh1s_elem] = sp_h2_error (hspace, hmsh, u, uex, graduex, hessuex)
 
 if (numel(u) ~= hspace.ndof)
   error ('Wrong size of the vector of degrees of freedom')
 end
 
-errh1 = 0; errl2 = 0; errh1s = 0;
-errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);
+errh2s = 0; errh2 = 0; errh1 = 0; errl2 = 0; errh1s = 0;
+errh2_elem = zeros (1, hmsh.nel); errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh2s_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);
 
 first_elem = cumsum ([0 hmsh.nel_per_level]) + 1;
 last_elem = cumsum ([hmsh.nel_per_level]);
@@ -50,22 +51,29 @@ last_dof = cumsum (hspace.ndof_per_level);
 for ilev = 1:hmsh.nlevels
   if (hmsh.nel_per_level(ilev) > 0)
     msh_level = hmsh.msh_lev{ilev};
-    sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
+    sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true, 'hessian', true);
 
     sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
 
-    [errh1_lev, errl2_lev, errh1s_lev, errh1_lev_elem, errl2_lev_elem, errh1s_lev_elem] = ...
-      sp_h1_error (sp_level, msh_level, hspace.Csub{ilev}*u(1:last_dof(ilev)), uex, graduex);
+    [errh2_lev, errh1_lev, errl2_lev, errh2s_lev, errh1s_lev, errh2_lev_elem, errh1_lev_elem, errl2_lev_elem, errh2s_lev_elem, errh1s_lev_elem] = ...
+      sp_h2_error (sp_level, msh_level, hspace.Csub{ilev}*u(1:last_dof(ilev)), uex, graduex, hessuex);
 
+    errh2 = errh2 + errh2_lev.^2;
     errh1 = errh1 + errh1_lev.^2;
     errl2 = errl2 + errl2_lev.^2;
     errh1s = errh1s + errh1s_lev.^2;
+    errh2s = errh2s + errh2s_lev.^2;
 
+    errh2_elem(:,first_elem(ilev):last_elem(ilev))  = errh2_lev_elem;    
     errh1_elem(:,first_elem(ilev):last_elem(ilev))  = errh1_lev_elem;
     errl2_elem(:,first_elem(ilev):last_elem(ilev))  = errl2_lev_elem;
     errh1s_elem(:,first_elem(ilev):last_elem(ilev)) = errh1s_lev_elem;
+    errh2s_elem(:,first_elem(ilev):last_elem(ilev)) = errh2s_lev_elem;
+
   end
 end
+errh2  = sqrt (errh2);
+errh2s  = sqrt (errh2s);
 errh1  = sqrt (errh1);
 errl2  = sqrt (errl2);
 errh1s = sqrt (errh1s);

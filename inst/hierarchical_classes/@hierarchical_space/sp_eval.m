@@ -41,5 +41,5 @@ function [eu, F] = sp_eval (u, hspace, geometry, npts, varargin)
   C = hspace_subdivision_matrix (hspace);
   u_lev =  C{hspace.nlevels} * u;
   [eu, F] = sp_eval (u_lev, sp_lev, geometry, npts, varargin{:});
-
+  
 end

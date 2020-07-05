@@ -12,7 +12,7 @@
 %   hspace:   the object of the hierarchical space with one more level, without active functions
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -52,11 +52,7 @@ if (numel(hspace.space_of_level) == hmsh.nlevels-1)
   msh_level = hmsh.mesh_of_level(hmsh.nlevels);
   [new_space, Proj] = sp_refine (hspace.space_of_level(hmsh.nlevels-1), msh_level, hmsh.nsub, degree, regularity);
   hspace.space_of_level(hmsh.nlevels) = new_space; clear new_space
-  if (is_scalar)
-    hspace.Proj(hmsh.nlevels-1,:) = Proj(:);
-  else
-    hspace.Proj(hmsh.nlevels-1,:,:) = Proj;
-  end
+  hspace.Proj{hmsh.nlevels-1} = Proj;
   
   hspace.nlevels = hmsh.nlevels;
   hspace.active{hmsh.nlevels} = [];

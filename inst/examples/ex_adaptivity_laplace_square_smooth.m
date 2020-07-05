@@ -66,7 +66,6 @@ surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 subplot(1,2,2)
 surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze (problem_data.uex(F(1,:,:), F(2,:,:))));
 
-
 %!test
 %! problem_data.geo_name = 'geo_square.txt';
 %! problem_data.nmnn_sides   = [];
