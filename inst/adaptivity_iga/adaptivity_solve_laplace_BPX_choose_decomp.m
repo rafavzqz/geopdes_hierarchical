@@ -54,10 +54,10 @@ function [u, bpx, solution_data] = adaptivity_solve_laplace_BPX_choose_decomp (h
 
 geometry = geo_load (problem_data.geo_name);
 
-stiff_mat = op_gradu_gradv_hier_lowmem (hspace, hspace, hmsh, problem_data.c_diff);
+stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 rhs = op_f_v_hier (hspace, hmsh, problem_data.f);
 
-mass_mat = op_u_v_hier_lowmem (hspace, hspace, hmsh);
+mass_mat = op_u_v_hier (hspace, hspace, hmsh);
 
 % Apply Neumann boundary conditions
 if (~isfield (struct (hmsh), 'npatch')) % Single patch case
@@ -111,10 +111,10 @@ bpx(1).Qi = speye (hspace_bpx(1).ndof);
 Cref = speye (hspace_bpx(1).ndof);
 
 for ref = 1:hmsh.nlevels-1
-  bpx(ref).Ai = op_gradu_gradv_hier_lowmem (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
+  bpx(ref).Ai = op_gradu_gradv_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
   bpx(ref).rhs = op_f_v_hier (hspace_bpx(ref), hmsh_bpx(ref), problem_data.f);
   bpx(ref).ndof = hspace_bpx(ref).ndof;
-  bpx(ref).Mi = op_u_v_hier_lowmem (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
+  bpx(ref).Mi = op_u_v_hier (hspace_bpx(ref), hspace_bpx(ref), hmsh_bpx(ref));
   
   cumndof = cumsum ([0 hspace_bpx(ref).ndof_per_level]);
   [~, drchlt_dofs_lev] = sp_drchlt_l2_proj (hspace_bpx(ref), hmsh_bpx(ref), problem_data.h, problem_data.drchlt_sides);
@@ -163,9 +163,9 @@ for ref = 1:hmsh.nlevels-1
     
     elseif (strcmpi (decomp{ide}, 'Support_dofs'))
 % Functions of previous levels entering in \Omega_{l+1}
-      new_cells = hmsh_bpx(ref).active{end};
-      funs = sp_get_basis_functions (hspace_bpx(ref).space_of_level(end), hmsh_bpx(ref).mesh_of_level(end), new_cells);
-      [~,jj] = find (hspace_bpx(ref).Csub{ref}(funs,:)); 
+%       new_cells = hmsh_bpx(ref).active{end};
+%       funs = sp_get_basis_functions (hspace_bpx(ref).space_of_level(end), hmsh_bpx(ref).mesh_of_level(end), new_cells);
+      [~,jj] = find (hspace_bpx(ref).Csub{ref}); 
       new_dofs = unique(jj);
       bpx(ref).new_dofs{ide} = intersect (bpx(ref).int_dofs, new_dofs);
     end
@@ -228,9 +228,9 @@ for ide = 1:numel(decomp)
 
   elseif (strcmpi (decomp{ide}, 'Support_dofs'))
 % Functions of previous levels entering in \Omega_{l+1}
-    new_cells = hmsh.active{end};
-    funs = sp_get_basis_functions (hspace.space_of_level(end), hmsh.mesh_of_level(end), new_cells);
-    [~,jj] = find (hspace.Csub{end}(funs,:)); 
+%     new_cells = hmsh.active{end};
+%     funs = sp_get_basis_functions (hspace.space_of_level(end), hmsh.mesh_of_level(end), new_cells);
+    [~,jj] = find (hspace.Csub{end}); 
     new_dofs = unique(jj);
     bpx(hmsh.nlevels).new_dofs{ide} = intersect (bpx(hmsh.nlevels).int_dofs, new_dofs);
   end
