@@ -18,7 +18,7 @@
 %     flag:     a flag to tell whether all the input functions are active (1) 
 %               active or deactivated (2), or if there is any passive function (0)
 %
-% Copyright (C) 2016 Rafael Vazquez
+% Copyright (C) 2016-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -42,13 +42,12 @@ function [parents, flag] = hspace_get_parents (hspace, lev, ind)
 
 if (isa (hspace.space_of_level(1), 'sp_scalar'))
   is_scalar = true;
-  ndim = size (hspace.Proj, 2);
 elseif (isa (hspace.space_of_level(1), 'sp_vector'))
   is_scalar = false;
-  ndim = size (hspace.Proj, 3);
 else
   error ('Unknown space type')
 end
+ndim = size (hspace.Proj{1}, 2);
 
 z = cell (ndim, 1);
 ind_sub = cell (ndim, 1);
@@ -59,7 +58,7 @@ if (is_scalar)
 
   for ii = 1:numel(ind_sub{1})
     for idim = 1:ndim
-      aux{idim} = find (hspace.Proj{lev-1, idim}(ind_sub{idim}(ii),:));
+      aux{idim} = find (hspace.Proj{lev-1}{idim}(ind_sub{idim}(ii),:));
     end
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([hspace.space_of_level(lev-1).ndof_dir, 1], z{:});
@@ -76,7 +75,7 @@ else
 
     for ii = 1:numel(ind_sub{1})
       for idim = 1:ndim
-        aux{idim} = find (hspace.Proj{lev-1, icomp, idim}(:,ind_sub{idim}(ii)));
+        aux{idim} = find (hspace.Proj{lev-1}{icomp, idim}(:,ind_sub{idim}(ii)));
       end
       [z{1:ndim}] = ndgrid (aux{:});
       auxI = sub2ind ([hspace.space_of_level(lev-1).ndof_dir(icomp,:), 1], z{:});

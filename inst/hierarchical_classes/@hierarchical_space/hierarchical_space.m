@@ -23,13 +23,13 @@
 %    [comp_dofs]    (1 x ncomp_param cell array) indices of the degrees of freedom for each component
 %    nlevels        (scalar)                the number of levels
 %    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
-%    Proj           (hmsh.nlevels-1 x ndim cell-array)
-%                   (hmsh.nlevels-1 x ncomp x ndim cell-array) 
+%    Proj           (hmsh.nlevels-1 x 1 cell-array) each level contains a second cell array
+%      (for level)  (ncomp_param x ndim cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels
-%                                           Proj{l,i} is a matrix of size N_{l+1} x N_l where N_l is the number 
-%                                           of univariate functions of level l in the direction i, such that
-%                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c^k_j = Proj{l,i}(j,k)
-%                                           For vectors, it takes the form Proj{l,c,i}, 
+%                                           Proj{l}{i} is a matrix of size N_{l+1} x N_l where N_l is the number 
+%                                           of univariate functions of level l in the direction l, such that
+%                                           a function B_{k,l} = \sum_j c^k_j B_{j,l+1}, and c^k_j = Proj{l}{i}(j,k)
+%                                           For vectors, it takes the form Proj{l}{c,i}, 
 %                                           where c is the component in the parametric domain
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
@@ -37,6 +37,8 @@
 %    deactivated   (1 x nlevels cell-array) List of deactivated functions on each level
 %    Csub          (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
 %                                            as linear combinations of splines (active and inactive) of the current level
+%    Csub_row_indices (1 x hmsh.nlevels cell-array) indices of the rows stored in Csub. 
+%                                            This allows to save memory space.
 %    boundary      (2 x ndim array)         a hierarchical space representing the restriction to the boundary
 %    dofs          (1 x ndof array)         only for boundary spaces, degrees of freedom that do not vanish on the boundary
 %    regularity    (1 x ndim array)         the regularity of the space, used during refinement to add a new level 
@@ -46,6 +48,7 @@
 %    Methods for post-processing, which require a computed vector of degrees of freedom
 %      sp_to_vtk:             export the solution to a VTK file, in a structured grid of points
 %      sp_eval:               evaluate the solution in a Cartesian grid of points
+%      sp_plot_solution:      plot the computed solution, given the degrees of freedom
 %      hspace_eval_hmsh:      evaluate the solution in the quadrature points of the corresponding hierarchical mesh
 %      sp_l2_error:           compute the error in L2 norm
 %      sp_h1_error:           compute the error in H1 norm
@@ -63,17 +66,21 @@
 %
 %    Other methods
 %      hspace_refine:         refine the hierarchical space
+%      hspace_coarsen:        coarsen the hierarchical space
 %      hspace_add_new_level:  add a new level, initialized without active functions
-%      hspace_remove_empty_level: remove the finest level, if it is empty
+%      hspace_remove_empty_levels: remove the finest level, if it is empty
+%      hspace_in_finer_mesh:  compute the same space in a finer hierarchical mesh
+%      hspace_admissibility_class: check the admissibility class of the associated mesh.
 %      hspace_check_partition_of_unity: check whether the computed coefficients
 %                             for the partition of unity are correct (used for debugging)
+%      sp_get_boundary_functions: get the degrees of freedom of a given boundary
 %
 % For details about the 'simplified' hierarchical space:
 %    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
 %     for hierarchical splines, IMA J. Numer. Anal., (2016)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -120,11 +127,11 @@ hspace.deactivated{1} = [];
 
 hspace.coeff_pou = ones (space.ndof, 1);
 if (is_scalar)
-  hspace.Proj = cell (0, hmsh.ndim);
+  hspace.Proj = cell (0, 1);
   hspace.ncomp_param = 1;
   hspace.comp_dofs = [];
 else
-  hspace.Proj = cell (0, numel (space.scalar_spaces), hmsh.ndim);
+  hspace.Proj = cell (0, 1);
   hspace.ncomp_param = space.ncomp_param;
   aux = 0;
   for icomp = 1:space.ncomp_param
@@ -133,6 +140,7 @@ else
   end
 end
 hspace.Csub{1} = speye (space.ndof);
+hspace.Csub_row_indices{1} = 1:space.ndof;
 
 hspace.dofs = [];
 hspace.adjacent_dofs = [];

@@ -1,6 +1,6 @@
 function [ list_of_cells ] = get_neighborhood (hmsh, hspace, Q_ind, lev_Q, m, adm_type)
 
-% GET_NEIGHBORHOOd: compute the neighborhood of the cells of a hierarchical mesh
+% GET_NEIGHBORHOOD: compute the neighborhood of the cells of a hierarchical mesh
 %
 %   [list_of_cells] = get_neighborhood (hmsh, hspace, Q_ind, Q_lev, m, adm_type)
 %

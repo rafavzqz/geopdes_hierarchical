@@ -20,7 +20,7 @@
 % The function is intended to be used in particular situations, so the
 %  boundary field is not computed, to save computational resources.
 %
-% Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -64,11 +64,7 @@ for ilev = hspace.nlevels+1:hmsh_fine.nlevels
   msh_level = hmsh_fine.mesh_of_level(ilev);
   [new_space, Proj] = sp_refine (hspace.space_of_level(ilev-1), msh_level, hmsh_fine.nsub); %, degree, degree-1);
   hspace.space_of_level(ilev) = new_space; clear new_space
-  if (is_scalar)
-    hspace.Proj(ilev-1,:) = Proj(:);
-  else
-    hspace.Proj(ilev-1,:,:) = Proj;
-  end
+  hspace.Proj{ilev-1} = Proj;
   
   hspace.nlevels = ilev;
   hspace.active{ilev} = [];
@@ -76,6 +72,6 @@ for ilev = hspace.nlevels+1:hmsh_fine.nlevels
   hspace.ndof_per_level(ilev) = 0;
 end
 
-hspace.Csub = hspace_subdivision_matrix (hspace, hmsh_fine);
+[hspace.Csub, hspace.Csub_row_indices] = hspace_subdivision_matrix (hspace, hmsh_fine);
 
 end
