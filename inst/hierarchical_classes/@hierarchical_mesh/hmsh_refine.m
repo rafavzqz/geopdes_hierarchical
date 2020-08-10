@@ -142,22 +142,16 @@ for lev = 1:hmsh.nlevels
 
     if (isempty (new_elements{lev}))
       indices = iold_act;
-% <<<<<<< HEAD
-%       msh_new = struct ('quad_weights', [], 'quad_nodes', [], 'geo_map', [],...
-%           'geo_map_jac', [], 'geo_map_der2', [], 'jacdet', [], 'element_size', []);
-% =======
-%       msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], ...
-%                         'geo_map_der3', [], 'geo_map_der4', [], 'jacdet', [], 'element_size', [], 'normal', []);
-      msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], ...
-                        'jacdet', [], 'element_size', [], 'normal', []);
-% >>>>>>> release_3.2
+      msh_new = struct ('quad_weights', [], ...%'quad_nodes', [],
+          'geo_map', [],...
+          'geo_map_jac', [], 'geo_map_der2', [], 'jacdet', [], 'element_size', [], 'normal', []);
     else
       msh_new = msh_evaluate_element_list (hmsh.mesh_of_level(lev), new_elements{lev});
       [~, ~, inew_act] = intersect (new_elements{lev}, hmsh.active{lev});
       indices = [iold_act(:); inew_act(:)];
     end
     msh_lev{lev}.quad_weights(:,indices) = [hmsh.msh_lev{lev}.quad_weights(:,iold), msh_new.quad_weights];
-    msh_lev{lev}.quad_nodes(:,:,indices) = cat(3, hmsh.msh_lev{lev}.quad_nodes(:,:,iold), msh_new.quad_nodes);
+%     msh_lev{lev}.quad_nodes(:,:,indices) = cat(3, hmsh.msh_lev{lev}.quad_nodes(:,:,iold), msh_new.quad_nodes);
     msh_lev{lev}.geo_map(:,:,indices) = cat (3, hmsh.msh_lev{lev}.geo_map(:,:,iold), msh_new.geo_map);
     msh_lev{lev}.geo_map_jac(:,:,:,indices) = cat (4, hmsh.msh_lev{lev}.geo_map_jac(:,:,:,iold), msh_new.geo_map_jac);
 % <<<<<<< HEAD
