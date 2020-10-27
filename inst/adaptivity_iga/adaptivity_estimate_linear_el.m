@@ -38,6 +38,7 @@
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017, 2018 Cesare Bracco, Rafael Vazquez
+% Copyright (C) 2020 Ondine Chanon
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -330,8 +331,10 @@ function est = compute_jump_terms (u, hmsh, hspace, lambda_lame, mu_lame, flag)
 % Compute the integral of the jump of the normal derivative at the interface
     if (strcmpi (flag, 'elements'))
       est_edges = integral_term_by_elements (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
-      est(interface_active_elements(1,:)) = est(interface_active_elements(1,:)) + est_edges;
-      est(interface_active_elements(2,:)) = est(interface_active_elements(2,:)) + est_edges;
+      for ielem = 1:size(interface_active_elements,2)
+        est(interface_active_elements(1,ielem)) = est(interface_active_elements(1,ielem)) + est_edges(ielem);
+        est(interface_active_elements(2,ielem)) = est(interface_active_elements(2,ielem)) + est_edges(ielem);
+      end
     elseif (strcmpi (flag, 'functions'))
       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
     end

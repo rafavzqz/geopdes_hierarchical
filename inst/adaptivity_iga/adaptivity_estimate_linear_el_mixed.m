@@ -364,8 +364,10 @@ function est = compute_jump_terms (u, press, hmsh, hspace, hspace_p, mu_lame, fl
 % Compute the integral of the jump of the normal derivative at the interface
     if (strcmpi (flag, 'elements'))
       est_edges = integral_term_by_elements (u, press, hmsh_aux, hspace_aux, hspace_p_aux, interfaces(iref), interface_elements, mu_lame);
-      est(interface_active_elements(1,:)) = est(interface_active_elements(1,:)) + est_edges;
-      est(interface_active_elements(2,:)) = est(interface_active_elements(2,:)) + est_edges;
+      for ielem = 1:size(interface_active_elements,2)
+        est(interface_active_elements(1,ielem)) = est(interface_active_elements(1,ielem)) + est_edges(ielem);
+        est(interface_active_elements(2,ielem)) = est(interface_active_elements(2,ielem)) + est_edges(ielem);
+      end
     elseif (strcmpi (flag, 'functions'))
       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
     end
