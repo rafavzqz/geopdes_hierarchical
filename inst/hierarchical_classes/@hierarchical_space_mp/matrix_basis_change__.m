@@ -52,8 +52,8 @@ if (nargin == 4)
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
     
-    [~,local_indices_coarse, ind_c] = intersect (sp_coarse.gnum{iptc}, ind_coarse, 'stable');
-    [~,local_indices_fine, ind_f] = intersect (sp_fine.gnum{iptc}, ind_fine, 'stable');
+    [~,local_indices_coarse, ind_c] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
+    [~,local_indices_fine, ind_f] = intersect (sp_fine.gnum{iptc}, ind_fine);
     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices_coarse, local_indices_fine);
  
     C(ind_f, ind_c) = Cpatch;
