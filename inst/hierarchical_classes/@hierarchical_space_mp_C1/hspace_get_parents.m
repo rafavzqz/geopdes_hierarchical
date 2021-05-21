@@ -36,7 +36,6 @@
 
 function [parents, flag] = hspace_get_parents (hspace, lev, ind)
 
-
 parents = [];
 
 ref_matrix = matrix_basis_change__ (hspace, lev);
