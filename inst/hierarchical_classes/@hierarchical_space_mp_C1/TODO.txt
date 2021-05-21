@@ -1,0 +1,4 @@
+hierarchical_space_mp_C1 (initialize)
+hspace_add_new_level (check the use of Proj)
+hspace_subdivision_matrix (seems ok, apart from localize Csub)
+matrix_basis_change__
