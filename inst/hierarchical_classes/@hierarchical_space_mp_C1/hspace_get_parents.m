@@ -39,13 +39,11 @@ function [parents, flag] = hspace_get_parents (hspace, lev, ind)
 
 parents = [];
 
-    ref_matrix = matrix_basis_change__ (hspace, lev);
-    for ii = 1:numel(ind)
-        auxI = find(ref_matrix(ind(ii),:));
-        parents = union (parents, auxI);
-    end
-
-
+ref_matrix = matrix_basis_change__ (hspace, lev);
+for ii = 1:numel(ind)
+  auxI = find(ref_matrix(ind(ii),:));
+  parents = union (parents, auxI);
+end
 
 if (nargout == 2)
   flag = all (ismember (ind, hspace.active{lev}));
