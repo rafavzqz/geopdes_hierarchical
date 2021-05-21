@@ -129,34 +129,6 @@ hspace.Proj1 = cell (0, hmsh.npatch);
 
 hspace.dofs = [];
 
-% if (~isempty (hmsh.boundary) && ~isempty (space.boundary))
-%   if (hmsh.ndim > 1)
-%     if (is_scalar)
-%       bnd_regularity = regularity(1:end-1);
-%     elseif (strcmpi (transform, 'grad-preserving'))
-%       for icomp = 1:space.sp_patch{1}.ncomp
-%         bnd_regularity{icomp} = regularity{icomp}(1:end-1);
-%       end
-%     elseif (strcmpi (transform, 'curl-preserving'))
-%       for icomp = 1:space.sp_patch{1}.ncomp_param-1
-%         bnd_regularity{icomp} = regularity{icomp}(1:end-1);
-%       end
-%     elseif (strcmpi (transform, 'div-preserving'))
-%       bnd_regularity = regularity{1}(2:end);
-%     end
-%     for iside = 1:numel (hmsh.boundary)
-%       boundary = hierarchical_space_mp (hmsh.boundary(iside), space.boundary(iside), space_type, truncated, bnd_regularity);
-%       boundary.dofs = space.boundary(iside).dofs;
-%       hspace.boundary(iside) = boundary;
-%     end
-%   elseif (hmsh.ndim == 1)
-%     hspace.boundary(1).dofs = space.boundary(1).dofs;
-%     hspace.boundary(2).dofs = space.boundary(2).dofs;
-%   end
-% else
-%   hspace.boundary = [];
-% end
-
 hspace.regularity = regularity;
 hspace = class (hspace, 'hierarchical_space_mp_C1');
 
