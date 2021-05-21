@@ -79,7 +79,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = hierarchical_space_mp_C1 (hmsh, space, varargin)
+function hspace = hierarchical_space_mp_C1_twopatches (hmsh, space, varargin)
 
 if (~isa (space, 'sp_multipatch_C1'))
   error ('The zero level space should be of class sp_multipatch_C1')
@@ -158,7 +158,7 @@ hspace.dofs = [];
 % end
 
 hspace.regularity = regularity;
-hspace = class (hspace, 'hierarchical_space_mp_C1');
+hspace = class (hspace, 'hierarchical_space_mp_C1_twopatches');
 
 end
 
