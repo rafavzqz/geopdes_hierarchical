@@ -81,8 +81,8 @@
 
 function hspace = hierarchical_space_mp_C1_twopatches (hmsh, space, varargin)
 
-if (~isa (space, 'sp_multipatch_C1'))
-  error ('The zero level space should be of class sp_multipatch_C1')
+if (~isa (space, 'sp_multipatch_C1_twopatch'))
+  error ('The zero level space should be of class sp_multipatch_C1_twopatch')
 end
 
 if (isa (space.sp_patch{1}, 'sp_scalar'))

@@ -56,10 +56,13 @@ if (npatch == 1)
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
   hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
 else
+  [edges, vertices] = vertices_struct (geometry, interfaces, boundaries, boundary_interfaces);
   msh   = msh_multipatch (msh, boundaries);
-  space = sp_multipatch_C1 (space, msh,geometry, interfaces, boundary_interfaces);
+%   space = sp_multipatch_C1_twopatch (space, msh, geometry, interfaces, boundary_interfaces);
+  space = sp_multipatch_C1 (space, msh, geometry, edges, vertices);
   hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space_mp_C1 (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+  hspace   = hierarchical_space_mp_C1_twopatches (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+%   hspace   = hierarchical_space_mp_C1 (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
 end
 
 end
