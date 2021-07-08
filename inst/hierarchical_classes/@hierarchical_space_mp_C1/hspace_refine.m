@@ -105,7 +105,7 @@ for lev = 1:hspace.nlevels-1
 
   elseif (strcmpi (hspace.type, 'standard') && ~isempty (new_cells{lev+1}))
 
-    children = hspace_get_children (hspace, lev, marked_fun{lev});
+    children = hspace_get_children (hspace, lev, marked_fun{lev}, hmsh); % FIX: remove hmsh
 
     active_and_deact = union (active{lev+1}, deactivated{lev+1});
     new_active = setdiff (children, active_and_deact(:));

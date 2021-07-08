@@ -34,10 +34,10 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function sp_plot_solution (u, hspace, geometry, varargin)
+function sp_plot_solution (u, hspace, geometry, hmsh, varargin)
 
   sp_lev = hspace.space_of_level(hspace.nlevels);
-  C = hspace_subdivision_matrix (hspace);
+  C = hspace_subdivision_matrix (hspace, hmsh, 'full'); % FIX: remove hmsh
   u_lev =  C{hspace.nlevels} * u;
   sp_plot_solution (u_lev, sp_lev, geometry, varargin{:});
 

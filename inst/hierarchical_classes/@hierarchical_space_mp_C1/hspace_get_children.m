@@ -35,14 +35,15 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [children, flag, children_of_function] = hspace_get_children (hspace, lev, ind)
+function [children, flag, children_of_function] = hspace_get_children (hspace, lev, ind, hmsh)
 
+% FIX: Remove hmsh in the final version, if not needed.
 
 children = [];
 
 children_of_function = cell (numel(ind), 1);
 
-ref_matrix = matrix_basis_change__ (hspace, lev+1);
+ref_matrix = matrix_basis_change__ (hspace, lev+1, [], hmsh); %FIX: remove hmsh
 for ii = 1:numel(ind)
   [auxI,~]= find(ref_matrix(:,ind(ii)));
   children = union (children, auxI);

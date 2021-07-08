@@ -30,7 +30,25 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function C = matrix_basis_change__ (hspace, lev, ind_coarse)
+function C = matrix_basis_change__ (hspace, lev, ind_coarse, hmsh)
+
+% FIX: remove hmsh from input arguments
+spc = hspace.space_of_level(lev-1).constructor (hmsh.mesh_of_level(lev));
+% Brute force (L2-projection)
+M = op_u_v_mp (hspace.space_of_level(lev), hspace.space_of_level(lev), hmsh.mesh_of_level(lev));
+G = op_u_v_mp (spc, hspace.space_of_level(lev), hmsh.mesh_of_level(lev));
+C = M \ G;
+C(abs(C)<1e-12) = 0;
+
+
+if (hspace.truncated)
+  indices = union (hspace.active{lev}, hspace.deactivated{lev});
+  C(indices,:) = 0;
+end
+
+return
+
+
 
 % We need to change this function, to compute the coefficients in Mario's notes (refinement masks)
 % It will write C^1 basis function of level lev-1, as linear combinations of C^1 basis functions of level lev.
