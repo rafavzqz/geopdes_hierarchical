@@ -56,14 +56,18 @@ function varargout = op_gradu_gradv_hier (hspu, hspv, hmsh, coeff)
       for idim = 1:hmsh.rdim
         x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
       end
-      spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
-      spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
-      K_lev = op_gradu_gradv (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
+        spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
+        spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', true);
+        
+        spu_lev = change_connectivity_localized_Csub (spu_lev, hspu, ilev);
+        spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
 
-      dofs_u = 1:ndofs_u;
-      dofs_v = 1:ndofs_v;
+        K_lev = op_gradu_gradv (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
 
-      K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.Csub{ilev}.' * K_lev * hspu.Csub{ilev};
+        dofs_u = 1:ndofs_u;
+        dofs_v = 1:ndofs_v;
+
+        K(dofs_v,dofs_u) = K(dofs_v,dofs_u) + hspv.Csub{ilev}.' * K_lev * hspu.Csub{ilev};    
     end
   end
 

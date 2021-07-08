@@ -1,27 +1,32 @@
-% ACTIVE2DEACTIVATED_MARKING: compute the deactivated entities (cells or functions) 
-%  to be possibly reactivated, from a list of marked active entities.
+% MARK_ELEMENTS_TO_REACTIVATE_FROM_ACTIVE: compute the elements to
+%     reactivate from the set of marked elements
 %
-%   [deact_marked, num] = active2deactivated_marking (marked, hmsh, hspace, adaptivity_data)
+%   [deact_marked, num] = mark_elements_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data)
 %
 % INPUT:
 %
 %   marked:  cell-array with the indices of marked cells (or functions) for each level, in the tensor-product setting
 %   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
 %   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
-%   adaptivity_data: a structure with the data for the adaptivity method.
-%                    In particular, it contains the field:
-%                     -'flag': elements or functions, according to marked
+%   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
+%     - coarsening_flag: either 'all' (default) or 'any', to decide how
+%                        many children must be marked to reactivate an element.
+%     - adm_class: admissibility class, an integer value, zero by default (no admissibility).
+%     - adm_type:  admissibility_type, either 'T-admissible' (default) or 'H-admissible'.
 %
 % OUTPUT:
 %
 %    deact_marked:  cell-array with the indices of marked cells (or functions) for each level to be reactivated, in the tensor-product setting
 %    num         :  number of cells (or elements) to be reactivated
 %
-% This function computes, acording to adaptivity_data.flag, the deactivated entities to be possibly reactivated. 
-% If flag = elements, all their children are (active and) marked. 
-% If flag = functions, they have at least one child (active and) marked.  
+%    The coarsening algorithm is detailed in the paper
+%      M. Carraturo, C. Giannelli, A. Reali, R. Vazquez
+%      Suitably graded THB-spline refinement and coarsening: Towards 
+%      an adaptive isogeometric analysis of additive manufacturing processes. 
+%      Comput. Methods Appl. Mech. Engrg., 2019.
 %
-% Copyright (C) 2016, 2017 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2016, 2017, 2018 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2018, 2019 Massimo Carraturo, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -38,88 +43,89 @@
 
 function [deact_marked, num] = mark_elements_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data)
 
+if (~isfield (adaptivity_data, 'coarsening_flag'))
+  adaptivity_data.coarsening_flag = 'all';
+end
+
+if (~isfield(adaptivity_data,'adm_class') || adaptivity_data.adm_class < 2)
+  adm_class = 0;
+else
+  adm_class = adaptivity_data.adm_class;
+end
+
+if (~isfield(adaptivity_data,'adm_type') || isempty (adaptivity_data.adm_type))
+  adm_type = 'T-admissible';
+else
+  adm_type = adaptivity_data.adm_type;
+end
+
 
 deact_marked = cell (hmsh.nlevels, 1);
-% admissible_to_reactivate = cell (hmsh.nlevels-1, 1);
-% children_per_cell = cell (hmsh.nlevels-1, 1);
 
-% % Elements that can be reactivated
-% for lev = 1:hmsh.nlevels-1
-%   [~,~,children_per_cell{lev}] = hmsh_get_children (hmsh, lev, hmsh.deactivated{lev});
-%   ind = ~any (ismember (children_per_cell{lev}, hmsh.deactivated{lev+1}));
-% %   ind = all (ismember (children_per_cell{lev}, hmsh.active{lev+1}));
-%   admissible_to_reactivate{lev} = hmsh.deactivated{lev}(ind);
-% end
+for lev = hmsh.nlevels-1:-1:1
+  if (~isempty(marked{lev+1}))
+    [parents, flag] = hmsh_get_parent (hmsh, lev+1, marked{lev+1});
+    if (flag ~= 1)
+      error ('Some nonactive elements were marked.')
+    end
 
+    [~,~,children_per_cell] = hmsh_get_children (hmsh, lev, parents);    
 
-% if (strcmpi (adaptivity_data.flag, 'elements'))
-  for lev = 1:hmsh.nlevels-1
-    if (~isempty(marked{lev+1}))
-      [parents, flag] = hmsh_get_parent (hmsh, lev+1, marked{lev+1});
-      if (flag ~= 1)
-        error ('Some nonactive elements were marked.')
-      end
+    ind = all (ismember (children_per_cell, hmsh.active{lev+1}));
+    parents = parents(ind);
+    children_per_cell = children_per_cell(:,ind);
 
-      [~,~,children_per_cell] = hmsh_get_children (hmsh, lev, parents);    
-
-      ind = all (ismember (children_per_cell, hmsh.active{lev+1}));
-      parents = parents(ind);
-
-      if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
-% To reactivate one cell, only one child needs to be marked
-        deact_marked{lev} = parents;
-      elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
-% To reactivate one cell, all the children must be marked
-        ind2 = all (ismember (children_per_cell(:,ind), marked{lev+1}));
-        deact_marked{lev} = parents(ind2);
+    if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
+      deact_marked{lev} = parents;
+    elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
+      ind2 = all (ismember (children_per_cell, marked{lev+1}));
+      parents = parents(ind2);
+      children_per_cell = children_per_cell(:,ind2);
+      deact_marked{lev} = parents;
+    else
+      error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
+    end
+    marked{lev+1} = children_per_cell;
+    
+% Algorithm to recover admissible meshes
+    if (adm_class)
+      lev_s = lev + adm_class;
+      if (lev_s > hmsh.nlevels)
+        continue
       else
-        error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
+        active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
+        active_and_deact = setdiff (active_and_deact, marked{lev_s});
+        keep_inds = [];
+        
+        if (strcmpi (adm_type, 'T-admissible'))
+          supp_ext = support_extension (hmsh, hspace, children_per_cell(:), lev+1, lev+1);
+          [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
+          for iel = 1:numel(deact_marked{lev})
+            supp_ext_local = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
+            [~,ia,~] = intersect (supp_ext, supp_ext_local);
+            if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
+              keep_inds = [keep_inds, iel];
+            end          
+          end
+          
+        elseif (strcmpi (adm_type, 'H-admissible'))
+          supp_ext = support_extension (hmsh, hspace, deact_marked{lev}, lev, lev);
+          [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev, lev_s);
+          for iel = 1:numel(deact_marked{lev})
+            supp_ext_local = support_extension (hmsh, hspace, deact_marked{lev}(iel), lev, lev);
+            [~,ia,~] = intersect (supp_ext, supp_ext_local);
+            if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
+              keep_inds = [keep_inds, iel];
+            end          
+          end
+        end
+        deact_marked{lev} = deact_marked{lev}(keep_inds);
       end
     end
+    
   end
+end
   
-% elseif (strcmpi (adaptivity_data.flag, 'functions'))
-%   for lev = 1:hmsh.nlevels-1
-%     if (~isempty(marked{lev+1}))
-%       [parents, flag] = hspace_get_parents (hspace, lev+1, marked{lev+1});
-%       if (flag ~= 1)
-%         error ('Some nonactive functions were marked.')
-%       end
-% 
-%       parents = intersect (parents, hspace.deactivated{lev});
-%       [~,~,children_per_function] = hspace_get_children (hspace, lev, parents);
-%       
-%       if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
-% % To reactivate one function, only one child needs to be marked
-%         deact_marked{lev} = parents;
-%       elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
-% % To reactivate one function, all the children must be marked
-%         ind = cellfun (@(x) all (ismember (x, marked{lev+1})), children_per_function);
-%         deact_marked{lev} = parents(ind);
-%       else
-%         error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
-%       end
-%     end
-%   end
-% else
-%   error ('Unknown option for coarsening, in adaptivity_data.flag')
-% end
-
 num = sum (cellfun (@numel, deact_marked));
-
-% % deact_marked = cell (hmsh.nlevels, 1);
-% 
-% for lev = 1:hmsh.nlevels-1
-%   [parents, flag] = hspace_get_parents (hspace, lev+1, marked{lev+1});
-%   if (flag ~= 1)
-%     error ('Some nonactive functions were marked.')
-%   end
-% 
-%   parents = intersect (parents, hspace.deactivated{lev});
-%   for ii = 1:numel(parents)
-%     if (any (ismember (hspace_get_children (hspace, lev, parents(ii)), marked{lev+1})))
-%       deact_marked{lev} = union(deact_marked{lev}, parents(ii));
-%     end
-%   end
     
 end

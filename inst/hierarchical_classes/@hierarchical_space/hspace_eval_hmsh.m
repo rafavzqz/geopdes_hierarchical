@@ -43,7 +43,7 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
   nopts = numel (options);
 
 % For vector-valued spaces, the value of catdir is then corrected by adding one
-  value = false; gradient = false; laplacian = false;
+  value = false; gradient = false; laplacian = false; bilaplacian = false;
   hessian = false; curl = false; divergence = false;
   for iopt = 1:nopts
     switch (lower (options{iopt}))
@@ -56,6 +56,9 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
       case 'laplacian' % Only for scalars, at least for now
         laplacian = true;
         catdir(iopt) = 2;
+      case 'bilaplacian'
+        bilaplacian = true;
+        catdir(iopt) = 2;          
       case 'hessian'
         hessian = true;
         catdir(iopt) = 4;
@@ -78,6 +81,9 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
         'value', value, 'gradient', gradient, 'hessian', hessian, 'curl', curl, 'divergence', divergence);
   else
+      % for higher order derivatives
+%     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
+%         'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian, 'bilaplacian', bilaplacian);
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
         'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian);
   end
@@ -90,8 +96,11 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
     if (hmsh.nel_per_level(ilev) > 0)
       msh_level = hmsh.msh_lev{ilev};
       sp_level = eval_element_list (hspace.space_of_level(ilev), msh_level);
-        
-      [eu_lev, F_lev] = eval_fun (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
+      
+      sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
+      u_lev = hspace.Csub{ilev}*u(1:last_dof(ilev));
+      
+      [eu_lev, F_lev] = eval_fun (u_lev, sp_level, msh_level);
       for iopt = 1:nopts
         eu{iopt} = cat (catdir(iopt), eu{iopt}, eu_lev{iopt});
       end

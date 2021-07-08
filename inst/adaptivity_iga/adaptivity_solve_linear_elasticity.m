@@ -58,43 +58,107 @@ mat    = op_su_ev_hier (hspace, hspace, hmsh, problem_data.lambda_lame, problem_
 rhs    = op_f_v_hier (hspace, hmsh, problem_data.f);
 
 % Apply Neumann boundary conditions
-for iside = problem_data.nmnn_sides
+if (~isfield (struct (hmsh), 'npatch')) % Single patch case
+  for iside = problem_data.nmnn_sides
 % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
-  gside = @(varargin) problem_data.g(varargin{:},iside);
-  dofs = hspace.boundary(iside).dofs;
-  rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
+    gside = @(varargin) problem_data.g(varargin{:},iside);
+    dofs = hspace.boundary(iside).dofs;
+    rhs(dofs) = rhs(dofs) + op_f_v_hier (hspace.boundary(iside), hmsh.boundary(iside), gside);
+  end
+else % Multipatch case
+  boundaries = hmsh.mesh_of_level(1).boundaries;
+  Nbnd = cumsum ([0, boundaries.nsides]);
+  for iref = problem_data.nmnn_sides
+    iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+    gref = @(varargin) problem_data.g(varargin{:},iref);
+    rhs_nmnn = op_f_v_hier (hspace.boundary, hmsh.boundary, gref, iref_patch_list);
+    rhs(hspace.boundary.dofs) = rhs(hspace.boundary.dofs) + rhs_nmnn;
+  end
 end
 
 % Apply pressure conditions
-for iside = problem_data.press_sides
-  pside = @(varargin) problem_data.p(varargin{:},iside);
-  dofs = hspace.boundary(iside).dofs;
-  rhs(dofs) = rhs(dofs) - op_pn_v_hier (hspace.boundary(iside), hmsh.boundary(iside), pside);
+if (~isfield (struct (hmsh), 'npatch')) % Single patch case
+  for iside = problem_data.press_sides
+    error ('Press sides are not implemented yet')
+    pside = @(varargin) problem_data.p(varargin{:},iside);
+    dofs = hspace.boundary(iside).dofs;
+    rhs(dofs) = rhs(dofs) - op_pn_v_hier (hspace.boundary(iside), hmsh.boundary(iside), pside);
+  end
+else % Multipatch case
+  boundaries = hmsh.mesh_of_level(1).boundaries;
+  Nbnd = cumsum ([0, boundaries.nsides]);
+  for iref = problem_data.press_sides
+    error ('Press sides are not implemented yet')
+    iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+    pref = @(varargin) problem_data.p(varargin{:},iref);
+    rhs_press = op_pn_v_hier (hspace.boundary, hmsh.boundary, pref, iref_patch_list);
+    rhs(hspace.boundary.dofs) = rhs(hspace.boundary.dofs) - rhs_press;
+  end
 end
 
 % Apply symmetry conditions
 u = zeros (hspace.ndof, 1);
 symm_dofs = [];
-for iside = problem_data.symm_sides
-  msh_side = hmsh_eval_boundary_side (hmsh, iside);
-  normal_comp = zeros (msh_side.rdim, msh_side.nqn * msh_side.nel);
-  for idim = 1:msh_side.rdim
-    normal_comp(idim,:) = reshape (msh_side.normal(idim,:,:), 1, msh_side.nqn*msh_side.nel);
-  end
+if (~isfield (struct (hmsh), 'npatch')) % Single patch case
+  for iside = problem_data.symm_sides
+    msh_side = hmsh_eval_boundary_side (hmsh, iside);
+%     normal_comp = zeros (msh_side.rdim, msh_side.nqn * msh_side.nel);
+%     for idim = 1:msh_side.rdim
+%       normal_comp(idim,:) = reshape (msh_side.normal(idim,:,:), 1, msh_side.nqn*msh_side.nel);
+%     end
+    normal_comp = reshape (msh_side.normal, msh_side.rdim, msh_side.nqn*msh_side.nel);
 
-  parallel_to_axes = false;
-  for ind = 1:msh_side.rdim
-    ind2 = setdiff (1:msh_side.rdim, ind);
-    if (all (all (abs (normal_comp(ind2,:)) < 1e-10)))
-      symm_dofs = union (symm_dofs, hspace.boundary(iside).dofs(hspace.boundary(iside).comp_dofs{ind}));
-      parallel_to_axes = true;
-      break
+    parallel_to_axes = false;
+    for ind = 1:msh_side.rdim
+      ind2 = setdiff (1:msh_side.rdim, ind);
+      if (all (all (abs (normal_comp(ind2,:)) < 1e-10)))
+        symm_dofs = union (symm_dofs, hspace.boundary(iside).dofs(hspace.boundary(iside).comp_dofs{ind}));
+        parallel_to_axes = true;
+        break
+      end
+    end
+    if (~parallel_to_axes)
+      error ('adaptivity_solve_linear_elasticity: We have only implemented the symmetry condition for boundaries parallel to the axes')
     end
   end
-  if (~parallel_to_axes)
-    error ('adaptivity_solve_linear_elasticity: We have only implemented the symmetry condition for boundaries parallel to the axes')
+else % Multipatch case
+  boundaries = hmsh.mesh_of_level(1).boundaries;
+  Nbnd = cumsum ([0, boundaries.nsides]);
+  symm_dofs = [];
+  for iref = problem_data.symm_sides
+    iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+    for ii = 1:numel(iref_patch_list)
+      iptc_bnd = iref_patch_list(ii);
+      iptc = boundaries(iref).patches(ii);
+      iside = boundaries(iref).faces(ii);
+      msh_patch = hmsh.mesh_of_level(1).msh_patch{iptc};
+      msh_side = msh_eval_boundary_side (msh_patch, iside);
+      normal_comp = reshape (msh_side.normal, msh_side.rdim, msh_side.nqn*msh_side.nel);
+
+      parallel_to_axes = false;
+      for ind = 1:msh_side.rdim
+        ind2 = setdiff (1:msh_side.rdim, ind);
+        if (all (all (abs (normal_comp(ind2,:)) < 1e-10)))
+          parallel_to_axes = true;
+          break
+        end
+      end
+      if (~parallel_to_axes)
+        error ('adaptivity_solve_linear_elasticity: We have only implemented the symmetry condition for boundaries parallel to the axes')
+      else
+        shifting_indices = cumsum ([0 hspace.boundary.ndof_per_level]);
+        symm_dofs_iref = [];
+        for ilev = 1:hmsh.boundary.nlevels
+          sp_lev = hspace.boundary.space_of_level(ilev);
+          global_comp_dofs = sp_lev.gnum{iptc_bnd}(sp_lev.sp_patch{iptc_bnd}.comp_dofs{ind});
+          [~,~,bnd_indices] = intersect (global_comp_dofs, hspace.boundary.active{ilev});
+          symm_dofs_iref = union (symm_dofs_iref, shifting_indices(ilev) + bnd_indices);
+        end
+        symm_dofs = union (symm_dofs, hspace.boundary.dofs(symm_dofs_iref));
+      end
+    end
   end
-end
+end  
 
 % Apply Dirichlet boundary conditions
 [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);

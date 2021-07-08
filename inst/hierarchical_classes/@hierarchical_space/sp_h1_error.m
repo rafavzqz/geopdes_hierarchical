@@ -37,6 +37,10 @@
 
 function [errh1, errl2, errh1s, errh1_elem, errl2_elem, errh1s_elem] = sp_h1_error (hspace, hmsh, u, uex, graduex)
 
+if (numel(u) ~= hspace.ndof)
+  error ('Wrong size of the vector of degrees of freedom')
+end
+
 errh1 = 0; errl2 = 0; errh1s = 0;
 errh1_elem = zeros (1, hmsh.nel); errl2_elem = zeros (1, hmsh.nel); errh1s_elem = zeros (1, hmsh.nel);
 
@@ -47,6 +51,8 @@ for ilev = 1:hmsh.nlevels
   if (hmsh.nel_per_level(ilev) > 0)
     msh_level = hmsh.msh_lev{ilev};
     sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
+
+    sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
 
     [errh1_lev, errl2_lev, errh1s_lev, errh1_lev_elem, errl2_lev_elem, errh1s_lev_elem] = ...
       sp_h1_error (sp_level, msh_level, hspace.Csub{ilev}*u(1:last_dof(ilev)), uex, graduex);

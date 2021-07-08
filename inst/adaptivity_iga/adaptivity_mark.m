@@ -57,15 +57,6 @@ switch adaptivity_data.mark_strategy
   aux_marked(est > adaptivity_data.mark_param * max_est) = 1;
  case 'GERS'
   est_sum2 = sum (est.^2);
-%   est_sum2_marked = 0;
-%   threshold = (1 - adaptivity_data.mark_param)^2 * est_sum2;
-%   gamma = 1;
-%   while (est_sum2_marked < threshold)
-%     gamma = gamma - 0.01;
-%     ff = find (est > gamma * max_est);
-%     aux_marked(ff) = 1;
-%     est_sum2_marked = sum ((est(ff)).^2);
-%   end
   [est2_ordered, perm] = sort (est.^2, 'descend');
   index = find (cumsum (est2_ordered) > (1 - adaptivity_data.mark_param)^2 * est_sum2, 1, 'first');
   index = find (est2_ordered > 0.999 * est2_ordered(index), 1, 'last');

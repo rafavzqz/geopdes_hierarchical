@@ -14,6 +14,7 @@
 %   hspace: the object of the hierarchical space after removing the empty levels
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017-2019 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -42,7 +43,7 @@ end
 for ilev = hspace.nlevels:-1:hmsh.nlevels+1
   if (isempty (hspace.active{ilev}))
     hspace.space_of_level(ilev) = [];
-    hspace.Proj(ilev-1,:,:) = [];
+    hspace.Proj(ilev-1) = [];
 
     hspace.active(ilev) = [];
     hspace.deactivated(ilev) = [];
