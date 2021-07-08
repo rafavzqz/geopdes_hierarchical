@@ -120,7 +120,6 @@ end
 % Initialization of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
 
-
 % ADAPTIVE LOOP
 iter = 0;
 while (1)
@@ -134,7 +133,7 @@ while (1)
 % SOLVE AND PLOT
   if (plot_data.print_info)
     disp('SOLVE:')
-    fprintf('Number of elements: %d. Total DOFs: %d. Numer of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
+    fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
   u = adaptivity_solve_laplace_mp_C1 (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
@@ -193,12 +192,7 @@ while (1)
   end
 
 % REFINE
-%%%% In the future, there should be only one function, and this check be performed inside
-  if (isfield (adaptivity_data, 'adm'))
-    [hmsh, hspace] = adaptivity_refine_adm (hmsh, hspace, marked, adaptivity_data);
-  else
-    [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-  end
+  [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
 end
 
 solution_data.iter = iter;
