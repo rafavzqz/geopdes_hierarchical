@@ -32,6 +32,10 @@
 
 function C = matrix_basis_change__ (hspace, lev, ind_coarse, hmsh)
 
+if (isfield (struct(hspace), 'C_L2'))
+  C = hspace.C_L2{lev-1};
+else
+
 % FIX: remove hmsh from input arguments
 spc = hspace.space_of_level(lev-1).constructor (hmsh.mesh_of_level(lev));
 % Brute force (L2-projection)
@@ -39,7 +43,7 @@ M = op_u_v_mp (hspace.space_of_level(lev), hspace.space_of_level(lev), hmsh.mesh
 G = op_u_v_mp (spc, hspace.space_of_level(lev), hmsh.mesh_of_level(lev));
 C = M \ G;
 C(abs(C)<1e-12) = 0;
-
+end
 
 if (hspace.truncated)
   indices = union (hspace.active{lev}, hspace.deactivated{lev});

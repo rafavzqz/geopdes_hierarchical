@@ -130,6 +130,7 @@ hspace.Proj1 = cell (0, hmsh.npatch);
 hspace.dofs = [];
 
 hspace.regularity = regularity;
+hspace.C_L2 = cell (0,1);
 hspace = class (hspace, 'hierarchical_space_mp_C1');
 
 end
