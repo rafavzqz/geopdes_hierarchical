@@ -114,13 +114,14 @@ if (nargin < 3)
     ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ip}.ndof_dir; 
     ndof_Bsp_ref = prod(ndof_dir_spn_ref);  
     %Indices of the B-splines which are not active (not interior)
+    %keyboard
     ind=sub2ind(ndof_dir_spn,[1*ones(1,ndof_dir_spn(2)) 2*ones(1,ndof_dir_spn(2))...
-        (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],1:ndof_dir_spn(2));
-    ind=[ind sub2ind(ndof_dir_spn,2:(ndof_dir_spn(1)-1),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
+        (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],repmat(1:ndof_dir_spn(2),1,4));
+    ind=[ind sub2ind(ndof_dir_spn,repmat(2:(ndof_dir_spn(1)-1),1,4),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
         (ndof_dir_spn(2)-1)*ones(1,ndof_dir_spn(1)-2) ndof_dir_spn(2)*ones(1,ndof_dir_spn(1)-2)])];
     ind_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],1:ndof_dir_spn_ref(2));
-    ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,2:(ndof_dir_spn_ref(1)-1),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+    ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
     %Refinement of interior functions
     Bsp_indices_coarse = setdiff (1:ndof_Bsp, ind);
@@ -135,11 +136,18 @@ if (nargin < 3)
   for ii=1:nint
     %get interf_dir=1,2 according to the interface being horizontal or vertical
     all_dir = 1:ndim; % possible directions
-    side_on_int(1) = interfaces(ii).side1;
-    side_on_int(2) = interfaces(ii).side2;
-    patch_on_int(1) = interfaces(ii).patch1;
-    patch_on_int(2) = interfaces(ii).patch2;
-    for ipatch=1:2 %local patch index
+    clear side_on_int 
+    clear patch_on_int
+    if ~isempty(interfaces(ii).patch1)
+        side_on_int(1) = interfaces(ii).side1;
+        patch_on_int(1) = interfaces(ii).patch1;
+    end
+    if ~isempty(interfaces(ii).patch2)
+        side_on_int(2) = interfaces(ii).side2;
+        patch_on_int(2) = interfaces(ii).patch2;
+    end
+    
+    for ipatch=1:length(patch_on_int) %local patch index
         side = side_on_int(ipatch);
         interf_dir_orthogonal = ceil (side/2);  %direction orthogonal to the interface
         interf_dir_parallel = setdiff (all_dir, interf_dir_orthogonal);  %direction(s) parallel to the interface
@@ -156,12 +164,12 @@ if (nargin < 3)
         
         % Get the indices ind0, ind1 corresponding to the standard B-splines spanning edge functions
         ind=sub2ind(ndof_dir_spn,[1*ones(1,ndof_dir_spn(2)) 2*ones(1,ndof_dir_spn(2))...
-        (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],1:ndof_dir_spn(2));
-        ind=[ind sub2ind(ndof_dir_spn,2:(ndof_dir_spn(1)-1),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
+        (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],repmat(1:ndof_dir_spn(2),1,4));
+        ind=[ind sub2ind(ndof_dir_spn,repmat(2:(ndof_dir_spn(1)-1),1,4),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
         (ndof_dir_spn(2)-1)*ones(1,ndof_dir_spn(1)-2) ndof_dir_spn(2)*ones(1,ndof_dir_spn(1)-2)])];  
         ind_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],1:ndof_dir_spn_ref(2));
-        ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,2:(ndof_dir_spn_ref(1)-1),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+        ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
 
         %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
@@ -190,7 +198,7 @@ if (nargin < 3)
         indices0_coarse = ndof_interior_C1 + shift_inds_e(ii) + (1:ndof_0_C1-6); %also to be modified (taking into account trace functions of previous patches)
         indices0_fine = ndof_interior_C1_ref + shift_inds_e_ref(ii) + (1:ndof_0_C1_ref-6);
         if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-          C(indices0_fine,indices0_coarse) = Proj0{interf_dir_parallel}(3:end-3,3:end-3);  %first term of refinement formula in Lemma 2
+          C(indices0_fine,indices0_coarse) = Proj0{interf_dir_parallel}(4:end-3,4:end-3);  %first term of refinement formula in Lemma 2
         end
         C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
 
@@ -198,7 +206,7 @@ if (nargin < 3)
         indices1_coarse = ndof_interior_C1 + shift_inds_e(ii) + ndof_0_C1-6 + (1:ndof_1_C1-4); %also to be modified (taking into account trace functions of previous patches)
         indices1_fine = ndof_interior_C1_ref + shift_inds_e_ref(ii) + ndof_0_C1_ref-6 + (1:ndof_1_C1_ref-4);
         if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-          C(indices1_fine,indices1_coarse) = (1/2)*Proj1{interf_dir_parallel}(2:end-2,2:end-2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
+          C(indices1_fine,indices1_coarse) = (1/2)*Proj1{interf_dir_parallel}(3:end-2,3:end-2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
         C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
     end
@@ -219,6 +227,8 @@ if (nargin < 3)
     
     %a) part of the matrix describing the dependence on the same vertex
     %function on the finer level
+    sigma_coarse=0;
+    sigma_fine=0;
     sigma_rat=sigma_coarse/sigma_fine; %how do we get sigma_corase and sigma_fine?
     sigma_vec=[1 sigma_rat sigma_rat^2 sigma_rat sigma_rat^2 sigma_rat^2];
     C(ndof_interior_C1_ref + ndof_edge_C1_ref+shift_inds_v_ref(iv)+(1:6),ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv)+(1:6))=diag(sigma_vec);
@@ -226,124 +236,124 @@ if (nargin < 3)
     %b) part of the matrix describing the dependence on edge funtions on the
     %finer level
     for iedge=1:nint
-        
+        a=1;
     end
     
     %c) part of the matrix describing the dependence on the standard functions
     %on the finer level
     for iedge=1:npatch
-        
+        a=1;
     end
     
   end
   
 
-  
-  interfaces = hspace.space_of_level(lev-1).interfaces;
-  side_on_int(1) = interfaces.side1;
-  side_on_int(2) = interfaces.side2;
-  
-  %Numbering of functions: 1) interior functions; 2) edge functions; 3)vertex functions
-  %Therefore, should we do 3 cycles on vertices, edges and vertices?
-  for ipatch = 1:npatch  
-      
-    %first we construct the matrices containing the coefficients lambda, mu, nu (usual refinement coefficients for B-splines)  
-    Lambda = 1;
-    Proj = hspace.Proj{lev-1, ipatch};
-    for idim = 1:ndim
-      Lambda = kron (Proj{idim}, Lambda);
-    end
-    Proj0 = hspace.Proj0{lev-1, ipatch};
-    Proj1 = hspace.Proj1{lev-1, ipatch};
-    
-    %get interf_dir=1,2 according to the interface being horizontal or vertical
-    all_dir = 1:ndim; % possible directions
-    side = side_on_int(ipatch);
-    interf_dir_orthogonal = ceil (side/2);  %direction orthogonal to the interface
-    interf_dir_parallel = setdiff (all_dir, interf_dir_orthogonal);  %direction(s) parallel to the interface
-    interf_dir = interf_dir_parallel;
-    degree = hspace.space_of_level(lev-1).sp_patch{ipatch}.degree(interf_dir); %degree
-    
-    %define the 1D B-spline space parallel to the interface: spn (p,r)
-    %(actually it is enough to know the number of degrees of freedom of this space)
-    ndof_dir_spn = hspace.space_of_level(lev-1).sp_patch{ipatch}.ndof_dir;
-    ndof_spn = ndof_dir_spn(interf_dir);
-    ndof_Bsp = prod(ndof_dir_spn);  %dimension of bivariate space
-    ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ipatch}.ndof_dir; %same for the finer level
-    ndof_spn_ref = ndof_dir_spn_ref(interf_dir);     %same for the finer level
-    ndof_Bsp_ref = prod(ndof_dir_spn_ref);   %same for the finer level
-    
-    % Get the indices ind0 and ind1, corresponding, in the matrix CC (see sp_multipatch_C1),
-    %  to the B-splines of patch iptc used in the sums of (12) and (13) of Mario's notes (use sub2ind with spn)
-    %  (needs to be fixed and checked)
-    if (side == 1)
-      ind0 = sub2ind (ndof_dir_spn, ones(1,ndof_spn), 1:ndof_spn);
-      ind1 = sub2ind (ndof_dir_spn, 2*ones(1,ndof_spn), 1:ndof_spn);
-      ind0_ref = sub2ind (ndof_dir_spn_ref, ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, 2*ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level
-    elseif (side == 2)
-      ind0 = sub2ind (ndof_dir_spn, ndof_dir_spn(1) * ones(1,ndof_spn), 1:ndof_spn);
-      ind1 = sub2ind (ndof_dir_spn, (ndof_dir_spn(1)-1) * ones(1,ndof_spn), 1:ndof_spn);
-      ind0_ref = sub2ind (ndof_dir_spn_ref, ndof_dir_spn_ref(1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, (ndof_dir_spn_ref(1)-1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level
-    elseif (side == 3)
-      ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ones(1,ndof_spn));
-      ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, 2*ones(1,ndof_spn));
-      ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ones(1,ndof_spn_ref));  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, 2*ones(1,ndof_spn_ref));  %same for the finer level
-    elseif (side == 4)
-      ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ndof_dir_spn(2) * ones(1,ndof_spn));
-      ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, (ndof_dir_spn(2)-1) * ones(1,ndof_spn));
-      ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ndof_dir_spn_ref(2) * ones(1,ndof_spn_ref));  %same for the finer level
-      ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, (ndof_dir_spn_ref(2)-1) * ones(1,ndof_spn_ref));  %same for the finer level
-    end
-    
-    %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
-    %(actually it is enough to know the number of degrees of freedom of these two spaces)
-    ndof_0_C1 = length (hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir}) - degree - 1;
-    ndof_0_C1_ref = length (hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir}) - degree - 1; %same for the finer level
-    ndof_1_C1 = length (hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir}) - degree ;
-    ndof_1_C1_ref = length (hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir}) - degree; %same for the finer level
-    
-    %in Cpatch{iptc}, columns 1:sp.ndof_interior represent the regular
-    %(interior) B-splines (all patches),
-    ndof_interior_C1 = hspace.space_of_level(lev-1).ndof_interior;
-    ndof_interior_C1_ref = hspace.space_of_level(lev).ndof_interior; %same for the finer level
-    
-    Cpatch = hspace.space_of_level(lev-1).Cpatch;
-    
-    %in Cpatch{iptc}, rows interior_dofs_per_patch{itpc} represent the interior B-spline
-    %ndof_interior=hspace.space_of_level(lev-1).interior_dofs_per_patch{ipatch};
-    %ndof_interior_ref=hspace.space_of_level(lev).interior_dofs_per_patch{ipatch}; %same for the finer level
-    %ind0 correspond to N_0^(p,r) in (12) and ind1 to N_1^(p,r) in (12)-(13) 
-    
-    Aux = Lambda * Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
-
-    %Taking care of the parts corresponding to Lemma 1 (Mario's notes on refinement)
-    Bsp_indices_coarse = setdiff (1:ndof_Bsp, union (ind0, ind1));
-    Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, union (ind0_ref, ind1_ref));
-    interior_inds_coarse = shift_inds(ipatch)+1:shift_inds(ipatch+1);
-    interior_inds_fine = shift_inds_ref(ipatch)+1:shift_inds_ref(ipatch+1);
-    
-    C(interior_inds_fine,interior_inds_coarse) = Lambda(Bsp_indices_fine, Bsp_indices_coarse);  %not all Lambda
-
-   %Taking care of the parts corresponding to Lemma 2 (Mario's notes on refinement)
-    indices0_coarse = ndof_interior_C1 + (1:ndof_0_C1);
-    indices0_fine = ndof_interior_C1_ref + (1:ndof_0_C1_ref);
-    if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-      C(indices0_fine,indices0_coarse) = Proj0{interf_dir_parallel};  %first term of refinement formula in Lemma 2
-    end
-    C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
-    
-   %Taking care of the parts corresponding to Lemma 3 (Mario's notes on refinement)
-    indices1_coarse = ndof_interior_C1 + ndof_0_C1 + (1:ndof_1_C1);
-    indices1_fine = ndof_interior_C1_ref + ndof_0_C1_ref + (1:ndof_1_C1_ref);
-    if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-      C(indices1_fine,indices1_coarse) = (1/2)*Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
-    end
-    C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
-
-  end
+%   TWO_PATCH CODE
+%   interfaces = hspace.space_of_level(lev-1).interfaces;
+%   side_on_int(1) = interfaces.side1;
+%   side_on_int(2) = interfaces.side2;
+%   
+%   %Numbering of functions: 1) interior functions; 2) edge functions; 3)vertex functions
+%   %Therefore, should we do 3 cycles on vertices, edges and vertices?
+%   for ipatch = 1:npatch  
+%       
+%     %first we construct the matrices containing the coefficients lambda, mu, nu (usual refinement coefficients for B-splines)  
+%     Lambda = 1;
+%     Proj = hspace.Proj{lev-1, ipatch};
+%     for idim = 1:ndim
+%       Lambda = kron (Proj{idim}, Lambda);
+%     end
+%     Proj0 = hspace.Proj0{lev-1, ipatch};
+%     Proj1 = hspace.Proj1{lev-1, ipatch};
+%     
+%     %get interf_dir=1,2 according to the interface being horizontal or vertical
+%     all_dir = 1:ndim; % possible directions
+%     side = side_on_int(ipatch);
+%     interf_dir_orthogonal = ceil (side/2);  %direction orthogonal to the interface
+%     interf_dir_parallel = setdiff (all_dir, interf_dir_orthogonal);  %direction(s) parallel to the interface
+%     interf_dir = interf_dir_parallel;
+%     degree = hspace.space_of_level(lev-1).sp_patch{ipatch}.degree(interf_dir); %degree
+%     
+%     %define the 1D B-spline space parallel to the interface: spn (p,r)
+%     %(actually it is enough to know the number of degrees of freedom of this space)
+%     ndof_dir_spn = hspace.space_of_level(lev-1).sp_patch{ipatch}.ndof_dir;
+%     ndof_spn = ndof_dir_spn(interf_dir);
+%     ndof_Bsp = prod(ndof_dir_spn);  %dimension of bivariate space
+%     ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ipatch}.ndof_dir; %same for the finer level
+%     ndof_spn_ref = ndof_dir_spn_ref(interf_dir);     %same for the finer level
+%     ndof_Bsp_ref = prod(ndof_dir_spn_ref);   %same for the finer level
+%     
+%     % Get the indices ind0 and ind1, corresponding, in the matrix CC (see sp_multipatch_C1),
+%     %  to the B-splines of patch iptc used in the sums of (12) and (13) of Mario's notes (use sub2ind with spn)
+%     %  (needs to be fixed and checked)
+%     if (side == 1)
+%       ind0 = sub2ind (ndof_dir_spn, ones(1,ndof_spn), 1:ndof_spn);
+%       ind1 = sub2ind (ndof_dir_spn, 2*ones(1,ndof_spn), 1:ndof_spn);
+%       ind0_ref = sub2ind (ndof_dir_spn_ref, ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
+%       ind1_ref = sub2ind (ndof_dir_spn_ref, 2*ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level
+%     elseif (side == 2)
+%       ind0 = sub2ind (ndof_dir_spn, ndof_dir_spn(1) * ones(1,ndof_spn), 1:ndof_spn);
+%       ind1 = sub2ind (ndof_dir_spn, (ndof_dir_spn(1)-1) * ones(1,ndof_spn), 1:ndof_spn);
+%       ind0_ref = sub2ind (ndof_dir_spn_ref, ndof_dir_spn_ref(1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref);  %same for the finer level
+%       ind1_ref = sub2ind (ndof_dir_spn_ref, (ndof_dir_spn_ref(1)-1) * ones(1,ndof_spn_ref), 1:ndof_spn_ref); %same for the finer level
+%     elseif (side == 3)
+%       ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ones(1,ndof_spn));
+%       ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, 2*ones(1,ndof_spn));
+%       ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ones(1,ndof_spn_ref));  %same for the finer level
+%       ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, 2*ones(1,ndof_spn_ref));  %same for the finer level
+%     elseif (side == 4)
+%       ind0 = sub2ind (ndof_dir_spn, 1:ndof_spn, ndof_dir_spn(2) * ones(1,ndof_spn));
+%       ind1 = sub2ind (ndof_dir_spn, 1:ndof_spn, (ndof_dir_spn(2)-1) * ones(1,ndof_spn));
+%       ind0_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, ndof_dir_spn_ref(2) * ones(1,ndof_spn_ref));  %same for the finer level
+%       ind1_ref = sub2ind (ndof_dir_spn_ref, 1:ndof_spn_ref, (ndof_dir_spn_ref(2)-1) * ones(1,ndof_spn_ref));  %same for the finer level
+%     end
+%     
+%     %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
+%     %(actually it is enough to know the number of degrees of freedom of these two spaces)
+%     ndof_0_C1 = length (hspace.space_of_level(lev-1).knots0_patches{ipatch}{interf_dir}) - degree - 1;
+%     ndof_0_C1_ref = length (hspace.space_of_level(lev).knots0_patches{ipatch}{interf_dir}) - degree - 1; %same for the finer level
+%     ndof_1_C1 = length (hspace.space_of_level(lev-1).knots1_patches{ipatch}{interf_dir}) - degree ;
+%     ndof_1_C1_ref = length (hspace.space_of_level(lev).knots1_patches{ipatch}{interf_dir}) - degree; %same for the finer level
+%     
+%     %in Cpatch{iptc}, columns 1:sp.ndof_interior represent the regular
+%     %(interior) B-splines (all patches),
+%     ndof_interior_C1 = hspace.space_of_level(lev-1).ndof_interior;
+%     ndof_interior_C1_ref = hspace.space_of_level(lev).ndof_interior; %same for the finer level
+%     
+%     Cpatch = hspace.space_of_level(lev-1).Cpatch;
+%     
+%     %in Cpatch{iptc}, rows interior_dofs_per_patch{itpc} represent the interior B-spline
+%     %ndof_interior=hspace.space_of_level(lev-1).interior_dofs_per_patch{ipatch};
+%     %ndof_interior_ref=hspace.space_of_level(lev).interior_dofs_per_patch{ipatch}; %same for the finer level
+%     %ind0 correspond to N_0^(p,r) in (12) and ind1 to N_1^(p,r) in (12)-(13) 
+%     
+%     Aux = Lambda * Cpatch{ipatch}; %this matrix expresses C1 basis functions of lev-1 in terms of B-splines of level lev
+% 
+%     %Taking care of the parts corresponding to Lemma 1 (Mario's notes on refinement)
+%     Bsp_indices_coarse = setdiff (1:ndof_Bsp, union (ind0, ind1));
+%     Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, union (ind0_ref, ind1_ref));
+%     interior_inds_coarse = shift_inds(ipatch)+1:shift_inds(ipatch+1);
+%     interior_inds_fine = shift_inds_ref(ipatch)+1:shift_inds_ref(ipatch+1);
+%     
+%     C(interior_inds_fine,interior_inds_coarse) = Lambda(Bsp_indices_fine, Bsp_indices_coarse);  %not all Lambda
+% 
+%    %Taking care of the parts corresponding to Lemma 2 (Mario's notes on refinement)
+%     indices0_coarse = ndof_interior_C1 + (1:ndof_0_C1);
+%     indices0_fine = ndof_interior_C1_ref + (1:ndof_0_C1_ref);
+%     if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
+%       C(indices0_fine,indices0_coarse) = Proj0{interf_dir_parallel};  %first term of refinement formula in Lemma 2
+%     end
+%     C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
+%     
+%    %Taking care of the parts corresponding to Lemma 3 (Mario's notes on refinement)
+%     indices1_coarse = ndof_interior_C1 + ndof_0_C1 + (1:ndof_1_C1);
+%     indices1_fine = ndof_interior_C1_ref + ndof_0_C1_ref + (1:ndof_1_C1_ref);
+%     if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
+%       C(indices1_fine,indices1_coarse) = (1/2)*Proj1{interf_dir_parallel};  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
+%     end
+%     C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
+% 
+%   end
   
 % We have to change all this part following Mario's notes, and using Proj, Proj0 and Proj1
 elseif (nargin == 3)
