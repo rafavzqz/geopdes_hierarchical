@@ -253,7 +253,7 @@ if (nargin < 3)
 %             *hspace.space_of_level(1).vertex_function_matrices{2,1}{1}.K_prev;
 %         
 %         C(ind_edge_and_int_ref,indices_v_coarse)=0;
-    end
+%    end
     
     %c) part of the matrix describing the dependence on the standard functions
     %on the finer level
