@@ -277,12 +277,11 @@ if (nargin < 3)
         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
         int_ref=setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
         
-%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
-            K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
-            E=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
-%         else %modify according to orientation
-%             K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
-%             E=-hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_next;
+        K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
+        E=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
+%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==-1 
+%             E(:,[4 5])=-E(:,[4 5]);
+%             E=E(:,[3 2 1 5 4]);
 %         end
         
         %Auxiliary matrices (standard refinement matrix)
@@ -297,29 +296,36 @@ if (nargin < 3)
 
         dim_sp0=size(Proj0{interf_dir},2);
         dim_sp1=size(Proj1{interf_dir},2);
-        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
-            inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
-        else
-            inactive_edge=[dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
-        end
         dim_sp0_ref=size(Proj0{interf_dir},1);
         dim_sp1_ref=size(Proj1{interf_dir},1);
-        active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2]; %indices of active edge functions (finer level)
+        
+        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
+            inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
+            active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+        else
+            %inactive_edge=[dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
+            active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+            inactive_edge=[dim_sp0:-1:dim_sp0-2 dim_sp0+dim_sp1:-1:dim_sp0+dim_sp1-1];            
+            %active_edge_ref=[dim_sp0_ref-3:-1:4 dim_sp0_ref+dim_sp1_ref-2:-1:dim_sp0_ref+3];
+        end
+
+         %indices of active edge functions (finer level)
 %         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)~=1 %correct??
 %             active_edge_ref=flip(active_edge_ref);
 %         end
-        %The error is: it's not necessarily Kprev!! It depends on the orientation!!
-        indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
-        indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
+%         indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
+%         indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
         Aux_edge_disc=[Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
             zeros(size(Proj1{interf_dir},1),size(Proj0{interf_dir},2)) (1/2)*Proj1{interf_dir}]; 
         
-        Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
-        %We need to define ind_edge_ref and ind_int_ref
         ind_edge_ref=ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
                      ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
+        C(ind_edge_ref,indices_v_coarse)=Aux_edge_disc(active_edge_ref,inactive_edge)*K;
+        
         ind_int_ref=shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
-        C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
+        C(ind_int_ref,indices_v_coarse)=Aux(int_ref,:)*K;
+%         Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
+%         C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
         
         V=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.V;
         Aux=Lambda*V;
