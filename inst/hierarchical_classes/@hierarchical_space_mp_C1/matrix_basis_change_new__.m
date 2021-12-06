@@ -105,25 +105,26 @@ if (nargin < 3)
     for idim = 1:ndim
       Lambda = kron (Proj{idim}, Lambda);
     end
-    %Proj0 = hspace.Proj0{lev-1, ip};
-    %Proj1 = hspace.Proj1{lev-1, ip};
 
-    %Dimension of standard bivariate spline space on the patch
+    %Dimension of standard bivariate spline spaces on the patch
     ndof_dir_spn = hspace.space_of_level(lev-1).sp_patch{ip}.ndof_dir;
-    ndof_Bsp = prod(ndof_dir_spn);  
-    %...and the same for the finer level
+    ndof_Bsp = prod(ndof_dir_spn);
     ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{ip}.ndof_dir; 
-    ndof_Bsp_ref = prod(ndof_dir_spn_ref);  
+    ndof_Bsp_ref = prod(ndof_dir_spn_ref);
+
     %Indices of the B-splines which are not active (not interior)
-    %keyboard
-    ind=sub2ind(ndof_dir_spn,[1*ones(1,ndof_dir_spn(2)) 2*ones(1,ndof_dir_spn(2))...
-        (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],repmat(1:ndof_dir_spn(2),1,4));
-    ind=[ind sub2ind(ndof_dir_spn,repmat(2:(ndof_dir_spn(1)-1),1,4),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
-        (ndof_dir_spn(2)-1)*ones(1,ndof_dir_spn(1)-2) ndof_dir_spn(2)*ones(1,ndof_dir_spn(1)-2)])];
-    ind_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
-    ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
-        (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
+    boundary = struct(hspace.space_of_level(lev-1).sp_patch{ip}.boundary);
+    ind = union ([boundary.dofs], [boundary.adjacent_dofs]);
+    boundary = struct(hspace.space_of_level(lev).sp_patch{ip}.boundary);
+    ind_ref = union ([boundary.dofs], [boundary.adjacent_dofs]);
+%     ind=sub2ind(ndof_dir_spn,[1*ones(1,ndof_dir_spn(2)) 2*ones(1,ndof_dir_spn(2))...
+%         (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],repmat(1:ndof_dir_spn(2),1,4));
+%     ind=[ind sub2ind(ndof_dir_spn,repmat(2:(ndof_dir_spn(1)-1),1,4),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
+%         (ndof_dir_spn(2)-1)*ones(1,ndof_dir_spn(1)-2) ndof_dir_spn(2)*ones(1,ndof_dir_spn(1)-2)])];
+%     ind_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
+%         (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+%     ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+%         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
     %Refinement of interior functions
     Bsp_indices_coarse = setdiff (1:ndof_Bsp, ind);
     Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, ind_ref);
@@ -134,20 +135,20 @@ if (nargin < 3)
   end
   
   interfaces = hspace.space_of_level(lev-1).interfaces;
-  for ii=1:nint
+  for ii = 1:nint
     %get interf_dir=1,2 according to the interface being horizontal or vertical
     clear side_on_int 
     clear patch_on_int
-    if ~isempty(interfaces(ii).patch1)
+    if (~isempty(interfaces(ii).patch1))
         side_on_int(1) = interfaces(ii).side1;
         patch_on_int(1) = interfaces(ii).patch1;
     end
-    if ~isempty(interfaces(ii).patch2)
+    if (~isempty(interfaces(ii).patch2))
         side_on_int(2) = interfaces(ii).side2;
         patch_on_int(2) = interfaces(ii).patch2;
     end
     
-    for ipatch=1:length(patch_on_int) %local patch index
+    for ipatch = 1:length(patch_on_int) %local patch index
         side = side_on_int(ipatch);
         interf_dir_orthogonal = ceil (side/2);  %direction orthogonal to the interface
         interf_dir_parallel = setdiff (all_dir, interf_dir_orthogonal);  %direction(s) parallel to the interface
@@ -163,14 +164,18 @@ if (nargin < 3)
         ndof_Bsp_ref = prod(ndof_dir_spn_ref);   %same for the finer level
         
         % Get the indices ind0, ind1 corresponding to the standard B-splines spanning edge functions
-        ind=sub2ind(ndof_dir_spn,[1*ones(1,ndof_dir_spn(2)) 2*ones(1,ndof_dir_spn(2))...
-        (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],repmat(1:ndof_dir_spn(2),1,4));
-        ind=[ind sub2ind(ndof_dir_spn,repmat(2:(ndof_dir_spn(1)-1),1,4),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
-        (ndof_dir_spn(2)-1)*ones(1,ndof_dir_spn(1)-2) ndof_dir_spn(2)*ones(1,ndof_dir_spn(1)-2)])];  
-        ind_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
-        ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
-        (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
+        boundary = struct(hspace.space_of_level(lev-1).sp_patch{patch_on_int(ipatch)}.boundary);
+        ind = union ([boundary.dofs], [boundary.adjacent_dofs]);
+        boundary = struct(hspace.space_of_level(lev).sp_patch{patch_on_int(ipatch)}.boundary);
+        ind_ref = union ([boundary.dofs], [boundary.adjacent_dofs]);
+%         ind=sub2ind(ndof_dir_spn,[1*ones(1,ndof_dir_spn(2)) 2*ones(1,ndof_dir_spn(2))...
+%         (ndof_dir_spn(1)-1)*ones(1,ndof_dir_spn(2)) ndof_dir_spn(1)*ones(1,ndof_dir_spn(2))],repmat(1:ndof_dir_spn(2),1,4));
+%         ind=[ind sub2ind(ndof_dir_spn,repmat(2:(ndof_dir_spn(1)-1),1,4),[1*ones(1,ndof_dir_spn(1)-2) 2*ones(1,ndof_dir_spn(1)-2)...
+%         (ndof_dir_spn(2)-1)*ones(1,ndof_dir_spn(1)-2) ndof_dir_spn(2)*ones(1,ndof_dir_spn(1)-2)])];  
+%         ind_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
+%         (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+%         ind_ref=[ind_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+%         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
 
         %define the 1D B-spline spaces parallel to the interface: sp0 (p,r+1) and sp1 (p-1,r)
         %(actually it is enough to know the number of degrees of freedom of these two spaces)
@@ -214,26 +219,28 @@ if (nargin < 3)
   
   %For this part, do we need to save the sigmas, Ks and Vs in the
   %hierarchical space structure? YES
-  for iv=1:nvert
+  for iv = 1:nvert
     
     %refinement of vertex functions
-    patches=hspace.space_of_level(lev-1).vertices(iv).patches;
-    edges=hspace.space_of_level(lev-1).vertices(iv).edges;
+    patches = hspace.space_of_level(lev-1).vertices(iv).patches;
+    edges = hspace.space_of_level(lev-1).vertices(iv).edges;
     
     %global indices of this vertex functions (coarse level)
-    indices_v_coarse=ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv)+(1:6);
+%     indices_v_coarse = hspace.space_of_level(lev-1).dofs_on_vertex{iv}
+    indices_v_coarse = ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv) + (1:6);
+    indices_v_ref = ndof_interior_C1_ref + ndof_edge_C1_ref + shift_inds_v_ref(iv) + (1:6);
     
     %a) part of the matrix describing the dependence on the same vertex
     %function on the finer level
-    sigma_coarse=hspace.space_of_level(lev-1).vertex_function_matrices{1,iv};
-    sigma_fine=hspace.space_of_level(lev).vertex_function_matrices{1,iv};
-    sigma_rat=sigma_coarse/sigma_fine;
-    sigma_vec=[1 sigma_rat sigma_rat^2 sigma_rat sigma_rat^2 sigma_rat^2];
-    C(ndof_interior_C1_ref + ndof_edge_C1_ref + shift_inds_v_ref(iv)+(1:6),indices_v_coarse)=diag(sigma_vec);
+    sigma_coarse = hspace.space_of_level(lev-1).vertex_function_matrices{1,iv};
+    sigma_fine = hspace.space_of_level(lev).vertex_function_matrices{1,iv};
+    sigma_rat = sigma_coarse/sigma_fine;
+    sigma_vec = [1 sigma_rat sigma_rat^2 sigma_rat sigma_rat^2 sigma_rat^2];
+    C(indices_v_ref,indices_v_coarse) = diag(sigma_vec);
     
     %b) part of the matrix describing the dependence on edge and interior functions 
     %on the finer level
-    for ip=1:numel(patches)       
+    for ip = 1:numel(patches)
         prev_edge = edges(ip); %global index of the previous edge
         next_edge = edges(mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1); %global index of the next edge (wrong, but not used)
         
@@ -270,12 +277,14 @@ if (nargin < 3)
         %keyboard
         
         % Get the indices of the interior standard B-splines (finer level)
-        ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir; %same for the finer level
-        int_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
-        int_ref=[int_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
-        (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
-        int_ref=setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
+        ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir;
+%         int_ref = sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
+%         (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+%         int_ref = [int_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+%         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
+%         int_ref = setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
+        [indx, indy] = ndgrid (3:ndof_dir_spn_ref(1)-2, 3:ndof_dir_spn_ref(2)-2);
+        int_ref = sub2ind (ndof_dir_spn_ref, indx(:).', indy(:).');
         
         K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
         E=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
@@ -292,12 +301,12 @@ if (nargin < 3)
         end
         Proj0 = hspace.Proj0{lev-1, patches(ip)};
         Proj1 = hspace.Proj1{lev-1, patches(ip)};
-        Aux = Lambda * E;%Cpatch_full{patches(ip)}; %PROBLEM: C_patch does not include the "discarded" edge functions we need here
+        Aux = Lambda * E;
 
-        dim_sp0=size(Proj0{interf_dir},2);
-        dim_sp1=size(Proj1{interf_dir},2);
-        dim_sp0_ref=size(Proj0{interf_dir},1);
-        dim_sp1_ref=size(Proj1{interf_dir},1);
+        dim_sp0 = size (Proj0{interf_dir},2);
+        dim_sp1 = size (Proj1{interf_dir},2);
+        dim_sp0_ref = size (Proj0{interf_dir},1);
+        dim_sp1_ref = size (Proj1{interf_dir},1);
         
         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
             inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
@@ -315,21 +324,21 @@ if (nargin < 3)
 %         end
 %         indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
 %         indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
-        Aux_edge_disc=[Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
+        Aux_edge_disc = [Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
             zeros(size(Proj1{interf_dir},1),size(Proj0{interf_dir},2)) (1/2)*Proj1{interf_dir}]; 
         
-        ind_edge_ref=ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
-                     ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
-        C(ind_edge_ref,indices_v_coarse)=Aux_edge_disc(active_edge_ref,inactive_edge)*K;
+        ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
+                       ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
+        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K;
         
         ind_int_ref=shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
         C(ind_int_ref,indices_v_coarse)=Aux(int_ref,:)*K;
 %         Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
 %         C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
         
-        V=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.V;
-        Aux=Lambda*V;
-        C(ind_int_ref,indices_v_coarse)=C(ind_int_ref,indices_v_coarse)+Aux(int_ref,:);
+        V = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.V;
+        Aux = Lambda*V;
+        C(ind_int_ref,indices_v_coarse) = C(ind_int_ref,indices_v_coarse)+Aux(int_ref,:);
     end
    %if there are MORE EDGES THAN PATCHES (boundary vertex), we must repeat
    %the same procedure for that edge
