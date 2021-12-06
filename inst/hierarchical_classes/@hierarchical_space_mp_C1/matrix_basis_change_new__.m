@@ -215,57 +215,193 @@ if (nargin < 3)
   %For this part, do we need to save the sigmas, Ks and Vs in the
   %hierarchical space structure? YES
   for iv=1:nvert
+    
     %refinement of vertex functions
     patches=hspace.space_of_level(lev-1).vertices(iv).patches;
     edges=hspace.space_of_level(lev-1).vertices(iv).edges;
-%     
-%     %a) part of the matrix describing the dependence on the same vertex
-%     %function on the finer level
-%     sigma_coarse=hspace.space_of_level(lev-1).vertex_function_matrices{1,iv};
-%     sigma_fine=hspace.space_of_level(lev).vertex_function_matrices{1,iv};
-%     sigma_rat=sigma_coarse/sigma_fine;
-%     sigma_vec=[1 sigma_rat sigma_rat^2 sigma_rat sigma_rat^2 sigma_rat^2];
-%     C(ndof_interior_C1_ref + ndof_edge_C1_ref+shift_inds_v_ref(iv)+(1:6),ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv)+(1:6))=diag(sigma_vec);
-%     
-%     %b) part of the matrix describing the dependence on edge and interior functions 
-%     %on the finer level
-%     for ip=1:numel(patches)       
-%         prev_edge = edges(ip); %global index of the previous edge
-%         next_edge = edges(mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1); %global index of the next edge
-% 
-%         %Compute the space on the pacth, indices needed for the two edges, etc.
-%         
-%         %Auxiliary matrices (standard refinement matrix)
-%         Lambda = 1;
-%         Proj = hspace.Proj{lev-1, patch_on_int(ipatch)};
-%         for idim = 1:ndim
-%             Lambda = kron (Proj{idim}, Lambda);
-%         end
-%         Proj0 = hspace.Proj0{lev-1, patch_on_int(ipatch)};
-%         Proj1 = hspace.Proj1{lev-1, patch_on_int(ipatch)};
-%         
-%         %this must be completed! It should be the refinement matrix of the
-%         %discarded edge functions (or larger and then we extract a part of it)
-%         Aux_edge=[Proj0 zeros(size(Proj0,1),size(Proj1,2));...
-%             zeros(size(Proj1,1),size(Proj0,1)) (1/2)*Proj1]; 
-%          
-%         Aux=Aux_edge(ind_edge_and_int_ref,ind_edge_discard)...
-%             *hspace.space_of_level(1).vertex_function_matrices{2,1}{1}.K_prev;
-%         
-%         C(ind_edge_and_int_ref,indices_v_coarse)=0;
-%    end
     
-    %c) part of the matrix describing the dependence on the standard functions
+    %global indices of this vertex functions (coarse level)
+    indices_v_coarse=ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv)+(1:6);
+    
+    %a) part of the matrix describing the dependence on the same vertex
+    %function on the finer level
+    sigma_coarse=hspace.space_of_level(lev-1).vertex_function_matrices{1,iv};
+    sigma_fine=hspace.space_of_level(lev).vertex_function_matrices{1,iv};
+    sigma_rat=sigma_coarse/sigma_fine;
+    sigma_vec=[1 sigma_rat sigma_rat^2 sigma_rat sigma_rat^2 sigma_rat^2];
+    C(ndof_interior_C1_ref + ndof_edge_C1_ref + shift_inds_v_ref(iv)+(1:6),indices_v_coarse)=diag(sigma_vec);
+    
+    %b) part of the matrix describing the dependence on edge and interior functions 
     %on the finer level
-%     for ip=1:hspace.space_of_level(lev-1).vertices(iv).valence_p
-%         %Auxiliary matrices (standard refinement matrix)
-%         Lambda = 1;
-%         Proj = hspace.Proj{lev-1, patch_on_int(ip)};
-%         for idim = 1:ndim
-%             Lambda = kron (Proj{idim}, Lambda);
+    for ip=1:numel(patches)       
+        prev_edge = edges(ip); %global index of the previous edge
+        next_edge = edges(mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1); %global index of the next edge (wrong, but not used)
+        
+        %determining interf_dir (interface direction)
+        if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,3)==0 %x and y not inverted between them
+            if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,1)==0   
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=1;
+                else
+                    interf_dir=2;
+                end
+            else
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=2;
+                else
+                    interf_dir=1;
+                end
+            end
+        else
+            if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,1)==0   
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=2;
+                else
+                    interf_dir=1;
+                end
+            else
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=1;
+                else
+                    interf_dir=2;
+                end
+            end            
+        end
+        %keyboard
+        
+        % Get the indices of the interior standard B-splines (finer level)
+        ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir; %same for the finer level
+        int_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
+        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+        int_ref=[int_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+        (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
+        int_ref=setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
+        
+%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
+            K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
+            E=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
+%         else %modify according to orientation
+%             K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
+%             E=-hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_next;
 %         end
-%     end
-    
+        
+        %Auxiliary matrices (standard refinement matrix)
+        Lambda = 1;
+        Proj = hspace.Proj{lev-1, patches(ip)};
+        for idim = 1:ndim
+            Lambda = kron (Proj{idim}, Lambda);
+        end
+        Proj0 = hspace.Proj0{lev-1, patches(ip)};
+        Proj1 = hspace.Proj1{lev-1, patches(ip)};
+        Aux = Lambda * E;%Cpatch_full{patches(ip)}; %PROBLEM: C_patch does not include the "discarded" edge functions we need here
+
+        dim_sp0=size(Proj0{interf_dir},2);
+        dim_sp1=size(Proj1{interf_dir},2);
+        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
+            inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
+        else
+            inactive_edge=[dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
+        end
+        dim_sp0_ref=size(Proj0{interf_dir},1);
+        dim_sp1_ref=size(Proj1{interf_dir},1);
+        active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2]; %indices of active edge functions (finer level)
+%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)~=1 %correct??
+%             active_edge_ref=flip(active_edge_ref);
+%         end
+        %The error is: it's not necessarily Kprev!! It depends on the orientation!!
+        indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
+        indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
+        Aux_edge_disc=[Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
+            zeros(size(Proj1{interf_dir},1),size(Proj0{interf_dir},2)) (1/2)*Proj1{interf_dir}]; 
+        
+        Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
+        %We need to define ind_edge_ref and ind_int_ref
+        ind_edge_ref=ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
+                     ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
+        ind_int_ref=shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
+        C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
+        
+        V=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.V;
+        Aux=Lambda*V;
+        C(ind_int_ref,indices_v_coarse)=C(ind_int_ref,indices_v_coarse)+Aux(int_ref,:);
+    end
+   %if there are MORE EDGES THAN PATCHES (boundary vertex), we must repeat
+   %the same procedure for that edge
+   if numel(edges)>numel(patches)
+       ip=numel(edges)-1; %we are on the last patch
+        %determining interf_dir
+        if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,3)==0 %x and y not inverted between them
+            if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,1)==0   
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=2;
+                else
+                    interf_dir=1;
+                end
+            else
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=1;
+                else
+                    interf_dir=2;
+                end
+            end
+        else
+            if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,1)==0   
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=1;
+                else
+                    interf_dir=2;
+                end
+            else
+                if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
+                    interf_dir=2;
+                else
+                    interf_dir=1;
+                end
+            end            
+        end
+        % Get the indices of the interior standard B-splines (finer level)
+        ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir; %same for the finer level
+        int_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
+        (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
+        int_ref=[int_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
+        (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
+        int_ref=setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
+        
+        %Auxiliary matrices (standard refinement matrix)
+        Lambda = 1;
+        Proj = hspace.Proj{lev-1, patches(ip)};
+        for idim = 1:ndim
+            Lambda = kron (Proj{idim}, Lambda);
+        end
+        Proj0 = hspace.Proj0{lev-1, patches(ip)};
+        Proj1 = hspace.Proj1{lev-1, patches(ip)};
+        Aux = Lambda * hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_next; 
+        
+        dim_sp0=size(Proj0{interf_dir},2);
+        dim_sp1=size(Proj1{interf_dir},2);
+        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip+1)==1
+            inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
+        else
+            inactive_edge=[dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
+        end
+        dim_sp0_ref=size(Proj0{interf_dir},1);
+        dim_sp1_ref=size(Proj1{interf_dir},1);
+        active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2]; %indices of active edge functions (finer level)
+        
+        indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
+        indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
+        
+        Aux_edge_disc=[Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
+            zeros(size(Proj1{interf_dir},1),size(Proj0{interf_dir},2)) (1/2)*Proj1{interf_dir}];   
+        Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]...
+            *hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
+        %We need to define ind_edge_ref and ind_int_ref
+        ind_edge_ref=ndof_interior_C1_ref + shift_inds_e_ref(edges(ip+1))+1:...
+                     ndof_interior_C1_ref + shift_inds_e_ref(edges(ip+1)+1);
+        ind_int_ref=shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
+        C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
+   end 
+   
   end
   
 
