@@ -274,7 +274,6 @@ if (nargin < 3)
                 end
             end            
         end
-        %keyboard
         
         % Get the indices of the interior standard B-splines (finer level)
         ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir;
@@ -286,12 +285,12 @@ if (nargin < 3)
         [indx, indy] = ndgrid (3:ndof_dir_spn_ref(1)-2, 3:ndof_dir_spn_ref(2)-2);
         int_ref = sub2ind (ndof_dir_spn_ref, indx(:).', indy(:).');
         
-        K=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
-        E=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
-%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==-1 
-%             E(:,[4 5])=-E(:,[4 5]);
-%             E=E(:,[3 2 1 5 4]);
-%         end
+        K = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
+        E = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
+        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==-1 
+            E(:,[4 5]) = -E(:,[4 5]);
+            E = E(:,[3 2 1 5 4]);
+        end
         
         %Auxiliary matrices (standard refinement matrix)
         Lambda = 1;
@@ -308,31 +307,34 @@ if (nargin < 3)
         dim_sp0_ref = size (Proj0{interf_dir},1);
         dim_sp1_ref = size (Proj1{interf_dir},1);
         
-        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1
-            inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
-            active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+        if (hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1)
+            inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
+            active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+            Aux_edge_disc = [Proj0{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
+                             zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1{interf_dir}];
+            ind_edge_ref = ndof_interior_C1_ref + ...
+                           (shift_inds_e_ref(edges(ip))+1:shift_inds_e_ref(edges(ip)+1));
         else
-            %inactive_edge=[dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
-            active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
-            inactive_edge=[dim_sp0:-1:dim_sp0-2 dim_sp0+dim_sp1:-1:dim_sp0+dim_sp1-1];            
-            %active_edge_ref=[dim_sp0_ref-3:-1:4 dim_sp0_ref+dim_sp1_ref-2:-1:dim_sp0_ref+3];
+            inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
+            active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+%             inactive_edge = [dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
+%             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+%             inactive_edge = [dim_sp0:-1:dim_sp0-2 dim_sp0+dim_sp1:-1:dim_sp0+dim_sp1-1];            
+%             active_edge_ref = [dim_sp0_ref-3:-1:4 dim_sp0_ref+dim_sp1_ref-2:-1:dim_sp0_ref+3];
+            Aux_edge_disc = [Proj0{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
+                             zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1{interf_dir}];
+            nn0 = numel(4:dim_sp0_ref-3);
+            nn1 = numel(3:dim_sp1_ref-2);
+            ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)) + ...
+                            [nn0:-1:1, nn0+(nn1:-1:1)];
         end
 
-         %indices of active edge functions (finer level)
-%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)~=1 %correct??
-%             active_edge_ref=flip(active_edge_ref);
-%         end
-%         indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
-%         indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
-        Aux_edge_disc = [Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
-            zeros(size(Proj1{interf_dir},1),size(Proj0{interf_dir},2)) (1/2)*Proj1{interf_dir}]; 
-        
-        ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
-                       ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
+%         ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
+%                        ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
         C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K;
         
-        ind_int_ref=shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
-        C(ind_int_ref,indices_v_coarse)=Aux(int_ref,:)*K;
+        ind_int_ref = shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
+        C(ind_int_ref,indices_v_coarse) = Aux(int_ref,:)*K;
 %         Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
 %         C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
         
