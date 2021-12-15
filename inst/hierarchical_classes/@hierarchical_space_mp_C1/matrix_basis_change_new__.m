@@ -241,6 +241,7 @@ if (nargin < 3)
     %b) part of the matrix describing the dependence on edge and interior functions 
     %on the finer level
     for ip = 1:numel(patches)
+        ip_plus_1=mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1;
         prev_edge = edges(ip); %global index of the previous edge
         next_edge = edges(mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1); %global index of the next edge (wrong, but not used)
         
@@ -285,11 +286,19 @@ if (nargin < 3)
         [indx, indy] = ndgrid (3:ndof_dir_spn_ref(1)-2, 3:ndof_dir_spn_ref(2)-2);
         int_ref = sub2ind (ndof_dir_spn_ref, indx(:).', indy(:).');
         
-        K = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
-        E = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
+        K_prev = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_prev;
+        E_prev = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_prev;
         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==-1 
-            E(:,[4 5]) = -E(:,[4 5]);
-            E = E(:,[3 2 1 5 4]);
+            E_prev(:,[4 5]) = -E_prev(:,[4 5]);
+            E_prev = E_prev(:,[3 2 1 5 4]);
+        end
+        K_next = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
+        E_next = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_next;
+        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip_plus_1)==-1 
+            E_next(:,[4 5]) = -E_next(:,[4 5]);
+            E_next = E_next(:,[3 2 1 5 4]);
+            K_next([4 5],:) = -K_next([4 5],:);
+            K_next = K_next([3 2 1 5 4],:);
         end
         
         %Auxiliary matrices (standard refinement matrix)
@@ -300,7 +309,8 @@ if (nargin < 3)
         end
         Proj0 = hspace.Proj0{lev-1, patches(ip)};
         Proj1 = hspace.Proj1{lev-1, patches(ip)};
-        Aux = Lambda * E;
+        Aux_prev = Lambda * E_prev;
+        Aux_next = Lambda * E_next;
 
         dim_sp0 = size (Proj0{interf_dir},2);
         dim_sp1 = size (Proj1{interf_dir},2);
@@ -331,10 +341,15 @@ if (nargin < 3)
 
 %         ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
 %                        ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
-        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K;
+        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_prev;
+        
+        if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==-1 
+            K_prev([4 5],:) = -K_prev([4 5],:);
+            K_prev = K_prev([3 2 1 5 4],:);
+        end
         
         ind_int_ref = shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
-        C(ind_int_ref,indices_v_coarse) = Aux(int_ref,:)*K;
+        C(ind_int_ref,indices_v_coarse) = Aux_prev(int_ref,:)*K_prev+Aux_next(int_ref,:)*K_next;
 %         Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
 %         C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
         
