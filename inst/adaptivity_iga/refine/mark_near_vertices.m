@@ -6,7 +6,7 @@
 % INPUT:
 %
 %   hmsh:   object representing the coarse hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
+%   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space_mp_C1)
 %   marked: cell array with the indices, in the single level mesh, of the marked elements
 %            for each level
 %
@@ -52,7 +52,7 @@ for ilev = 1:hmsh.nlevels
       flag = true;
     end
   end
-  marked{ilev} = intersect (union (marked{ilev}, new_marked), hmsh.active{ilev});
+  marked{ilev} = union (marked{ilev}, intersect (new_marked, hmsh.active{ilev}));
 end
 
 end
