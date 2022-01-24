@@ -65,7 +65,7 @@ if (strcmpi (option, 'reduced'))
 elseif (strcmpi (option, 'full'))
   for lev = 2:hspace.nlevels
     I = speye (hspace.space_of_level(lev).ndof); 
-    aux = matrix_basis_change__ (hspace, lev, [], hmsh); % FIX: remove hmsh
+    aux = matrix_basis_change__ (hspace, lev); % FIX: remove hmsh
     Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
     clear aux I
   end

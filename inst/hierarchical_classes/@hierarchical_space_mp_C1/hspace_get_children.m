@@ -43,7 +43,7 @@ children = [];
 
 children_of_function = cell (numel(ind), 1);
 
-ref_matrix = matrix_basis_change__ (hspace, lev+1, [], hmsh); %FIX: remove hmsh
+ref_matrix = matrix_basis_change__ (hspace, lev+1); %FIX: remove hmsh
 for ii = 1:numel(ind)
   [auxI,~]= find(ref_matrix(:,ind(ii)));
   children = union (children, auxI);
