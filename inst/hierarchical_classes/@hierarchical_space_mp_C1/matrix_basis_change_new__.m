@@ -230,20 +230,18 @@ if (nargin < 3)
     indices_v_coarse = ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv) + (1:6);
     indices_v_ref = ndof_interior_C1_ref + ndof_edge_C1_ref + shift_inds_v_ref(iv) + (1:6);
     
-    %a) part of the matrix describing the dependence on the same vertex
-    %function on the finer level
+    %a) part of the matrix describing the dependence on the same vertex functions on the finer level
     sigma_coarse = hspace.space_of_level(lev-1).vertex_function_matrices{1,iv};
     sigma_fine = hspace.space_of_level(lev).vertex_function_matrices{1,iv};
     sigma_rat = sigma_coarse/sigma_fine;
     sigma_vec = [1 sigma_rat sigma_rat^2 sigma_rat sigma_rat^2 sigma_rat^2];
     C(indices_v_ref,indices_v_coarse) = diag(sigma_vec);
     
-    %b) part of the matrix describing the dependence on edge and interior functions 
-    %on the finer level
+    %b) part of the matrix describing the dependence on edge and interior functions on the finer level
     for ip = 1:numel(patches)
         ip_plus_1=mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1;
-        %prev_edge = edges(ip); %global index of the previous edge
-        %next_edge = edges(mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1); %global index of the next edge (wrong, but not used)
+        prev_edge = edges(ip); %global index of the previous edge
+        next_edge = edges(mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1); %global index of the next edge (wrong, but not used)
         
         %determining interf_dir (interface direction)
         if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,3)==0 %x and y not inverted between them
@@ -278,11 +276,6 @@ if (nargin < 3)
         
         % Get the indices of the interior standard B-splines (finer level)
         ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir;
-%         int_ref = sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-%         (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
-%         int_ref = [int_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
-%         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
-%         int_ref = setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
         [indx, indy] = ndgrid (3:ndof_dir_spn_ref(1)-2, 3:ndof_dir_spn_ref(2)-2);
         int_ref = sub2ind (ndof_dir_spn_ref, indx(:).', indy(:).');
         
@@ -309,14 +302,12 @@ if (nargin < 3)
         end
         Proj0 = hspace.Proj0{lev-1, patches(ip)};
         Proj1 = hspace.Proj1{lev-1, patches(ip)};
-        Aux_prev = Lambda * E_prev;
-        Aux_next = Lambda * E_next;
-
         dim_sp0 = size (Proj0{interf_dir},2);
         dim_sp1 = size (Proj1{interf_dir},2);
         dim_sp0_ref = size (Proj0{interf_dir},1);
         dim_sp1_ref = size (Proj1{interf_dir},1);
         
+        %dependence on edge functions (finer level) of prev edge
         if (hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==1)
             inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
@@ -327,10 +318,6 @@ if (nargin < 3)
         else
             inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
-%             inactive_edge = [dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
-%             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
-%             inactive_edge = [dim_sp0:-1:dim_sp0-2 dim_sp0+dim_sp1:-1:dim_sp0+dim_sp1-1];            
-%             active_edge_ref = [dim_sp0_ref-3:-1:4 dim_sp0_ref+dim_sp1_ref-2:-1:dim_sp0_ref+3];
             Aux_edge_disc = [Proj0{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                              zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1{interf_dir}];
             nn0 = numel(4:dim_sp0_ref-3);
@@ -338,80 +325,60 @@ if (nargin < 3)
             ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)) + ...
                             [nn0:-1:1, nn0+(nn1:-1:1)];
         end
-
-%         ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
-%                        ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
         C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_prev;
         
+        %dependence on standard B-splines (finer level) through coarse edge functions of prev and next edge
         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip)==-1 
             K_prev([4 5],:) = -K_prev([4 5],:);
             K_prev = K_prev([3 2 1 5 4],:);
         end
-        
+        Aux_prev = Lambda * E_prev;
+        Aux_next = Lambda * E_next;
         ind_int_ref = shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
         C(ind_int_ref,indices_v_coarse) = Aux_prev(int_ref,:)*K_prev+Aux_next(int_ref,:)*K_next;
-%         Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]*K;
-%         C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
         
+        %dependence on standard B-splines (finer level)
         V = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.V;
         Aux = Lambda*V;
-        %keyboard
         C(ind_int_ref,indices_v_coarse) = C(ind_int_ref,indices_v_coarse)-Aux(int_ref,:);
     end
-   %if there are MORE EDGES THAN PATCHES (boundary vertex), we must repeat
-   %the same procedure for that edge
+    
+   %if there are MORE EDGES THAN PATCHES (boundary vertex), we must find
+   %the dependence on the corresponding edge functions
    if numel(edges)>numel(patches)
-       ip=numel(edges)-1; %we are on the last patch
-       ip_plus_1=mod(ip, hspace.space_of_level(lev-1).vertices(iv).valence_e) + 1;
+       ip=numel(patches); %we are on the last patch and we consider the (ip+1)-th edge
         %determining interf_dir
         if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,3)==0 %x and y not inverted between them
             if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,1)==0   
                 if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
-                    interf_dir=1;
-                else
                     interf_dir=2;
+                else
+                    interf_dir=1;
                 end
             else
                 if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
-                    interf_dir=2;
-                else
                     interf_dir=1;
+                else
+                    interf_dir=2;
                 end
             end
         else
             if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,1)==0   
                 if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
-                    interf_dir=2;
-                else
                     interf_dir=1;
+                else
+                    interf_dir=2;
                 end
             else
                 if hspace.space_of_level(lev-1).vertices(iv).patch_reorientation(ip,2)==0 
-                    interf_dir=1;
-                else
                     interf_dir=2;
+                else
+                    interf_dir=1;
                 end
             end            
         end
         
-        ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir;
-        [indx, indy] = ndgrid (3:ndof_dir_spn_ref(1)-2, 3:ndof_dir_spn_ref(2)-2);
-        int_ref = sub2ind (ndof_dir_spn_ref, indx(:).', indy(:).');
-        % Get the indices of the interior standard B-splines (finer level)
-%         ndof_dir_spn_ref = hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof_dir; %same for the finer level
-%         int_ref=sub2ind(ndof_dir_spn_ref,[1*ones(1,ndof_dir_spn_ref(2)) 2*ones(1,ndof_dir_spn_ref(2))...
-%         (ndof_dir_spn_ref(1)-1)*ones(1,ndof_dir_spn_ref(2)) ndof_dir_spn_ref(1)*ones(1,ndof_dir_spn_ref(2))],repmat(1:ndof_dir_spn_ref(2),1,4));
-%         int_ref=[int_ref sub2ind(ndof_dir_spn_ref,repmat(2:(ndof_dir_spn_ref(1)-1),1,4),[1*ones(1,ndof_dir_spn_ref(1)-2) 2*ones(1,ndof_dir_spn_ref(1)-2)...
-%         (ndof_dir_spn_ref(2)-1)*ones(1,ndof_dir_spn_ref(1)-2) ndof_dir_spn_ref(2)*ones(1,ndof_dir_spn_ref(1)-2)])];
-%         int_ref=setdiff(1:hspace.space_of_level(lev).sp_patch{patches(ip)}.ndof, int_ref);
-        K_next = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
-        %E_next = hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_next;
-%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip_plus_1)==-1 
-%             E_next(:,[4 5]) = -E_next(:,[4 5]);
-%             E_next = E_next(:,[3 2 1 5 4]);
-%             K_next([4 5],:) = -K_next([4 5],:);
-%             K_next = K_next([3 2 1 5 4],:);
-%         end
+        K_next=hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
         
         %Auxiliary matrices (standard refinement matrix)
         Lambda = 1;
@@ -421,71 +388,31 @@ if (nargin < 3)
         end
         Proj0 = hspace.Proj0{lev-1, patches(ip)};
         Proj1 = hspace.Proj1{lev-1, patches(ip)};
-%         Aux_prev = Lambda * E_prev;
-%         Aux_next = Lambda * E_next;
-
-        dim_sp0 = size (Proj0{interf_dir},2);
-        dim_sp1 = size (Proj1{interf_dir},2);
-        dim_sp0_ref = size (Proj0{interf_dir},1);
-        dim_sp1_ref = size (Proj1{interf_dir},1);
         
-        if (hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip_plus_1)==1)
+        dim_sp0=size(Proj0{interf_dir},2);
+        dim_sp1=size(Proj1{interf_dir},2);
+        dim_sp0_ref=size(Proj0{interf_dir},1);
+        dim_sp1_ref=size(Proj1{interf_dir},1);
+        
+        %dependence on edge functions (finer level) of next edge
+        if (hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip+1)==1)
             inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
             Aux_edge_disc = [Proj0{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                              zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1{interf_dir}];
             ind_edge_ref = ndof_interior_C1_ref + ...
-                           (shift_inds_e_ref(edges(ip))+1:shift_inds_e_ref(edges(ip)+1));
+                           (shift_inds_e_ref(edges(ip+1))+1:shift_inds_e_ref(edges(ip+1)+1));
         else
             inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
-%             inactive_edge = [dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
-%             active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
-%             inactive_edge = [dim_sp0:-1:dim_sp0-2 dim_sp0+dim_sp1:-1:dim_sp0+dim_sp1-1];            
-%             active_edge_ref = [dim_sp0_ref-3:-1:4 dim_sp0_ref+dim_sp1_ref-2:-1:dim_sp0_ref+3];
             Aux_edge_disc = [Proj0{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                              zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1{interf_dir}];
             nn0 = numel(4:dim_sp0_ref-3);
             nn1 = numel(3:dim_sp1_ref-2);
-            ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)) + ...
+            ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip+1)) + ...
                             [nn0:-1:1, nn0+(nn1:-1:1)];
-        end
-
-%         ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip))+1:...
-%                        ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)+1);
-        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_next;
-%         Lambda = 1;
-%         Proj = hspace.Proj{lev-1, patches(ip)};
-%         for idim = 1:ndim
-%             Lambda = kron (Proj{idim}, Lambda);
-%         end
-%         Proj0 = hspace.Proj0{lev-1, patches(ip)};
-%         Proj1 = hspace.Proj1{lev-1, patches(ip)};
-%         Aux = Lambda * hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.E_next; 
-%         
-%         dim_sp0=size(Proj0{interf_dir},2);
-%         dim_sp1=size(Proj1{interf_dir},2);
-%         if hspace.space_of_level(lev-1).vertices(iv).edge_orientation(ip+1)==1
-%             inactive_edge=[1 2 3 dim_sp0+1 dim_sp0+2];
-%         else
-%             inactive_edge=[dim_sp0-2:dim_sp0 dim_sp0+dim_sp1-1:dim_sp0+dim_sp1];
-%         end
-%         dim_sp0_ref=size(Proj0{interf_dir},1);
-%         dim_sp1_ref=size(Proj1{interf_dir},1);
-%         active_edge_ref=[4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2]; %indices of active edge functions (finer level)
-%         
-%         indices0_coarse = []; %this must be the indices of the "discarded" trace edge functions (coarse level)
-%         indices1_coarse = []; %this must be the indices of the "discarded" derivative edge functions (coarse level)
-%         
-%         Aux_edge_disc=[Proj0{interf_dir} zeros(size(Proj0{interf_dir},1),size(Proj1{interf_dir},2));...
-%             zeros(size(Proj1{interf_dir},1),size(Proj0{interf_dir},2)) (1/2)*Proj1{interf_dir}];   
-%         Aux_edge_disc=[Aux_edge_disc(active_edge_ref,inactive_edge); Aux(int_ref,:)]...
-%             *hspace.space_of_level(lev-1).vertex_function_matrices{2,iv}{ip}.K_next;
-%         %We need to define ind_edge_ref and ind_int_ref
-%         ind_edge_ref=ndof_interior_C1_ref + shift_inds_e_ref(edges(ip+1))+1:...
-%                      ndof_interior_C1_ref + shift_inds_e_ref(edges(ip+1)+1);
-%         ind_int_ref=shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
-%         C(union(ind_edge_ref,ind_int_ref,'stable'),indices_v_coarse)=Aux_edge_disc;
+        end       
+        C(ind_edge_ref,indices_v_coarse)=Aux_edge_disc(active_edge_ref,inactive_edge)*K_next;
    end 
    
   end
