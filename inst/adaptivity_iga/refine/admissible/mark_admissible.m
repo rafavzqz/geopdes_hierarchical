@@ -58,12 +58,40 @@ else
   adm_type = adaptivity_data.adm_type;
 end
 
-for lev = hmsh.nlevels:-1:1
-  neighbors = get_neighborhood (hmsh, hspace, marked{lev}, lev, m, adm_type);
-  if (numel(neighbors) > 0)
-    lev_m = lev - m + 1;
-    new_marked = intersect (neighbors, hmsh.active{lev_m});
-    marked{lev_m} = union (marked{lev_m}, new_marked);
+if (~isa(hspace,'hierarchical_space_mp_C1'))
+% Standard case
+  for lev = hmsh.nlevels:-1:1
+    neighbors = get_neighborhood (hmsh, hspace, marked{lev}, lev, m, adm_type);
+    if (numel(neighbors) > 0)
+      lev_m = lev - m + 1;
+      new_marked = intersect (neighbors, hmsh.active{lev_m});
+      marked{lev_m} = union (marked{lev_m}, new_marked);
+    end
+  end
+else
+% C1 multipatch. Start marking elements adjacent to a vertex, and then neighborhood for admissibility.
+  for lev = hmsh.nlevels:-1:1
+    
+    msh_lev = hmsh.mesh_of_level(lev);
+    [~, elems_adj_to_vertices] = msh_cells_near_vertex (msh_lev, vertices);
+
+    marked_for_vertex = cellfun (@(x) intersect(marked{lev}, x), elems_adj_to_vertices, 'UniformOutput', false);
+
+    for ivert = 1:numel(vertices)
+      if (~isempty (marked_for_vertex{ivert}))
+        cells_on_patch = sp_get_vertex_neighbors (hspace.space_of_level(lev), msh_lev, ivert);
+        add_patch_elems = cellfun (@(x) any (ismember (marked_for_vertex{ivert}, x)), cells_on_patch);
+        new_marked = union (new_marked, [cells_on_patch{add_patch_elems}]);
+      end
+    end
+    marked{lev} = union (marked{lev}, intersect (new_marked, hmsh.active{lev}));
+    
+    neighbors = get_neighborhood (hmsh, hspace, marked{lev}, lev, m, adm_type);
+    if (numel(neighbors) > 0)
+      lev_m = lev - m + 1;
+      new_marked = intersect (neighbors, hmsh.active{lev_m});
+      marked{lev_m} = union (marked{lev_m}, new_marked);
+    end
   end
 end
 

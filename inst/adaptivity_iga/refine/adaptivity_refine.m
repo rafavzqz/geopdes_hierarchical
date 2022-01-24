@@ -43,15 +43,14 @@ switch (adaptivity_data.flag)
     marked_elements = marked;
 end
 
-if (isa(hspace,'hierarchical_space_mp_C1'))
-  marked_elements = mark_near_vertices (hmsh, hspace, marked_elements);
-end
-
 if (isfield (adaptivity_data, 'adm_class'))
   marked_elements = mark_admissible (hmsh, hspace, marked_elements, adaptivity_data);
   [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
   marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked_elements, 'elements');
 else
+  if (isa(hspace,'hierarchical_space_mp_C1'))
+    marked_elements = mark_near_vertices (hmsh, hspace, marked_elements);
+  end
   [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
   marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag);  
 end
