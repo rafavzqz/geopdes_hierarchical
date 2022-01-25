@@ -71,8 +71,9 @@ if (~isa(hspace,'hierarchical_space_mp_C1'))
 else
 % C1 multipatch. Start marking elements adjacent to a vertex, and then neighborhood for admissibility.
   for lev = hmsh.nlevels:-1:1
-    
+    new_marked=[];
     msh_lev = hmsh.mesh_of_level(lev);
+    vertices = hspace.space_of_level(lev).vertices;
     [~, elems_adj_to_vertices] = msh_cells_near_vertex (msh_lev, vertices);
 
     marked_for_vertex = cellfun (@(x) intersect(marked{lev}, x), elems_adj_to_vertices, 'UniformOutput', false);
