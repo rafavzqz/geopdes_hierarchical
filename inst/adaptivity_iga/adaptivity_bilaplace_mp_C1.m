@@ -157,7 +157,6 @@ while (1)
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
-%  est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data);
   est = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
