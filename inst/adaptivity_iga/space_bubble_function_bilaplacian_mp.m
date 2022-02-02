@@ -52,7 +52,7 @@ function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, varargin)
   sp.nsh = ones(1,hmsh.nel);
   sp.ndof = hmsh.nel * sp.nsh_max;
   sp.ndof_per_level = [hmsh.nel_per_level] * sp.nsh_max;
-  sp.space_of_level = [];
+  %sp.space_of_level = [];
 
 % Build bubble functions as Bernstein polynomials on a reference element
   ndim = hmsh.ndim;
