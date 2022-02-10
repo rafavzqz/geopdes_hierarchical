@@ -17,6 +17,7 @@
 %                 hspace.space_of_level(lev).ndof  x  sum(hspace.ndof_per_level(1:lev))
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2018, 2019 Luca Coradello, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function Csub = hspace_subdivision_matrix (hspace, hmsh, option)
+function [Csub, row_indices] = hspace_subdivision_matrix (hspace, hmsh, option)
 
 if (nargin == 1)
   option = 'full';
@@ -42,27 +43,34 @@ elseif (~strcmpi (option, 'reduced') && ~strcmpi (option, 'full'))
 end
 
 Csub = cell (hspace.nlevels, 1);
+row_indices = cell (hspace.nlevels, 1);
 Csub{1} = speye (hspace.space_of_level(1).ndof); 
-Csub{1} = Csub{1}(:,hspace.active{1});
 
 if (strcmpi (option, 'reduced'))
+  Csub{1} = Csub{1}(:,hspace.active{1});
   fun_on_active = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.active{1});
   fun_on_deact = sp_get_basis_functions (hspace.space_of_level(1), hmsh.mesh_of_level(1), hmsh.deactivated{1});
   fun_on_deact = union (fun_on_active, fun_on_deact);
+  row_indices{1} = fun_on_deact;
 
-%   for lev = 2:hspace.nlevels
-  for lev = 2:hmsh.nlevels % This allows to compute Csub for finer meshes
-    I_rows = hspace.active{lev}; I_cols = 1:hspace.ndof_per_level(lev);
-    I = sparse (I_rows, I_cols, ones(size(I_cols)), hspace.space_of_level(lev).ndof, hspace.ndof_per_level(lev));
-    aux = matrix_basis_change__ (hspace, lev, fun_on_deact);  %matrix_basis_change__ needs to be completed
+  for lev = 2:hmsh.nlevels
+    fun_on_active_finer_level = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.active{lev});
+    fun_on_deact_finer_level = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.deactivated{lev});
+    fun_on_deact_finer_level = union (fun_on_active_finer_level, fun_on_deact_finer_level);
 
-    fun_on_active = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.active{lev});
-    fun_on_deact = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), hmsh.deactivated{lev});
-    fun_on_deact = union (fun_on_active, fun_on_deact);
-    Csub{lev} = [aux*Csub{lev-1}, I];    
+    [~,~,IB] = intersect(hspace.active{lev}, fun_on_deact_finer_level);
+    I_rows = IB; I_cols = 1:hspace.ndof_per_level(lev);
+    I = sparse (I_rows, I_cols, ones(size(I_cols)), numel(fun_on_deact_finer_level), hspace.ndof_per_level(lev));
+
+    aux = matrix_basis_change__ (hspace, lev, fun_on_deact, fun_on_deact_finer_level);
+
+    fun_on_deact = fun_on_deact_finer_level;
+    Csub{lev} = [aux*Csub{lev-1}, I];
+    row_indices{lev} = fun_on_deact;
   end
   
 elseif (strcmpi (option, 'full'))
+  Csub{1} = Csub{1}(:,hspace.active{1});
   for lev = 2:hspace.nlevels
     I = speye (hspace.space_of_level(lev).ndof); 
     aux = matrix_basis_change__ (hspace, lev); % FIX: remove hmsh

@@ -39,7 +39,8 @@ for iref = refs
 %         sp_bnd_struct = sp_precompute (sp_bnd, msh_side_from_interior, 'value', true, 'gradient', true);
 
         sp_bnd = sp_lev_patch.boundary(iside);
-        Cpatch = hspace.space_of_level(ilev).Cpatch{iptc};
+%         Cpatch = hspace.space_of_level(ilev).Cpatch{iptc};
+        Cpatch = hspace.space_of_level(ilev).Cpatch{iptc}(:,hspace.Csub_row_indices{ilev});
         CC = Cpatch * hspace.Csub{ilev}; % This is probably very unefficient. Who cares...
 
         [~,icol] = find (CC(sp_bnd.dofs,:));

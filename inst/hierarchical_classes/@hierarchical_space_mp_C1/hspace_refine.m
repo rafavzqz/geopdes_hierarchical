@@ -46,7 +46,7 @@ end
 % end
 
 % Update the matrices for changing basis
-hspace.Csub = hspace_subdivision_matrix (hspace, hmsh,'full');  %this will be modified when matrix_basis_change__ is completed
+[hspace.Csub, hspace.Csub_row_indices] = hspace_subdivision_matrix (hspace, hmsh);
 
 end
 

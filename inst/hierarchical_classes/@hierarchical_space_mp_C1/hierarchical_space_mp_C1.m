@@ -65,6 +65,7 @@
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017 Rafael Vazquez
+% Copyright (C) 2019-2022 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -123,6 +124,7 @@ hspace.deactivated{1} = [];
 hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = cell (0, hmsh.npatch);
 hspace.Csub{1} = speye (space.ndof);
+hspace.Csub_row_indices{1} = 1:space.ndof;
 
 hspace.Proj0 = cell (0, hmsh.npatch);
 hspace.Proj1 = cell (0, hmsh.npatch);

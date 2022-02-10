@@ -53,6 +53,7 @@ function rhs = op_f_v_hier (hspace, hmsh, f, patch_list)
           x{idim} = reshape (msh_lev.geo_map(idim,:,:), msh_lev.nqn, msh_lev.nel);
         end
         sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_lev, 'value', true);
+        sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev);
         b_lev = op_f_v (sp_lev, msh_lev, f(x{:}));
 
         dofs = 1:ndofs;

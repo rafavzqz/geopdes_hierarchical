@@ -91,6 +91,8 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
       msh_level = hmsh.msh_lev{ilev};
       sp_level = eval_element_list (hspace.space_of_level(ilev), msh_level);
         
+      sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
+
       [eu_lev, F_lev] = eval_fun (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_level, msh_level);
       for iopt = 1:nopts
         eu{iopt} = cat (catdir(iopt), eu{iopt}, eu_lev{iopt});

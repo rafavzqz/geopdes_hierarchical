@@ -67,6 +67,9 @@ function varargout = op_laplaceu_laplacev_hier (hspu, hspv, hmsh, coeff, patch_l
         end
         spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), msh_lev, 'value', false, 'laplacian', true);
         spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), msh_lev, 'value', false, 'laplacian', true);
+
+        spu_lev = change_connectivity_localized_Csub (spu_lev, hspu, ilev);
+        spv_lev = change_connectivity_localized_Csub (spv_lev, hspv, ilev);
         K_lev = op_laplaceu_laplacev (spu_lev, spv_lev, msh_lev, coeff (x{:}));
 
         dofs_u = 1:ndofs_u;
