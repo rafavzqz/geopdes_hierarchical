@@ -76,9 +76,9 @@ function estimator = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, pro
         x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), nqn, hmsh.nel_per_level(ilev));
       end
       spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', false, 'hessian', true);
-      if (~isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
+%       if (~isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
         spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
-      end
+%       end
       spv_lev = space_bubble.space_of_level(ilev);
       
       solution_of_level = hspace.Csub{ilev}*u(1:last_dof(ilev));
