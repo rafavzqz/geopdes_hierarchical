@@ -50,7 +50,7 @@ end
 if (hspace.truncated)
   indices = union (hspace.active{lev}, hspace.deactivated{lev});
   if (nargin == 4)
-    [~, indices] = ismember(indices,ind_fine);
+    [~,~,indices] = intersect (indices,ind_fine);
   end
   C(indices,:) = 0;
 end
