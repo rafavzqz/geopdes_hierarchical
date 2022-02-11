@@ -95,8 +95,6 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
 
   npatch = sp_coarse.npatch;
 
-  shift_inds = cumsum ([0 cellfun(@numel, sp_coarse.interior_dofs_per_patch)]);
-  shift_inds_ref = cumsum ([0 cellfun(@numel, sp_fine.interior_dofs_per_patch)]);
   if (nargin == 5)
     C = sparse (numel(ind_fine), numel(ind_coarse));
     for iptc = 1:npatch
@@ -104,8 +102,8 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
       spf_patch = sp_fine.sp_patch{iptc};
     
 % Compute the indices of interior B-splines
-      interior_inds_coarse = shift_inds(iptc)+1:shift_inds(iptc+1);
-      interior_inds_fine = shift_inds_ref(iptc)+1:shift_inds_ref(iptc+1);
+      interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
+      interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       [~,local_indices,ind_c] = intersect (interior_inds_coarse, ind_coarse);
       ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
@@ -132,8 +130,8 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
       ind_ref = union ([boundary.dofs], [boundary.adjacent_dofs]);
       Bsp_indices_coarse = setdiff (1:ndof_Bsp, ind);
       Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, ind_ref);
-      interior_inds_coarse = shift_inds(iptc)+1:shift_inds(iptc+1);
-      interior_inds_fine = shift_inds_ref(iptc)+1:shift_inds_ref(iptc+1);
+      interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
+      interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       if (nargin == 4)
         [~,local_indices,~] = intersect (interior_inds_coarse, ind_coarse);
@@ -169,7 +167,7 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
   ndof_interior_C1_ref = sp_fine.ndof_interior;
   for ii = 1:nint
     if (nargin == 6 || nargin == 7)
-      all_inds_on_edge = ndof_interior_C1 + shift_inds_e(ii) + (1:shift_inds_e(ii+1));
+      all_inds_on_edge = sp_coarse.dofs_on_edge{ii};
       if (isempty (intersect (all_inds_on_edge, ind_coarse)))
         continue
       end
@@ -275,17 +273,6 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
   ndim = 2;
   nvert = numel (sp_coarse.vertices);
   
-  shift_inds_ref = cumsum ([0 cellfun(@numel, sp_fine.interior_dofs_per_patch)]);
-  shift_inds_e_ref = cumsum([0 cellfun(@numel, sp_fine.dofs_on_edge)]);
-  shift_inds_v = cumsum([0 cellfun(@numel, sp_coarse.dofs_on_vertex)]);
-  shift_inds_v_ref = cumsum([0 cellfun(@numel, sp_fine.dofs_on_vertex)]);
-  
-% Number of interior and edge functions
-  ndof_interior_C1 = sp_coarse.ndof_interior;
-  ndof_interior_C1_ref = sp_fine.ndof_interior;
-  ndof_edge_C1 = sp_coarse.ndof_edges;
-  ndof_edge_C1_ref = sp_fine.ndof_edges;
-
 % Auxiliary arrays to easily compute the direction of the interface,
 % according to patch_reorientation, without using three nested if-else.
   interf_dirs_patch1(:,:,1) = [1 2; 2 1];
@@ -293,9 +280,9 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
   interf_dirs_patch2 = interf_dirs_patch1(:,:,[2 1]);
 
   for iv = 1:nvert
-    %global indices of this vertex functions (coarse level)
-    indices_v_coarse = ndof_interior_C1 + ndof_edge_C1 + shift_inds_v(iv) + (1:6);
-    indices_v_fine = ndof_interior_C1_ref + ndof_edge_C1_ref + shift_inds_v_ref(iv) + (1:6);
+    %global indices of functions associated to this vertex
+    indices_v_coarse = sp_coarse.dofs_on_vertex{iv};
+    indices_v_fine = sp_fine.dofs_on_vertex{iv};
     
     if ((nargin == 6 || nargin == 7) && isempty (intersect(indices_v_coarse, ind_coarse)))
       continue
@@ -367,15 +354,13 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       if (sp_coarse.vertices(iv).edge_orientation(ip) == 1)
         Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                          zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch{interf_dir}];
-        ind_edge_ref = ndof_interior_C1_ref + ...
-                       (shift_inds_e_ref(edges(ip))+1:shift_inds_e_ref(edges(ip)+1));
+        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)};
       else
         Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                        zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch{interf_dir}];
         nn0 = numel(4:dim_sp0_ref-3);
         nn1 = numel(3:dim_sp1_ref-2);
-        ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip)) + ...
-                        [nn0:-1:1, nn0+(nn1:-1:1)];
+        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)}([nn0:-1:1, nn0+(nn1:-1:1)]);
       end
 
       if (nargin == 5)
@@ -398,7 +383,7 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       Aux_next = Lambda * E_next;
       V = sp_coarse.vertex_function_matrices{2,iv}{ip}.V;
       Aux = Lambda*V;
-      ind_int_ref = shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
+      ind_int_ref = sp_fine.dofs_on_patch{patches(ip)}; %shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
       
       if (nargin == 5)
         C(ind_int_ref,indices_v_coarse) = Aux_prev(int_ref,:)*K_prev + Aux_next(int_ref,:)*K_next;
@@ -445,15 +430,13 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       if (sp_coarse.vertices(iv).edge_orientation(ip+1)==1)
         Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                          zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch{interf_dir}];
-        ind_edge_ref = ndof_interior_C1_ref + ...
-                       (shift_inds_e_ref(edges(ip+1))+1:shift_inds_e_ref(edges(ip+1)+1));
+        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)};
       else
         Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
                          zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch{interf_dir}];
         nn0 = numel(4:dim_sp0_ref-3);
         nn1 = numel(3:dim_sp1_ref-2);
-        ind_edge_ref = ndof_interior_C1_ref + shift_inds_e_ref(edges(ip+1)) + ...
-                        [nn0:-1:1, nn0+(nn1:-1:1)];
+        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)}([nn0:-1:1, nn0+(nn1:-1:1)]);
       end
       if (nargin == 5)
         C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_next;
