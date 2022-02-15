@@ -20,7 +20,7 @@
 %     children_of_function: cell array with the children of each function
 %
 % Copyright (C) 2015, 2016, 2017 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2018 Cesare Bracco, Rafael Vazquez
+% Copyright (C) 2018--2022 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -35,22 +35,152 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [children, flag, children_of_function] = hspace_get_children (hspace, lev, ind, hmsh)
+function [children, flag, children_of_function] = hspace_get_children (hspace, lev, ind)
 
-% FIX: Remove hmsh in the final version, if not needed.
+ndim = size (hspace.Proj{1}, 2);
+npatch = hspace.space_of_level(1).npatch;
+interfaces = hspace.space_of_level(1).interfaces;
+nint = numel (interfaces);
+vertices = hspace.space_of_level(1).vertices;
+nvert = numel (vertices);
 
 children = [];
-
 children_of_function = cell (numel(ind), 1);
+ind_sub = cell (ndim, 1);
 
-ref_matrix = matrix_basis_change__ (hspace, lev+1); %FIX: remove hmsh
-for ii = 1:numel(ind)
-  [auxI,~]= find(ref_matrix(:,ind(ii)));
-  children = union (children, auxI);
-  children_of_function{ii} = auxI;  
+% Children of interior functions
+aux = cell (ndim, 1);
+for iptc = 1:npatch
+  int_patch_dofs_c = hspace.space_of_level(lev).dofs_on_patch{iptc};
+  [~,indices,position] = intersect (int_patch_dofs_c, ind);
+  
+  indices_tp = hspace.space_of_level(lev).interior_dofs_per_patch{iptc}(indices);
+
+  [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir, 1], indices_tp); % The extra 1 makes it work in any dimension
+
+  for ii = 1:numel(ind_sub{1})
+    for idim = 1:ndim
+      aux{idim} = find (hspace.Proj{lev, iptc}{idim}(:,ind_sub{idim}(ii)));
+    end
+    [z{1:ndim}] = ndgrid (aux{:});
+    auxI = sub2ind ([hspace.space_of_level(lev+1).sp_patch{iptc}.ndof_dir, 1], z{:});
+    [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{iptc}, auxI);
+    children_of_this_function = hspace.space_of_level(lev+1).dofs_on_patch{iptc}(local_indices(:));
+    children = union (children, children_of_this_function);
+    children_of_function{position(ii)} = children_of_this_function(:).';
+  end
 end
-    
-if (nargout == 2)
+
+% Children of edge functions
+for iint = 1:nint
+  patches = [interfaces(iint).patch1 interfaces(iint).patch2];
+  sides = [interfaces(iint).side1 interfaces(iint).side2];
+  
+  [ind_on_edge,~,position] = intersect (hspace.space_of_level(lev).dofs_on_edge{iint}, ind);
+  
+  possible_children = [];
+  ind_sub = cell (ndim, 1);
+  for iptc = 1:numel(patches)
+    Proj_patch = hspace.Proj{lev, patches(iptc)};
+    ndof_dir_bsp_c = hspace.space_of_level(lev).sp_patch{patches(iptc)}.ndof_dir;
+    ndof_dir_bsp_f = hspace.space_of_level(lev+1).sp_patch{patches(iptc)}.ndof_dir;
+    if (sides(iptc) == 1)
+      ind_sub{1} = [1 2];
+      ind_sub{2} = 1:ndof_dir_bsp_c(2);
+    elseif (sides(iptc) == 2)
+      ind_sub{1} = [ndof_dir_bsp_c(1)-1 ndof_dir_bsp_c(1)];
+      ind_sub{2} = 1:ndof_dir_bsp_c(2);
+    elseif (sides(iptc) == 3)
+      ind_sub{1} = 1:ndof_dir_bsp_c(1);
+      ind_sub{2} = [1 2];
+    elseif (sides(iptc) == 4)
+      ind_sub{1} = 1:ndof_dir_bsp_c(1);
+      ind_sub{2} = [ndof_dir_bsp_c(2)-1 ndof_dir_bsp_c(2)];
+    end
+    for idim = 1:ndim
+      [aux{idim},~] = find (Proj_patch{idim}(:,ind_sub{idim}));
+      aux{idim} = unique (aux{idim});
+    end
+    [z{1:ndim}] = ndgrid (aux{:});
+    auxI = sub2ind ([ndof_dir_bsp_f, 1], z{:});
+    [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
+    possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
+  end
+
+%   possible_children = cell2mat (hspace.space_of_level(lev+1).dofs_on_patch(patches));
+  possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_edge{iint});
+  ref_matrix = matrix_basis_change__ (hspace, lev+1, ind_on_edge, possible_children);
+
+  for ii = 1:numel(ind_on_edge)
+    [auxI,~]= find(ref_matrix(:,ii));
+    children_of_this_function = possible_children(auxI(:));
+    children = union (children, children_of_this_function);
+    children_of_function{position(ii)} = children_of_this_function(:).';
+  end
+end
+
+% Children of vertex functions (I use some brute force for interior functions)
+for iv = 1:nvert
+  patches = vertices(iv).patches;
+  edges = vertices(iv).edges;
+
+  [ind_on_vertex,~,position] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, ind);
+  
+  possible_children = [];
+  ind_sub = cell (ndim, 1);
+  for iptc = 1:numel(patches)
+    Proj_patch = hspace.Proj{lev, patches(iptc)};
+    ndof_dir_bsp_c = hspace.space_of_level(lev).sp_patch{patches(iptc)}.ndof_dir;
+    ndof_dir_bsp_f = hspace.space_of_level(lev+1).sp_patch{patches(iptc)}.ndof_dir;
+
+    ornt = vertices(iv).patch_reorientation(iptc,[1 2]);
+    if (all (ornt == [0 0]))
+      ind_sub{1} = 1:6;
+      ind_sub{2} = 1:6;
+    elseif (all (ornt == [1 0]))
+      ind_sub{1} = ndof_dir_bsp_c(1)-5:ndof_dir_bsp_c(1);
+      ind_sub{2} = 1:6;
+    elseif (all (ornt == [0 1]))
+      ind_sub{1} = 1:6;
+      ind_sub{2} = ndof_dir_bsp_c(2)-5:ndof_dir_bsp_c(2);
+    elseif (all (ornt == [1 1]))
+      ind_sub{1} = ndof_dir_bsp_c(1)-5:ndof_dir_bsp_c(1);
+      ind_sub{2} = ndof_dir_bsp_c(2)-5:ndof_dir_bsp_c(2);
+    end
+    for idim = 1:ndim
+      [aux{idim},~] = find (Proj_patch{idim}(:,ind_sub{idim}));
+      aux{idim} = unique (aux{idim});
+    end
+    [z{1:ndim}] = ndgrid (aux{:});
+    auxI = sub2ind ([ndof_dir_bsp_f, 1], z{:});
+    [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
+    possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
+  end
+  
+%  possible_children = cell2mat (hspace.space_of_level(lev+1).dofs_on_patch(patches));
+  possible_children = union (possible_children, cell2mat (hspace.space_of_level(lev+1).dofs_on_edge(edges)));
+  possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_vertex{iv});
+  ref_matrix = matrix_basis_change__ (hspace, lev+1, ind_on_vertex, possible_children);
+
+  for ii = 1:numel(ind_on_vertex)
+    [auxI,~]= find(ref_matrix(:,ii));
+    children_of_this_function = possible_children(auxI(:));
+    children = union (children, children_of_this_function);
+    children_of_function{position(ii)} = children_of_this_function(:).';  
+  end
+end
+
+% % Children of edge and vertex functions. It uses a lot of memory
+% [indices_not_interior, position] = setdiff (ind, 1:hspace.space_of_level(lev).ndof_interior);
+% 
+% ref_matrix = matrix_basis_change__ (hspace, lev+1, indices_not_interior);
+% for ii = 1:numel(indices_not_interior)
+%   [auxI,~]= find(ref_matrix(:,ind(position(ii))));
+%   children = union (children, auxI);
+%   children_of_function{position(ii)} = auxI;  
+% end
+
+if (nargout >= 2)
   flag = all (ismember (ind, hspace.active{lev}));
   if (~flag)
     flag = 2 *all (ismember (ind, union (hspace.active{lev}, hspace.deactivated{lev})));
