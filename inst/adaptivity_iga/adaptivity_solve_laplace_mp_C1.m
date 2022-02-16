@@ -85,9 +85,9 @@ ilev = hmsh.nlevels;
             [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), weak_drchlt_sides, h, c_diff);
         end
         
-        row_indices = hspace.Csub_row_indices{ilev};
-        stiff_mat = stiff_mat - hspace.Csub{ilev}.' * N_mat(row_indices,row_indices) *hspace.Csub{ilev};
-        rhs = rhs + hspace.Csub{ilev}.' * N_rhs(row_indices);
+        Csub = hspace_subdivision_matrix(hspace, hmsh, 'full');
+        stiff_mat = stiff_mat - Csub{ilev}.' * N_mat * Csub{ilev};
+        rhs = rhs + Csub{ilev}.' * N_rhs;
 end
 
 % Solve the linear system
