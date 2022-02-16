@@ -97,7 +97,7 @@ function [A, rhs] = sp_weak_drchlt_bc_laplace (hspace, hmsh, bnd_sides, bnd_func
 
 % For simplicity I replaced charlen by 2^(-level)
 %           coeff_at_qnodes =  coeff_at_qnodes * Cpen ./ msh_side.charlen;
-          coeff_at_qnodes =  coeff_at_qnodes * Cpen * 2^(-ilev);
+          coeff_at_qnodes =  coeff_at_qnodes * Cpen / 2^(-ilev);
           C = op_u_v (sp_bnd, sp_bnd, msh_side, coeff_at_qnodes);
           C = Caux.' * C * Caux;
 
