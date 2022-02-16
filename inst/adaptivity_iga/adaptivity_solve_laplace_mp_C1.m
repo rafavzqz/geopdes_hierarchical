@@ -41,7 +41,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function u = adaptivity_solve_laplace_mp_C1 (hmsh, hspace, problem_data)
+function u = adaptivity_solve_laplace_mp_C1 (hmsh, hspace, problem_data, method_data)
 
 data_names = fieldnames (problem_data);
 for iopt  = 1:numel (data_names)
@@ -77,17 +77,14 @@ end
 
 % Apply Dirichlet boundary conditions in weak form, by Nitsche's method
 if (exist ('weak_drchlt_sides', 'var'))
-ilev = hmsh.nlevels;
-
-        if (exist ('Cpen', 'var'))
-            [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hsphace.space_of_level(ilev), hmsh.mesh_of_level(ilev), weak_drchlt_sides, h, c_diff, Cpen); 
-        else
-            [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hspace.space_of_level(ilev), hmsh.mesh_of_level(ilev), weak_drchlt_sides, h, c_diff);
-        end
+  if (isfield (method_data, 'Cpen'))
+    [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hspace, hmsh, weak_drchlt_sides, h, c_diff, method_data.Cpen); 
+  else
+    [N_mat, N_rhs] = sp_weak_drchlt_bc_laplace (hspace, hmsh, weak_drchlt_sides, h, c_diff);
+  end
         
-        Csub = hspace_subdivision_matrix(hspace, hmsh, 'full');
-        stiff_mat = stiff_mat - Csub{ilev}.' * N_mat * Csub{ilev};
-        rhs = rhs + Csub{ilev}.' * N_rhs;
+  stiff_mat = stiff_mat - N_mat;
+  rhs = rhs + N_rhs;
 end
 
 % Solve the linear system
