@@ -51,7 +51,7 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
+function est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data)
 
 if (isfield(adaptivity_data, 'C0_est'))
     C0_est = adaptivity_data.C0_est;
