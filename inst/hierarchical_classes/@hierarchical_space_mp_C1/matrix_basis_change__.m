@@ -213,8 +213,8 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
       for idim = 1:ndim
         Lambda = kron (Proj_patch{idim}, Lambda);
       end
-      Proj0_patch = Proj0{patch_on_int(ipatch)};
-      Proj1_patch = Proj1{patch_on_int(ipatch)};
+      Proj0_patch = Proj0{patch_on_int(ipatch)}{interf_dir_parallel};
+      Proj1_patch = Proj1{patch_on_int(ipatch)}{interf_dir_parallel};
         
       % Indices0 and indices1 respectively correspond to trace and derivative edge functions
       indices0_coarse = ndof_interior_C1 + shift_inds_e(ii) + (1:ndof_0_C1-6);
@@ -224,8 +224,8 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
       
       if (nargin == 5)
         if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-          C(indices0_fine,indices0_coarse) = Proj0_patch{interf_dir_parallel}(4:end-3,4:end-3);  %first term of refinement formula in Lemma 2
-          C(indices1_fine,indices1_coarse) = (1/2)*Proj1_patch{interf_dir_parallel}(3:end-2,3:end-2);  %first term of refinement formula in Lemma 3
+          C(indices0_fine,indices0_coarse) = Proj0_patch(4:end-3,4:end-3);  %first term of refinement formula in Lemma 2
+          C(indices1_fine,indices1_coarse) = (1/2)*Proj1_patch(3:end-2,3:end-2);  %first term of refinement formula in Lemma 3
         end
         Aux = Lambda * sp_coarse.Cpatch{patch_on_int(ipatch)};
         C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
@@ -235,8 +235,8 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
         [ind_coarse0_on_edge,local_indices0,~] = intersect (indices0_coarse, ind_coarse);
         [ind_coarse1_on_edge,local_indices1,~] = intersect (indices1_coarse, ind_coarse);
         if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-          C(indices0_fine,ind_coarse0_on_edge) = Proj0_patch{interf_dir_parallel}(4:end-3,local_indices0+3);  %first term of refinement formula in Lemma 2
-          C(indices1_fine,ind_coarse1_on_edge) = (1/2)*Proj1_patch{interf_dir_parallel}(3:end-2,local_indices1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
+          C(indices0_fine,ind_coarse0_on_edge) = Proj0_patch(4:end-3,local_indices0+3);  %first term of refinement formula in Lemma 2
+          C(indices1_fine,ind_coarse1_on_edge) = (1/2)*Proj1_patch(3:end-2,local_indices1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
         Aux = Lambda * sp_coarse.Cpatch{patch_on_int(ipatch)};
         C(interior_inds_fine,ind_coarse0_on_edge) = Aux(Bsp_indices_fine,ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
@@ -250,8 +250,8 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
         
         [~,local_indices_int,ind_int_f] = intersect (interior_inds_fine, ind_fine);
         if (ipatch == 1) % Doing it this way, I don't need to care about the orientation
-          C(ind_f0,ind_c0) = Proj0_patch{interf_dir_parallel}(local_indices_f0+3,local_indices_c0+3);  %first term of refinement formula in Lemma 2
-          C(ind_f1,ind_c1) = (1/2)*Proj1_patch{interf_dir_parallel}(local_indices_f1+2,local_indices_c1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
+          C(ind_f0,ind_c0) = Proj0_patch(local_indices_f0+3,local_indices_c0+3);  %first term of refinement formula in Lemma 2
+          C(ind_f1,ind_c1) = (1/2)*Proj1_patch(local_indices_f1+2,local_indices_c1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
         Aux = Lambda * sp_coarse.Cpatch{patch_on_int(ipatch)};
         C(ind_int_f,ind_c0) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
@@ -341,23 +341,23 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       for idim = 1:ndim
         Lambda = kron (Proj_patch{idim}, Lambda);
       end
-      Proj0_patch = Proj0{patches(ip)};
-      Proj1_patch = Proj1{patches(ip)};
-      dim_sp0 = size (Proj0_patch{interf_dir},2);
-      dim_sp1 = size (Proj1_patch{interf_dir},2);
-      dim_sp0_ref = size (Proj0_patch{interf_dir},1);
-      dim_sp1_ref = size (Proj1_patch{interf_dir},1);
+      Proj0_patch = Proj0{patches(ip)}{interf_dir};
+      Proj1_patch = Proj1{patches(ip)}{interf_dir};
+      dim_sp0 = size (Proj0_patch,2);
+      dim_sp1 = size (Proj1_patch,2);
+      dim_sp0_ref = size (Proj0_patch,1);
+      dim_sp1_ref = size (Proj1_patch,1);
 
       % Dependence on edge functions (using previous edge)
       inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
       active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
       if (sp_coarse.vertices(iv).edge_orientation(ip) == 1)
-        Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
-                         zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch{interf_dir}];
+        Aux_edge_disc = [Proj0_patch,                zeros(dim_sp0_ref,dim_sp1);...
+                         zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch];
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)};
       else
-        Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
-                       zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch{interf_dir}];
+        Aux_edge_disc = [Proj0_patch,              zeros(dim_sp0_ref,dim_sp1);...
+                       zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch];
         nn0 = numel(4:dim_sp0_ref-3);
         nn1 = numel(3:dim_sp1_ref-2);
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)}([nn0:-1:1, nn0+(nn1:-1:1)]);
@@ -416,24 +416,24 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       for idim = 1:ndim
         Lambda = kron (Proj_patch{idim}, Lambda);
       end
-      Proj0_patch = Proj0{patches(ip)};
-      Proj1_patch = Proj1{patches(ip)};
+      Proj0_patch = Proj0{patches(ip)}{interf_dir};
+      Proj1_patch = Proj1{patches(ip)}{interf_dir};
 
-      dim_sp0=size(Proj0_patch{interf_dir},2);
-      dim_sp1=size(Proj1_patch{interf_dir},2);
-      dim_sp0_ref=size(Proj0_patch{interf_dir},1);
-      dim_sp1_ref=size(Proj1_patch{interf_dir},1);
+      dim_sp0 = size(Proj0_patch,2);
+      dim_sp1 = size(Proj1_patch,2);
+      dim_sp0_ref = size(Proj0_patch,1);
+      dim_sp1_ref = size(Proj1_patch,1);
 
       % Dependence on edge functions (using next edge)
       inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
       active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
       if (sp_coarse.vertices(iv).edge_orientation(ip+1)==1)
-        Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
-                         zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch{interf_dir}];
+        Aux_edge_disc = [Proj0_patch,                zeros(dim_sp0_ref,dim_sp1);...
+                         zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch];
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)};
       else
-        Aux_edge_disc = [Proj0_patch{interf_dir},          zeros(dim_sp0_ref,dim_sp1);...
-                         zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch{interf_dir}];
+        Aux_edge_disc = [Proj0_patch,                zeros(dim_sp0_ref,dim_sp1);...
+                         zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch];
         nn0 = numel(4:dim_sp0_ref-3);
         nn1 = numel(3:dim_sp1_ref-2);
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)}([nn0:-1:1, nn0+(nn1:-1:1)]);
