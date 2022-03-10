@@ -135,7 +135,7 @@ function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, varargin)
       space_of_level.shape_function_hessians = shape_hess ./ ld_first ./ ld_second;
       
     % Apply grad preserving transform
-      space_of_level = sp_grad_preserving_transform (space_of_level, hmsh.msh_lev{iLevel}, 1, 1, 1);
+      space_of_level = sp_grad_preserving_transform (space_of_level, hmsh.msh_lev{iLevel}, 1, 1, 1, 1);
       sp.space_of_level(iLevel) = space_of_level;
     end
   end
