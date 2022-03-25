@@ -208,10 +208,10 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
       interior_inds_fine = shift_inds_ref(patch_on_int(ipatch))+1:shift_inds_ref(patch_on_int(ipatch)+1);
 
       % Auxiliary matrices (standard refinement matrix)
-      Lambda = 1;
+      Theta = 1;
       Proj_patch = Proj{patch_on_int(ipatch)};
       for idim = 1:ndim
-        Lambda = kron (Proj_patch{idim}, Lambda);
+        Theta = kron (Proj_patch{idim}, Theta);
       end
       Proj0_patch = Proj0{patch_on_int(ipatch)}{interf_dir_parallel};
       Proj1_patch = Proj1{patch_on_int(ipatch)}{interf_dir_parallel};
@@ -227,7 +227,7 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(indices0_fine,indices0_coarse) = Proj0_patch(4:end-3,4:end-3);  %first term of refinement formula in Lemma 2
           C(indices1_fine,indices1_coarse) = (1/2)*Proj1_patch(3:end-2,3:end-2);  %first term of refinement formula in Lemma 3
         end
-        Aux = Lambda * sp_coarse.Cpatch{patch_on_int(ipatch)};
+        Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
         C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
         C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
 
@@ -238,7 +238,7 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(indices0_fine,ind_coarse0_on_edge) = Proj0_patch(4:end-3,local_indices0+3);  %first term of refinement formula in Lemma 2
           C(indices1_fine,ind_coarse1_on_edge) = (1/2)*Proj1_patch(3:end-2,local_indices1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
-        Aux = Lambda * sp_coarse.Cpatch{patch_on_int(ipatch)};
+        Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
         C(interior_inds_fine,ind_coarse0_on_edge) = Aux(Bsp_indices_fine,ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
         C(interior_inds_fine,ind_coarse1_on_edge) = Aux(Bsp_indices_fine,ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
 
@@ -253,7 +253,7 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(ind_f0,ind_c0) = Proj0_patch(local_indices_f0+3,local_indices_c0+3);  %first term of refinement formula in Lemma 2
           C(ind_f1,ind_c1) = (1/2)*Proj1_patch(local_indices_f1+2,local_indices_c1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
-        Aux = Lambda * sp_coarse.Cpatch{patch_on_int(ipatch)};
+        Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
         C(ind_int_f,ind_c0) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
         C(ind_int_f,ind_c1) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
       end
@@ -336,10 +336,10 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       end
         
       %Auxiliary matrices (standard refinement matrix)
-      Lambda = 1;
+      Theta = 1;
       Proj_patch = Proj{patches(ip)};
       for idim = 1:ndim
-        Lambda = kron (Proj_patch{idim}, Lambda);
+        Theta = kron (Proj_patch{idim}, Theta);
       end
       Proj0_patch = Proj0{patches(ip)}{interf_dir};
       Proj1_patch = Proj1{patches(ip)}{interf_dir};
@@ -379,10 +379,10 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
         K_prev([4 5],:) = -K_prev([4 5],:);
         K_prev = K_prev([3 2 1 5 4],:);
       end
-      Aux_prev = Lambda * E_prev;
-      Aux_next = Lambda * E_next;
+      Aux_prev = Theta * E_prev;
+      Aux_next = Theta * E_next;
       V = sp_coarse.vertex_function_matrices{2,iv}{ip}.V;
-      Aux = Lambda*V;
+      Aux = Theta*V;
       ind_int_ref = sp_fine.dofs_on_patch{patches(ip)}; %shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
       
       if (nargin == 5)
@@ -411,10 +411,10 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       K_next=sp_coarse.vertex_function_matrices{2,iv}{ip}.K_next;
         
       %Auxiliary matrices (standard refinement matrix)
-      Lambda = 1;
+      Theta = 1;
       Proj_patch = Proj{patches(ip)};
       for idim = 1:ndim
-        Lambda = kron (Proj_patch{idim}, Lambda);
+        Theta = kron (Proj_patch{idim}, Theta);
       end
       Proj0_patch = Proj0{patches(ip)}{interf_dir};
       Proj1_patch = Proj1{patches(ip)}{interf_dir};
