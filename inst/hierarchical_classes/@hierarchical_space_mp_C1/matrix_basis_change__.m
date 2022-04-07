@@ -308,6 +308,7 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
     end
     
     %b) part of the matrix describing the dependence on edge and interior functions on the finer level
+    % To deal with the orientation we change E and K, as it is easier than changing Theta and Lambda
     for ip = 1:numel(patches)
       ip_plus_1 = mod(ip, sp_coarse.vertices(iv).valence_e) + 1;
         
@@ -322,16 +323,14 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
         
       K_prev = sp_coarse.vertex_function_matrices{2,iv}{ip}.K_prev;
       E_prev = sp_coarse.vertex_function_matrices{2,iv}{ip}.E_prev;
-      if (sp_coarse.vertices(iv).edge_orientation(ip) == -1) 
-        E_prev(:,[4 5]) = -E_prev(:,[4 5]);
+      if (sp_coarse.vertices(iv).edge_orientation(ip) == -1)
         E_prev = E_prev(:,[3 2 1 5 4]);
+        K_prev = K_prev([3 2 1 5 4],:);
       end
       K_next = sp_coarse.vertex_function_matrices{2,iv}{ip}.K_next;
       E_next = sp_coarse.vertex_function_matrices{2,iv}{ip}.E_next;
       if (sp_coarse.vertices(iv).edge_orientation(ip_plus_1) == -1) 
-        E_next(:,[4 5]) = -E_next(:,[4 5]);
         E_next = E_next(:,[3 2 1 5 4]);
-        K_next([4 5],:) = -K_next([4 5],:);
         K_next = K_next([3 2 1 5 4],:);
       end
         
@@ -349,36 +348,28 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       dim_sp1_ref = size (Proj1_patch,1);
 
       % Dependence on edge functions (using previous edge)
-      inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
-      active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+      ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)};
       if (sp_coarse.vertices(iv).edge_orientation(ip) == 1)
-        Aux_edge_disc = [Proj0_patch,                zeros(dim_sp0_ref,dim_sp1);...
-                         zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch];
+        Aux_edge_disc = [Proj0_patch(4:dim_sp0_ref-3,[1 2 3]), zeros(dim_sp0_ref-6,2);...
+                         zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[1 2])];
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)};
       else
-        Aux_edge_disc = [Proj0_patch,              zeros(dim_sp0_ref,dim_sp1);...
-                       zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch];
-        nn0 = numel(4:dim_sp0_ref-3);
-        nn1 = numel(3:dim_sp1_ref-2);
-        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)}([nn0:-1:1, nn0+(nn1:-1:1)]);
+        Aux_edge_disc = [Proj0_patch(4:dim_sp0_ref-3,dim_sp0-2:dim_sp0), zeros(dim_sp0_ref-6,2);...
+                         zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1-1 dim_sp1])];
       end
 
       if (nargin == 5)
-        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_prev;
+        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc*K_prev;
       elseif (nargin == 6)
         [ind_coarse_on_vertex,local_indices,~] = intersect (indices_v_coarse, ind_coarse);
-        C(ind_edge_ref,ind_coarse_on_vertex) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_prev(:,local_indices);
+        C(ind_edge_ref,ind_coarse_on_vertex) = Aux_edge_disc*K_prev(:,local_indices);
       elseif (nargin == 7)
         [~,local_indices_c,ind_c] = intersect (indices_v_coarse, ind_coarse);
         [~,local_indices_f,ind_f] = intersect (ind_edge_ref, ind_fine);
-        C(ind_f, ind_c) = Aux_edge_disc(active_edge_ref(local_indices_f),inactive_edge)*K_prev(:,local_indices_c);
+        C(ind_f, ind_c) = Aux_edge_disc(local_indices_f,:)*K_prev(:,local_indices_c);
       end
         
       % Dependence on standard B-splines, first through edge functions (K matrices) and then directly (V matrix)
-      if (sp_coarse.vertices(iv).edge_orientation(ip) == -1)
-        K_prev([4 5],:) = -K_prev([4 5],:);
-        K_prev = K_prev([3 2 1 5 4],:);
-      end
       Aux_prev = Theta * E_prev;
       Aux_next = Theta * E_next;
       V = sp_coarse.vertex_function_matrices{2,iv}{ip}.V;
@@ -425,28 +416,23 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       dim_sp1_ref = size(Proj1_patch,1);
 
       % Dependence on edge functions (using next edge)
-      inactive_edge = [1 2 3 dim_sp0+1 dim_sp0+2];
-      active_edge_ref = [4:dim_sp0_ref-3 dim_sp0_ref+3:dim_sp0_ref+dim_sp1_ref-2];
+      ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)};
       if (sp_coarse.vertices(iv).edge_orientation(ip+1)==1)
-        Aux_edge_disc = [Proj0_patch,                zeros(dim_sp0_ref,dim_sp1);...
-                         zeros(dim_sp1_ref,dim_sp0), (1/2)*Proj1_patch];
-        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)};
+        Aux_edge_disc = [Proj0_patch(4:dim_sp0_ref-3,[1 2 3]), zeros(dim_sp0_ref-6,2);...
+                         zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[1 2])];
       else
-        Aux_edge_disc = [Proj0_patch,                zeros(dim_sp0_ref,dim_sp1);...
-                         zeros(dim_sp1_ref,dim_sp0), (-1/2)*Proj1_patch];
-        nn0 = numel(4:dim_sp0_ref-3);
-        nn1 = numel(3:dim_sp1_ref-2);
-        ind_edge_ref = sp_fine.dofs_on_edge{edges(ip+1)}([nn0:-1:1, nn0+(nn1:-1:1)]);
+        Aux_edge_disc = [Proj0_patch(4:dim_sp0_ref-3,dim_sp0-2:dim_sp0), zeros(dim_sp0_ref-6,2);...
+                         zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1-1 dim_sp1])];
       end
       if (nargin == 5)
-        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_next;
+        C(ind_edge_ref,indices_v_coarse) = Aux_edge_disc*K_next;
       elseif (nargin == 6)
         [ind_coarse_on_vertex,local_indices,~] = intersect (indices_v_coarse, ind_coarse);
-        C(ind_edge_ref,ind_coarse_on_vertex) = Aux_edge_disc(active_edge_ref,inactive_edge)*K_next(:,local_indices);
+        C(ind_edge_ref,ind_coarse_on_vertex) = Aux_edge_disc*K_next(:,local_indices);
       elseif (nargin == 7)
         [~,local_indices_c,ind_c] = intersect (indices_v_coarse, ind_coarse);
         [~,local_indices_f,ind_f] = intersect (ind_edge_ref, ind_fine);
-        C(ind_f, ind_c) = Aux_edge_disc(active_edge_ref(local_indices_f),inactive_edge)*K_next(:,local_indices_c);
+        C(ind_f, ind_c) = Aux_edge_disc(local_indices_f,:)*K_next(:,local_indices_c);
       end
     end 
   end
