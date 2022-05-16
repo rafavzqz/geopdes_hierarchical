@@ -54,13 +54,16 @@ for iref = refs
         end
         coeff_at_qnodes = ones (size(x{1}));
         dudn_at_qnodes = dudn (x{:},iref);
+        
+% Since "charlen" is not present in msh_side, I assume isotropic elements
+        charlen = msh_bnd_struct.element_size;
 
 %        M(1:ndofs,1:ndofs) = M(1:ndofs,1:ndofs) + CC(sp_bnd.dofs,:).' * op_u_v_tp (sp_bnd, sp_bnd, msh_bnd, coeff_at_qnodes) * CC(sp_bnd.dofs,:);
         M(1:ndofs,1:ndofs) = M(1:ndofs,1:ndofs) + CC.' * op_u_v (sp_bnd_struct, sp_bnd_struct, msh_side, coeff_at_qnodes) * CC;
         rhs(1:ndofs) = rhs(1:ndofs) + CC.' * op_f_v (sp_bnd_struct, msh_side, href(x{:}));
     
-        M2(1:ndofs,1:ndofs) = M2(1:ndofs,1:ndofs) + CC.' * op_gradu_n_gradv_n (sp_bnd_struct, sp_bnd_struct, msh_side, coeff_at_qnodes) * CC;
-        rhs2(1:ndofs) = rhs2(1:ndofs) + CC.' * op_gradv_n_f (sp_bnd_struct, msh_side, dudn_at_qnodes); % I am missing the other part of the vector. It is in M2 :-)
+        M2(1:ndofs,1:ndofs) = M2(1:ndofs,1:ndofs) + CC.' * op_gradu_n_gradv_n (sp_bnd_struct, sp_bnd_struct, msh_side, coeff_at_qnodes.*charlen) * CC;
+        rhs2(1:ndofs) = rhs2(1:ndofs) + CC.' * op_gradv_n_f (sp_bnd_struct, msh_side, dudn_at_qnodes.*charlen); % I am missing the other part of the vector. It is in M2 :-)
       end
     end
   end
