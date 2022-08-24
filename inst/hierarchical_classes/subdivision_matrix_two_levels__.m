@@ -112,7 +112,7 @@ if (is_scalar)
     if (strcmpi (sp_coarse.space_type, 'NURBS'))
       weights_coarse = sp_coarse.weights(:);
       weights_fine = sp_fine.weights(:);
-      vals = vals .* weights_coarse(cols) ./ weights_fine(rows);
+      vals = vals .* weights_coarse(ind_coarse(cols)) ./ weights_fine(ind_fine(rows));
     end
   else    
     error('Wrong number of input parameters!')
