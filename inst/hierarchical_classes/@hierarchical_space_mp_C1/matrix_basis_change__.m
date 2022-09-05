@@ -347,7 +347,7 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)};
       else
         Lambda = [Proj0_patch(4:dim_sp0_ref-3,dim_sp0:-1:dim_sp0-2), zeros(dim_sp0_ref-6,2);...
-                  zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
+                  zeros(dim_sp1_ref-4,3),               -(1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
       end
 
       if (nargin == 5)
@@ -414,7 +414,7 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
                   zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[1 2])];
       else
         Lambda = [Proj0_patch(4:dim_sp0_ref-3,dim_sp0:-1:dim_sp0-2), zeros(dim_sp0_ref-6,2);...
-                  zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
+                  zeros(dim_sp1_ref-4,3),               -(1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
       end
       if (nargin == 5)
         C(ind_edge_ref,indices_v_coarse) = Lambda*K_next;
