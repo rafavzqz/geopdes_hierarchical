@@ -1,4 +1,4 @@
-function [u_drchlt, drchlt_dofs] = sp_bilaplacian_drchlt_C1 (hspace, hmsh, refs, h, dudn)
+function [u_drchlt, drchlt_dofs, kernel_info] = sp_bilaplacian_drchlt_C1 (hspace, hmsh, refs, h, dudn)
 
 % refs should be the whole boundary, for now
 M = spalloc (hspace.ndof, hspace.ndof, hspace.ndof);
@@ -83,15 +83,15 @@ B_change_local = [];
 n_boundaries = numel(hmsh.mesh_of_level(1).boundaries); % number of boundary edges
 global_refs = numel(hspace.space_of_level(1).interfaces) - n_boundaries + refs; % global numbering of Dirichlet boundary edges
 
-for lev = 1 : hspace.nlevels
-    for iv = 1 : numel(hspace.space_of_level(lev).vertices)
-        [~, ind_active_vert] = intersect(hspace.active{lev}, hspace.space_of_level(lev).dofs_on_vertex{iv}); % Indices of the functions of vertex iv in the vector of active functions of level lev
-        if ~isempty(ind_active_vert)
-            if numel(hspace.space_of_level(lev).vertices(iv).patches) > 1
-                % Loop just over Dirichlet boundary vertices
-                if ~isempty(intersect(global_refs, hspace.space_of_level(lev).vertices(iv).edges))
-                    if (hspace.space_of_level(lev).vertices(iv).boundary_vertex)
-
+for iv = 1 : numel(hspace.space_of_level(1).vertices) % Loop on the vertices
+    % Loop just over Dirichlet boundary vertices
+    if ~isempty(intersect(global_refs, hspace.space_of_level(1).vertices(iv).edges))
+        if (hspace.space_of_level(1).vertices(iv).boundary_vertex)
+            for lev = 1 : hspace.nlevels % Loop on the levels    
+                [~, ind_active_vert] = intersect(hspace.active{lev}, hspace.space_of_level(lev).dofs_on_vertex{iv}); % Indices of the functions of vertex iv in the vector of active functions of level lev
+                if ~isempty(ind_active_vert) % Check if the vertex iv is active on level lev
+                    if numel(hspace.space_of_level(lev).vertices(iv).patches) > 1 % Check if the vertex is shared among more than one patch
+                        
                         patches = hspace.space_of_level(lev).vertices(iv).patches([1 end]);
 
                         operations = hspace.space_of_level(lev).vertices(iv).patch_reorientation([1 end], :);
