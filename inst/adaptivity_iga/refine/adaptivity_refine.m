@@ -44,7 +44,8 @@ switch (adaptivity_data.flag)
 end
 
 if (isfield (adaptivity_data, 'adm_class'))
-  marked_elements = mark_admissible (hmsh, hspace, marked_elements, adaptivity_data);
+%   marked_elements = mark_admissible (hmsh, hspace, marked_elements, adaptivity_data);
+  marked_elements = mark_admissible_reviewer (hmsh, hspace, marked_elements, adaptivity_data);
   [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
   marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked_elements, 'elements');
 else
