@@ -67,7 +67,7 @@ function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, varargin)
   elseif (ndim == 3)
     geometry = geo_load (nrbextrude (nrb4surf ([0 0], [1 0], [0 1], [1 1])));
   end
-  nqn_dir = hmsh.msh_lev{1}.nqn_dir;
+  nqn_dir = hmsh.msh_lev{end}.nqn_dir;
   rule     = msh_gauss_nodes (nqn_dir);
   [qn, qw] = msh_set_quad_nodes (breaks_reference, rule);
   msh_reference = msh_cartesian (breaks_reference, qn, qw, geometry);
