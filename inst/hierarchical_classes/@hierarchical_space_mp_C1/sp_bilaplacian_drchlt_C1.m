@@ -39,9 +39,10 @@ for iref = refs
 %         sp_bnd_struct = sp_precompute (sp_bnd, msh_side_from_interior, 'value', true, 'gradient', true);
 
         sp_bnd = sp_lev_patch.boundary(iside);
-%         Cpatch = hspace.space_of_level(ilev).Cpatch{iptc};
-        [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, hspace.space_of_level(ilev).Cpatch_cols{iptc});
-        CC = hspace.space_of_level(ilev).Cpatch{iptc}(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
+%         Cpatch = hspace.space_of_level(ilev).Cpatch{iptc};        
+        [Cpatch, Cpatch_cols_lev] = sp_compute_Cpatch (hspace.space_of_level(ilev), iptc);
+        [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, Cpatch_cols_lev);
+        CC = Cpatch(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
 
         [~,icol] = find (CC(sp_bnd.dofs,:));
         [~,jcol] = find (CC(sp_bnd.adjacent_dofs,:));
@@ -104,11 +105,13 @@ for iv = 1 : numel(hspace.space_of_level(1).vertices) % Loop on the vertices
             Cpatch_ind_R = indices_loc_R([2 3 hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+2]);
             Cpatch_ind_L = indices_loc_L([hspace.space_of_level(lev).sp_patch{patches(2)}.ndof_dir(1)+1 hspace.space_of_level(lev).sp_patch{patches(2)}.ndof_dir(1)+2 2*hspace.space_of_level(lev).sp_patch{patches(2)}.ndof_dir(1)+1]);
 
-            [~,~,inds1] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, hspace.space_of_level(lev).Cpatch_cols{patches(1)});
-            [~,~,inds2] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, hspace.space_of_level(lev).Cpatch_cols{patches(2)});
+            [Cpatch1, Cpatch_cols1] = sp_compute_Cpatch (hspace.space_of_level(lev), patches(1));
+            [Cpatch2, Cpatch_cols2] = sp_compute_Cpatch (hspace.space_of_level(lev), patches(2));
+            [~,~,inds1] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, Cpatch_cols1);
+            [~,~,inds2] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, Cpatch_cols2);
 
-            M_ker = [hspace.space_of_level(lev).Cpatch{patches(1)}(Cpatch_ind_R, inds1); ...
-                     hspace.space_of_level(lev).Cpatch{patches(2)}(Cpatch_ind_L, inds2)];
+            M_ker = [Cpatch1(Cpatch_ind_R, inds1); ...
+                     Cpatch2(Cpatch_ind_L, inds2)];
 
             ker = null(full(M_ker));
             if (~isempty(ker))
