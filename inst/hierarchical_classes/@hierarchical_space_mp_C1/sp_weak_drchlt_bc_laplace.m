@@ -88,7 +88,8 @@ function [A, rhs] = sp_weak_drchlt_bc_laplace (hspace, hmsh, bnd_sides, bnd_func
           coeff_at_qnodes = coeff (x{:});
 
           row_indices = hspace.Csub_row_indices{ilev};
-          Caux = hspace.space_of_level(ilev).Cpatch{iptc}(:,row_indices) * hspace.Csub{ilev};
+          [~,Csub_rows,Cpatch_cols] = intersect (row_indices, hspace.space_of_level(ilev).Cpatch_cols{iptc});
+          Caux = hspace.space_of_level(ilev).Cpatch{iptc}(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
           B = op_gradv_n_u (sp_bnd, sp_bnd, msh_side, coeff_at_qnodes);
           B = Caux.' * B * Caux;
 

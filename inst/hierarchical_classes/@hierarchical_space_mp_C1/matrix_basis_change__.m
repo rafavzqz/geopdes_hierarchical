@@ -227,9 +227,15 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(indices0_fine,indices0_coarse) = Proj0_patch(4:end-3,4:end-3);  %first term of refinement formula in Lemma 2
           C(indices1_fine,indices1_coarse) = (1/2)*Proj1_patch(3:end-2,3:end-2);  %first term of refinement formula in Lemma 3
         end
+%         Aux2 = Theta * sp_coarse.Cpatch2{patch_on_int(ipatch)};
+%         C2 = C;
+%         C2(interior_inds_fine,indices0_coarse) = Aux2(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
+%         C2(interior_inds_fine,indices1_coarse) = Aux2(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
         Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
-        C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
-        C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
+        [~,cols_0_coarse,Cpatch_cols_0] = intersect (indices0_coarse, sp_coarse.Cpatch_cols{patch_on_int(ipatch)});
+        [~,cols_1_coarse,Cpatch_cols_1] = intersect (indices1_coarse, sp_coarse.Cpatch_cols{patch_on_int(ipatch)});
+        C(interior_inds_fine,indices0_coarse(cols_0_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_0);   %second term of refinement formula in Lemma 2
+        C(interior_inds_fine,indices1_coarse(cols_1_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_1);   %second term of refinement formula in Lemma 3
 
       elseif (nargin == 6)
         [ind_coarse0_on_edge,local_indices0,~] = intersect (indices0_coarse, ind_coarse);
@@ -238,9 +244,15 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(indices0_fine,ind_coarse0_on_edge) = Proj0_patch(4:end-3,local_indices0+3);  %first term of refinement formula in Lemma 2
           C(indices1_fine,ind_coarse1_on_edge) = (1/2)*Proj1_patch(3:end-2,local_indices1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
+%         Aux2 = Theta * sp_coarse.Cpatch2{patch_on_int(ipatch)};
+%         C2 = C;
+%         C2(interior_inds_fine,ind_coarse0_on_edge) = Aux2(Bsp_indices_fine,ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
+%         C2(interior_inds_fine,ind_coarse1_on_edge) = Aux2(Bsp_indices_fine,ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
         Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
-        C(interior_inds_fine,ind_coarse0_on_edge) = Aux(Bsp_indices_fine,ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
-        C(interior_inds_fine,ind_coarse1_on_edge) = Aux(Bsp_indices_fine,ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
+        [~,cols_0_coarse,Cpatch_cols_0] = intersect (ind_coarse0_on_edge, sp_coarse.Cpatch_cols{patch_on_int(ipatch)});
+        [~,cols_1_coarse,Cpatch_cols_1] = intersect (ind_coarse1_on_edge, sp_coarse.Cpatch_cols{patch_on_int(ipatch)});
+        C(interior_inds_fine,ind_coarse0_on_edge(cols_0_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_0);   %second term of refinement formula in Lemma 2
+        C(interior_inds_fine,ind_coarse1_on_edge(cols_1_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_1);   %second term of refinement formula in Lemma 3
 
       elseif (nargin == 7)
         [ind_coarse0_on_edge,local_indices_c0,ind_c0] = intersect (indices0_coarse, ind_coarse);
@@ -253,9 +265,15 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(ind_f0,ind_c0) = Proj0_patch(local_indices_f0+3,local_indices_c0+3);  %first term of refinement formula in Lemma 2
           C(ind_f1,ind_c1) = (1/2)*Proj1_patch(local_indices_f1+2,local_indices_c1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
+%         Aux2 = Theta * sp_coarse.Cpatch2{patch_on_int(ipatch)};
+%         C2 = C;
+%         C2(ind_int_f,ind_c0) = Aux2(Bsp_indices_fine(local_indices_int),ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
+%         C2(ind_int_f,ind_c1) = Aux2(Bsp_indices_fine(local_indices_int),ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
         Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
-        C(ind_int_f,ind_c0) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
-        C(ind_int_f,ind_c1) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
+        [~,cols_0_coarse,Cpatch_cols_0] = intersect (ind_coarse(ind_c0), sp_coarse.Cpatch_cols{patch_on_int(ipatch)});
+        [~,cols_1_coarse,Cpatch_cols_1] = intersect (ind_coarse(ind_c1), sp_coarse.Cpatch_cols{patch_on_int(ipatch)});
+        C(ind_int_f,ind_c0(cols_0_coarse)) = Aux(Bsp_indices_fine(local_indices_int),Cpatch_cols_0);   %second term of refinement formula in Lemma 2
+        C(ind_int_f,ind_c1(cols_1_coarse)) = Aux(Bsp_indices_fine(local_indices_int),Cpatch_cols_1);   %second term of refinement formula in Lemma 3
       end
     end
   end
