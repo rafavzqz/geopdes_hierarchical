@@ -108,9 +108,13 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
 %       interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       [~,local_indices,ind_c] = intersect (interior_inds_coarse, ind_coarse);
-      ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
+      ind_coarse_on_patch = sp_get_local_interior_functions (sp_coarse, iptc);
+      ind_coarse_on_patch = ind_coarse_on_patch(local_indices);
+%       ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
       [~,local_indices,ind_f] = intersect (interior_inds_fine, ind_fine);
-      ind_fine_on_patch = sp_fine.interior_dofs_per_patch{iptc}(local_indices);
+      ind_fine_on_patch = sp_get_local_interior_functions (sp_fine, iptc);
+      ind_fine_on_patch = ind_fine_on_patch(local_indices);
+%       ind_fine_on_patch = sp_fine.interior_dofs_per_patch{iptc}(local_indices);
       
       Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, ind_coarse_on_patch, ind_fine_on_patch); 
       C(ind_f, ind_c) = Cpatch;
@@ -139,7 +143,9 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
 
       if (nargin == 4)
         [~,local_indices,~] = intersect (interior_inds_coarse, ind_coarse);
-        ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
+        ind_coarse_on_patch = sp_get_local_interior_functions (sp_coarse, iptc);
+        ind_coarse_on_patch = ind_coarse_on_patch(local_indices);
+%         ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
         Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, ind_coarse_on_patch);
       elseif (nargin == 3)
         Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc});
@@ -164,7 +170,7 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
   interfaces = sp_coarse.interfaces;
   nint = numel (interfaces);
   
-  shift_inds_ref = cumsum ([0 cellfun(@numel, sp_fine.interior_dofs_per_patch)]);
+  shift_inds_ref = cumsum ([0 sp_fine.ndof_interior_per_patch]);
   shift_inds_e = cumsum([0 cellfun(@numel, sp_coarse.dofs_on_edge)]);
   shift_inds_e_ref = cumsum([0 cellfun(@numel, sp_fine.dofs_on_edge)]);
   ndof_interior_C1 = sp_coarse.ndof_interior;

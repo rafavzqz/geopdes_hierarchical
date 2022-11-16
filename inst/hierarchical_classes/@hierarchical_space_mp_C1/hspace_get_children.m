@@ -55,7 +55,9 @@ for iptc = 1:npatch
 %   int_patch_dofs_c = hspace.space_of_level(lev).dofs_on_patch{iptc};
   [~,indices,position] = intersect (int_patch_dofs_c, ind);
   
-  indices_tp = hspace.space_of_level(lev).interior_dofs_per_patch{iptc}(indices);
+  indices_tp = sp_get_local_interior_functions (hspace.space_of_level(lev), iptc);
+  indices_tp = indices_tp(indices);
+%   indices_tp = hspace.space_of_level(lev).interior_dofs_per_patch{iptc}(indices);
 
   [ind_sub{:}] = ind2sub ([hspace.space_of_level(lev).sp_patch{iptc}.ndof_dir, 1], indices_tp); % The extra 1 makes it work in any dimension
 
@@ -65,7 +67,9 @@ for iptc = 1:npatch
     end
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([hspace.space_of_level(lev+1).sp_patch{iptc}.ndof_dir, 1], z{:});
-    [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{iptc}, auxI);
+    local_interior_dofs = sp_get_local_interior_functions (hspace.space_of_level(lev+1), iptc);
+    [~,local_indices,~] = intersect (local_interior_dofs, auxI);
+%     [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{iptc}, auxI);
     [~,interior_dofs_patch] = sp_get_functions_on_patch (hspace.space_of_level(lev+1), iptc);
     children_of_this_function = interior_dofs_patch(local_indices(:));
 %     children_of_this_function = hspace.space_of_level(lev+1).dofs_on_patch{iptc}(local_indices(:));
@@ -106,7 +110,9 @@ for iint = 1:nint
     end
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([ndof_dir_bsp_f, 1], z{:});
-    [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
+    local_interior_dofs = sp_get_local_interior_functions (hspace.space_of_level(lev+1), patches(iptc));
+    [~,local_indices,~] = intersect (local_interior_dofs, auxI);
+%     [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
     [~,interior_dofs_patch] = sp_get_functions_on_patch (hspace.space_of_level(lev+1), patches(iptc));
     possible_children = union (possible_children, interior_dofs_patch(local_indices(:)));
 %     possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
@@ -158,7 +164,9 @@ for iv = 1:nvert
     end
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([ndof_dir_bsp_f, 1], z{:});
-    [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
+    local_interior_dofs = sp_get_local_interior_functions (hspace.space_of_level(lev+1), patches(iptc));
+    [~,local_indices,~] = intersect (local_interior_dofs, auxI);
+%     [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
     [~,interior_dofs_patch] = sp_get_functions_on_patch (hspace.space_of_level(lev+1), patches(iptc));
     possible_children = union (possible_children, interior_dofs_patch(local_indices(:)));
 %     possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
