@@ -51,7 +51,8 @@ ind_sub = cell (ndim, 1);
 % Children of interior functions
 aux = cell (ndim, 1);
 for iptc = 1:npatch
-  int_patch_dofs_c = hspace.space_of_level(lev).dofs_on_patch{iptc};
+  [~,int_patch_dofs_c] = sp_get_functions_on_patch (hspace.space_of_level(lev), iptc);
+%   int_patch_dofs_c = hspace.space_of_level(lev).dofs_on_patch{iptc};
   [~,indices,position] = intersect (int_patch_dofs_c, ind);
   
   indices_tp = hspace.space_of_level(lev).interior_dofs_per_patch{iptc}(indices);
@@ -65,7 +66,9 @@ for iptc = 1:npatch
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([hspace.space_of_level(lev+1).sp_patch{iptc}.ndof_dir, 1], z{:});
     [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{iptc}, auxI);
-    children_of_this_function = hspace.space_of_level(lev+1).dofs_on_patch{iptc}(local_indices(:));
+    [~,interior_dofs_patch] = sp_get_functions_on_patch (hspace.space_of_level(lev+1), iptc);
+    children_of_this_function = interior_dofs_patch(local_indices(:));
+%     children_of_this_function = hspace.space_of_level(lev+1).dofs_on_patch{iptc}(local_indices(:));
     children = union (children, children_of_this_function);
     children_of_function{position(ii)} = children_of_this_function(:).';
   end
@@ -104,10 +107,12 @@ for iint = 1:nint
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([ndof_dir_bsp_f, 1], z{:});
     [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
-    possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
+    [~,interior_dofs_patch] = sp_get_functions_on_patch (hspace.space_of_level(lev+1), patches(iptc));
+    possible_children = union (possible_children, interior_dofs_patch(local_indices(:)));
+%     possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
   end
 
-%   possible_children = cell2mat (hspace.space_of_level(lev+1).dofs_on_patch(patches));
+% %   possible_children = cell2mat (hspace.space_of_level(lev+1).dofs_on_patch(patches));
   possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_edge{iint});
   ref_matrix = matrix_basis_change__ (hspace, lev+1, ind_on_edge, possible_children);
 
@@ -154,10 +159,12 @@ for iv = 1:nvert
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([ndof_dir_bsp_f, 1], z{:});
     [~,local_indices,~] = intersect (hspace.space_of_level(lev+1).interior_dofs_per_patch{patches(iptc)}, auxI);
-    possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
+    [~,interior_dofs_patch] = sp_get_functions_on_patch (hspace.space_of_level(lev+1), patches(iptc));
+    possible_children = union (possible_children, interior_dofs_patch(local_indices(:)));
+%     possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_patch{patches(iptc)}(local_indices(:)));
   end
   
-%  possible_children = cell2mat (hspace.space_of_level(lev+1).dofs_on_patch(patches));
+% %  possible_children = cell2mat (hspace.space_of_level(lev+1).dofs_on_patch(patches));
   possible_children = union (possible_children, cell2mat (hspace.space_of_level(lev+1).dofs_on_edge(edges)));
   possible_children = union (possible_children, hspace.space_of_level(lev+1).dofs_on_vertex{iv});
   ref_matrix = matrix_basis_change__ (hspace, lev+1, ind_on_vertex, possible_children);

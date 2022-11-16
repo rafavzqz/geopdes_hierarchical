@@ -102,8 +102,10 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
       spf_patch = sp_fine.sp_patch{iptc};
     
 % Compute the indices of interior B-splines
-      interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
-      interior_inds_fine = sp_fine.dofs_on_patch{iptc};
+      [~,interior_inds_coarse] = sp_get_functions_on_patch (sp_coarse, iptc);
+      [~,interior_inds_fine] = sp_get_functions_on_patch (sp_fine, iptc);
+%       interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
+%       interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       [~,local_indices,ind_c] = intersect (interior_inds_coarse, ind_coarse);
       ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
@@ -130,8 +132,10 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
       ind_ref = union ([boundary.dofs], [boundary.adjacent_dofs]);
       Bsp_indices_coarse = setdiff (1:ndof_Bsp, ind);
       Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, ind_ref);
-      interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
-      interior_inds_fine = sp_fine.dofs_on_patch{iptc};
+      [~,interior_inds_coarse] = sp_get_functions_on_patch (sp_coarse, iptc);
+      [~,interior_inds_fine] = sp_get_functions_on_patch (sp_fine, iptc);
+%       interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
+%       interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       if (nargin == 4)
         [~,local_indices,~] = intersect (interior_inds_coarse, ind_coarse);
@@ -387,7 +391,8 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       Aux_next = Theta * E_next;
       V = sp_coarse.vertex_function_matrices{2,iv}{ip}.V;
       Aux = Theta*V;
-      ind_int_ref = sp_fine.dofs_on_patch{patches(ip)}; %shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
+      [~,ind_int_ref] = sp_get_functions_on_patch (sp_fine, patches(ip)); 
+%       ind_int_ref = sp_fine.dofs_on_patch{patches(ip)}; %shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
       
       if (nargin == 5)
         C(ind_int_ref,indices_v_coarse) = Aux_prev(int_ref,:)*K_prev + Aux_next(int_ref,:)*K_next;
