@@ -85,7 +85,21 @@ else
         new_marked = union (new_marked, [cells_on_patch{add_patch_elems}]);
       end
     end
-    marked{lev} = union (marked{lev}, intersect (new_marked, hmsh.active{lev}));
+    new_marked = setdiff (new_marked, marked{lev});
+    new_marked = intersect (new_marked, hmsh.active{lev});
+    marked{lev} = union (marked{lev}, new_marked);
+
+% Second round (for propagation). Not nice, but it should work.
+    new_marked_for_vertex = cellfun (@(x) intersect(new_marked, x), elems_adj_to_vertices, 'UniformOutput', false);
+    for ivert = 1:numel(vertices)
+      if (~isempty (new_marked_for_vertex{ivert}))
+        cells_on_patch = sp_get_vertex_neighbors (hspace.space_of_level(lev), msh_lev, ivert);
+        add_patch_elems = cellfun (@(x) any (ismember (new_marked_for_vertex{ivert}, x)), cells_on_patch);
+        new_marked = union (new_marked, [cells_on_patch{add_patch_elems}]);
+      end
+    end
+    new_marked = intersect (new_marked, hmsh.active{lev});
+    marked{lev} = union (marked{lev}, new_marked);
     
     neighbors = get_neighborhood (hmsh, hspace, marked{lev}, lev, m, adm_type);
     if (numel(neighbors) > 0)
