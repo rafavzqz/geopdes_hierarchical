@@ -81,7 +81,7 @@ u = zeros (hspace.ndof, 1);
 u(dirichlet_dofs) = u_dirichlet;
 
 int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
-rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs);
+rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u_dirichlet;
 
 % Solve the linear system
 u(int_dofs) = stiff_mat(int_dofs, int_dofs) \ rhs(int_dofs);
