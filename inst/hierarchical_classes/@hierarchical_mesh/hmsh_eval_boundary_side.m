@@ -28,6 +28,7 @@
 % Copyright (C) 2009, 2010 Carlo de Falco
 % Copyright (C) 2011, 2014, 2015, 2017 Rafael Vazquez
 % Copyright (C) 2017 Luca Coradello
+% Copyright (C) 2023 Pablo Antolin
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -64,6 +65,8 @@ if (isempty (element_list))
   msh_side.geo_map = [];
   msh_side.geo_map_jac = [];
   msh_side.geo_map_der2 = [];
+  msh_side.geo_map_der3 = [];
+  msh_side.geo_map_der4 = [];
   msh_side.jacdet = [];
   msh_side.element_size = [];
   return
@@ -73,7 +76,9 @@ else
   msh_side.quad_weights = zeros (nqn, nel);
   msh_side.geo_map = zeros (hmsh_bnd.rdim, nqn, nel);
   msh_side.geo_map_jac = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, nqn, nel);
-  msh_side.geo_map_der2 = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
+  msh_side.geo_map_ = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
+  msh_side.geo_map_der3 = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
+  msh_side.geo_map_der4 = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
   msh_side.jacdet = zeros (nqn, nel);
   msh_side.element_size = zeros (1, nel);
   msh_side.normal = zeros (hmsh_bnd.rdim, nqn, nel);
@@ -100,6 +105,8 @@ for ilev = 1:hmsh_bnd.nlevels
     msh_side.geo_map(:,:,input_indices) = msh_aux.geo_map;
     msh_side.geo_map_jac(:,:,:,input_indices) = msh_aux.geo_map_jac;
     msh_side.geo_map_der2(:,:,:,:,input_indices) = msh_aux.geo_map_der2;
+    msh_side.geo_map_der3(:,:,:,:,:,input_indices) = msh_aux.geo_map_der3;
+    msh_side.geo_map_der4(:,:,:,:,:,:,input_indices) = msh_aux.geo_map_der4;
     msh_side.jacdet(:,input_indices) = msh_aux.jacdet;
     msh_side.element_size(:,input_indices) = msh_aux.element_size;
     msh_side.normal(:,:,input_indices) = msh_aux.normal;
