@@ -13,6 +13,7 @@
 % The function is still unefficient, but it can be useful
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2023 Pablo Antolin
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -50,8 +51,14 @@ for ilev = 1:hmsh.nlevels
     aux_geometry.rdim = hmsh.rdim;
     aux_geometry.map = hmsh.mesh_of_level(ilev).map;
     aux_geometry.map_der = hmsh.mesh_of_level(ilev).map_der;
+    aux_geometry.map_der2 = hmsh.mesh_of_level(ilev).map_der2;
+    aux_geometry.map_der3 = hmsh.mesh_of_level(ilev).map_der3;
+    aux_geometry.map_der4 = hmsh.mesh_of_level(ilev).map_der4;
     qn = msh_set_quad_nodes (hmsh.mesh_of_level(ilev).breaks, rule);
-    msh_plot = msh_cartesian (hmsh.mesh_of_level(ilev).breaks, qn, [], aux_geometry, 'boundary', false);
+    msh_plot = msh_cartesian (hmsh.mesh_of_level(ilev).breaks, qn, [], aux_geometry, 'boundary', false, ...
+        'der2', hmsh.mesh_of_level(ilev).der2, ...
+        'der3', hmsh.mesh_of_level(ilev).der3, ...
+        'der4', hmsh.mesh_of_level(ilev).der4);
     msh_level = msh_evaluate_element_list (msh_plot, hmsh.active{ilev});
     clear msh_plot
 

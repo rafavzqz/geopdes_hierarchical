@@ -22,6 +22,7 @@
 %    geometry: geometry structure (see geo_load)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2023 Pablo Antolin
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -40,13 +41,27 @@ function [hmsh, hspace, geometry] = adaptivity_initialize_vector (problem_data, 
 
 [geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
 
+map_der2 = false;
+map_der3 = false;
+map_der4 = false;
+if (isfield (method_data, 'map_der2'))
+  map_der2 = method_data.map_der2;
+end
+if (isfield (method_data, 'map_der3'))
+  map_der3 = method_data.map_der3;
+end
+if (isfield (method_data, 'map_der4'))
+  map_der4 = method_data.map_der4;
+end
+
 npatch = numel (geometry);
 for iptc = 1:npatch
   [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
 
   rule     = msh_gauss_nodes (method_data.nquad);
   [qn, qw] = msh_set_quad_nodes (zeta, rule);
-  msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc));
+  msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc), ...
+                   'der2', map_der2, 'der3', map_der3, 'der4', map_der4);
   sp_scalar= sp_bspline (knots, method_data.degree, msh{iptc});
   scalar_spaces = repmat ({sp_scalar}, 1, msh{iptc}.rdim);
   space{iptc} = sp_vector (scalar_spaces, msh{iptc});

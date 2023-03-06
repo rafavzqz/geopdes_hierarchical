@@ -131,6 +131,9 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.rdim = hmsh.rdim;
     msh_lev{lev}.nel = hmsh.nel_per_level(lev);
     msh_lev{lev}.elem_list = hmsh.active{lev}(:).';
+    msh_lev{lev}.der2 = hmsh.msh_lev{lev}.der2;
+    msh_lev{lev}.der3 = hmsh.msh_lev{lev}.der3;
+    msh_lev{lev}.der4 = hmsh.msh_lev{lev}.der4;
 
     if (isempty (new_elements))
       indices = iold_act;
@@ -143,11 +146,18 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.quad_weights(:,indices) = [hmsh.msh_lev{lev}.quad_weights(:,iold), msh_new.quad_weights];
     msh_lev{lev}.geo_map(:,:,indices) = cat (3, hmsh.msh_lev{lev}.geo_map(:,:,iold), msh_new.geo_map);
     msh_lev{lev}.geo_map_jac(:,:,:,indices) = cat (4, hmsh.msh_lev{lev}.geo_map_jac(:,:,:,iold), msh_new.geo_map_jac);
-    msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
-    msh_lev{lev}.geo_map_der3(:,:,:,:,:,indices) = cat (6, hmsh.msh_lev{lev}.geo_map_der3(:,:,:,:,:,iold), msh_new.geo_map_der3);
-    msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,indices) = cat (7, hmsh.msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,iold), msh_new.geo_map_der4);
     msh_lev{lev}.jacdet(:,indices) = [hmsh.msh_lev{lev}.jacdet(:,iold), msh_new.jacdet];
     msh_lev{lev}.element_size(:,indices) = [hmsh.msh_lev{lev}.element_size(:,iold), msh_new.element_size];
+
+    if (msh{lev}.der2)
+      msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
+    end
+    if (msh{lev}.der3)
+      msh_lev{lev}.geo_map_der3(:,:,:,:,:,indices) = cat (6, hmsh.msh_lev{lev}.geo_map_der3(:,:,:,:,:,iold), msh_new.geo_map_der3);
+    end
+    if (msh{lev}.der4)
+      msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,indices) = cat (7, hmsh.msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,iold), msh_new.geo_map_der4);
+    end
 
     Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
     for iptc = 1:msh_lev{lev}.npatch
@@ -158,6 +168,9 @@ for lev = 1:hmsh.nlevels
     end
     msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).msh_patch{1}.nqn;
     msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).msh_patch{1}.nqn_dir;
+    msh_lev{lev}.der2 = hmsh.mesh_of_level(lev).msh_patch{1}.der2;
+    msh_lev{lev}.der3 = hmsh.mesh_of_level(lev).msh_patch{1}.der3;
+    msh_lev{lev}.der4 = hmsh.mesh_of_level(lev).msh_patch{1}.der4;
   end
 end
 

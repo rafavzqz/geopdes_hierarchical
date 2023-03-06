@@ -54,7 +54,7 @@ problem_data.geometry = geo_load (problem_data.geo_name);
 
 rule     = msh_gauss_nodes (method_data.nquad);
 [qn, qw] = msh_set_quad_nodes (zeta, rule);
-msh   = msh_cartesian (zeta, qn, qw, problem_data.geometry, 'der2', true);
+msh   = msh_cartesian (zeta, qn, qw, problem_data.geometry, 'der2', true, 'der3', true, 'der4', true);
 space = sp_bspline (knots, method_data.degree, msh);
 hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
 hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated);

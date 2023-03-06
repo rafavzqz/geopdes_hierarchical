@@ -140,7 +140,11 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.nel_dir = hmsh.mesh_of_level(lev).nel_dir;
     msh_lev{lev}.nqn_dir = hmsh.mesh_of_level(lev).nqn_dir;
     msh_lev{lev}.nqn = hmsh.mesh_of_level(lev).nqn;
+    msh_lev{lev}.der2 = hmsh.msh_lev{lev}.der2;
+    msh_lev{lev}.der3 = hmsh.msh_lev{lev}.der3;
+    msh_lev{lev}.der4 = hmsh.msh_lev{lev}.der4;
 
+    
     if (isempty (new_elements{lev}))
       indices = iold_act;
       msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], ...
@@ -154,14 +158,23 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.quad_weights(:,indices) = [hmsh.msh_lev{lev}.quad_weights(:,iold), msh_new.quad_weights];
     msh_lev{lev}.geo_map(:,:,indices) = cat (3, hmsh.msh_lev{lev}.geo_map(:,:,iold), msh_new.geo_map);
     msh_lev{lev}.geo_map_jac(:,:,:,indices) = cat (4, hmsh.msh_lev{lev}.geo_map_jac(:,:,:,iold), msh_new.geo_map_jac);
-    msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
-    msh_lev{lev}.geo_map_der3(:,:,:,:,:,indices) = cat (6, hmsh.msh_lev{lev}.geo_map_der3(:,:,:,:,:,iold), msh_new.geo_map_der3);
-    msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,indices) = cat (7, hmsh.msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,iold), msh_new.geo_map_der4);    
     msh_lev{lev}.jacdet(:,indices) = [hmsh.msh_lev{lev}.jacdet(:,iold), msh_new.jacdet];
     msh_lev{lev}.element_size(:,indices) = [hmsh.msh_lev{lev}.element_size(:,iold), msh_new.element_size];
     %%%%%%%%% FOR KIRCHHOFF-LOVE TO BE CHECKED
     if(hmsh.mesh_of_level(lev).ndim > 1 && isfield(hmsh.msh_lev{lev}, 'normal'))
       msh_lev{lev}.normal(:,:,indices) = cat (3, hmsh.msh_lev{lev}.normal(:,:,iold), msh_new.normal);
+    end
+
+    if(hmsh.msh_lev{lev}.der2)
+      msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
+    end
+
+    if(hmsh.msh_lev{lev}.der3)
+      msh_lev{lev}.geo_map_der3(:,:,:,:,:,indices) = cat (6, hmsh.msh_lev{lev}.geo_map_der3(:,:,:,:,:,iold), msh_new.geo_map_der3);
+    end
+
+    if(hmsh.msh_lev{lev}.der4)
+      msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,indices) = cat (7, hmsh.msh_lev{lev}.geo_map_der4(:,:,:,:,:,:,iold), msh_new.geo_map_der4);    
     end
   end
 end

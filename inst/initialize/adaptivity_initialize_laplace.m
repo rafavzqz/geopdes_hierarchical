@@ -22,6 +22,7 @@
 %    geometry: geometry structure (see geo_load and mp_geo_load)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2023 Pablo Antolin
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@ for iptc = 1:npatch
   
   rule     = msh_gauss_nodes (method_data.nquad);
   [qn, qw] = msh_set_quad_nodes (zeta, rule);
-  msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc));
+  msh{iptc}   = msh_cartesian (zeta, qn, qw, geometry(iptc), 'der2', true);
   space{iptc} = sp_bspline (knots, method_data.degree, msh{iptc});
 end
 

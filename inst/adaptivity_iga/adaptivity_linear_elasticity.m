@@ -6,6 +6,7 @@
 % XXXXXXXXXXXXX TEXT IS MISSING
 % 
 % Copyright (C) 2017 Cesare Bracco, Rafael Vazquez
+% Copyright (C) 2023 Pablo Antolin
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -45,6 +46,7 @@ end
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % Initialization of the hierarchical mesh and space
+method_data.map_der2 = true;
 [hmsh, hspace, geometry] = adaptivity_initialize_vector (problem_data, method_data);
 
 % ADAPTIVE LOOP

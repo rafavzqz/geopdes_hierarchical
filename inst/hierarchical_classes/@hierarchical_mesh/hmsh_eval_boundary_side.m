@@ -23,6 +23,15 @@
 %     quad_weights  (nqn x nel vector)        weights associated to the quadrature nodes
 %     geo_map       (rdim x nqn x nel vector) physical coordinates of the quadrature nodes
 %     geo_map_jac   (rdim x ndim x nqn x nel) Jacobian matrix of the map evaluated at the quadrature nodes
+%     geo_map_der2   (rdim x ndim x ndim x nqn x nel)
+%                                             Hessian tensor of the map evaluated at the quadrature nodes.
+%                                             Available is already present in hmsh.
+%     geo_map_der3   (rdim x ndim x ndim x ndim x nqn x nel)
+%                                             Third derivatives of the map evaluated at the quadrature nodes
+%                                             Available is already present in hmsh.
+%     geo_map_der4   (rdim x ndim x ndim x ndim x ndim x nqn x nel)
+%                                             Fourth derivatives of the map evaluated at the quadrature nodes
+%                                             Available is already present in hmsh.
 %     jacdet        (nqn x nel)               element of length, area, volume (if rdim = ndim, determinant of the Jacobian)
 %
 % Copyright (C) 2009, 2010 Carlo de Falco
@@ -73,10 +82,14 @@ if (isempty (element_list))
 else
   nel = numel (element_list);
   msh_side.nqn = nqn;
+  msh_side.der2 = hmsh_bnd.msh_lev{1}.der2;
+  msh_side.der3 = hmsh_bnd.msh_lev{1}.der3;
+  msh_side.der4 = hmsh_bnd.msh_lev{1}.der4;
   msh_side.quad_weights = zeros (nqn, nel);
   msh_side.geo_map = zeros (hmsh_bnd.rdim, nqn, nel);
   msh_side.geo_map_jac = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, nqn, nel);
   msh_side.geo_map_ = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
+  msh_side.geo_map_der2 = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
   msh_side.geo_map_der3 = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
   msh_side.geo_map_der4 = zeros (hmsh_bnd.rdim, hmsh_bnd.ndim, hmsh_bnd.ndim, hmsh_bnd.ndim, hmsh_bnd.ndim, nqn, nel);
   msh_side.jacdet = zeros (nqn, nel);
@@ -104,12 +117,19 @@ for ilev = 1:hmsh_bnd.nlevels
     msh_side.quad_weights(:,input_indices) = msh_aux.quad_weights;
     msh_side.geo_map(:,:,input_indices) = msh_aux.geo_map;
     msh_side.geo_map_jac(:,:,:,input_indices) = msh_aux.geo_map_jac;
-    msh_side.geo_map_der2(:,:,:,:,input_indices) = msh_aux.geo_map_der2;
-    msh_side.geo_map_der3(:,:,:,:,:,input_indices) = msh_aux.geo_map_der3;
-    msh_side.geo_map_der4(:,:,:,:,:,:,input_indices) = msh_aux.geo_map_der4;
     msh_side.jacdet(:,input_indices) = msh_aux.jacdet;
     msh_side.element_size(:,input_indices) = msh_aux.element_size;
     msh_side.normal(:,:,input_indices) = msh_aux.normal;
+
+    if (msh_aux.der2)
+      msh_side.geo_map_der2(:,:,:,:,input_indices) = msh_aux.geo_map_der2;
+    end
+    if (msh_aux.der3)
+      msh_side.geo_map_der3(:,:,:,:,:,input_indices) = msh_aux.geo_map_der3;
+    end
+    if (msh_aux.der4)
+      msh_side.geo_map_der4(:,:,:,:,:,:,input_indices) = msh_aux.geo_map_der4;
+    end
   end
 end
 
