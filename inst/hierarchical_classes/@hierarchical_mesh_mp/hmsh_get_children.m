@@ -53,7 +53,7 @@ z = cell (ndim, 1);
 aux = cell (ndim, 1);
 children_of_cell = zeros (prod (nsub), numel (ind));
 for iptc = 1:hmsh.npatch
-  [~,indices,~] = intersect (Nelem(iptc)+1:Nelem(iptc+1), ind);
+  [~,indices,position_on_ind] = intersect (Nelem(iptc)+1:Nelem(iptc+1), ind);
 
   cells_sub = cell (ndim, 1);
   [cells_sub{:}] = ind2sub ([hmsh.mesh_of_level(lev).msh_patch{iptc}.nel_dir, 1], indices); % The extra 1 makes it work in any dimension
@@ -65,7 +65,7 @@ for iptc = 1:hmsh.npatch
     [z{1:ndim}] = ndgrid (aux{:});
     auxI = sub2ind ([hmsh.mesh_of_level(lev+1).msh_patch{iptc}.nel_dir, 1], z{:});
     children = union (children, auxI(:)+Nelem_fine(iptc));
-    children_of_cell(:,ii) = auxI(:)' + Nelem_fine(iptc);
+    children_of_cell(:,position_on_ind(ii)) = auxI(:)' + Nelem_fine(iptc);
   end
 end
 
