@@ -15,6 +15,7 @@
 % % %   Cref:      a matrix to pass from the coarse space (input) to the refined space (output)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2023 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
