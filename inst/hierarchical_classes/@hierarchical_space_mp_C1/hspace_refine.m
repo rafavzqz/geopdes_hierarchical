@@ -29,7 +29,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function hspace = hspace_refine (hspace, hmsh, M, new_cells)
+function [hspace, Cref] = hspace_refine (hspace, hmsh, M, new_cells)
 
 % Computation of a tensor product space if a new level is activated,
 %  and the 1D projectors between the previous level and the new one.
@@ -38,12 +38,12 @@ if (numel(hspace.space_of_level) < hmsh.nlevels)
   M{hmsh.nlevels} = [];
 end
 
-% % Update of active functions
-% if (nargout == 2)
-%   [hspace, Cref] = update_active_functions (hspace, hmsh, new_cells, M);
-% else
+% Update of active functions
+if (nargout == 2)
+  [hspace, Cref] = update_active_functions (hspace, hmsh, new_cells, M);
+else
   hspace = update_active_functions (hspace, hmsh, new_cells, M);
-% end
+end
 
 % Update the matrices for changing basis
 [hspace.Csub, hspace.Csub_row_indices] = hspace_subdivision_matrix (hspace, hmsh);
@@ -123,86 +123,87 @@ for lev = 1:hspace.nlevels-1
 end % for lev
 
 
-% % Computation of the matrix to pass from the original to the refined space
-% if (nargout == 2 || ~hspace.truncated)
-%     
-%   %THB case
-%   if (hspace.truncated)
-%       
-%     ndof_per_level = cellfun (@numel, active);
-%     ndlev = hspace.ndof_per_level(1);
-%     fun_on_act_deact = 1:hspace.space_of_level(1).ndof;
-%     Id = sparse (numel(fun_on_act_deact), ndlev);
-%     Id(hspace.active{1},:) = speye (ndlev, ndlev);
-%     Cref = Id;
-% 
-%     for lev = 1:hspace.nlevels-1
-%       Cmat = matrix_basis_change__ (hspace, lev+1, fun_on_act_deact);
-% 
-%       [~,act_indices] = intersect (fun_on_act_deact, active{lev});
-% 
-%       elems = union (hmsh.active{lev+1}, hmsh.deactivated{lev+1});
-%       fun_on_act_deact_new = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), elems);
-% 
-%       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
-%       ndof_until_lev = sum (ndof_per_level(1:lev));
-% 
-%       aux = sparse (ndof_until_lev + numel(fun_on_act_deact_new), size(Cref,2));
-%       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
-%       aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
-%       aux(ndof_until_lev+(1:numel(fun_on_act_deact_new)),:) = ...
-%         Cmat(fun_on_act_deact_new,fun_on_act_deact) * Cref(ndof_prev_levs+1:end,:);
-% 
-%       fun_on_act_deact = fun_on_act_deact_new;
-%       ndlev = hspace.ndof_per_level(lev+1);
-%       [~,indices] = intersect (fun_on_act_deact, hspace.active{lev+1});
-%       Id = sparse (numel(fun_on_act_deact), ndlev);
-%       Id(indices,:) = speye (ndlev, ndlev);
-%       
-%       Cref = [aux, [sparse(ndof_until_lev,ndlev); Id]];
-%       clear aux
-%     end
-%     ndof_prev_levs = sum (ndof_per_level(1:hspace.nlevels-1));
-%     [~,act_indices] = intersect (fun_on_act_deact, active{hspace.nlevels});
-%     Cref(ndof_prev_levs+(1:numel(active{hspace.nlevels})),:) = Cref(ndof_prev_levs+act_indices,:);
-%     Cref(ndof_prev_levs+numel(active{hspace.nlevels})+1:end,:) = [];
-%   
-%   else %HB-splines case
-% 
-%     ndof_per_level = cellfun (@numel, active);
-%     ndlev = hspace.ndof_per_level(1);
-%     active_and_deact = union (active{1}, deactivated{1});
-%     [~,indices] = intersect (active_and_deact, hspace.active{1});
-%     Id = sparse (numel(active_and_deact), ndlev);
-%     Id(indices,:) = speye (ndlev, ndlev);
-%     Cref = Id;
-% 
-%     for lev = 1:hspace.nlevels-1
-%       Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev});
-% 
-%       [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
-%       [~,act_indices] = intersect (active_and_deact, active{lev});
-%       active_and_deact = union (active{lev+1}, deactivated{lev+1});
-% 
-%       ndof_prev_levs = sum (ndof_per_level(1:lev-1));
-%       ndof_until_lev = sum (ndof_per_level(1:lev));
-% 
-%       aux = sparse (ndof_until_lev + numel(active_and_deact), size(Cref,2));
-%       aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
-%       aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
-%       aux(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
-%         Cmat(active_and_deact,deactivated{lev}) * Cref(ndof_prev_levs+deact_indices,:); 
-% 
-%       ndlev = hspace.ndof_per_level(lev+1);
-%       [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
-%       Id = sparse (numel(active_and_deact), ndlev);
-%       Id(indices,:) = speye (ndlev, ndlev);
-% 
-%       Cref = [aux, [sparse(ndof_until_lev,ndlev); Id]];
-%       clear aux;
-%     end
-%   end
-% end
+% Computation of the matrix to pass from the original to the refined space
+if (nargout == 2 || ~hspace.truncated)
+    
+  %THB case
+  if (hspace.truncated)
+      
+    ndof_per_level = cellfun (@numel, active);
+    ndlev = hspace.ndof_per_level(1);
+    fun_on_act_deact = 1:hspace.space_of_level(1).ndof;
+    Id = sparse (numel(fun_on_act_deact), ndlev);
+    Id(hspace.active{1},:) = speye (ndlev, ndlev);
+    Cref = Id;
+
+    for lev = 1:hspace.nlevels-1
+      [~,act_indices] = intersect (fun_on_act_deact, active{lev});
+
+      elems = union (hmsh.active{lev+1}, hmsh.deactivated{lev+1});
+      fun_on_act_deact_new = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), elems);
+      
+      Cmat = matrix_basis_change__ (hspace, lev+1, fun_on_act_deact, fun_on_act_deact_new);
+      
+      ndof_prev_levs = sum (ndof_per_level(1:lev-1));
+      ndof_until_lev = sum (ndof_per_level(1:lev));
+
+      aux = sparse (ndof_until_lev + numel(fun_on_act_deact_new), size(Cref,2));
+      aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
+      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
+      aux(ndof_until_lev+(1:numel(fun_on_act_deact_new)),:) = ...
+        Cmat(1:numel(fun_on_act_deact_new),1:numel(fun_on_act_deact)) * Cref(ndof_prev_levs+1:end,:); 
+    
+      fun_on_act_deact = fun_on_act_deact_new;
+      ndlev = hspace.ndof_per_level(lev+1);
+      [~,indices] = intersect (fun_on_act_deact, hspace.active{lev+1});
+      Id = sparse (numel(fun_on_act_deact), ndlev);
+      Id(indices,:) = speye (ndlev, ndlev);
+      
+      Cref = [aux, [sparse(ndof_until_lev,ndlev); Id]];
+      clear aux
+    end
+    ndof_prev_levs = sum (ndof_per_level(1:hspace.nlevels-1));
+    [~,act_indices] = intersect (fun_on_act_deact, active{hspace.nlevels});
+    Cref(ndof_prev_levs+(1:numel(active{hspace.nlevels})),:) = Cref(ndof_prev_levs+act_indices,:);
+    Cref(ndof_prev_levs+numel(active{hspace.nlevels})+1:end,:) = [];
+  
+  else %HB-splines case
+
+    ndof_per_level = cellfun (@numel, active);
+    ndlev = hspace.ndof_per_level(1);
+    active_and_deact = union (active{1}, deactivated{1});
+    [~,indices] = intersect (active_and_deact, hspace.active{1});
+    Id = sparse (numel(active_and_deact), ndlev);
+    Id(indices,:) = speye (ndlev, ndlev);
+    Cref = Id;
+
+    for lev = 1:hspace.nlevels-1
+
+      [~,deact_indices] = intersect (active_and_deact, deactivated{lev});
+      [~,act_indices] = intersect (active_and_deact, active{lev});
+      active_and_deact = union (active{lev+1}, deactivated{lev+1});
+
+      Cmat = matrix_basis_change__ (hspace, lev+1, deactivated{lev}, active_and_deact);
+
+      ndof_prev_levs = sum (ndof_per_level(1:lev-1));
+      ndof_until_lev = sum (ndof_per_level(1:lev));
+
+      aux = sparse (ndof_until_lev + numel(active_and_deact), size(Cref,2));
+      aux(1:ndof_prev_levs,:) = Cref(1:ndof_prev_levs,:);
+      aux(ndof_prev_levs+(1:numel(active{lev})),:) = Cref(ndof_prev_levs+act_indices,:);
+      aux(ndof_until_lev+(1:numel(active_and_deact)),:) = ...
+        Cmat(1:numel(active_and_deact),1:numel(deactivated{lev})) * Cref(ndof_prev_levs+deact_indices,:);
+    
+      ndlev = hspace.ndof_per_level(lev+1);
+      [~,indices] = intersect (active_and_deact, hspace.active{lev+1});
+      Id = sparse (numel(active_and_deact), ndlev);
+      Id(indices,:) = speye (ndlev, ndlev);
+
+      Cref = [aux, [sparse(ndof_until_lev,ndlev); Id]];
+      clear aux;
+    end
+  end
+end
 
 
 hspace.active = active(1:hspace.nlevels);
