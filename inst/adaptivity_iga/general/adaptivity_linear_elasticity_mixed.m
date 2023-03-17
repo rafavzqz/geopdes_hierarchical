@@ -68,6 +68,7 @@ while (iter < adaptivity_data.num_max_iter)
   
   if (plot_data.plot_hmesh)
     hmsh_plot_cells (hmsh, 10, fig_mesh);
+    drawnow
   end
   if (plot_data.plot_discrete_sol)
     figure(fig_sol)  
@@ -80,11 +81,8 @@ while (iter < adaptivity_data.num_max_iter)
     subplot (1,2,2)
     eu2 = problem_data.uex (X, Y);
     quiver (X, Y, squeeze(eu2(1,:,:)), squeeze(eu2(2,:,:)))
-    title ('Exact solution'), axis equal tight  
-  end
-  if (plot_data.plot_hmesh || plot_data.plot_discrete_sol)
-%     disp('Paused. Type "dbcont" to continue')
-%     keyboard
+    title ('Exact solution'), axis equal tight
+    drawnow
   end
     
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
