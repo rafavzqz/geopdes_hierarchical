@@ -42,7 +42,7 @@ end
 adaptivity_data.flag = 'elements';
 [hmsh_h2, hspace_h2, Cref] = adaptivity_refine (hmsh, hspace, hmsh.active, adaptivity_data);
 
-u_h2 = solve_bilaplace_mpC1 (hmsh_h2, hspace_h2, problem_data);
+u_h2 = adaptivity_solve_bilaplace_mp_C1 (hmsh_h2, hspace_h2, problem_data);
 
 % Compute the estimator on the fine mesh, and then pass to the coarse mesh
 zeroex = @(varargin) zeros (size(varargin{1}));
