@@ -140,7 +140,7 @@ while (1)
     disp('SOLVE:')
     fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
-  u = solve_bilaplace_mpC1 (hmsh, hspace, problem_data);
+  u = adaptivity_solve_bilaplace_mp_C1 (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
