@@ -19,6 +19,7 @@
 %    ncomp          (scalar)                number of components of the space
 %    [ncomp_param]  (scalar)                number of components of the functions of the space in the parametric domain (usually equal to msh.ndim)
 %    type           (string)                'standard' or 'simplified'
+%    truncated      (logical)               truncated or non-truncated basis
 %    ndof           (scalar)                total number of active functions 
 %    [comp_dofs]    (1 x ncomp_param cell array) indices of the degrees of freedom for each component
 %    nlevels        (scalar)                the number of levels

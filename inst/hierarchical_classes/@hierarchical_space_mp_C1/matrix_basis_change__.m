@@ -102,13 +102,19 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
       spf_patch = sp_fine.sp_patch{iptc};
     
 % Compute the indices of interior B-splines
-      interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
-      interior_inds_fine = sp_fine.dofs_on_patch{iptc};
+      [~,interior_inds_coarse] = sp_get_functions_on_patch (sp_coarse, iptc);
+      [~,interior_inds_fine] = sp_get_functions_on_patch (sp_fine, iptc);
+%       interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
+%       interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       [~,local_indices,ind_c] = intersect (interior_inds_coarse, ind_coarse);
-      ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
+      ind_coarse_on_patch = sp_get_local_interior_functions (sp_coarse, iptc);
+      ind_coarse_on_patch = ind_coarse_on_patch(local_indices);
+%       ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
       [~,local_indices,ind_f] = intersect (interior_inds_fine, ind_fine);
-      ind_fine_on_patch = sp_fine.interior_dofs_per_patch{iptc}(local_indices);
+      ind_fine_on_patch = sp_get_local_interior_functions (sp_fine, iptc);
+      ind_fine_on_patch = ind_fine_on_patch(local_indices);
+%       ind_fine_on_patch = sp_fine.interior_dofs_per_patch{iptc}(local_indices);
       
       Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, ind_coarse_on_patch, ind_fine_on_patch); 
       C(ind_f, ind_c) = Cpatch;
@@ -130,12 +136,16 @@ function C = subdivision_interior (sp_coarse, sp_fine, Proj, ind_coarse, ind_fin
       ind_ref = union ([boundary.dofs], [boundary.adjacent_dofs]);
       Bsp_indices_coarse = setdiff (1:ndof_Bsp, ind);
       Bsp_indices_fine = setdiff (1:ndof_Bsp_ref, ind_ref);
-      interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
-      interior_inds_fine = sp_fine.dofs_on_patch{iptc};
+      [~,interior_inds_coarse] = sp_get_functions_on_patch (sp_coarse, iptc);
+      [~,interior_inds_fine] = sp_get_functions_on_patch (sp_fine, iptc);
+%       interior_inds_coarse = sp_coarse.dofs_on_patch{iptc};
+%       interior_inds_fine = sp_fine.dofs_on_patch{iptc};
 
       if (nargin == 4)
         [~,local_indices,~] = intersect (interior_inds_coarse, ind_coarse);
-        ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
+        ind_coarse_on_patch = sp_get_local_interior_functions (sp_coarse, iptc);
+        ind_coarse_on_patch = ind_coarse_on_patch(local_indices);
+%         ind_coarse_on_patch = sp_coarse.interior_dofs_per_patch{iptc}(local_indices);
         Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, ind_coarse_on_patch);
       elseif (nargin == 3)
         Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc});
@@ -160,7 +170,7 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
   interfaces = sp_coarse.interfaces;
   nint = numel (interfaces);
   
-  shift_inds_ref = cumsum ([0 cellfun(@numel, sp_fine.interior_dofs_per_patch)]);
+  shift_inds_ref = cumsum ([0 sp_fine.ndof_interior_per_patch]);
   shift_inds_e = cumsum([0 cellfun(@numel, sp_coarse.dofs_on_edge)]);
   shift_inds_e_ref = cumsum([0 cellfun(@numel, sp_fine.dofs_on_edge)]);
   ndof_interior_C1 = sp_coarse.ndof_interior;
@@ -227,9 +237,16 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(indices0_fine,indices0_coarse) = Proj0_patch(4:end-3,4:end-3);  %first term of refinement formula in Lemma 2
           C(indices1_fine,indices1_coarse) = (1/2)*Proj1_patch(3:end-2,3:end-2);  %first term of refinement formula in Lemma 3
         end
-        Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
-        C(interior_inds_fine,indices0_coarse) = Aux(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
-        C(interior_inds_fine,indices1_coarse) = Aux(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
+%         Aux2 = Theta * sp_coarse.Cpatch2{patch_on_int(ipatch)};
+%         C2 = C;
+%         C2(interior_inds_fine,indices0_coarse) = Aux2(Bsp_indices_fine,indices0_coarse);   %second term of refinement formula in Lemma 2
+%         C2(interior_inds_fine,indices1_coarse) = Aux2(Bsp_indices_fine,indices1_coarse);   %second term of refinement formula in Lemma 3
+        [Cpatch, Cpatch_cols] = sp_compute_Cpatch (sp_coarse, patch_on_int(ipatch));
+        Aux = Theta * Cpatch;
+        [~,cols_0_coarse,Cpatch_cols_0] = intersect (indices0_coarse, Cpatch_cols);
+        [~,cols_1_coarse,Cpatch_cols_1] = intersect (indices1_coarse, Cpatch_cols);
+        C(interior_inds_fine,indices0_coarse(cols_0_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_0);   %second term of refinement formula in Lemma 2
+        C(interior_inds_fine,indices1_coarse(cols_1_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_1);   %second term of refinement formula in Lemma 3
 
       elseif (nargin == 6)
         [ind_coarse0_on_edge,local_indices0,~] = intersect (indices0_coarse, ind_coarse);
@@ -238,9 +255,16 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(indices0_fine,ind_coarse0_on_edge) = Proj0_patch(4:end-3,local_indices0+3);  %first term of refinement formula in Lemma 2
           C(indices1_fine,ind_coarse1_on_edge) = (1/2)*Proj1_patch(3:end-2,local_indices1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
-        Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
-        C(interior_inds_fine,ind_coarse0_on_edge) = Aux(Bsp_indices_fine,ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
-        C(interior_inds_fine,ind_coarse1_on_edge) = Aux(Bsp_indices_fine,ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
+%         Aux2 = Theta * sp_coarse.Cpatch2{patch_on_int(ipatch)};
+%         C2 = C;
+%         C2(interior_inds_fine,ind_coarse0_on_edge) = Aux2(Bsp_indices_fine,ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
+%         C2(interior_inds_fine,ind_coarse1_on_edge) = Aux2(Bsp_indices_fine,ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
+        [Cpatch, Cpatch_cols] = sp_compute_Cpatch (sp_coarse, patch_on_int(ipatch));
+        Aux = Theta * Cpatch;
+        [~,cols_0_coarse,Cpatch_cols_0] = intersect (ind_coarse0_on_edge, Cpatch_cols);
+        [~,cols_1_coarse,Cpatch_cols_1] = intersect (ind_coarse1_on_edge, Cpatch_cols);
+        C(interior_inds_fine,ind_coarse0_on_edge(cols_0_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_0);   %second term of refinement formula in Lemma 2
+        C(interior_inds_fine,ind_coarse1_on_edge(cols_1_coarse)) = Aux(Bsp_indices_fine,Cpatch_cols_1);   %second term of refinement formula in Lemma 3
 
       elseif (nargin == 7)
         [ind_coarse0_on_edge,local_indices_c0,ind_c0] = intersect (indices0_coarse, ind_coarse);
@@ -253,9 +277,16 @@ function C = subdivision_edges (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_coar
           C(ind_f0,ind_c0) = Proj0_patch(local_indices_f0+3,local_indices_c0+3);  %first term of refinement formula in Lemma 2
           C(ind_f1,ind_c1) = (1/2)*Proj1_patch(local_indices_f1+2,local_indices_c1+2);  %first term of refinement formula in Lemma 3 %WARNING: MULTIPLIED BY 1/2?
         end
-        Aux = Theta * sp_coarse.Cpatch{patch_on_int(ipatch)};
-        C(ind_int_f,ind_c0) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
-        C(ind_int_f,ind_c1) = Aux(Bsp_indices_fine(local_indices_int),ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
+%         Aux2 = Theta * sp_coarse.Cpatch2{patch_on_int(ipatch)};
+%         C2 = C;
+%         C2(ind_int_f,ind_c0) = Aux2(Bsp_indices_fine(local_indices_int),ind_coarse0_on_edge);   %second term of refinement formula in Lemma 2
+%         C2(ind_int_f,ind_c1) = Aux2(Bsp_indices_fine(local_indices_int),ind_coarse1_on_edge);   %second term of refinement formula in Lemma 3
+        [Cpatch, Cpatch_cols] = sp_compute_Cpatch (sp_coarse, patch_on_int(ipatch));
+        Aux = Theta * Cpatch;
+        [~,cols_0_coarse,Cpatch_cols_0] = intersect (ind_coarse(ind_c0), Cpatch_cols);
+        [~,cols_1_coarse,Cpatch_cols_1] = intersect (ind_coarse(ind_c1), Cpatch_cols);
+        C(ind_int_f,ind_c0(cols_0_coarse)) = Aux(Bsp_indices_fine(local_indices_int),Cpatch_cols_0);   %second term of refinement formula in Lemma 2
+        C(ind_int_f,ind_c1(cols_1_coarse)) = Aux(Bsp_indices_fine(local_indices_int),Cpatch_cols_1);   %second term of refinement formula in Lemma 3
       end
     end
   end
@@ -347,7 +378,7 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
         ind_edge_ref = sp_fine.dofs_on_edge{edges(ip)};
       else
         Lambda = [Proj0_patch(4:dim_sp0_ref-3,dim_sp0:-1:dim_sp0-2), zeros(dim_sp0_ref-6,2);...
-                  zeros(dim_sp1_ref-4,3),               -(1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
+                  zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
       end
 
       if (nargin == 5)
@@ -366,7 +397,8 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
       Aux_next = Theta * E_next;
       V = sp_coarse.vertex_function_matrices{2,iv}{ip}.V;
       Aux = Theta*V;
-      ind_int_ref = sp_fine.dofs_on_patch{patches(ip)}; %shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
+      [~,ind_int_ref] = sp_get_functions_on_patch (sp_fine, patches(ip)); 
+%       ind_int_ref = sp_fine.dofs_on_patch{patches(ip)}; %shift_inds_ref(patches(ip))+1:shift_inds_ref(patches(ip)+1);
       
       if (nargin == 5)
         C(ind_int_ref,indices_v_coarse) = Aux_prev(int_ref,:)*K_prev + Aux_next(int_ref,:)*K_next;
@@ -414,7 +446,7 @@ function C = subdivision_vertices (sp_coarse, sp_fine, Proj, Proj0, Proj1, ind_c
                   zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[1 2])];
       else
         Lambda = [Proj0_patch(4:dim_sp0_ref-3,dim_sp0:-1:dim_sp0-2), zeros(dim_sp0_ref-6,2);...
-                  zeros(dim_sp1_ref-4,3),               -(1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
+                  zeros(dim_sp1_ref-4,3),               (1/2)*Proj1_patch(3:dim_sp1_ref-2,[dim_sp1 dim_sp1-1])];
       end
       if (nargin == 5)
         C(ind_edge_ref,indices_v_coarse) = Lambda*K_next;
