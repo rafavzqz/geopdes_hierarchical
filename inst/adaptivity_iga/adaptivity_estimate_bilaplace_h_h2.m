@@ -1,8 +1,8 @@
-% ADAPTIVITY_ESTIMATE_LAPLACE_H_H2: compute the estimator by solving the problem in a globally refined mesh.
+% ADAPTIVITY_ESTIMATE_BILAPLACE_H_H2: compute the estimator by solving the problem in a globally refined mesh.
 %
 % USAGE:
 %
-%   est = adaptivity_estimate_laplace_h_h2 (u, hmsh, hspace, problem_data, method_data)
+%   est = adaptivity_estimate_bilaplace_h_h2 (u, hmsh, hspace, problem_data)
 %
 % INPUT:
 %
@@ -10,7 +10,6 @@
 %   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   hspace:       object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
 %   problem_data: a structure with data of the problem (see adaptivity_solve_laplace_mp_C1).
-%   method_data:  a structure with discretization data (only used for penalization in Nitsche's method)
 %
 % OUTPUT:
 %
@@ -33,7 +32,7 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function est = adaptivity_estimate_laplace_h_h2 (u, hmsh, hspace, problem_data, method_data)
+function est = adaptivity_estimate_bilaplace_h_h2 (u, hmsh, hspace, problem_data)
 
 if (~isempty (hmsh.active{end}))
   hmsh = hmsh_add_new_level (hmsh);
@@ -43,7 +42,7 @@ end
 adaptivity_data.flag = 'elements';
 [hmsh_h2, hspace_h2, Cref] = adaptivity_refine (hmsh, hspace, hmsh.active, adaptivity_data);
 
-u_h2 = adaptivity_solve_laplace_mp_C1 (hmsh_h2, hspace_h2, problem_data, method_data);
+u_h2 = solve_bilaplace_mpC1 (hmsh_h2, hspace_h2, problem_data);
 
 % Compute the estimator on the fine mesh, and then pass to the coarse mesh
 zeroex = @(varargin) zeros (size(varargin{1}));
