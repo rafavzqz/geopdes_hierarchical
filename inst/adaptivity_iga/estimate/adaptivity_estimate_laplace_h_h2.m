@@ -54,13 +54,14 @@ first_elem = cumsum ([0 hmsh.nel_per_level]) + 1;
 last_elem = cumsum ([hmsh.nel_per_level]);
 last_elem_h2 = cumsum ([hmsh_h2.nel_per_level]);
 est = zeros (hmsh.nel, 1);
+nchildren = prod (hmsh.nsub);
 for ilev = 1:hmsh.nlevels-1
   [~,~,children_inds] = hmsh_get_children (hmsh, ilev, hmsh.active{ilev});
   [~,children_pos] = ismember (children_inds, hmsh_h2.active{ilev+1});
   inds_hmsh = first_elem(ilev):last_elem(ilev);
   inds_hmsh_h2 = last_elem_h2(ilev) + children_pos;
-  est(inds_hmsh) = sqrt (sum (est_elems_h2(inds_hmsh_h2).^2, 1));
+  est_h2 = reshape (est_elems_h2(inds_hmsh_h2), nchildren, numel(inds_hmsh));
+  est(inds_hmsh) = sqrt (sum (est_h2.^2, 1));
 end
-
 
 end
