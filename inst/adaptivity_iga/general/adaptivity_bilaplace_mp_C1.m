@@ -155,7 +155,11 @@ while (1)
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
-  est = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, problem_data, adaptivity_data);
+  if (~isfield (adaptivity_data, 'estimator') || strcmpi (adaptivity_data.estimator, 'bubble'))
+    est = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, problem_data, adaptivity_data);
+  elseif (strcmpi (adaptivity_data.estimator, 'h-h2'))
+    est = adaptivity_estimate_bilaplace_h_h2 (u, hmsh, hspace, problem_data);
+  end
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'hessuex'))
