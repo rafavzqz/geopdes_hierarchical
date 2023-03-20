@@ -47,18 +47,21 @@ u_h2 = adaptivity_solve_bilaplace_mp_C1 (hmsh_h2, hspace_h2, problem_data);
 % Compute the estimator on the fine mesh, and then pass to the coarse mesh
 zeroex = @(varargin) zeros (size(varargin{1}));
 zerogex = @(varargin) zeros ([hmsh.rdim, size(varargin{1})]);
-[~,~,~,~,~,est_elems_h2] = sp_h1_error (hspace_h2, hmsh_h2, u_h2 - Cref*u, zeroex, zerogex);
+zerohex = @(varargin) zeros ([hmsh.rdim, hmsh.rdim, size(varargin{1})]);
+[~,~,~,~,~,~,~,~,est_elems_h2] = sp_h2_error (hspace_h2, hmsh_h2, u_h2 - Cref*u, zeroex, zerogex, zerohex);
 
 first_elem = cumsum ([0 hmsh.nel_per_level]) + 1;
 last_elem = cumsum ([hmsh.nel_per_level]);
 last_elem_h2 = cumsum ([hmsh_h2.nel_per_level]);
 est = zeros (hmsh.nel, 1);
+nchildren = prod (hmsh.nsub);
 for ilev = 1:hmsh.nlevels-1
   [~,~,children_inds] = hmsh_get_children (hmsh, ilev, hmsh.active{ilev});
   [~,children_pos] = ismember (children_inds, hmsh_h2.active{ilev+1});
   inds_hmsh = first_elem(ilev):last_elem(ilev);
   inds_hmsh_h2 = last_elem_h2(ilev) + children_pos;
-  est(inds_hmsh) = sqrt (sum (est_elems_h2(inds_hmsh_h2).^2, 1));
+  est_h2 = reshape (est_elems_h2(inds_hmsh_h2), nchildren, numel(inds_hmsh));
+  est(inds_hmsh) = sqrt (sum (est_h2.^2, 1));
 end
 
 
