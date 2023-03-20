@@ -150,7 +150,11 @@ while (1)
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
-  est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data);
+  if (~isfield (adaptivity_data, 'estimator') || strcmpi (adaptivity_data.estimator, 'residual'))
+    est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data);
+  elseif (strcmpi (adaptivity_data.estimator, 'h-h2'))
+    est = adaptivity_estimate_laplace_h_h2 (u, hmsh, hspace, problem_data, method_data);
+  end
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))
@@ -178,11 +182,6 @@ while (1)
   
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
-%   for ilev=1:hmsh.nlevels-1  %uniform refinement
-%       marked{ilev}=[];
-%   end
-%   marked{hmsh.nlevels}=1:hmsh.mesh_of_level(hmsh.nlevels).nel;
-%   num_marked=numel(marked{hmsh.nlevels});
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   if (plot_data.print_info)
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
