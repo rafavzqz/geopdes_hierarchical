@@ -61,7 +61,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function u = solve_bilaplace_gradgrad_2d_mpC1 (hmsh, hspace, problem_data)
+function u = adaptivity_solve_bilaplace_gradgrad_2d_mpC1 (hmsh, hspace, problem_data)
 
 % Extract the fields from the data structures into local variables
 data_names = fieldnames (problem_data);
