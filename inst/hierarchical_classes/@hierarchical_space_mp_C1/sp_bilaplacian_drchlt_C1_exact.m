@@ -85,52 +85,55 @@ n_boundaries = numel(hmsh.mesh_of_level(1).boundaries); % number of boundary edg
 global_refs = numel(hspace.space_of_level(1).interfaces) - n_boundaries + refs; % global numbering of Dirichlet boundary edges
 
 for iv = 1 : numel(hspace.space_of_level(1).vertices) % Loop on the vertices
+  if (hspace.space_of_level(1).vertices(iv).boundary_vertex && hspace.space_of_level(1).vertices(iv).valence_p>1)
   % Loop just over Dirichlet boundary vertices
-  if (~isempty(intersect(global_refs, hspace.space_of_level(1).vertices(iv).edges)))
-    if (hspace.space_of_level(1).vertices(iv).boundary_vertex)
+    if (~isempty(intersect(global_refs, hspace.space_of_level(1).vertices(iv).edges)))
       for lev = 1 : hspace.nlevels % Loop on the levels    
         [~, ind_active_vert] = intersect(hspace.active{lev}, hspace.space_of_level(lev).dofs_on_vertex{iv}); % Indices of the functions of vertex iv in the vector of active functions of level lev
         if (~isempty(ind_active_vert)) % Check if the vertex iv is active on level lev
-          if (numel(hspace.space_of_level(lev).vertices(iv).patches) > 1) % Check if the vertex is shared among more than one patch
-                        
-             patches = hspace.space_of_level(lev).vertices(iv).patches([1 end]);
+          patches = hspace.space_of_level(lev).vertices(iv).patches([1 end]);
 
-             operations = hspace.space_of_level(lev).vertices(iv).patch_reorientation([1 end], :);
-             indices_loc_R = indices_reorientation(hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir, operations(1, :));
-             indices_loc_L = indices_reorientation(hspace.space_of_level(lev).sp_patch{patches(2)}.ndof_dir, operations(2, :));
+          operations = hspace.space_of_level(lev).vertices(iv).patch_reorientation([1 end], :);
+          indices_loc_R = indices_reorientation(hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir, operations(1, :));
+          indices_loc_L = indices_reorientation(hspace.space_of_level(lev).sp_patch{patches(2)}.ndof_dir, operations(2, :));
 
-             indices_loc_R = indices_loc_R(:);
-             indices_loc_L = indices_loc_L(:);
+          indices_loc_R = indices_loc_R(:);
+          indices_loc_L = indices_loc_L(:);
 
-             Cpatch_ind_R = indices_loc_R([2 3 hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+2]);
-             Cpatch_ind_L = indices_loc_L([hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+1 hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+2 2*hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+1]);
+%           Cpatch_ind_R = indices_loc_R([2 3 hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+2]);
+%           Cpatch_ind_L = indices_loc_L([hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+1 hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+2 2*hspace.space_of_level(lev).sp_patch{patches(1)}.ndof_dir(1)+1]);
+          Cpatch_ind_R = indices_loc_R([1 2 3 space.sp_patch{patches(1)}.ndof_dir(1)+[1 2]]);
+          if (hspace.space_of_level(1).vertices(iv).valence_p == 2)
+            Cpatch_ind_L = indices_loc_L([space.sp_patch{patches(2)}.ndof_dir(1)+[1 2] 2*space.sp_patch{patches(2)}.ndof_dir(1)+1]);
+          else
+            Cpatch_ind_L = indices_loc_L([space.sp_patch{patches(2)}.ndof_dir(1)+[1 2] 2*space.sp_patch{patches(2)}.ndof_dir(1)+1]);
+          end
 
-            [Cpatch1, Cpatch_cols1] = sp_compute_Cpatch (hspace.space_of_level(lev), patches(1));
-            [Cpatch2, Cpatch_cols2] = sp_compute_Cpatch (hspace.space_of_level(lev), patches(2));
-            [~,~,inds1] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, Cpatch_cols1);
-            [~,~,inds2] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, Cpatch_cols2);
+          [Cpatch1, Cpatch_cols1] = sp_compute_Cpatch (hspace.space_of_level(lev), patches(1));
+          [Cpatch2, Cpatch_cols2] = sp_compute_Cpatch (hspace.space_of_level(lev), patches(2));
+          [~,~,inds1] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, Cpatch_cols1);
+          [~,~,inds2] = intersect (hspace.space_of_level(lev).dofs_on_vertex{iv}, Cpatch_cols2);
 
-            M_ker = [Cpatch1(Cpatch_ind_R, inds1); ...
-                     Cpatch2(Cpatch_ind_L, inds2)];
+          M_ker = [Cpatch1(Cpatch_ind_R, inds1); ...
+                   Cpatch2(Cpatch_ind_L, inds2)];
 
-             ker = null(full(M_ker));
-             if (~isempty(ker))
-               count_vert = count_vert + 1;
-               [~, ind] = max(abs(ker));
+          ker = null(full(M_ker));
+          if (~isempty(ker))
+            count_vert = count_vert + 1;
+            [~, ind] = max(abs(ker));
 
-               row_inds = (count_vert-1)*6 + (1:6);
-               B_change_local = blkdiag (B_change_local, ker(:));
+            row_inds = (count_vert-1)*6 + (1:6);
+            B_change_local = blkdiag (B_change_local, ker(:));
 
-               dofs_on_vertex = sum(hspace.ndof_per_level(1:lev-1)) + ind_active_vert;
-               vertices_numbers(count_vert) = iv;
-               dofs_to_remove(count_vert) = dofs_on_vertex(ind);
-               row_indices(row_inds) = dofs_on_vertex;
-             end
-           end
-         end
-       end
-     end
-   end
+            dofs_on_vertex = sum(hspace.ndof_per_level(1:lev-1)) + ind_active_vert;
+            vertices_numbers(count_vert) = iv;
+            dofs_to_remove(count_vert) = dofs_on_vertex(ind);
+            row_indices(row_inds) = dofs_on_vertex;
+          end
+        end
+      end
+    end
+  end
 end
 kernel_info = struct ('vertices_numbers', vertices_numbers, 'all_vertex_dofs', row_indices, 'quasi_interior_dofs', dofs_to_remove, 'B_change_local', sparse(B_change_local));
 

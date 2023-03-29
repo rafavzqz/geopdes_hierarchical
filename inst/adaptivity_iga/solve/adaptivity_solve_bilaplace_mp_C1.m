@@ -14,33 +14,22 @@
 %
 % USAGE:
 %
-%  [geometry, msh, space, u] = solve_bilaplace_mpC1 (problem_data, method_data)
+%  u = adaptivity_solve_bilaplace_mp_C1 (hmsh, hspace, problem_data)
 %
 % INPUT:
 %
+%  hmsh:         a multi-patch hierarchical mesh object (see @hierarchical_mesh_mp)
+%  hspace:       a multi-patch C^1 hierarchical space object (see @hierarchical_space_mp_C1)
 %  problem_data: a structure with data of the problem. It contains the fields:
 %    - geo_name:     name of the file containing the geometry
 %    - drchlt_sides: sides with Dirichlet boundary condition (always homogeneous)
 %    - c_diff:       constant physical parameter (epsilon in the equation)
 %    - f:            source term
 %
-%  method_data : a structure with discretization data. Its fields are:
-%    - degree:     degree of the spline functions.
-%    - regularity: continuity of the spline functions.
-%    - nsub:       number of subelements with respect to the geometry mesh 
-%                   (nsub=1 leaves the mesh unchanged)
-%    - nquad:      number of points for Gaussian quadrature rule
-%
 % OUTPUT:
 %
-%  geometry: geometry structure (see geo_load)
-%  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
-%  space:    space object that defines the discrete space (see sp_scalar)
-%  u:        the computed degrees of freedom
+%  u: the computed degrees of freedom
 %
-% Copyright (C) 2009, 2010, 2011 Carlo de Falco
-% Copyright (C) 2011, 2013 Rafael Vazquez
-% Copyright (C) 2013, Marco Pingaro
 % Copyright (C) 2020-2023, Cesare Bracco, Andrea Farahat, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
