@@ -161,6 +161,9 @@ while (1)
   if (isfield (problem_data, 'hessuex'))
     [err_h2(iter), err_h1(iter), err_l2(iter), err_h2s(iter), err_h1s(iter)] = sp_h2_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex, problem_data.hessuex);
     if (plot_data.print_info); fprintf('Error in H2 seminorm = %g\n', err_h2s(iter)); end
+  elseif (isfield (problem_data, 'lapuex'))
+    [err_h2(iter), err_h1(iter), err_l2(iter), err_h2s(iter), err_h1s(iter)] = sp_h2_equiv_lap_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex, problem_data.lapuex);
+    if (plot_data.print_info); fprintf('Error in (equivalent) H2 seminorm = %g\n', err_h2s(iter)); end
   elseif (isfield (problem_data, 'graduex'))
     [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
     if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
