@@ -52,7 +52,7 @@ else
     marked_elements = mark_near_vertices (hmsh, hspace, marked_elements);
   end
   [hmsh, new_cells] = hmsh_refine (hmsh, marked_elements);
-  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked, adaptivity_data.flag);  
+  marked_functions = compute_functions_to_deactivate (hmsh, hspace, marked_elements, adaptivity_data.flag);
 end
 
 if (nargout == 3)
