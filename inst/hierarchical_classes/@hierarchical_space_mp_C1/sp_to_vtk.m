@@ -44,7 +44,14 @@ function sp_to_vtk (u, hspace, geometry, npts, filename, fieldname, varargin)
 
   sp_lev = hspace.space_of_level(hspace.nlevels);
   C = hspace_subdivision_matrix (hspace, [], 'full');
-  u_lev =  C{hspace.nlevels} * u;
+  C = C{hspace.nlevels};
+  if (hspace.ndof == numel(u))
+    u_lev =  C * u;
+  else
+    rdim = geometry.rdim;
+    u = reshape (u, hspace.ndof, rdim);
+    u_lev =  reshape (C * u, [], 1);
+  end
   sp_to_vtk (u_lev, sp_lev, geometry, npts, filename, fieldname, varargin{:});
 
 end

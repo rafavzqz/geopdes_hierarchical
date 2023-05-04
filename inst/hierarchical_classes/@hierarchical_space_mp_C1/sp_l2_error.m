@@ -69,10 +69,10 @@ else
         dofs_to_lev = union (dofs_to_lev, (icomp-1)*hspace.ndof + (1:last_dof(ilev)));
       end
 
-      Csub = repmat (hspace.Csub(ilev), hmsh.rdim, 1);
-      Csub = blkdiag (Csub{:});
+      u_lev = reshape (u(dofs_to_lev), last_dof(ilev), hmsh.rdim);
+      u_lev =  reshape (hspace.Csub{ilev} * u_lev, [], 1);
       [errl2_lev, errl2_lev_elem] = ...
-        sp_l2_error (sp_level, msh_level, Csub*u(dofs_to_lev), uex);
+        sp_l2_error (sp_level, msh_level, u_lev, uex);
 
       errl2 = errl2 + errl2_lev.^2;
 
