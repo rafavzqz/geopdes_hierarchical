@@ -90,11 +90,14 @@ function estimator = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, pro
       K_err_lev = op_laplaceu_laplacev (spv_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
       error_of_level = K_err_lev \ residual_of_level;
 
-      hess_val_eps = sp_eval_msh (error_of_level, spv_lev, hmsh.msh_lev{ilev}, 'hessian');
-      hess_val_eps = reshape (hess_val_eps, spv_lev.ncomp, [], hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel);
+%       hess_val_eps = sp_eval_msh (error_of_level, spv_lev, hmsh.msh_lev{ilev}, 'hessian');
+%       hess_val_eps = reshape (hess_val_eps, spv_lev.ncomp, [], hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel);
+      hess_val_eps = sp_eval_msh (error_of_level, spv_lev, hmsh.msh_lev{ilev}, 'laplacian');
+      hess_val_eps = reshape (hess_val_eps, spv_lev.ncomp, hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel);
 
       w = hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet;      
-      err_elem = sum (reshape (sum (sum ((hess_val_eps).^2, 1), 2), [hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel]) .*w);
+%       err_elem = sum (reshape (sum (sum ((hess_val_eps).^2, 1), 2), [hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel]) .*w);
+      err_elem = sum (reshape (sum ((hess_val_eps).^2, 1), [hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel]) .*w);
       err_elem = sqrt(err_elem);
       
       estimator((shifting_vector(ilev)+1):shifting_vector(ilev+1)) = err_elem;
