@@ -38,21 +38,49 @@ errl2_elem = zeros (1, hmsh.nel);
 first_elem = cumsum ([0 hmsh.nel_per_level]) + 1;
 last_elem = cumsum ([hmsh.nel_per_level]);
 last_dof = cumsum (hspace.ndof_per_level);
-for ilev = 1:hmsh.nlevels
-  if (hmsh.nel_per_level(ilev) > 0)
-    msh_level = hmsh.msh_lev{ilev};
-    sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
 
-    sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
+if (hspace.ndof == numel(u))
+  for ilev = 1:hmsh.nlevels
+    if (hmsh.nel_per_level(ilev) > 0)
+      msh_level = hmsh.msh_lev{ilev};
+      sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
 
-    [errl2_lev, errl2_lev_elem] = ...
-      sp_l2_error (sp_level, msh_level, hspace.Csub{ilev}*u(1:last_dof(ilev)), uex);
+      sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
 
-    errl2 = errl2 + errl2_lev.^2;
+      [errl2_lev, errl2_lev_elem] = ...
+        sp_l2_error (sp_level, msh_level, hspace.Csub{ilev}*u(1:last_dof(ilev)), uex);
 
-    errl2_elem(:,first_elem(ilev):last_elem(ilev))  = errl2_lev_elem;
+      errl2 = errl2 + errl2_lev.^2;
+
+      errl2_elem(:,first_elem(ilev):last_elem(ilev))  = errl2_lev_elem;
+    end
+  end
+else
+  for ilev = 1:hmsh.nlevels
+    if (hmsh.nel_per_level(ilev) > 0)
+      msh_level = hmsh.msh_lev{ilev};
+      sp_level = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+
+      sp_level = change_connectivity_localized_Csub (sp_level, hspace, ilev);
+      sp_level = sp_scalar2vector (sp_level, msh_level, 'value', true);
+
+      dofs_to_lev = [];
+      for icomp = 1:hmsh.rdim
+        dofs_to_lev = union (dofs_to_lev, (icomp-1)*hspace.ndof + (1:last_dof(ilev)));
+      end
+
+      Csub = repmat (hspace.Csub(ilev), hmsh.rdim, 1);
+      Csub = blkdiag (Csub{:});
+      [errl2_lev, errl2_lev_elem] = ...
+        sp_l2_error (sp_level, msh_level, Csub*u(dofs_to_lev), uex);
+
+      errl2 = errl2 + errl2_lev.^2;
+
+      errl2_elem(:,first_elem(ilev):last_elem(ilev))  = errl2_lev_elem;
+    end
   end
 end
+
 errl2  = sqrt (errl2);
 
 end
