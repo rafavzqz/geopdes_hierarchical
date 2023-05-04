@@ -1,8 +1,8 @@
 % OP_SU_EV_HIER: assemble the matrix A = [a(i,j)], a(i,j) = 1/2 (sigma (u_j), epsilon (v_i))
 %  for hierarchical splines, exploiting the multilevel structure.
 %
-%   mat = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu);
-%   [rows, cols, values] = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu);
+%   mat = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu, patch_list);
+%   [rows, cols, values] = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu, patch_list);
 %
 % INPUT:
 %
@@ -10,6 +10,7 @@
 %   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space_mp)
 %   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   lambda, mu: function handles to compute the Lame' coefficients
+%   patch_list: list of patches on which to compute the integrals
 %
 % OUTPUT:
 %
