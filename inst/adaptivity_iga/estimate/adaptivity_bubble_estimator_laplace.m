@@ -23,7 +23,7 @@
 %   For more information on the bubble estimators, see Coradello, Antolin and Buffa, CMAME, 2020.
 %         
 %
-% Copyright (C) 2018-2022 Luca Coradello, Rafael Vazquez
+% Copyright (C) 2018-2023 Luca Coradello, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
