@@ -2,12 +2,13 @@
 %
 % USAGE:
 %
-%   space_bubble = space_bubble_function_bilaplacian_mp (hmsh, degree)
+%   space_bubble = space_bubble_function_bilaplacian_mp (hmsh, degree, [param])
 %
 % INPUT:
 %
 %   u:            degrees of freedom
 %   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%   param:        compute functions in the physical (default) or the parametric domain
 %
 % OUTPUT:
 %
@@ -16,7 +17,7 @@
 %   For more information on the bubble estimators, see Coradello, Antolin and Buffa, CMAME, 2020.
 %         
 %
-% Copyright (C) 2018-2022 Luca Coradello, Rafael Vazquez
+% Copyright (C) 2018-2023 Luca Coradello, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -32,8 +33,12 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 %function sp = space_bubble_function_bilaplacian_rafa (hmsh, degree, problem_type, varargin)
-function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, varargin)
-  
+function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, param, varargin)
+
+  if (nargin < 3 || isempty (param))
+    param = false;
+  end
+
   if numel(varargin) == 0
       iside = -1;
   else
@@ -56,7 +61,7 @@ function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, varargin)
 
 % Build bubble functions as Bernstein polynomials on a reference element
   ndim = hmsh.ndim;
-  for iDim = 1:ndim;
+  for iDim = 1:ndim
     breaks_reference{iDim} = [0 1];
     knots_reference{iDim} = [zeros(1,sp.degree(iDim)+1) ones(1,sp.degree(iDim)+1)];
   end
@@ -135,7 +140,9 @@ function sp = space_bubble_function_bilaplacian_mp (hmsh, degree, varargin)
       space_of_level.shape_function_hessians = shape_hess ./ ld_first ./ ld_second;
       
     % Apply grad preserving transform
-      space_of_level = sp_grad_preserving_transform (space_of_level, hmsh.msh_lev{iLevel}, 1, 1, 1, 1);
+      if (~param)
+        space_of_level = sp_grad_preserving_transform (space_of_level, hmsh.msh_lev{iLevel}, 1, 1, 1, 1);
+      end
       sp.space_of_level(iLevel) = space_of_level;
     end
   end
