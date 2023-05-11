@@ -1,41 +1,35 @@
-% ADAPTIVITY_SOLVE_BILAPLACE_MPC1: Solve a 2d bilaplace problem with a
+% ADAPTIVITY_SOLVE_BILAPLACE_MP_C1: Solve a 2d bilaplace problem with a
 % variational formulation using the laplacian
 %
 % The function solves the bilaplacian problem
 %
-%      epsilon laplace(laplace(u)) = f    in Omega = F((0,1)^2)
+%      laplace(epsilon laplace(u)) = f    in Omega = F((0,1)^2)
 %                            du/dn = 0    on Gamma_D (Rotation)
 %                                u = 0    on Gamma_D (Transverse displacement)
 %           m = epsilon d^2 u/dn^2 = 0    on Gamma_N (Distributed double forces)
 %
-% with a variational formulation using the Hessian matrix, that is
+% with a variational formulation given by
 %
-%       epsilon ( laplace(u), laplace(v) ) = (f,v)
+%       ( epsilon laplace(u), laplace(v) ) = (f,v)
 %
 % USAGE:
 %
-%  [geometry, msh, space, u] = solve_bilaplace_mpC1 (problem_data, method_data)
+%  u = adaptivity_solve_bilaplace_mp_C1 (hmsh, hspace, problem_data)
 %
 % INPUT:
 %
+%  hmsh:         object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%  hspace:       object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
 %  problem_data: a structure with data of the problem. It contains the fields:
 %    - geo_name:     name of the file containing the geometry
-%    - drchlt_sides: sides with Dirichlet boundary condition (always homogeneous)
-%    - c_diff:       constant physical parameter (epsilon in the equation)
+%    - drchlt_sides: sides with essential boundary conditions (value and normal derivative)
+%    - c_diff:       physical parameter (epsilon in the equation)
 %    - f:            source term
-%
-%  method_data : a structure with discretization data. Its fields are:
-%    - degree:     degree of the spline functions.
-%    - regularity: continuity of the spline functions.
-%    - nsub:       number of subelements with respect to the geometry mesh 
-%                   (nsub=1 leaves the mesh unchanged)
-%    - nquad:      number of points for Gaussian quadrature rule
+%    - h,g:          boundary conditions, value (h) and normal derivative (g)
+%    - uex, graduex: exact solution. If known, the boundary conditions are computed from it.
 %
 % OUTPUT:
 %
-%  geometry: geometry structure (see geo_load)
-%  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
-%  space:    space object that defines the discrete space (see sp_scalar)
 %  u:        the computed degrees of freedom
 %
 % Copyright (C) 2009, 2010, 2011 Carlo de Falco

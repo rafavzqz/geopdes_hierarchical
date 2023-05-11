@@ -9,9 +9,10 @@
 %   hspace: object representing the coarse space of hierarchical splines (see hierarchical_space)
 %   marked: cell array with the indices, in the tensor product space, of the marked elements/functions
 %            for each level
-%   adaptivity_data: a structure with the data for the adaptivity method.
-%                    It contains the field 'flag', that can take the value
-%                    'elements' or 'functions', depending on the refinement strategy.
+%   adaptivity_data: a structure with the data for the adaptivity method. It contains the fields:
+%    - flag:      refine either by 'elements' or 'functions'.
+%    - adm_class: admissibility class for refinement (by default, not used).
+%    - adm_type:  type of admissibility, either 'T-admissible' or 'H-admissible'.
 %
 % OUTPUT:
 %

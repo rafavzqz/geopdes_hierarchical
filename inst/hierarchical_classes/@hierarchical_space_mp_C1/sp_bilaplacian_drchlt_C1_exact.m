@@ -58,6 +58,14 @@ for iref = refs
         
 % Since "charlen" is not present in msh_side, I assume isotropic elements
         charlen = msh_bnd_struct.element_size;
+%         max_dof_per_level = cumsum (hspace.ndof_per_level);
+%         for iel = 1:msh_bnd_struct.nel
+%           [~,hb_inds] = find (CC(sp_bnd_struct.connectivity(:,iel),:));
+%           hb_inds = min(hb_inds);
+%           min_lev = find (hb_inds <= max_dof_per_level, 1, 'first');
+%           charlen(iel) = charlen(iel) * 2^(min_lev - ilev);
+%         end
+% %         charlen = 2^(-ilev);
 
 %        M(1:ndofs,1:ndofs) = M(1:ndofs,1:ndofs) + CC(sp_bnd.dofs,:).' * op_u_v_tp (sp_bnd, sp_bnd, msh_bnd, coeff_at_qnodes) * CC(sp_bnd.dofs,:);
         M(1:ndofs,1:ndofs) = M(1:ndofs,1:ndofs) + CC.' * op_u_v (sp_bnd_struct, sp_bnd_struct, msh_side, coeff_at_qnodes) * CC;

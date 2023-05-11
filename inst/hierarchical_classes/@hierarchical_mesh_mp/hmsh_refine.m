@@ -146,7 +146,11 @@ for lev = 1:hmsh.nlevels
 
     if (isempty (new_elements{lev}))
       indices = iold_act;
-      msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], 'jacdet', [], 'element_size', []);
+      if (hmsh.ndim == 2 && hmsh.rdim == 3)
+        msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], 'jacdet', [], 'element_size', [], 'normal', []);
+      else
+        msh_new = struct ('quad_weights', [], 'geo_map', [], 'geo_map_jac', [], 'geo_map_der2', [], 'jacdet', [], 'element_size', []);
+      end
     else
       msh_new = msh_evaluate_element_list (hmsh.mesh_of_level(lev), new_elements{lev});
       [~, ~, inew_act] = intersect (new_elements{lev}, hmsh.active{lev});
@@ -158,6 +162,9 @@ for lev = 1:hmsh.nlevels
     msh_lev{lev}.geo_map_der2(:,:,:,:,indices) = cat (5, hmsh.msh_lev{lev}.geo_map_der2(:,:,:,:,iold), msh_new.geo_map_der2);
     msh_lev{lev}.jacdet(:,indices) = [hmsh.msh_lev{lev}.jacdet(:,iold), msh_new.jacdet];
     msh_lev{lev}.element_size(:,indices) = [hmsh.msh_lev{lev}.element_size(:,iold), msh_new.element_size];
+    if (hmsh.ndim == 2 && hmsh.rdim == 3)
+      msh_lev{lev}.normal(:,:,indices) = cat (3, hmsh.msh_lev{lev}.normal(:,:,iold), msh_new.normal);
+    end
 
     Nelem = cumsum ([0 hmsh.mesh_of_level(lev).nel_per_patch]);
     for iptc = 1:msh_lev{lev}.npatch

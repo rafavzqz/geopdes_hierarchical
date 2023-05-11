@@ -1,4 +1,4 @@
-% ADAPTIVITY_ESTIMATE_LAPLACE: Computation of a posteriori error indicators for Laplacian problem, using globally smooth (C^1) hierarchical spaces.
+% ADAPTIVITY_ESTIMATE_LAPLACE_MP_C1: Computation of a posteriori error indicators for Laplacian problem, using globally smooth (C^1) hierarchical spaces.
 %
 % We consider the diffusion problem
 %
@@ -8,13 +8,13 @@
 %
 % USAGE:
 %
-%   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
+%   est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data)
 %
 % INPUT:
 %
 %   u:            degrees of freedom
-%   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh)
-%   hspace:       object representing the space of hierarchical splines (see hierarchical_space)
+%   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%   hspace:       object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - c_diff:        diffusion coefficient (epsilon in the equation), assumed to be a smooth (C^1) function
 %    - grad_c_diff:   gradient of the diffusion coefficient (equal to zero if not present)
@@ -36,6 +36,7 @@
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022-2023 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -94,37 +95,6 @@ switch adaptivity_data.flag
         
     case 'functions'
         error ('The estimator by functions is not implemented for the C^1 case')
-%         ms = zeros (hmsh.nlevels, 1);
-%         for ilev = 1:hmsh.nlevels
-%             if (hmsh.msh_lev{ilev}.nel ~= 0)
-%                 ms(ilev) = max (hmsh.msh_lev{ilev}.element_size);
-%             else
-%                 ms(ilev) = 0;
-%             end
-%         end
-%         ms = ms * sqrt (hmsh.ndim);
-%         
-%         Nf = cumsum ([0; hspace.ndof_per_level(:)]);
-%         dof_level = zeros (hspace.ndof, 1);
-%         for lev = 1:hspace.nlevels
-%             dof_level(Nf(lev)+1:Nf(lev+1)) = lev;
-%         end
-%         coef = ms(dof_level).*sqrt(hspace.coeff_pou(:));
-%         
-%         est = zeros(hspace.ndof,1);
-%         ndofs = 0;
-%         Ne = cumsum([0; hmsh.nel_per_level(:)]);
-%         for ilev = 1:hmsh.nlevels
-%             ndofs = ndofs + hspace.ndof_per_level(ilev);
-%             if (hmsh.nel_per_level(ilev) > 0)
-%                 ind_e = (Ne(ilev)+1):Ne(ilev+1);
-%                 sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-%                 b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
-%                 dofs = 1:ndofs;
-%                 est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
-%             end
-%         end
-%         est = C0_est * coef .* sqrt(est);
 end
 
 end

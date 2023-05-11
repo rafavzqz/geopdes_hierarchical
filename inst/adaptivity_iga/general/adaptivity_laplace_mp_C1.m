@@ -1,13 +1,14 @@
-% ADAPTIVITY_LAPLACE: solve the Laplace problem with an adaptive isogeometric method based on hierarchical splines.
+% ADAPTIVITY_LAPLACE_MP_C1: solve the Laplace problem with an adaptive
+%  isogeometric method based on hierarchical splines for C^1 multipatch splines.
 %
-% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace (problem_data, method_data, adaptivity_data, plot_data)
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_laplace_mp_C1 (problem_data, method_data, adaptivity_data, plot_data)
 %
 % INPUT:
 %
 %  problem_data: a structure with data of the problem. It contains the fields:
 %    - geo_name:     name of the file containing the geometry
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
-%    - drchlt_sides: sides with Dirichlet boundary condition
+%    - weak_drchlt_sides: sides with Dirichlet boundary condition, condition imposed weakly
 %    - c_diff:       diffusion coefficient (see solve_laplace)
 %    - grad_c_diff:  gradient of the diffusion coefficient (if not present, it is taken as zero)
 %    - f:            function handle of the source term
@@ -16,12 +17,13 @@
 %
 %  method_data : a structure with discretization data. It contains the fields:
 %    - degree:       degree of the spline functions.
-%    - regularity:   continuity of the spline functions.
+%    - regularity:   continuity of the spline functions (at most degree minus 2).
 %    - nsub_coarse:  number of subelements with respect to the geometry mesh (1 leaves the mesh unchanged)
 %    - nsub_refine:  number of subelements to be added at each refinement step (2 for dyadic)
 %    - nquad:        number of points for Gaussian quadrature rule
 %    - space_type:   'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
 %    - truncated:    false (classical basis) or true (truncated basis)
+%    - Cpen:         penalization term for Nitsche's method
 %
 %  adaptivity_data: a structure with data for the adaptive method. It contains the fields:
 %    - flag:          refinement procedure, based either on 'elements' or on 'functions'
@@ -34,6 +36,8 @@
 %    - tol:           stopping criterium, adaptive refinement is stopped when the global error estimator
 %                      is lower than tol.
 %    - C0_est:        an optional multiplicative constant for scaling the error estimators (default value: 1).
+%    - adm_class:     admissibility class, to control the interaction of functions of different levels;
+%    - adm_type:      either 'T-admissible' or 'H-admissible'
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh:        plot the mesh at every iteration
@@ -42,9 +46,9 @@
 %                          number of functions, estimated error, number of marked elements/functions...)
 %
 % OUTPUT:
-%    geometry:      geometry structure (see geo_load)
-%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh)
-%    hspace:        object representing the space of hierarchical splines (see hierarchical_space)
+%    geometry:      geometry structure (see mp_geo_load)
+%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%    hspace:        object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
 %    u:             computed degrees of freedom, at the last iteration.
 %    solution_data: a structure with the following fields
 %      - iter:       iteration on which the adaptive procedure stopped
@@ -63,15 +67,7 @@
 %           5: maximum number of elements reached before convergence
 % 
 %
-% For more details about the implementation, see:
-%    E. M. Garau, R. Vazquez, Algorithms for the implementation of adaptive
-%     isogeometric methods using hierarchical splines, Tech. Report, IMATI-CNR, 2016
-%
-% For details about the 'simplified' hierarchical space:
-%    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
-%     for hierarchical splines, IMA J. Numer. Anal., (2016)
-%
-% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022-2023 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -127,8 +123,7 @@ while (1)
   
   if (plot_data.print_info)
     fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
-  end
-    
+  end    
 
 % SOLVE AND PLOT
   if (plot_data.print_info)
@@ -178,11 +173,6 @@ while (1)
   
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
-%   for ilev=1:hmsh.nlevels-1  %uniform refinement
-%       marked{ilev}=[];
-%   end
-%   marked{hmsh.nlevels}=1:hmsh.mesh_of_level(hmsh.nlevels).nel;
-%   num_marked=numel(marked{hmsh.nlevels});
   [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   if (plot_data.print_info)
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);

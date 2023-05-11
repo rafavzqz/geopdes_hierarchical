@@ -34,6 +34,8 @@
 %    - tol:           stopping criterium, adaptive refinement is stopped when the global error estimator
 %                      is lower than tol.
 %    - C0_est:        an optional multiplicative constant for scaling the error estimators (default value: 1).
+%    - adm_class:     admissibility class, to control the interaction of functions of different levels;
+%    - adm_type:      either 'T-admissible' or 'H-admissible'
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh:        plot the mesh at every iteration

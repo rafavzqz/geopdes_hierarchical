@@ -1,13 +1,14 @@
 % SP_PLOT_SOLUTION: Plot the computed solution, given the degrees of freedom.
 %
-%   [eu, F] = sp_plot_solution (u, space, geometry, pts, [ncuts=2]);
-%   [eu, F] = sp_plot_solution (u, space, geometry, [npts], [ncuts=2]);
+%   [eu, F] = sp_plot_solution (u, space, geometry, hmsh, pts, [ncuts=2]);
+%   [eu, F] = sp_plot_solution (u, space, geometry, hmsh, [npts], [ncuts=2]);
 %
 % INPUT:
 %     
 %     u:           vector of dof weights
 %     hspace:      object defining the discrete space (see hierarchical_space_mp)
 %     geometry:    geometry structure (see mp_geo_load)
+%     hmsh:        object defining the hierarchical mesh (see hierarchical_mesh_mp)
 %     pts:         cell array with coordinates of points along each parametric direction
 %     npts:        number of points along each parametric direction
 %     ncuts:       only for volumetric domains, number of internal "cuts" in each parametric direction.

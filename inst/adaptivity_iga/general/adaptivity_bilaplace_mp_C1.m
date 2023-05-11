@@ -1,4 +1,5 @@
-% ADAPTIVITY_BILAPLACE: solve the bilaplacian problem with an adaptive isogeometric method based on hierarchical splines.
+% ADAPTIVITY_BILAPLACE_MP_C1: solve the bilaplacian problem with an adaptive 
+%  isogeometric method based on hierarchical splines for C^1 multipatch splines.
 %
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_bilaplace (problem_data, method_data, adaptivity_data, plot_data)
 %
@@ -6,13 +7,12 @@
 %
 %  problem_data: a structure with data of the problem. It contains the fields:
 %    - geo_name:     name of the file containing the geometry
-%    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
-%    - drchlt_sides: sides with Dirichlet boundary condition
-%    - c_diff:       diffusion coefficient (see solve_laplace)
-%    - grad_c_diff:  gradient of the diffusion coefficient (if not present, it is taken as zero)
+%    - drchlt_sides: sides with essential boundary conditions (value and normal derivative)
+%    - c_diff:       physical parameter (see adaptivity_solve_bilaplace_mp_C1)
 %    - f:            function handle of the source term
-%    - g:            function for Neumann condition (if nmnn_sides is not empty)
+%    - g:            function for Neumann condition
 %    - h:            function for Dirichlet boundary condition
+%    - uex, graduex: exact solution. If known, the boundary conditions are computed from it.
 %
 %  method_data : a structure with discretization data. It contains the fields:
 %    - degree:       degree of the spline functions.
@@ -34,6 +34,8 @@
 %    - tol:           stopping criterium, adaptive refinement is stopped when the global error estimator
 %                      is lower than tol.
 %    - C0_est:        an optional multiplicative constant for scaling the error estimators (default value: 1).
+%    - adm_class:     admissibility class, to control the interaction of functions of different levels;
+%    - adm_type:      either 'T-admissible' or 'H-admissible'
 %
 %  plot_data: a structure to decide whether to plot things during refinement.
 %    - plot_hmesh:        plot the mesh at every iteration
@@ -42,18 +44,20 @@
 %                          number of functions, estimated error, number of marked elements/functions...)
 %
 % OUTPUT:
-%    geometry:      geometry structure (see geo_load)
-%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh)
-%    hspace:        object representing the space of hierarchical splines (see hierarchical_space)
+%    geometry:      geometry structure (see mp_geo_load)
+%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%    hspace:        object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
 %    u:             computed degrees of freedom, at the last iteration.
 %    solution_data: a structure with the following fields
 %      - iter:       iteration on which the adaptive procedure stopped
 %      - ndof:       number of degrees of freedom for each computed iteration
 %      - nel:        number of elements for each computed iteration
 %      - gest:       global error estimator, for each computed iteration
+%      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
 %      - err_h1s:    error in H1 seminorm for each iteration, if the exact solution is known
 %      - err_h1:     error in H1 norm for each iteration, if the exact solution is known
-%      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
+%      - err_h2s:    error in H2 seminorm (only Laplacian for surfaces) for each iteration, if the exact solution is known
+%      - err_h2:     error in H2 norm (only Laplacian for surfaces) for each iteration, if the exact solution is known
 %      - flag:       a flag with one of the following values:
 %          -1: the coefficients for the partition of unity were wrong. This is probably caused by a bug.
 %           1: convergence is reached, the global estimator is lower than the given tolerance
@@ -61,17 +65,9 @@
 %           3: maximum number of levels reached before convergence
 %           4: maximum number of degrees of freedom reached before convergence
 %           5: maximum number of elements reached before convergence
-% 
 %
-% For more details about the implementation, see:
-%    E. M. Garau, R. Vazquez, Algorithms for the implementation of adaptive
-%     isogeometric methods using hierarchical splines, Tech. Report, IMATI-CNR, 2016
 %
-% For details about the 'simplified' hierarchical space:
-%    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
-%     for hierarchical splines, IMA J. Numer. Anal., (2016)
-%
-% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022-2023 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

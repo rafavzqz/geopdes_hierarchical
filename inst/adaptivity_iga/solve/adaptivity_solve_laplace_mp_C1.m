@@ -1,4 +1,5 @@
-% ADAPTIVITY_SOLVE_LAPLACE: assemble and solve the linear system for Laplacian problem, using hierarchical spaces.
+% ADAPTIVITY_SOLVE_LAPLACE_MP_C1: assemble and solve the linear system for
+%  Laplacian problem, using hierarchical spaces of C^1 multipatch splines.
 %
 % The function solves the diffusion problem
 %
@@ -8,25 +9,28 @@
 %
 % USAGE:
 %
-% u = adaptivity_solve_laplace (hmsh, hspace, method_data)
+% u = adaptivity_solve_laplace_mp_C1 (hmsh, hspace, problem_data, method_data)
 %
 % INPUT:
 %
-%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh)
-%   hspace: object representing the space of hierarchical splines (see hierarchical_space)
+%   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%   hspace: object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
-%    - drchlt_sides: sides with Dirichlet boundary condition
+%    - weak_drchlt_sides: sides with Dirichlet boundary condition
 %    - c_diff:       diffusion coefficient (epsilon in the equation)
 %    - f:            function handle of the source term
 %    - g:            function for Neumann condition (if nmnn_sides is not empty)
 %    - h:            function for Dirichlet boundary condition
+%   method_data: a structure with data for discretization. For this function, it must contain the fields:
+%    - Cpen: penalty parameter for Nitsche's method.
 %
 % OUTPUT:
 %
 %   u: computed degrees of freedom
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022-2023 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -73,7 +77,6 @@ for ilev = 1:hmsh.nlevels
         end
     end
 end
-
 
 % Apply Dirichlet boundary conditions in weak form, by Nitsche's method
 if (exist ('weak_drchlt_sides', 'var'))
