@@ -90,15 +90,12 @@ function estimator = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, pro
       K_err_lev = op_laplaceu_laplacev (spv_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
       error_of_level = K_err_lev \ residual_of_level;
 
-%       hess_val_eps = sp_eval_msh (error_of_level, spv_lev, hmsh.msh_lev{ilev}, 'hessian');
-%       hess_val_eps = reshape (hess_val_eps, spv_lev.ncomp, [], hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel);
-      hess_val_eps = sp_eval_msh (error_of_level, spv_lev, hmsh.msh_lev{ilev}, 'laplacian');
-      hess_val_eps = reshape (hess_val_eps, spv_lev.ncomp, hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel);
-
-      w = hmsh.msh_lev{ilev}.quad_weights .* hmsh.msh_lev{ilev}.jacdet;      
-%       err_elem = sum (reshape (sum (sum ((hess_val_eps).^2, 1), 2), [hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel]) .*w);
-      err_elem = sum (reshape (sum ((hess_val_eps).^2, 1), [hmsh.msh_lev{ilev}.nqn, hmsh.msh_lev{ilev}.nel]) .*w);
-      err_elem = sqrt(err_elem);
+% Compute the estimator from the matrix, avoiding a loop on the elements
+      first_index = num2cell (cumsum([0 spv_lev.nsh(1:end-1)])+1);
+      last_index = num2cell (cumsum(spv_lev.nsh(1:end)));
+      err_elem = cellfun(@(a,b) error_of_level(a:b).' * K_err_lev(a:b,a:b) * error_of_level(a:b), ...
+                          first_index, last_index, 'UniformOutput', false);
+      err_elem = sqrt (cell2mat(err_elem));
       
       estimator((shifting_vector(ilev)+1):shifting_vector(ilev+1)) = err_elem;
     end
