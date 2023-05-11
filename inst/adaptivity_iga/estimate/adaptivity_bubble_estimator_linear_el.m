@@ -74,7 +74,6 @@ function estimator = adaptivity_bubble_estimator_linear_el (u, hmsh, hspace, pro
       for idim = 1:hmsh.rdim
         x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), nqn, hmsh.nel_per_level(ilev));
       end
-%       spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', false, 'hessian', true);
       spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
       spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
       spv_lev = space_bubble.space_of_level(ilev);
@@ -88,12 +87,10 @@ function estimator = adaptivity_bubble_estimator_linear_el (u, hmsh, hspace, pro
 
       u_lev = reshape (u(dofs_to_lev), last_dof(ilev), hmsh.rdim);
       solution_of_level = reshape (hspace.Csub{ilev}*u_lev, [], 1);
-%       K_lev = op_gradgradu_gradgradv (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));      
       K_lev = op_su_ev (spu_lev, spv_lev, hmsh.msh_lev{ilev}, lambda(x{:}), mu(x{:}));
       b_lev = op_f_v (spv_lev, hmsh.msh_lev{ilev}, problem_data.f(x{:}));           
       residual_of_level = b_lev - K_lev * solution_of_level;
 
-%       K_err_lev = op_gradgradu_gradgradv (spv_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (x{:}));
       K_err_lev = op_su_ev (spv_lev, spv_lev, hmsh.msh_lev{ilev}, lambda(x{:}), mu(x{:}));
       error_of_level = K_err_lev \ residual_of_level;
 
