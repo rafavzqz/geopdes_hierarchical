@@ -1,17 +1,18 @@
 % SP_EVAL_PHYS: Compute the value or derivatives of a function from its degrees of freedom, at a given set of points in the physical domain.
 %
-%   eu = sp_eval_phys (u, space, geometry, pts, [options]);
-%   [eu, pts_list] = sp_eval_phys (u, space, geometry, pts, [options]);
+%   eu = sp_eval_phys (u, hspace, hmsh, geometry, pts, [options]);
+%   [eu, pts_list] = sp_eval_phys (u, hspace, hmsh, geometry, pts, [options]);
 %
 % INPUT:
 %     
 %     u:           vector of dof weights
-%     space:       object defining the discrete space (see sp_scalar)
+%     hspace:      object defining the discrete space (see hierarchical_space)
+%     hmsh:        object defining the hierarchical mesh (see hierarchical_mesh)
 %     geometry:    geometry structure (see geo_load)
 %     pts:         array (rdim x npts) with coordinates of points
-%     npts:        number of points along each parametric direction
 %     options:     cell array with the fields to plot
-%                   accepted options are 'value' (default), 'gradient', 'laplacian', 'hessian'
+%                   accepted options for scalars are 'value' (default), 'gradient', 'laplacian', 'hessian'
+%                   accepted options for vectors are 'value' (default), 'gradient', 'curl', 'divergence'
 %
 % OUTPUT:
 %
@@ -51,11 +52,7 @@ function [eu, pts_list] = sp_eval_phys (u, hspace, hmsh, geometry, pts, options)
     options = {options};
   end
 
-  if (isa (hspace.space_of_level(1), 'sp_scalar'))
-    is_scalar = true;
-  else
-    is_scalar = false;
-  end
+  is_scalar = isa (hspace.space_of_level(1), 'sp_scalar');
   
   nopts = numel (options);
   ndim = hmsh.ndim;
