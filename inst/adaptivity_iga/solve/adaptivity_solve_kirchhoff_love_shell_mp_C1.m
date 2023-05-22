@@ -76,7 +76,7 @@ rhs(add_dofs) = B_change_vector.' * rhs(vertex_dofs);
 % Solve the linear system
 u(int_dofs) = Kmat(int_dofs, int_dofs) \ rhs(int_dofs);
 % Compute the energy (only valid for homogeneous b.c.)
-energy = sqrt (u(int_dofs).' * Kmat(int_dofs, int_dofs) * u(int_dofs));
+energy = 0.5 * u(int_dofs).' * Kmat(int_dofs, int_dofs) * u(int_dofs);
 
 % Switching to the usual basis using the local matrix for the vertex dofs
 u_old = u(setdiff(vertex_dofs, add_dofs)); % Coefficients of the vertex functions that were already in the old basis
