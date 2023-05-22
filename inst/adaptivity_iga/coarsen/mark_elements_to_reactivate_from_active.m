@@ -103,7 +103,9 @@ for lev = hmsh.nlevels-1:-1:1
             end
         end
     end
+% TODO: children_per_cell should be updated before marked{lev+1} (as above)
     [~,~,marked{lev+1}] = hmsh_get_children (hmsh, lev, deact_marked{lev});
+    children_per_cell = marked{lev+1};
 
     
 % Algorithm to recover admissible meshes
