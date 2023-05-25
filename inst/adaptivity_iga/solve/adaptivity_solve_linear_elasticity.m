@@ -15,7 +15,7 @@
 %
 % USAGE:
 %
-% u = adaptivity_solve_linear_elasticity (hmsh, hspace, method_data)
+% u = adaptivity_solve_linear_elasticity (hmsh, hspace, problem_data)
 %
 % INPUT:
 %

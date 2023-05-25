@@ -57,39 +57,52 @@ function estimator = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, prob
     deg = hspace.space_of_level(1).degree;
     space_bubble = space_bubble_function_bilaplacian (hmsh, deg);
     nqn = hmsh.mesh_of_level(1).nqn;
+    is_scalar = true;
   elseif (isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
     deg = hspace.space_of_level(1).sp_patch{1}.degree;    
     space_bubble = space_bubble_function_bilaplacian_mp (hmsh, deg, true); % true to compute in the parametric domain
-    spb = space_bubble_function_bilaplacian_mp (hmsh, deg);
     nqn = hmsh.mesh_of_level(1).msh_patch{1}.nqn;
-  else
-    error ('Estimator not implemented for this kind of space object')
+    is_scalar = true;
+  elseif (isa (hspace.space_of_level(1), 'sp_vector'))
+    deg = hspace.space_of_level(1).scalar_spaces{1}.degree;
+    space_bubble = space_bubble_function_bilaplacian (hmsh, deg, true); % true to compute in the parametric domain
+    nqn = hmsh.mesh_of_level(1).nqn;
+    is_scalar = false;
   end  
   
   estimator = zeros(1,hmsh.nel);
   
   shifting_vector = cumsum([0 hmsh.nel_per_level]);
-  
+
   for ilev = 1:hmsh.nlevels
     if (hmsh.nel_per_level(ilev) > 0)
       x = cell (hmsh.rdim,1);
       for idim = 1:hmsh.rdim
         x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), nqn, hmsh.nel_per_level(ilev));
       end
-%       spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', false, 'hessian', true);
-      spu_lev = sp_evaluate_element_list_param__ (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true, 'hessian', true);
-      spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
+%     spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', false, 'gradient', false, 'hessian', true);
+      if (is_scalar)
+        spu_lev = sp_evaluate_element_list_param__ (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true, 'hessian', true);
+        spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
+        spu_lev = sp_scalar2vector_param (spu_lev, hmsh.msh_lev{ilev}, 'value', false, 'gradient', true, 'hessian', true);
+      else
+        spu_lev = sp_evaluate_element_list_param (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true, 'hessian', true);
+        spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
+      end
       spv_lev = space_bubble.space_of_level(ilev);
-      spu_lev = sp_scalar2vector_param (spu_lev, hmsh.msh_lev{ilev}, 'value', false, 'gradient', true, 'hessian', true);
       spv_lev = sp_scalar2vector_param (spv_lev, hmsh.msh_lev{ilev}, 'value', true, 'gradient', true, 'hessian', true);
       
-      dofs_to_lev = [];
-      for icomp = 1:hmsh.rdim
-        dofs_to_lev = union (dofs_to_lev, (icomp-1)*hspace.ndof + (1:last_dof(ilev)));
+      if (is_scalar) 
+        dofs_to_lev = [];
+        for icomp = 1:hmsh.rdim
+          dofs_to_lev = union (dofs_to_lev, (icomp-1)*hspace.ndof + (1:last_dof(ilev)));
+        end
+        u_lev = reshape (u(dofs_to_lev), last_dof(ilev), hmsh.rdim);
+        solution_of_level = reshape (hspace.Csub{ilev}*u_lev, [], 1);
+      else
+        solution_of_level = hspace.Csub{ilev}*u(1:last_dof(ilev));
       end
 
-      u_lev = reshape (u(dofs_to_lev), last_dof(ilev), hmsh.rdim);
-      solution_of_level = reshape (hspace.Csub{ilev}*u_lev, [], 1);
       K_lev = op_KL_shells (spu_lev, spv_lev, hmsh.msh_lev{ilev}, E_coeff(x{:}), nu_coeff(x{:}), problem_data.thickness);
       b_lev = op_f_v (spv_lev, hmsh.msh_lev{ilev}, problem_data.f(x{:}));           
       residual_of_level = b_lev - K_lev * solution_of_level;
@@ -99,7 +112,7 @@ function estimator = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, prob
 
 % Compute the estimator from the matrix, avoiding a loop on the elements
       conn = arrayfun (@(x) spv_lev.connectivity(1:spv_lev.nsh(x), x), 1:hmsh.msh_lev{ilev}.nel, 'UniformOutput', false);
-      err_elem = cellfun(@(ind) error_of_level(ind).' * K_err_lev(ind,ind) * error_of_level(ind), conn);
+      err_elem = cellfun(@(ind) full (error_of_level(ind).' * K_err_lev(ind,ind) * error_of_level(ind)), conn);
       err_elem = sqrt (err_elem);
       
       estimator((shifting_vector(ilev)+1):shifting_vector(ilev+1)) = err_elem;
