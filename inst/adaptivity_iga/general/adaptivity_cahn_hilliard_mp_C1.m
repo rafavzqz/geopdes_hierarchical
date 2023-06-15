@@ -78,7 +78,7 @@ for iopt  = 1:numel (data_names)
 end
 
 data_names = fieldnames (initial_conditions);
-for iopt  = 1:numel (initial_conditions)
+for iopt  = 1:numel (data_names)
   eval ([data_names{iopt} '= initial_conditions.(data_names{iopt});']);
 end
 
@@ -91,16 +91,6 @@ mu = @(x) 3 * alpha * x.^2 - beta;
 dmu = @(x) 6 * alpha * x;
 
 %%-------------------------------------------------------------------------
-% Construct geometry structure, and information for interfaces and boundaries
-
-% Initialization of the most coarse level of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
-
-% Refine the mesh up to a predefined level
-n_refininements = adaptivity_data.max_level-1; % number of uniform refinements
-[hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adaptivity_data);
-
-%%-------------------------------------------------------------------------
 % Generalized alpha parameters
 a_m = .5*((3-rho_inf_gen_alpha)/(1+rho_inf_gen_alpha));
 a_f =  1/(1+rho_inf_gen_alpha);
@@ -108,28 +98,57 @@ gamma =  .5 + a_m - a_f;
 
 
 %%-------------------------------------------------------------------------
-% Initial conditions
+% Construct geometry structure, and information for interfaces and boundaries
 
-% mass matrix
-mass_mat = op_u_v_hier(hspace,hspace,hmsh);
-% penalty matrix
-bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
-[Pen, ~] = penalty_matrix (hspace, hmsh, bou, Cpen_projection);
+% Initialization of the most coarse level of the hierarchical mesh and space
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
 
+if  initial_conditions.restart_flag == 1
+    % skip refinement
 
-time = 0;
-if (exist('fun_u', 'var') && ~isempty(fun_u))
-  rhs = op_f_v_hier (hspace, hmsh, fun_u);
-  u_n = (mass_mat +  Pen)\rhs;
-else
-  u_n = zeros(hspace.ndof, 1);
+else   
+    
+    % Refine the mesh up to a predefined level
+    n_refininements = adaptivity_data.max_level-1; % number of uniform refinements
+    [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adaptivity_data);
+
 end
 
-if (exist('fun_udot', 'var') && ~isempty(fun_udot))
-  rhs = op_f_v_hier (space, msh, fun_udot);
-  udot_n = (mass_mat +  Pen)\rhs;
+%%-------------------------------------------------------------------------
+% Initial conditions
+time = problem_data.time;
+
+if initial_conditions.restart_flag == 1
+    disp('restart analysis')
+    hspace = initial_conditions.space_reload;
+    hmsh = initial_conditions.mesh_reload;
+    u_n = initial_conditions.fun_u;
+    udot_n = initial_conditions.fun_udot;
+    time = initial_conditions.time;
+
 else
-  udot_n = zeros(hspace.ndof, 1);
+
+    % mass matrix
+    mass_mat = op_u_v_hier(hspace,hspace,hmsh);
+    % penalty matrix
+    bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
+    [Pen, ~] = penalty_matrix (hspace, hmsh, bou, Cpen_projection);  
+
+    
+    if (exist('fun_u', 'var') && ~isempty(fun_u))
+      rhs = op_f_v_hier (hspace, hmsh, fun_u);
+      u_n = (mass_mat +  Pen)\rhs;
+    else
+      u_n = zeros(hspace.ndof, 1);
+    end
+    
+    if (exist('fun_udot', 'var') && ~isempty(fun_udot))
+      rhs = op_f_v_hier (space, msh, fun_udot);
+      udot_n = (mass_mat +  Pen)\rhs;
+    else
+      udot_n = zeros(hspace.ndof, 1);
+    end
+
 end
 
 %%-------------------------------------------------------------------------
@@ -188,6 +207,10 @@ while time < Time_max
         if (time +dt >= save_info.time_save(save_id))  
     
           save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
+
+
+
+          
     
           if (save_id > length(save_info.time_save))
             flag_stop_save = true;
@@ -389,6 +412,9 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hm
     %------------------------------------------------------------------  
     % mark
     [marked, num_marked_coa] = adaptivity_mark_coarsening_cahn_hilliard (est, hmsh, hspace, adaptivity_data);
+
+%     output_file_2 = strcat( 'coarsening_data_debug/Coarsening_data' );
+%     save(output_file_2,  'marked', 'est','hmsh', 'hspace')
     
     if num_marked_coa == 0
         old_space.modified = 0;
@@ -431,9 +457,12 @@ mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
 % penalty term (matrix and vector)
 bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
 [Pen, ~] = penalty_matrix (hspace, hmsh, bou, pen_proje);
+
+% disp (condest(mass_coarse))
+
 mass_coarse = mass_coarse + Pen;
 
-
+% disp (condest(mass_coarse))
 
 %G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
 %u_n_coa = mass_coarse\(G*u_n);
@@ -814,6 +843,7 @@ function save_results_step(field, field_dot,time, hspace, hmsh, geometry, save_i
     sp_to_vtk (field, hspace, geometry, vtk_pts, output_file ,{'solution', 'gradient'}, {'value', 'gradient'})    
     
     save(output_file,'field', 'field_dot', 'time','hspace','hmsh')
+
 %     
 %     fig = figure('visible','off');
 %     sp_plot_solution (field, hspace, geometry,vtk_pts)

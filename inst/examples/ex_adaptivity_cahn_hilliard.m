@@ -4,51 +4,36 @@ clear all
 
 
 
-
+nel =1;
+p= 2;
 
 % 1) PHYSICAL DATA OF THE PROBLEM
 clear problem_data  
 % Physical domain, defined as NURBS map given in a text file
-% nrb1 = nrb4surf ([0 0], [.5 0], [0 .5], [.5 .5]);
-% nrb2 = nrb4surf ([.5 0], [1 0], [.5 .5], [1 .5]);
-% nrb3 = nrb4surf ([0 0.5], [.5 0.5], [0 1], [.5 1]);
-% nrb4 = nrb4surf ([.5 0.5], [1 0.5], [.5 1], [1 1]);
-% nrb(1) = nrb1;
-% nrb(2) = nrb2;
-% nrb(3) = nrb3;
-% nrb(4) = nrb4;
-
-problem_data.geo_name = 'curved_3patch_bicubic.txt' ;% nrb; %'geo_square_mp.txt';
+problem_data.geo_name = 'geo_square.txt';
 
 % Physical parameters
-lambda = 5e-2;%(1/(4*sqrt(2) *pi))^2; %6.15e-4;% 2.45e-3; 
+lambda = 6.15e-4;
 problem_data.lambda = @(x, y) lambda* ones(size(x));
 
-
-% Time and time step size
-Time_max = 50;
-dt = 1e-1;
-problem_data.time = 0;
-problem_data.Time_max = Time_max;
-
-
 % penalty parameters
-problem_data.Cpen_nitsche = 1e4 * lambda; % Nitsche's method parameter
-problem_data.Cpen_projection = 1000;      % parameter of the penalized L2 projection (see initial conditions)
+problem_data.pen_nitsche = 1e4 * lambda; % Nitsche's  penalty constant 
+problem_data.pen_projection = 1000;      % penalty value to constrain the flux in L2 projection
 
+% time  
+problem_data.time = 0;
+problem_data.Time_max = 1;    
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
-nel =1;
-p= 3;
 method_data.degree     = [p p];         % Degree of the splines
-method_data.regularity = [p-2 p-2];     % Regularity of the splines
+method_data.regularity = [p-1 p-1];     % Regularity of the splines
 %method_data.nsub       = [nel nel];     % Number of subdivisions
 method_data.nquad      = [p+1 p+1];     % Points for the Gaussian quadrature rule
 
 % time integration parameters
 method_data.rho_inf_gen_alpha = 0.5;
-method_data.dt =dt;
+method_data.dt =1e-3;
 
 % hierarchical structure
 method_data.nsub_coarse = [nel nel];    % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
@@ -64,14 +49,14 @@ adaptivity_data.C0_est = 1.0;
 
 
 adaptivity_data.estimator_type = 'field';
-adaptivity_data.mark_param = .1;
-adaptivity_data.mark_param_coarsening = .1;
-adaptivity_data.adm_class = p;
+adaptivity_data.mark_param = .2;
+adaptivity_data.mark_param_coarsening = .2;
+adaptivity_data.adm_class = 2;
 adaptivity_data.time_delay = 0.;
 
 
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.max_level = 5;
+adaptivity_data.max_level = 6;
 adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 10;
 adaptivity_data.max_nel = 500;
@@ -100,10 +85,10 @@ status = rmdir(folder_name);
 status = mkdir(folder_name);
 
 save_info.folder_name = folder_name;
-save_info.time_save = linspace(-.000001,problem_data.Time_max,51);
+save_info.time_save = linspace(-.000001,problem_data.Time_max,11);
 
 % 3) CALL TO THE SOLVER
-[geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard_mp_C1(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
+[geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
 
 
 %% 4) POST-PROCESSING
@@ -132,23 +117,12 @@ save(filename, 'time_steps');
 
 
 
-%% 4) POST-PROCESSING
-% 4.1) EXPORT TO PARAVIEW
+% %% 4) POST-PROCESSING
+% % 4.1) EXPORT TO PARAVIEW
 % u = results.u;
 % output_file = 'cahn_hilliard_adaptive';
 % 
-
-
-
-% % 5.2) EXPORT TO PARAVIEW    
-% vtk_pts = {linspace(0, 1, 40), linspace(0, 1, 40)};
-% for step = 1:length(results.time)
-%   output_file = strcat( folder_name,'/Square_cahn_hilliard_', num2str(step) );
-%   fprintf ('The result is saved in the file %s \n \n', output_file);
-%   sp_to_vtk (results.u(:,step), hspace, geometry, vtk_pts, output_file, {'u','grad_u'}, {'value','gradient'})
-% end
-%     
-
+% 
 % npts = [51 51];
 % fprintf ('The result is saved in the file %s \n \n', output_file);
 % sp_to_vtk (u, hspace, geometry, npts, output_file,{'u', 'grad_u'}, {'value', 'gradient'})

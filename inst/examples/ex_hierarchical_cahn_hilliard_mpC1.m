@@ -9,16 +9,25 @@ clear all
 % 1) PHYSICAL DATA OF THE PROBLEM
 clear problem_data  
 % Physical domain, defined as NURBS map given in a text file
-problem_data.geo_name = 'curved_3patch_bicubic.txt' ;
+nrb1 = nrb4surf ([0 0], [.5 0], [0 .5], [.5 .5]);
+nrb2 = nrb4surf ([.5 0], [1 0], [.5 .5], [1 .5]);
+nrb3 = nrb4surf ([0 0.5], [.5 0.5], [0 1], [.5 1]);
+nrb4 = nrb4surf ([.5 0.5], [1 0.5], [.5 1], [1 1]);
+nrb(1) = nrb1;
+nrb(2) = nrb2;
+nrb(3) = nrb3;
+nrb(4) = nrb4;
+
+problem_data.geo_name = nrb; %'geo_square_mp.txt';
 
 % Physical parameters
-lambda = 5e-2;
+lambda = (1/(4*sqrt(2) *pi))^2; %6.15e-4;% 2.45e-3; 
 problem_data.lambda = @(x, y) lambda* ones(size(x));
 
 
 % Time and time step size
-Time_max = 50;
-dt = 1e-1;
+Time_max = .08;
+dt = 1e-2;
 problem_data.time = 0;
 problem_data.Time_max = Time_max;
 
@@ -27,6 +36,9 @@ problem_data.Time_max = Time_max;
 problem_data.Cpen_nitsche = 1e4 * lambda; % Nitsche's method parameter
 problem_data.Cpen_projection = 1000;      % parameter of the penalized L2 projection (see initial conditions)
 
+% time  
+problem_data.time = 0;
+problem_data.Time_max = .08;    
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
@@ -55,9 +67,9 @@ adaptivity_data.C0_est = 1.0;
 
 
 adaptivity_data.estimator_type = 'field';
-adaptivity_data.mark_param = .1;
-adaptivity_data.mark_param_coarsening = .1;
-adaptivity_data.adm_class = p;
+adaptivity_data.mark_param = .2;
+adaptivity_data.mark_param_coarsening = .2;
+adaptivity_data.adm_class = 2;
 adaptivity_data.time_delay = 0.;
 
 
@@ -73,24 +85,16 @@ adaptivity_data.adm_type = 'T-admissible';
 
 % 3) INITIAL CONDITIONS 
 clear initial_conditions
-initial_conditions.restart_flag = 0;
-mean = 0.4;
+mean = 0.0;
 var = 0.005;
-ic_fun = @(x, y) mean + (rand(size(x))*2-1)*var;
+%ic_fun = @(x, y) mean + (rand(size(x))*2-1)*var;
+ic_fun = @(x, y) 0.1 * cos(2*pi*x) .* cos(2*pi*y);
 
 
-%ic_fun = @(x, y) 0.1 * cos(2*pi*x) .* cos(2*pi*y);
-
-% reload = load("Square_cahn_hilliard_adaptive_field_5.mat");
-% ic_fun = reload.field;
-% ic_fun_udot = reload.field_dot;
-% initial_conditions.mesh_reload = reload.hmsh;
-% initial_conditions.space_reload = reload.hspace;
-% initial_conditions.time = reload.time;
-
-
+%ic_fun = load("initial_conditions_nel_64_64_p_2_2.mat");
+%ic_fun = ic_fun.u_0;
 initial_conditions.fun_u = ic_fun;
-% initial_conditions.fun_udot = ic_fun_udot;
+
 
 % create folder
 folder_name = strcat('chan_hilliard_results_p',num2str(p),'_nel',num2str(nel),'_lambda',num2str(lambda),'_adaptive_',adaptivity_data.estimator_type);
@@ -99,11 +103,10 @@ status = rmdir(folder_name);
 status = mkdir(folder_name);
 
 save_info.folder_name = folder_name;
-save_info.time_save = linspace(-.000001,problem_data.Time_max,51);
-% save_info.time_save = linspace(reload.time-1e-8, problem_data.Time_max, round((Time_max- reload.time)/dt )+1)
+save_info.time_save = linspace(-.000001,problem_data.Time_max,11);
 
 % 3) CALL TO THE SOLVER
-[geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard_mp_C1(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
+[geometry, hmsh, hspace, results] = hierarchical_cahn_hilliard_mp_C1(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
 
 
 %% 4) POST-PROCESSING
@@ -134,20 +137,20 @@ save(filename, 'time_steps');
 
 %% 4) POST-PROCESSING
 % 4.1) EXPORT TO PARAVIEW
-% u = results.u;
-% output_file = 'cahn_hilliard_adaptive';
-% 
+u = results.u;
+output_file = 'cahn_hilliard_adaptive';
 
 
 
-% % 5.2) EXPORT TO PARAVIEW    
-% vtk_pts = {linspace(0, 1, 40), linspace(0, 1, 40)};
-% for step = 1:length(results.time)
-%   output_file = strcat( folder_name,'/Square_cahn_hilliard_', num2str(step) );
-%   fprintf ('The result is saved in the file %s \n \n', output_file);
-%   sp_to_vtk (results.u(:,step), hspace, geometry, vtk_pts, output_file, {'u','grad_u'}, {'value','gradient'})
-% end
-%     
+
+% 5.2) EXPORT TO PARAVIEW    
+vtk_pts = {linspace(0, 1, 40), linspace(0, 1, 40)};
+for step = 1:length(results.time)
+  output_file = strcat( folder_name,'/Square_cahn_hilliard_', num2str(step) );
+  fprintf ('The result is saved in the file %s \n \n', output_file);
+  sp_to_vtk (results.u(:,step), hspace, geometry, vtk_pts, output_file, {'u','grad_u'}, {'value','gradient'})
+end
+    
 
 % npts = [51 51];
 % fprintf ('The result is saved in the file %s \n \n', output_file);
