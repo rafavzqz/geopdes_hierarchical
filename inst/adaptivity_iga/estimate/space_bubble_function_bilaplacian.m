@@ -2,12 +2,13 @@
 %
 % USAGE:
 %
-%   space_bubble = space_bubble_function_bilaplacian (hmsh, degree)
+%   space_bubble = space_bubble_function_bilaplacian (hmsh, degree, param)
 %
 % INPUT:
 %
 %   u:            degrees of freedom
 %   hmsh:         object representing the hierarchical mesh (see hierarchical_mesh)
+%   param:        compute functions in the physical (default) or the parametric domain
 %
 % OUTPUT:
 %
@@ -32,8 +33,12 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 %function sp = space_bubble_function_bilaplacian (hmsh, degree, problem_type, varargin)
-function sp = space_bubble_function_bilaplacian (hmsh, degree, varargin)
+function sp = space_bubble_function_bilaplacian (hmsh, degree, param, varargin)
   
+  if (nargin < 3 || isempty (param))
+    param = false;
+  end
+
   if numel(varargin) == 0
       iside = -1;
   else
@@ -52,7 +57,7 @@ function sp = space_bubble_function_bilaplacian (hmsh, degree, varargin)
   sp.nsh = ones(1,hmsh.nel);
   sp.ndof = hmsh.nel * sp.nsh_max;
   sp.ndof_per_level = [hmsh.nel_per_level] * sp.nsh_max;
-  sp.space_of_level = [];
+%   sp.space_of_level = [];
 
 % Build bubble functions as Bernstein polynomials on a reference element
   ndim = hmsh.ndim;
@@ -123,7 +128,9 @@ function sp = space_bubble_function_bilaplacian (hmsh, degree, varargin)
       space_of_level.shape_function_hessians = shape_hess ./ ld_first ./ ld_second;
       
     % Apply grad preserving transform
-      space_of_level = sp_grad_preserving_transform (space_of_level, hmsh.msh_lev{iLevel}, 1, 1, 1);
+      if (~param)
+        space_of_level = sp_grad_preserving_transform (space_of_level, hmsh.msh_lev{iLevel}, 1, 1, 1, 1);
+      end
       sp.space_of_level(iLevel) = space_of_level;
     end
   end

@@ -95,7 +95,7 @@ function estimator = adaptivity_bubble_estimator_linear_el (u, hmsh, hspace, pro
       error_of_level = K_err_lev \ residual_of_level;
 
       conn = arrayfun (@(x) spv_lev.connectivity(1:spv_lev.nsh(x), x), 1:hmsh.msh_lev{ilev}.nel, 'UniformOutput', false);
-      err_elem = cellfun(@(ind) error_of_level(ind).' * K_err_lev(ind,ind) * error_of_level(ind), conn);
+      err_elem = cellfun(@(ind) full (error_of_level(ind).' * K_err_lev(ind,ind) * error_of_level(ind)), conn);
       err_elem = sqrt (err_elem);
       
       estimator((shifting_vector(ilev)+1):shifting_vector(ilev+1)) = err_elem;
