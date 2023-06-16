@@ -200,7 +200,7 @@ while time < Time_max
             [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hmsh, hspace, adaptivity_data,  u_n1, udot_n1, Cpen_projection, old_space);
         end
     end
-
+    
     %----------------------------------------------------------------------
     % Store results
     if (flag_stop_save == false)
@@ -208,10 +208,6 @@ while time < Time_max
     
           save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
 
-
-
-          
-    
           if (save_id > length(save_info.time_save))
             flag_stop_save = true;
           end
@@ -347,7 +343,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n
         end
 
         if hmsh.nlevels == adaptivity_data.max_level && continue_flag == 0
-            disp('mesh completely refined')
+            disp('Mesh completely refined at the maximum level')
             break
         end
 
@@ -366,7 +362,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n
 
         % stopping criterion
         if num_marked_ref == 0
-            disp('no element is refined')
+            disp('No element is refined')
             break  
         end
 

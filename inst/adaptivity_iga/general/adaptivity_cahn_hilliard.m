@@ -145,14 +145,7 @@ while time < Time_max
     if (flag_stop_save == false)
         if (time +dt >= save_info.time_save(save_id))  
 
-
-
-
           save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
-
-
-
-
 
           if (save_id > length(save_info.time_save))
             flag_stop_save = true;
@@ -160,8 +153,6 @@ while time < Time_max
           save_id = save_id + 1;
         end
     end
-
-
     
     %----------------------------------------------------------------------
     % update time
@@ -176,11 +167,6 @@ while time < Time_max
         dt = Time_max-time;
     end
     
-
-
-    
-
-
 end % end loop over time steps
 
 
@@ -261,7 +247,7 @@ function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adap
         for i = 1:n_refininements
 
             if hmsh.nlevels >= adaptivity_data.max_level % check max depth        
-                disp('uniform refinement limited by max_level')
+                disp('Uniform refinement limited by max_level')
                 break
             end
 
@@ -382,7 +368,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n
         end
 
         if hmsh.nlevels == adaptivity_data.max_level && continue_flag == 0
-            disp('Warning: mesh completely refined')
+            disp('Mesh completely refined at the maximum level')
             break
         end
 
@@ -401,7 +387,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n
 
         % stopping criterion
         if num_marked_ref == 0
-            disp('Warning: no element is refined')
+            disp('No element is refined')
             break  
         end
 
@@ -546,8 +532,6 @@ function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
 
       % 
       b_lev = op_f_v (sp_lev, hmsh_fine.msh_lev{ilev}, u_fine);
-
-
 
       dofs = 1:ndofs;
       rhs(dofs) = rhs(dofs) + hspace.Csub{ilev}.' * b_lev;
@@ -962,17 +946,13 @@ function varargout = op_gradv_n_u_hier (hspace, hmsh, nmnn_side, coeff)
         spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
         spv_lev = change_connectivity_localized_Csub (spv_lev, hspace, ilev);     
 
-
-           
         % compute the matrix
         K_lev = op_gradv_n_u (spu_lev, spv_lev, hmsh_side, coeff (x{:}));
-
 
         dofs_u = 1:ndofs_u;  
         dofs_v = 1:ndofs_v;
         Ktmp =  hspace.Csub{ilev}.' * K_lev * hspace.Csub{ilev};
         K(dofs_v,dofs_u) = K(dofs_v,dofs_u) +Ktmp;    
-
 
     end
   end
@@ -1052,7 +1032,6 @@ function norm_flux_side = flux_side(hspace, hmsh, uhat, side)
             norm_flux_side = norm_flux_side + errl2;
         end
     end
-
 
 end
 
@@ -1197,8 +1176,6 @@ if err> last_mesh.tol_skip_ada
 else
     adaptivity_data_flag = false;
 end
-
-
 
 end
 

@@ -1,6 +1,6 @@
-clc
-close all
-clear all
+% clc
+% close all
+% clear all
 
 
 
@@ -56,7 +56,7 @@ adaptivity_data.time_delay = 0.;
 
 
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.max_level = 6;
+adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 10;
 adaptivity_data.max_nel = 500;
@@ -92,106 +92,7 @@ save_info.time_save = linspace(-.000001,problem_data.Time_max,11);
 
 
 %% 4) POST-PROCESSING
-
-
-
 filename = strcat( folder_name,'/filenum_to_time_uniform_mesh.mat');
 time_steps = results.time;
 save(filename, 'time_steps');
 
-
-
-
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-% %% 4) POST-PROCESSING
-% % 4.1) EXPORT TO PARAVIEW
-% u = results.u;
-% output_file = 'cahn_hilliard_adaptive';
-% 
-% 
-% npts = [51 51];
-% fprintf ('The result is saved in the file %s \n \n', output_file);
-% sp_to_vtk (u, hspace, geometry, npts, output_file,{'u', 'grad_u'}, {'value', 'gradient'})
-% 
-% 
-% [eu, F] = sp_eval (u, hspace, geometry, npts, {'value', 'gradient'});
-% fig=figure; subplot (1,3,1)
-% surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu{1}, 'EdgeColor', 'none')
-% view(0,90);
-% colorbar
-% title('solution')
-% shading interp
-% subplot(1,3,2)
-% surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze ( eu{2}(1,:,:) ), 'EdgeColor', 'none');
-% view(0,90);
-% title('grad x')
-% shading interp
-% subplot(1,3,3)
-% surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze ( eu{2}(2,:,:) ), 'EdgeColor', 'none');
-% view(0,90);
-% title('grad y')
-% shading interp
-% saveas(fig , 'solution_hierarchical.png')
-% %%
-% fig=figure;
-% value = sqrt(eu{2}(1,:,:).^2 + eu{2}(2,:,:).^2);
-% %value = value/max(value,[],"all");
-% surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze ( value ), 'EdgeColor', 'none', 'FaceAlpha',0.5);
-% hold on
-% hmsh_plot_cells (hmsh)
-% view(0,90);
-% colorbar
-% shading interp
-% axis equal tight
-% saveas(fig , 'indicator.png')
-% 
-% 
-% fig=figure;
-% hmsh_plot_cells (hmsh)
-% view(0,90);
-% shading interp
-% axis equal tight
-% saveas(fig , 'mesh_hierarchical.png')
-
-
-
-%!demo
-%! ex_laplace_square
-
-%!test
-%! problem_data.geo_name = 'geo_square.txt';
-%! problem_data.nmnn_sides   = [];
-%! problem_data.drchlt_sides = [1 2 3 4];
-%! problem_data.c_diff  = @(x, y) ones(size(x));
-%! problem_data.f = @(x, y) zeros (size (x));
-%! problem_data.g = @test_square_g_nmnn;
-%! problem_data.h = @(x, y, ind) exp (x) .* sin(y);
-%! problem_data.uex     = @(x, y) exp (x) .* sin (y);
-%! problem_data.graduex = @(x, y) cat (1, ...
-%!                       reshape (exp(x).*sin(y), [1, size(x)]), ...
-%!                       reshape (exp(x).*cos(y), [1, size(x)]));
-%! method_data.degree     = [3 3];       % Degree of the splines
-%! method_data.regularity = [2 2];       % Regularity of the splines
-%! method_data.nsub       = [9 9];       % Number of subdivisions
-%! method_data.nquad      = [4 4];       % Points for the Gaussian quadrature rule
-%! [geometry, msh, space, u] = solve_laplace (problem_data, method_data);
-%! [error_h1, error_l2] = ...
-%!           sp_h1_error (space, msh, u, problem_data.uex, problem_data.graduex);
-%! assert (msh.nel, 81)
-%! assert (space.ndof, 144)
-%! assert (error_h1, 9.86428525677199e-06, 1e-14)
-%! assert (error_l2, 1.68004134750130e-07, 1e-14)
