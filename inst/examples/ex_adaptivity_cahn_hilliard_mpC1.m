@@ -2,9 +2,7 @@
 % close all
 % clear all
 
-
-
-
+warning ('off','geopdes:nrbmultipatch')
 
 % 1) PHYSICAL DATA OF THE PROBLEM
 clear problem_data  
