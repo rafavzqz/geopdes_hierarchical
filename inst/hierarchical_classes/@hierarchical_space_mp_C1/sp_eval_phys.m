@@ -1,6 +1,6 @@
 % SP_EVAL_PHYS: Compute the value or derivatives of a function from its degrees of freedom, at a given set of points in the physical domain.
 %
-%   eu = sp_eval_phys (u, space, geometry, pts, [patch_list], [options]);
+%   eu = sp_eval_phys (u, hspace, hmsh, geometry, pts, [patch_list], [options]);
 %
 % INPUT:
 %     
