@@ -62,7 +62,7 @@ function [A, rhs] = sp_weak_drchlt_bc_laplace (hspace, hmsh, bnd_sides, bnd_func
     iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
     for ilev = 1:hmsh.boundary.nlevels
       patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
-      patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
+      % patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
       dofs_on_lev = 1:last_dof(ilev);
 
       for ii = 1:numel(iref_patch_list)
