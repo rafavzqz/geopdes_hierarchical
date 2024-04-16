@@ -34,7 +34,7 @@
 %  contains scalar valued functions. This is different from the standard
 %  implementation in GeoPDEs with the sp_vector (or sp_multipatch) class.
 %
-% Copyright (C) 2022-2023 Rafael Vazquez
+% Copyright (C) 2022-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ while (1)
     disp('SOLVE:')
     fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
-  [u, energy(iter)] = adaptivity_solve_kirchhoff_love_shell_mp_C1 (hmsh, hspace, problem_data);
+  [u, energy(iter)] = adaptivity_solve_kirchhoff_love_shell_mp_C1 (hmsh, hspace, problem_data, method_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
@@ -102,10 +102,13 @@ while (1)
     fig_sol = plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex, fig_sol); 
     drawnow
   end
+  if (isfield (plot_data, 'pts'))
+    displ{iter} = sp_eval_phys (u, hspace, hmsh, geometry, plot_data.pts, plot_data.patch_for_pts);
+  end
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
-  est = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, problem_data, adaptivity_data);
+  est = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, problem_data, method_data, adaptivity_data);
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %e \n', gest(iter)); end
   if (isfield (problem_data, 'uex'))
@@ -152,5 +155,9 @@ if (exist ('err_l2', 'var'))
   solution_data.err_l2 = err_l2(1:iter);
 end
 solution_data.energy = energy(1:iter);
+
+if (isfield (plot_data, 'pts'))
+  solution_data.displ = displ;
+end
 
 end

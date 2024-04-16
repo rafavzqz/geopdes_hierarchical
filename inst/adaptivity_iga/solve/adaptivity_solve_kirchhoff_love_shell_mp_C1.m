@@ -24,6 +24,7 @@
 %  energy:   energy of the system (sqrt(u' * K * u)), for postprocessing.
 %
 % Copyright (C) 2022, 2023 Cesare Bracco, Andrea Farahat, Rafael Vazquez
+% Copyright (C) 2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -38,7 +39,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, energy] = adaptivity_solve_kirchhoff_love_shell_mp_C1 (hmsh, hspace, problem_data)
+function [u, energy] = adaptivity_solve_kirchhoff_love_shell_mp_C1 (hmsh, hspace, problem_data, method_data)
 
 % Extract the fields from the data structures into local variables
 data_names = fieldnames (problem_data);
@@ -48,6 +49,10 @@ end
 
 Kmat = op_KL_shells_hier (hspace, hspace, hmsh, E_coeff, nu_coeff, thickness);
 rhs = op_f_v_hier_vector (hspace, hmsh, f);
+% Apply zero rotation with Nitsche method
+if (exist ('rotation_sides', 'var') && ~isempty(rotation_sides))
+  Kmat = Kmat + sp_nitsche_KL_rotation (hspace, hmsh, rotation_sides, E_coeff, nu_coeff, thickness, method_data.penalty_coeff);
+end
 
 % Apply boundary conditions
 % TODO : so far, only homogeneous boundary conditions in every component are implemented
