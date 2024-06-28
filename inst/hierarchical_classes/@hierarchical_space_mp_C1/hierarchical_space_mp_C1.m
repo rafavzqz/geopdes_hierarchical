@@ -1,37 +1,39 @@
-% HIERARCHICAL_SPACE_MP: constructor of the class for hierarchical spaces for multipatch geometries.
+% HIERARCHICAL_SPACE_MP_C1: constructor of the class for hierarchical C1 multipatch spaces.
 %
-%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated, regularity])
+%    function hspace = hierarchical_space_mp_C1 (hmsh, space, [space_type, truncated, regularity])
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh_mp (see hierarchical_mesh_mp)
-%    space:      the coarsest space, an object of the class sp_multipatch (see sp_multipatch)
+%    space:      the coarsest space, an object of the class sp_multipatch (see sp_multipatch_C1)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
-%                - 'simplified', a simplified basis, were only children of removed functions are activated
-%    truncated:  decide whether the basis will be truncated or not
-%    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus one
+%                - 'simplified', a simplified basis, where only children of removed functions are activated
+%    truncated:  decide whether the basis will be truncated or not (not truncated by default)
+%    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus two
 %
 % OUTPUT:
-%    hspace: hierarchical_space_mp object, which contains the following fields and methods
+%    hspace: hierarchical_space_mp_C1 object, which contains the following fields and methods
 % 
 %    FIELD_NAME     TYPE                    DESCRIPTION
 %    ncomp          (scalar)                number of components of the space
 %    type           (string)                'standard' or 'simplified'
+%    truncated      (logical)               truncated or non-truncated basis
 %    ndof           (scalar)                total number of active functions 
 %    nlevels        (scalar)                the number of levels
-%    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
+%    space_of_level (1 x nlevels)           C1 multipatch space of each level (see sp_multipatch_C1)
 %    Proj           (hmsh.nlevels-1 x npatch cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels for each patch
 %                                           Proj{l,i} is a cell-array of dimension ndim, with the information for
-%                                           the univariate Projectors on the patch (see also hierarchical_space)
+%                                           the univariate Projectors on the i-th patch (see also hierarchical_space)
 %    Proj0                                  Like Proj, for univariate splines of degree p, regularity r+1
 %    Proj1                                  Like Proj, for univariate splines of degree p-1, regularity r
 %    ndof_per_level (1 x nlevels array)     number of active functions on each level
 %    active        (1 x nlevels cell-array) List of active functions on each level
-%    coeff_pou     (ndof x 1)               coefficientes to form the partition of the unity in the hierarchical space
 %    deactivated   (1 x nlevels cell-array) List of deactivated functions on each level
 %    Csub          (1 x hmsh.nlevels cell-array) Sparse matrices for changing basis. For each level, represent active functions of previous levels
 %                                            as linear combinations of splines (active and inactive) of the current level
+%    Csub_row_indices (1 x hmsh.nlevels cell-array) indices of the rows stored in Csub. 
+%                                            This allows to save memory space.
 %
 %    METHOD NAME
 %    Methods for post-processing, which require a computed vector of degrees of freedom
@@ -59,13 +61,14 @@
 %      hspace_add_new_level:  add a new level, initialized without active functions
 %      hspace_remove_empty_level: remove the finest level, if it is empty
 %
-% For details about the 'simplified' hierarchical space:
-%    A. Buffa, E. M. Garau, Refinable spaces and local approximation estimates 
-%     for hierarchical splines, IMA J. Numer. Anal., (2016)
+% For details about the hierarchical multipatch C1 space:
+%    C. Bracco, C. Giannelli, M. Kapl, R. Vazquez, Adaptive isogeometric
+%    methods with C1 (truncated) hierarchical splines on planar multi-patch
+%    domains, Math. Models Meth. Appl. Sci. (2023)
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017 Rafael Vazquez
-% Copyright (C) 2019-2022 Cesare Bracco, Rafael Vazquez
+% Copyright (C) 2019-2024 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -91,10 +94,6 @@ if (isa (space.sp_patch{1}, 'sp_scalar'))
   regularity = space.sp_patch{1}.degree - 2;
 elseif (isa (space.sp_patch{1}, 'sp_vector'))
   error ('Only done for scalars, so far')
-%   is_scalar = false;
-%   for icomp = 1:space.sp_patch{1}.ncomp_param
-%     regularity{icomp} = space.sp_patch{1}.scalar_spaces{icomp}.degree-1;
-%   end
 else
   error ('Unknown space type')
 end
@@ -104,7 +103,6 @@ default_values(1:numel(varargin)) = varargin;
 [space_type, truncated, regularity] = default_values{:};
 
 % This is done to simplify things for the boundary and gluing patches
-transform = space.sp_patch{1}.transform;
 if (check_regularity (regularity, space, is_scalar))
   error ('For multipatch geometries, we force the regularity to be the same in all directions')
 end
@@ -121,7 +119,6 @@ hspace.space_of_level = space;
 hspace.active{1} = (1:space.ndof)';
 hspace.deactivated{1} = [];
 
-hspace.coeff_pou = ones (space.ndof, 1);
 hspace.Proj = cell (0, hmsh.npatch);
 hspace.Csub{1} = speye (space.ndof);
 hspace.Csub_row_indices{1} = 1:space.ndof;
@@ -132,7 +129,6 @@ hspace.Proj1 = cell (0, hmsh.npatch);
 hspace.dofs = [];
 
 hspace.regularity = regularity;
-hspace.C_L2 = cell (0,1);
 hspace = class (hspace, 'hierarchical_space_mp_C1');
 
 end
