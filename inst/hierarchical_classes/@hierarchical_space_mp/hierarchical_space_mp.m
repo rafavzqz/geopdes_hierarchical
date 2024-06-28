@@ -1,14 +1,14 @@
 % HIERARCHICAL_SPACE_MP: constructor of the class for hierarchical spaces for multipatch geometries.
 %
-%    function hspace = hierarchical_space (hmsh, space, [space_type, truncated, regularity])
+%    function hspace = hierarchical_space_mp (hmsh, space, [space_type, truncated, regularity])
 %
 % INPUT
 %    hmsh:       an object of the class hierarchical_mesh_mp (see hierarchical_mesh_mp)
 %    space:      the coarsest space, an object of the class sp_multipatch (see sp_multipatch)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
-%                - 'simplified', a simplified basis, were only children of removed functions are activated
-%    truncated:  decide whether the basis will be truncated or not
+%                - 'simplified', a simplified basis, where only children of removed functions are activated
+%    truncated:  decide whether the basis will be truncated or not (not truncated by default)
 %    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus one
 %
 % OUTPUT:
@@ -17,9 +17,10 @@
 %    FIELD_NAME     TYPE                    DESCRIPTION
 %    ncomp          (scalar)                number of components of the space
 %    type           (string)                'standard' or 'simplified'
+%    truncated      (logical)               truncated or non-truncated basis
 %    ndof           (scalar)                total number of active functions 
 %    nlevels        (scalar)                the number of levels
-%    space_of_level (1 x nlevels)           tensor product space of each level, with 1d evaluations on the mesh of the same level (see sp_bspline)
+%    space_of_level (1 x nlevels)           multipatch space of each level (see sp_multipatch)
 %    Proj           (hmsh.nlevels-1 x npatch cell-array) 
 %                                           the coefficients relating 1D splines of two consecutive levels for each patch
 %                                           Proj{l,k} is a cell-array of dimension ndim, with the information for
