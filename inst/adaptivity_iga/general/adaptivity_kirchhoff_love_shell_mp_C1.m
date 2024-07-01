@@ -74,7 +74,7 @@ end
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % Initialization of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 % ADAPTIVE LOOP
 iter = 0;
@@ -97,14 +97,6 @@ while (1)
     fig_mesh = hmsh_plot_cells (hmsh, 10, fig_mesh);
     drawnow
   end
-  % if (plot_data.plot_discrete_sol)
-  %   npts = 51 * ones (1, hmsh.ndim);
-  %   fig_sol = plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex, fig_sol); 
-  %   drawnow
-  % end
-  % if (isfield (plot_data, 'pts'))
-  %   displ{iter} = sp_eval_phys (u, hspace, hmsh, geometry, plot_data.pts, plot_data.patch_for_pts);
-  % end
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
