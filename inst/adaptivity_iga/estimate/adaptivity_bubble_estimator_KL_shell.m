@@ -14,6 +14,7 @@
 %    - nu_coeff:  Poisson ratio, given as a function handle
 %    - thickness: thickness of the shell
 %    - f:         load, right-hand side of the problem
+%    - rotation_sides: if clamped boundary conditions are used
 %   method_data:  structure with data for discretization. If there are clamped condtions (rotation_sides), it must contain
 %    - penalty_coeff: penalty coefficient for Nitsche's method.
 %   adaptivity_data: structure with data for adaptivity. For this function, it must contain the field:
