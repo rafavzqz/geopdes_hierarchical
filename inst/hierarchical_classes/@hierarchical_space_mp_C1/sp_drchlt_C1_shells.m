@@ -10,6 +10,7 @@
 %  hmsh:       object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %  refs:       reference of the boundaries on which to apply the condition
 %  components: vector components on which to apply the zero displacement condition, for each boundary
+%               This part has not been tested yet!!!
 %
 % OUTPUT:
 %

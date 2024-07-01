@@ -5,7 +5,7 @@
 % INPUT:
 %
 %  hspu:     object representing the space of trial functions (see hierarchical_space_mp_C1)
-%  hspu:     object representing the space of test functions (see hierarchical_space_mp_C1)
+%  hspv:     object representing the space of test functions (see hierarchical_space_mp_C1)
 %  hmsh:     object defining the domain partition and the quadrature rule (see msh_cartesian)
 %  E_coeff:  function handle to compute the Young's modulus
 %  nu_coeff: function handle to compute the Poisson's ratio
@@ -14,7 +14,7 @@
 %
 % OUTPUT:
 %
-%  mat:    assembled stiffness matrix
+%  mat:    assembled matrix
 % 
 % Copyright (C) 2023 Rafael Vazquez
 %
