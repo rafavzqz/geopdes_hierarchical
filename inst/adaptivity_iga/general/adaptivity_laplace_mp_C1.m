@@ -114,6 +114,10 @@ if (isfield (problem_data, 'graduex'))
 end
   
 % Initialization of the hierarchical mesh and space
+if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity ~= 1)
+  warning('Setting interface regularity to C1')
+  method_data.interface_regularity = 1;
+end
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
 
 % ADAPTIVE LOOP

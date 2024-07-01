@@ -28,6 +28,7 @@
 %      - nel:        number of elements for each computed iteration
 %      - gest:       global error estimator, for each computed iteration
 %      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
+%      - energy:     computed energy, for each iteration
 %      - flag:       a flag with the stopping criterion satisfied (see adaptivity_laplace_mp_C1).
 %
 % The number of degrees of freedom is 3*hspace.ndof, that is, hspace only
@@ -74,6 +75,10 @@ end
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % Initialization of the hierarchical mesh and space
+if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity ~= 1)
+  warning('Setting interface regularity to C1')
+  method_data.interface_regularity = 1;
+end
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 % ADAPTIVE LOOP
