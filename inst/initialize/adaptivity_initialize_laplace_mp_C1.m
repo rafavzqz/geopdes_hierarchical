@@ -1,6 +1,6 @@
-% ADAPTIVITY_INITIALIZE_LAPLACE: initialize a hierarchical mesh and a hierarchical space with one-single level.
+% ADAPTIVITY_INITIALIZE_LAPLACE_MP_C1: initialize a hierarchical mesh and a hierarchical space with one-single level.
 %
-% [hmsh, hspace] = adaptivity_initialize_laplace (problem_data, method_data)
+% [hmsh, hspace] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data)
 %
 % INPUT:
 %
@@ -18,10 +18,12 @@
 %
 % OUTPUT:
 %    hmsh:     object representing the hierarchical mesh (see hierarchical_mesh and hierarchical_mesh_mp)
-%    hspace:   object representing the space of hierarchical splines (see hierarchical_space and hierarchical_space_mp)
+%    hspace:   object representing the space of hierarchical splines (see hierarchical_space, 
+%               hierarchical_space_mp and hierarchical_space_mp_C1)
 %    geometry: geometry structure (see geo_load and mp_geo_load)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -41,6 +43,8 @@ function [hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem
 [geometry, boundaries, interfaces, ~, boundary_interfaces] = mp_geo_load (problem_data.geo_name);
 
 npatch = numel (geometry);
+msh = cell (1, npatch); 
+space = cell (1, npatch);
 for iptc = 1:npatch
   [knots, zeta] = kntrefine (geometry(iptc).nurbs.knots, method_data.nsub_coarse-1, method_data.degree, method_data.regularity);
   
@@ -56,11 +60,20 @@ if (npatch == 1)
   hmsh     = hierarchical_mesh (msh, method_data.nsub_refine);
   hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
 else
-  [edges, vertices] = vertices_struct (geometry, interfaces, boundaries, boundary_interfaces);
-  msh   = msh_multipatch (msh, boundaries);
-  space = sp_multipatch_C1 (space, msh, geometry, edges, vertices);
-  hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
-  hspace   = hierarchical_space_mp_C1 (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+  if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity == 0)
+    msh   = msh_multipatch (msh, boundaries);
+    space = sp_multipatch (space, msh, interfaces, boundary_interfaces);
+    hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
+    hspace   = hierarchical_space_mp (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+  elseif (method_data.interface_regularity == 1)
+    [edges, vertices] = vertices_struct (geometry, interfaces, boundaries, boundary_interfaces);
+    msh   = msh_multipatch (msh, boundaries);
+    space = sp_multipatch_C1 (space, msh, geometry, edges, vertices);
+    hmsh     = hierarchical_mesh_mp (msh, method_data.nsub_refine);
+    hspace   = hierarchical_space_mp_C1 (hmsh, space, method_data.space_type, method_data.truncated, method_data.regularity);
+  else
+    error ('The selected interface regularity is not implemented in this function.')
+  end
 end
 
 end
