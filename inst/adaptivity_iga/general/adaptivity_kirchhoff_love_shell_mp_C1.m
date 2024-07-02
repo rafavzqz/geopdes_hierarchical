@@ -53,7 +53,7 @@
 function [geometry, hmsh, hspace, u, solution_data] = adaptivity_kirchhoff_love_shell_mp_C1 (problem_data, method_data, adaptivity_data, plot_data)
 
 if (nargin == 3)
-  plot_data = struct ('print_info', true, 'plot_hmesh', false, 'plot_discrete_sol', false);
+  plot_data = struct ('print_info', true, 'plot_hmesh', false);
 end
 if (~isfield (plot_data, 'print_info'))
   plot_data.print_info = true;
