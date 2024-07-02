@@ -69,9 +69,6 @@ end
 if (plot_data.plot_hmesh)
   fig_mesh = figure;
 end
-if (plot_data.plot_discrete_sol)
-  fig_sol = figure;
-end
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % Initialization of the hierarchical mesh and space
