@@ -1,4 +1,5 @@
-% SP_DRCHLT_C1_SHELLS: 
+% SP_DRCHLT_C1_SHELLS: impose zero displacement on selected boundaries, for
+%                       C1 multipatch splines
 %
 % USAGE:
 %
@@ -14,7 +15,16 @@
 %
 % OUTPUT:
 %
-%  u:        the computed degrees of freedom
+%  u:           assigned value to the degrees of freedom (zero for now)
+%  dofs:        global numbering of the corresponding basis functions
+%  kernel_info: a struct with information of kernel computation, containing:
+%              - vertices_numbers: vertices which contain a function in the kernel
+%              - all_vertex_dofs:  all functions on those vertices
+%              - quasi_interior_dofs: functions that will be treated as
+%                                     internal ones (as many as in the kernel)
+%              - B_change_local: coefficients of the functions in the kernel,
+%                                in terms of vertex basis functions. Matrix of size
+%                                numel(all_vertex_dofs) x numel (quasi_interior_dofs)
 %
 % Copyright (C) 2023, Rafael Vazquez
 %
