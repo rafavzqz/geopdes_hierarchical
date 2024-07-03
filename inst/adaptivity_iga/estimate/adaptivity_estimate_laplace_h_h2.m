@@ -1,4 +1,5 @@
 % ADAPTIVITY_ESTIMATE_LAPLACE_H_H2: compute the estimator by solving the problem in a globally refined mesh.
+%  The implementation is unefficient, but the estimator should work properly.
 %
 % USAGE:
 %
