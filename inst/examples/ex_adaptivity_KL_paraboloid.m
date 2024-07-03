@@ -1,4 +1,5 @@
-clear problem_data method_data adaptivity_data
+% PHYSICAL DATA OF THE PROBLEM
+clear problem_data
 
 problem_data.geo_name = 'geo_paraboloid_ASG1.txt';
 
@@ -24,7 +25,8 @@ problem_data.f       = @(x, y, z, ind) cat(1, ...
     reshape (hy (x,y,z), [1, size(x)]), ...
     reshape (hz (x,y,z), [1, size(x)]));
 
-% Discretization parameters
+% DISCRETIZATION PARAMETERS
+clear method_data
 deg = 4;
 method_data.degree      = deg * [1 1];     % Degree of the splines
 method_data.regularity  = (deg-2) * [1 1]; % Regularity of the splines
@@ -34,6 +36,8 @@ method_data.nquad       = (deg+1) * [1 1]; % Points for the Gaussian quadrature 
 method_data.space_type  = 'standard';
 method_data.truncated   = 1;            % 0: False, 1: True
 
+% ADAPTIVITY PARAMETERS
+clear adaptivity_data
 adaptivity_data.flag          = 'elements';
 adaptivity_data.C0_est        = 1.0;
 adaptivity_data.mark_param    = .25;

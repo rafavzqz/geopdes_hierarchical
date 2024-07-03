@@ -97,6 +97,9 @@ end
 if (~isfield (plot_data, 'plot_discrete_sol'))
   plot_data.plot_discrete_sol = false;
 end
+if (~isfield (problem_data, 'uex'))
+  problem_data.uex = [];
+end
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)
@@ -118,7 +121,7 @@ if (~isfield(method_data, 'interface_regularity') || method_data.interface_regul
   warning('Setting interface regularity to C1')
   method_data.interface_regularity = 1;
 end
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 % ADAPTIVE LOOP
 iter = 0;

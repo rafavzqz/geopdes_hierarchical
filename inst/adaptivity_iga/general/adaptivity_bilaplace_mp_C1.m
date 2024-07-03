@@ -97,6 +97,9 @@ end
 if (~isfield (plot_data, 'plot_discrete_sol'))
   plot_data.plot_discrete_sol = false;
 end
+if (~isfield (problem_data, 'uex'))
+  problem_data.uex = [];
+end
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)
