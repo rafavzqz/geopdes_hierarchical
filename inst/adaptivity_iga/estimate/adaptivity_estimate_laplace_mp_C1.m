@@ -1,4 +1,5 @@
-% ADAPTIVITY_ESTIMATE_LAPLACE_MP_C1: Computation of a posteriori error indicators for Laplacian problem, using globally smooth (C^1) hierarchical spaces.
+% ADAPTIVITY_ESTIMATE_LAPLACE_MP_C1: Computation of a posteriori error indicators for Laplacian problem, 
+%                                    using hierarchical C1 multipatch splines.
 %
 % We consider the diffusion problem
 %
@@ -20,7 +21,7 @@
 %    - grad_c_diff:   gradient of the diffusion coefficient (equal to zero if not present)
 %    - f:             function handle of the source term
 %   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
-%    - flag:          'elements' or 'functions', depending on the refinement strategy.
+%    - flag:          'elements'. Marking by 'functions' is not implemented.
 %    - C0_est:        multiplicative constant for the error indicators
 %
 %
@@ -30,9 +31,6 @@
 %           - (Buffa and Giannelli, 2016) When adaptivity_data.flag == 'elements': for an element Q,
 %                          est_Q := C0_est*h_Q*(int_Q |f + div(epsilon(x) grad(U))|^2)^(1/2),
 %           where h_Q is the local meshsize and U is the Galerkin solution
-%           - (Buffa and Garau, 2016) When adaptivity_data.flag == 'functions': for a B-spline basis function b,
-%                          est_b := C0_est*h_b*(int_{supp b} a_b*|f + div(epsilon(x) grad(U))|^2*b)^(1/2),
-%           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity, and U is the Galerkin solution
 %
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez

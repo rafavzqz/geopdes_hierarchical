@@ -1,11 +1,37 @@
-% ADAPTIVITY_linear_elasticity: solve the linear elasticity problem with an
-% adaptive isogeometric method based on hierarchical splines.
+% ADAPTIVITY_KIRCHHOFF_LOVE_SHELL: solve the Kirchhoff-Love shell formulation with an
+% adaptive isogeometric method based on hierarchical splines, in single-patch domains.
 %
-% [geometry, hmsh, hspace, u, solution_data] = adaptivity_linear_elasticity (problem_data, method_data, adaptivity_data, plot_data)
+% [geometry, hmsh, hspace, u, solution_data] = adaptivity_kirchhoff_love_shell (problem_data, method_data, adaptivity_data, plot_data)
 %
-% XXXXXXXXXXXXX TEXT IS MISSING
+% INPUT:
+%
+%  problem_data: a structure with data of the problem. It contains the fields:
+%    - geo_name:     name of the file containing the geometry
+%    - drchlt_sides: sides with Dirichlet boundary condition (for now, only homogeneous conditions in every direction)
+%    - E_coeff:      function handle for Young's modulus
+%    - nu_coeff:     function handle for Poisson's ratio
+%    - thickness:    scalar value, thickness of the shell
+%    - f:            source term, distributed load
 % 
-% Copyright (C) 2017 Cesare Bracco, Rafael Vazquez
+%  method_data : a structure with discretization data (see adaptivity_laplace).
+%  adaptivity_data: a structure with data for the adaptive method (see adaptivity_laplace).
+%  plot_data: a structure to decide whether to plot things during refinement (see adaptivity_laplace).
+% 
+% OUTPUT:
+%    geometry:      geometry structure (see mp_geo_load)
+%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh)
+%    hspace:        object representing the space of hierarchical splines (see hierarchical_space)
+%    u:             computed degrees of freedom, at the last iteration.
+%    solution_data: a structure with the following fields
+%      - iter:       iteration on which the adaptive procedure stopped
+%      - ndof:       number of degrees of freedom for each computed iteration
+%      - nel:        number of elements for each computed iteration
+%      - gest:       global error estimator, for each computed iteration
+%      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
+%      - energy:     computed energy, for each iteration
+%      - flag:       a flag with the stopping criterion satisfied (see adaptivity_laplace_mp_C1).
+%
+% Copyright (C) 2017-2024 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
