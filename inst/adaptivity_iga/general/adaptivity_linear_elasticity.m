@@ -1,11 +1,25 @@
-% ADAPTIVITY_linear_elasticity: solve the linear elasticity problem with an
+% ADAPTIVITY_LINEAR_ELASTICITY: solve the linear elasticity problem with an
 % adaptive isogeometric method based on hierarchical splines.
 %
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_linear_elasticity (problem_data, method_data, adaptivity_data, plot_data)
 %
-% XXXXXXXXXXXXX TEXT IS MISSING
+% INPUT:
+%
+%  problem_data: a structure with data of the problem. It contains the fields:
+%    - geo_name:     name of the file containing the geometry
+%    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
+%    - drchlt_sides: sides with Dirichlet boundary condition
+%    - c_diff:       diffusion coefficient (see solve_laplace)
+%    - grad_c_diff:  gradient of the diffusion coefficient (if not present, it is taken as zero)
+%    - f:            function handle of the source term
+%    - g:            function for Neumann condition (if nmnn_sides is not empty)
+%    - h:            function for Dirichlet boundary condition
+%
+%  method_data : a structure with discretization data (see adaptivity_laplace)
+%  adaptivity_data: a structure with data for the adaptive method (see adaptivity_laplace)
+%  plot_data: a structure to decide whether to plot things during refinement (see adaptivity_laplace)
 % 
-% Copyright (C) 2017 Cesare Bracco, Rafael Vazquez
+% Copyright (C) 2017-2018 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -63,7 +77,7 @@ while (1)
 % SOLVE AND PLOT
   if (plot_data.print_info)
     disp('SOLVE:')
-    fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
+    fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
   u = adaptivity_solve_linear_elasticity (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
