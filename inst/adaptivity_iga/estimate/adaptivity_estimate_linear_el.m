@@ -39,6 +39,7 @@
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017, 2018 Cesare Bracco, Rafael Vazquez
 % Copyright (C) 2020 Ondine Chanon
+% Copyright (C) 2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -208,6 +209,7 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
           sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
           msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
           sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'divergence', true);
+          sp_bnd_struct = change_connectivity_localized_Csub (sp_bnd_struct, hspace, ilev);
 
           stress = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'stress', ...
             problem_data.lambda_lame, problem_data.mu_lame);
@@ -443,9 +445,14 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
         msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
  
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
-        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true, 'divergence', true);
+        sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true, 'divergence', true);
 
-        stress = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+        [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{lev});
+        u_patch = zeros (sp_bnd_struct.ndof, 1);
+        u_patch(pos_gnum) = u_lev(pos_Csub);
+        stress = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
+        
         normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
         stress_normal = reshape (sum (bsxfun (@times, stress, normal), 2), [], msh_side.nqn, msh_side.nel);
 
