@@ -94,9 +94,9 @@ while (1)
   
 % ESTIMATE
    if (plot_data.print_info); disp('ESTIMATE:'); end
-     est = adaptivity_estimate_linear_el (u, hmsh, hspace, problem_data, adaptivity_data);
-     est_elem{iter} = est.';
-     gest(iter) = norm (est);
+   est = adaptivity_estimate_linear_el (u, hmsh, hspace, problem_data, adaptivity_data);
+   est_elem{iter} = est.';
+   gest(iter) = norm (est);
    if (plot_data.print_info); fprintf('Computed error estimate: %e \n', gest(iter)); end
    if (isfield (problem_data, 'graduex'))
      [err_h1(iter), err_l2(iter), err_h1s(iter),~,~,err_h1s_elem{iter}] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);

@@ -51,7 +51,7 @@ function sp = space_bubble_function_laplacian_mp (hmsh, degree, varargin)
   sp.nsh = sp.nsh_max * ones(1,hmsh.nel);
   sp.ndof = hmsh.nel * sp.nsh_max;
   sp.ndof_per_level = [hmsh.nel_per_level] * sp.nsh_max;
-  sp.space_of_level = [];
+%  sp.space_of_level = [];
 
 % Build bubble functions as Bernstein polynomials on a reference element
   ndim = hmsh.ndim;
@@ -66,7 +66,7 @@ function sp = space_bubble_function_laplacian_mp (hmsh, degree, varargin)
   elseif (ndim == 3)
     geometry = geo_load (nrbextrude (nrb4surf ([0 0], [1 0], [0 1], [1 1])));
   end
-  nqn_dir = hmsh.msh_lev{1}.nqn_dir;
+  nqn_dir = hmsh.mesh_of_level(1).msh_patch{1}.nqn_dir;
   rule     = msh_gauss_nodes (nqn_dir);
   [qn, qw] = msh_set_quad_nodes (breaks_reference, rule);
   msh_reference = msh_cartesian (breaks_reference, qn, qw, geometry);

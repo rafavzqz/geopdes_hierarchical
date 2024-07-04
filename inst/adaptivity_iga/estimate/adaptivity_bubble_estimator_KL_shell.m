@@ -25,6 +25,9 @@
 %
 %   est: computed a posteriori error indicators 
 %
+% WARNING: the current version of the code does not modify the bubble space
+%           depending on the boundary conditions
+%
 %   For more information on the bubble estimators, see Coradello, Antolin and Buffa, CMAME, 2020.
 %         
 %
@@ -74,7 +77,7 @@ function estimator = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, prob
     is_scalar = false;
   end  
   
-  estimator = zeros(1,hmsh.nel);
+  estimator = zeros(hmsh.nel, 1);
   
   shifting_vector = cumsum([0 hmsh.nel_per_level]);
 
