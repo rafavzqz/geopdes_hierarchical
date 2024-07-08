@@ -1,6 +1,46 @@
+% SP_BILAPLACIAN_DRCHLT_C1: assign the degrees of freedom of essential boundary conditions (value and normal derivative) through a projection.
+%  On boundary vertices, the kernel is computed to remove linear dependencies when restricting the functions to the boundary.
+%
+%   [u, dofs, kernel_info] = sp_bilaplacian_drchlt_C1 (hspace, hmsh, refs, h, dudn)
+%
+% INPUT:
+%
+%  hspace:     object representing the space of hierarchical splines (see hierarchical_space_mp_C1)
+%  hmsh:       object representing the hierarchical mesh (see hierarchical_mesh_mp)
+%  refs:       boundary references on which the conditions are imposed
+%  h:          function handle to compute the Dirichlet condition
+%  dudn:       function handle to compute the Neumann condition
+%
+% OUTPUT:
+%
+%  u:           assigned value to the degrees of freedom
+%  dofs:        global numbering of the corresponding basis functions
+%  kernel_info: a struct with information of kernel computation, containing:
+%              - vertices_numbers: vertices which contain a function in the kernel
+%              - all_vertex_dofs:  all functions on those vertices
+%              - quasi_interior_dofs: functions that will be treated as
+%                                     internal ones (as many as in the kernel)
+%              - B_change_local: coefficients of the functions in the kernel,
+%                                in terms of vertex basis functions. Matrix of size
+%                                numel(all_vertex_dofs) x numel (quasi_interior_dofs)
+%
+% Copyright (C) 2022-2023 Cesare Bracco, Andrea Farahat, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 function [u_drchlt, drchlt_dofs, kernel_info] = sp_bilaplacian_drchlt_C1 (hspace, hmsh, refs, h, dudn)
 
-% refs should be the whole boundary, for now
 M = spalloc (hspace.ndof, hspace.ndof, hspace.ndof);
 rhs = zeros (hspace.ndof, 1);
 
@@ -28,18 +68,14 @@ for iref = refs
       if (~isempty (active_cells_patch))
         msh_lev_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
         sp_lev_patch = hspace.space_of_level(ilev).sp_patch{iptc};
-%         msh_bnd = msh_lev_patch.boundary(iside);
         msh_side = msh_eval_boundary_side (msh_lev_patch, iside, active_cells_patch);
         msh_side_from_interior = msh_boundary_side_from_interior (msh_lev_patch, iside);
-%       hmsh_sfi = hmsh_boundary_side_from_interior (hmsh, iside);
 
         sp_bnd = sp_lev_patch.constructor (msh_side_from_interior);
         msh_bnd_struct = msh_evaluate_element_list (msh_side_from_interior, active_cells_patch);
         sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_bnd_struct, 'value', true, 'gradient', true);
-%         sp_bnd_struct = sp_precompute (sp_bnd, msh_side_from_interior, 'value', true, 'gradient', true);
 
         sp_bnd = sp_lev_patch.boundary(iside);
-%         Cpatch = hspace.space_of_level(ilev).Cpatch{iptc};        
         [Cpatch, Cpatch_cols_lev] = sp_compute_Cpatch (hspace.space_of_level(ilev), iptc);
         [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, Cpatch_cols_lev);
         CC = Cpatch(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
@@ -154,20 +190,3 @@ function indices = indices_reorientation (ndof_dir, operations)
     indices = indices.';
   end   
 end
-
-
-% u_drchlt = M(drchlt_dofs, drchlt_dofs) \ rhs(drchlt_dofs, 1);
-% 
-% uu = sparse (hspace.ndof, 1);
-% uu(drchlt_dofs) = u_drchlt;
-% 
-% drchlt_dofs2 = setdiff (drchlt_dofs2, drchlt_dofs);
-% rhs2 = rhs2 - M2 * uu;
-% u_drchlt2 = M2(drchlt_dofs2, drchlt_dofs2) \ rhs2(drchlt_dofs2);
-% 
-% uu(drchlt_dofs2) = u_drchlt2;
-% 
-% drchlt_dofs = union (drchlt_dofs, drchlt_dofs2);
-% u_drchlt = uu(drchlt_dofs);
-% 
-% end
