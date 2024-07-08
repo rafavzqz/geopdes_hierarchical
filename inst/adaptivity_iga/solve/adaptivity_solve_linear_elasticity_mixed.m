@@ -15,7 +15,7 @@
 %
 % USAGE:
 %
-% [u, press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_mul, method_data)
+% [u, press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_mul, problem_data)
 %
 % INPUT:
 %

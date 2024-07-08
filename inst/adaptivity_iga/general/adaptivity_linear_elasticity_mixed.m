@@ -17,7 +17,8 @@
 %    - g:            function for Neumann condition (if nmnn_sides is not empty)
 %    - h:            function for Dirichlet boundary condition
 %
-%  method_data : a structure with discretization data (see adaptivity_laplace)
+%  method_data : a structure with discretization data (see adaptivity_laplace). 
+%     Using Taylor-Hood splines. The degree and regularity correspond to the Lagrange multiplier.
 %  adaptivity_data: a structure with data for the adaptive method (see adaptivity_laplace)
 %  plot_data: a structure to decide whether to plot things during refinement (see adaptivity_laplace)
 %
@@ -26,8 +27,8 @@
 %    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh)
 %    hspace:        object representing the space of hierarchical splines for displacement (see hierarchical_space)
 %    u:             computed degrees of freedom for the displacement, at the last iteration.
-%    hspace_p:      object representing the space of hierarchical splines for pressure (see hierarchical_space)
-%    press:         computed degrees of freedom for the pressure, at the last iteration.
+%    hspace_p:      object representing the space of hierarchical splines for the Lagrange multiplier (see hierarchical_space)
+%    press:         computed degrees of freedom for the Lagrange multiplier, at the last iteration.
 %    solution_data: output_data, see adaptivity_laplace.
 % 
 % Copyright (C) 2017-2018 Cesare Bracco
