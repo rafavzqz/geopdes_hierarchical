@@ -1,4 +1,5 @@
 % ADAPTIVITY_ESTIMATE_LAPLACE_H_H2: compute the estimator by solving the problem in a globally refined mesh.
+%  The implementation is unefficient, but the estimator should work properly.
 %
 % USAGE:
 %
@@ -43,7 +44,11 @@ end
 adaptivity_data.flag = 'elements';
 [hmsh_h2, hspace_h2, Cref] = adaptivity_refine (hmsh, hspace, hmsh.active, adaptivity_data);
 
-u_h2 = adaptivity_solve_laplace_mp_C1 (hmsh_h2, hspace_h2, problem_data, method_data);
+if (isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
+  u_h2 = adaptivity_solve_laplace_mp_C1 (hmsh_h2, hspace_h2, problem_data, method_data);
+else
+  u_h2 = adaptivity_solve_laplace (hmsh_h2, hspace_h2, problem_data);
+end
 
 % Compute the estimator on the fine mesh, and then pass to the coarse mesh
 zeroex = @(varargin) zeros (size(varargin{1}));

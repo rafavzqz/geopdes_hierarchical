@@ -5,7 +5,7 @@
 %
 % INPUT:
 %     
-%   hspace: object representing the hierarchical space of test functions (see hierarchical_space_mp)
+%   hspace: object representing the hierarchical space of test functions (see hierarchical_space_mp_C1)
 %   hmsh:   object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   coeff:  function handle to compute the source function
 %   patches: list of patches where the integrals have to be computed. By default, all patches are selected.
@@ -18,7 +18,7 @@
 %  of the same level of the active elements have to be computed. See also
 %  op_gradu_gradv_hier for more details.
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2023 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

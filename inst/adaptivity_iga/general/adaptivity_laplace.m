@@ -134,15 +134,15 @@ while (1)
     fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
   end
     
-  if (~hspace_check_partition_of_unity (hspace, hmsh))
-    disp('ERROR: The partition-of-the-unity property does not hold.')
-    solution_data.flag = -1; break
-  end
+  % if (~hspace_check_partition_of_unity (hspace, hmsh))
+  %   disp('ERROR: The partition-of-the-unity property does not hold.')
+  %   solution_data.flag = -1; break
+  % end
 
 % SOLVE AND PLOT
   if (plot_data.print_info)
     disp('SOLVE:')
-    fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
+    fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
   u = adaptivity_solve_laplace (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
@@ -160,6 +160,8 @@ while (1)
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
   est = adaptivity_estimate_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
+%  est = adaptivity_estimate_laplace_h_h2 (u, hmsh, hspace, problem_data, method_data);
+%  est = adaptivity_bubble_estimator_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))

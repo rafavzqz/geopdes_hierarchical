@@ -4,8 +4,8 @@ clear problem_data
 problem_data.geo_name = 'geo_square.txt';
 
 % Type of boundary conditions for each side of the domain
-problem_data.nmnn_sides   = [];
-problem_data.drchlt_sides = [1 2 3 4];
+problem_data.nmnn_sides   = [3];
+problem_data.drchlt_sides = [1 2 4];
 
 % Physical parameters
 problem_data.c_diff  = @(x, y) ones(size(x));

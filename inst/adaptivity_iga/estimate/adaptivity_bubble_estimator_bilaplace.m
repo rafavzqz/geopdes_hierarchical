@@ -18,7 +18,10 @@
 %
 % OUTPUT:
 %
-%   est: computed a posteriori error indicators 
+%   est: computed a posteriori error indicators
+%
+% WARNING: the current version of the code does not modify the bubble space
+%           depending on the boundary conditions
 %
 %   For more information on the bubble estimators, see Coradello, Antolin and Buffa, CMAME, 2020.
 %         
@@ -57,7 +60,7 @@ function estimator = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, pro
     deg = hspace.space_of_level(1).degree;
     space_bubble = space_bubble_function_bilaplacian (hmsh, deg);
     nqn = hmsh.mesh_of_level(1).nqn;
-  elseif (isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
+  elseif (isa (hspace.space_of_level(1), 'sp_multipatch') || isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
     deg = hspace.space_of_level(1).sp_patch{1}.degree;    
     space_bubble = space_bubble_function_bilaplacian_mp (hmsh, deg);
     nqn = hmsh.mesh_of_level(1).msh_patch{1}.nqn;
@@ -65,7 +68,7 @@ function estimator = adaptivity_bubble_estimator_bilaplace (u, hmsh, hspace, pro
     error ('Estimator not implemented for this kind of space object')
   end  
   
-  estimator = zeros(1,hmsh.nel);
+  estimator = zeros(hmsh.nel, 1);
   
   shifting_vector = cumsum([0 hmsh.nel_per_level]);
   

@@ -134,7 +134,7 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
   dernum = ders{1}; der2num = ders{2};
 
   x = cell (hmsh.rdim, 1);
-  for idim = 1:hmsh.rdim;
+  for idim = 1:hmsh.rdim
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
   end
 

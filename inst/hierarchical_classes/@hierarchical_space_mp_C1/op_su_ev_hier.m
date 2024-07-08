@@ -74,7 +74,7 @@ function varargout = op_su_ev_hier (hspu, hspv, hmsh, lambda, mu, patch_list)
         dofs_v = [];
         for icomp = 1:rdim
           dofs_u = union (dofs_u, (icomp-1)*hspu.ndof + (1:ndofs_u));
-          dofs_v = union (dofs_v, (icomp-1)*hspv.ndof + (1:ndofs_u));
+          dofs_v = union (dofs_v, (icomp-1)*hspv.ndof + (1:ndofs_v));
         end
 
         Csub_u = repmat (hspu.Csub(ilev), 1, rdim);

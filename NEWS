@@ -1,3 +1,11 @@
+Summary of important changes for geopdes_hierarchical-3.4.0:
+-----------------------------------------------------------------------------
+* Added new class HIERARCHICAL_SPACE_MP_C1
+* Added new solvers for C1 spaces: Laplace, bilaplacian, Kirchhoff-Love shell
+* Added new solver for linear elasticity with mixed formulation
+* Added h-h/2 estimators for Laplace and bilaplacian
+* Added bubble estimators (without boundary modifications) for Laplace, bilaplacian, Kirchhoff-Love and linear elasticity.
+
 Summary of important changes for geopdes_hierarchical-3.2.2:
 -----------------------------------------------------------------------------
 * matrix_basis_change__: remove use of "stable" tag

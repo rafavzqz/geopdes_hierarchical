@@ -6,7 +6,7 @@
 % INPUT:
 %     
 %     u:           vector of dof weights
-%     hspace:      object representing the space of discrete functions (see hierarchical_space_mp)
+%     hspace:      object representing the space of discrete functions (see hierarchical_space_mp_C1)
 %     geometry:    geometry structure (see geo_load)
 %     npts:        number of points along each parametric direction where to evaluate
 %     pts:         cell array with the coordinates along each parametric direction of the points where to evaluate
@@ -25,7 +25,7 @@
 %    The current version is very unefficient, as it passes the solution to
 %     the tensor-product space of the finest level.
 %
-% Copyright (C) 2015 Rafael Vazquez
+% Copyright (C) 2015-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

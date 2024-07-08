@@ -7,7 +7,7 @@
 %    space:      the coarsest space, an object of the class sp_scalar (see sp_scalar or sp_vector)
 %    space_type: select which kind of hierarchical space to construct. The options are
 %                - 'standard',   the usual hierachical splines space (default value)
-%                - 'simplified', a simplified basis, were only children of removed functions are activated
+%                - 'simplified', a simplified basis, where only children of removed functions are activated
 %    truncated:  decide whether the basis will be truncated or not (not truncated by default)
 %    regularity: will be used for refinement. For vectors, it should be given in a cell array. By default it is degree minus one
 %

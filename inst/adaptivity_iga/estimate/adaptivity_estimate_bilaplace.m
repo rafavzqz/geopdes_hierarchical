@@ -1,4 +1,4 @@
-% ADAPTIVITY_ESTIMATE_LAPLACE: Computation of a posteriori error indicators for Bilaplacian problem
+% ADAPTIVITY_ESTIMATE_BILAPLACE: Computation of a posteriori error indicators for Bilaplacian problem
 %
 % USAGE:
 %

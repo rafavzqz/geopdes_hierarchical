@@ -2,7 +2,7 @@
 %
 % USAGE:
 %
-%   est = adaptivity_bubble_estimator_laplace (u, hmsh, hspace, problem_data)
+%   est = adaptivity_bubble_estimator_laplace (u, hmsh, hspace, problem_data, adaptivity_data)
 %
 % INPUT:
 %
@@ -19,6 +19,9 @@
 % OUTPUT:
 %
 %   est: computed a posteriori error indicators 
+%
+% WARNING: the current version of the code does not modify the bubble space
+%           depending on the boundary conditions
 %
 %   For more information on the bubble estimators, see Coradello, Antolin and Buffa, CMAME, 2020.
 %         
@@ -55,13 +58,13 @@ function estimator = adaptivity_bubble_estimator_laplace (u, hmsh, hspace, probl
     deg = hspace.space_of_level(1).degree;
     space_bubble = space_bubble_function_laplacian (hmsh, deg);
     nqn = hmsh.mesh_of_level(1).nqn;
-  elseif (isa (hspace.space_of_level(1), 'sp_multipatch'))
+  elseif (isa (hspace.space_of_level(1), 'sp_multipatch') || isa (hspace.space_of_level(1), 'sp_multipatch_C1'))
     deg = hspace.space_of_level(1).sp_patch{1}.degree;    
     space_bubble = space_bubble_function_laplacian_mp (hmsh, deg);
     nqn = hmsh.mesh_of_level(1).msh_patch{1}.nqn;
   end  
   
-  estimator = zeros(1,hmsh.nel);
+  estimator = zeros(hmsh.nel, 1);
   
   shifting_vector = cumsum([0 hmsh.nel_per_level]);
   

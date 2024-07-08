@@ -1,7 +1,7 @@
 % MARK_NEAR_VERTICES: mark elements close to vertices to maintain the linear
 %     independence of C^1 multipatch functions.
 %
-%   [marked, flag] = adaptivity_refine (hmsh, hspace, marked)
+%   [marked, flag] = mark_near_vertices (hmsh, hspace, marked)
 %
 % INPUT:
 %
@@ -34,8 +34,8 @@
 function [marked, flag] = mark_near_vertices (hmsh, hspace, marked)
 
 flag = false;
-% Using brute force (check every vertex at every level)
 vertices = hspace.space_of_level(1).vertices;
+
 for ilev = 1:hmsh.nlevels
   new_marked = [];
   

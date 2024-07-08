@@ -73,7 +73,7 @@ elseif (strcmpi (option, 'full'))
   Csub{1} = Csub{1}(:,hspace.active{1});
   for lev = 2:hspace.nlevels
     I = speye (hspace.space_of_level(lev).ndof); 
-    aux = matrix_basis_change__ (hspace, lev); % FIX: remove hmsh
+    aux = matrix_basis_change__ (hspace, lev);
     Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
     clear aux I
   end

@@ -97,6 +97,9 @@ end
 if (~isfield (plot_data, 'plot_discrete_sol'))
   plot_data.plot_discrete_sol = false;
 end
+if (~isfield (problem_data, 'uex'))
+  problem_data.uex = [];
+end
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)
@@ -114,7 +117,11 @@ if (isfield (problem_data, 'graduex'))
 end
   
 % Initialization of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
+if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity ~= 1)
+  warning('Setting interface regularity to C1')
+  method_data.interface_regularity = 1;
+end
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 % ADAPTIVE LOOP
 iter = 0;
@@ -146,6 +153,8 @@ while (1)
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
   est = adaptivity_estimate_laplace_mp_C1 (u, hmsh, hspace, problem_data, adaptivity_data);
+%  est = adaptivity_estimate_laplace_h_h2 (u, hmsh, hspace, problem_data, method_data);
+%  est = adaptivity_bubble_estimator_laplace (u, hmsh, hspace, problem_data, adaptivity_data);
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %f \n', gest(iter)); end
   if (isfield (problem_data, 'graduex'))
@@ -173,7 +182,7 @@ while (1)
   
 % MARK
   if (plot_data.print_info); disp('MARK:'); end
-  [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+    [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
   if (plot_data.print_info)
     fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
     disp('REFINE:')

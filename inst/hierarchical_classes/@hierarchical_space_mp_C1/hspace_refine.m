@@ -4,7 +4,7 @@
 %
 % INPUT:
 %
-%   hspace:    object representing the coarse hierarchical space (see hierarchical_space_mp)
+%   hspace:    object representing the coarse hierarchical space (see hierarchical_space_mp_C1)
 %   hmsh:      object representing the refined hierarchical mesh (see hierarchical_mesh_mp)
 %   marked:    cell array with the indices, in the tensor product setting, of the marked elements/functions for each level
 %   new_cells: cell array with the global indices of the new active elements for each level
@@ -12,7 +12,7 @@
 % OUTPUT:
 %
 %   hspace:    object representing the refined hierarchical space (see hierarchical_space)
-% % %   Cref:      a matrix to pass from the coarse space (input) to the refined space (output)
+%   Cref:      a matrix to pass from the coarse space (input) to the refined space (output)
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2023 Rafael Vazquez

@@ -1,12 +1,13 @@
 % OP_KL_SHELLS_HIER: assemble the Kirchhoff-Love shell stiffness matrix.
 %
 %   mat = op_KL_shells_hier (hspu, hspv, hmsh, E_coeff, nu_coeff, t_coeff, [patches]);
+%   [rows, cols, vals] = op_KL_shells_hier (hspu, hspv, hmsh, E_coeff, nu_coeff, t_coeff, [patches]);
 %
 % INPUT:
 %
 %  hspu:     object representing the space of trial functions (see hierarchical_space_mp_C1)
-%  hspu:     object representing the space of test functions (see hierarchical_space_mp_C1)
-%  hmsh:     object defining the domain partition and the quadrature rule (see msh_cartesian)
+%  hspv:     object representing the space of test functions (see hierarchical_space_mp_C1)
+%  hmsh:     object defining the domain partition and the quadrature rule (see hierarchical_mesh_mp)
 %  E_coeff:  function handle to compute the Young's modulus
 %  nu_coeff: function handle to compute the Poisson's ratio
 %  t_coeff:  thickness of the shell, scalar value
@@ -14,7 +15,7 @@
 %
 % OUTPUT:
 %
-%  mat:    assembled stiffness matrix
+%  mat:    assembled matrix
 % 
 % Copyright (C) 2023 Rafael Vazquez
 %
@@ -68,7 +69,7 @@ function varargout = op_KL_shells_hier (hspu, hspv, hmsh, E_coeff, nu_coeff, t_c
         dofs_v = [];
         for icomp = 1:rdim
           dofs_u = union (dofs_u, (icomp-1)*hspu.ndof + (1:ndofs_u));
-          dofs_v = union (dofs_v, (icomp-1)*hspv.ndof + (1:ndofs_u));
+          dofs_v = union (dofs_v, (icomp-1)*hspv.ndof + (1:ndofs_v));
         end
 
         Csub_u = repmat (hspu.Csub(ilev), 1, rdim);

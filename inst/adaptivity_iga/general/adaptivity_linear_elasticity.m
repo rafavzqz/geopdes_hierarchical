@@ -1,11 +1,32 @@
-% ADAPTIVITY_linear_elasticity: solve the linear elasticity problem with an
+% ADAPTIVITY_LINEAR_ELASTICITY: solve the linear elasticity problem with an
 % adaptive isogeometric method based on hierarchical splines.
 %
 % [geometry, hmsh, hspace, u, solution_data] = adaptivity_linear_elasticity (problem_data, method_data, adaptivity_data, plot_data)
 %
-% XXXXXXXXXXXXX TEXT IS MISSING
+% INPUT:
+%
+%  problem_data: a structure with data of the problem. It contains the fields:
+%    - geo_name:     name of the file containing the geometry
+%    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
+%    - drchlt_sides: sides with Dirichlet boundary condition
+%    - c_diff:       diffusion coefficient (see solve_laplace)
+%    - grad_c_diff:  gradient of the diffusion coefficient (if not present, it is taken as zero)
+%    - f:            function handle of the source term
+%    - g:            function for Neumann condition (if nmnn_sides is not empty)
+%    - h:            function for Dirichlet boundary condition
+%
+%  method_data : a structure with discretization data (see adaptivity_laplace)
+%  adaptivity_data: a structure with data for the adaptive method (see adaptivity_laplace)
+%  plot_data: a structure to decide whether to plot things during refinement (see adaptivity_laplace)
 % 
-% Copyright (C) 2017 Cesare Bracco, Rafael Vazquez
+% OUTPUT:
+%    geometry:      geometry structure (see geo_load or mp_geo_load)
+%    hmsh:          object representing the hierarchical mesh (see hierarchical_mesh)
+%    hspace:        object representing the space of hierarchical splines (see hierarchical_space)
+%    u:             computed degrees of freedom, at the last iteration.
+%    solution_data: output_data, see adaptivity_laplace.
+%
+% Copyright (C) 2017-2018 Cesare Bracco, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -55,15 +76,15 @@ while (1)
   if (plot_data.print_info)
     fprintf('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
   end
-  if (~hspace_check_partition_of_unity (hspace, hmsh))
-    disp('ERROR: The partition-of-the-unity property does not hold.')
-    solution_data.flag = -1; break
-  end
+  % if (~hspace_check_partition_of_unity (hspace, hmsh))
+  %   disp('ERROR: The partition-of-the-unity property does not hold.')
+  %   solution_data.flag = -1; break
+  % end
   
 % SOLVE AND PLOT
   if (plot_data.print_info)
     disp('SOLVE:')
-    fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
+    fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
   u = adaptivity_solve_linear_elasticity (hmsh, hspace, problem_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
@@ -79,18 +100,18 @@ while (1)
   end
   
 % ESTIMATE
-   if (plot_data.print_info); disp('ESTIMATE:'); end
-     est = adaptivity_estimate_linear_el (u, hmsh, hspace, problem_data, adaptivity_data);
-     est_elem{iter} = est.';
-     gest(iter) = norm (est);
-   if (plot_data.print_info); fprintf('Computed error estimate: %e \n', gest(iter)); end
-   if (isfield (problem_data, 'graduex'))
-     [err_h1(iter), err_l2(iter), err_h1s(iter),~,~,err_h1s_elem{iter}] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
-     if (plot_data.print_info); fprintf('Error in H1 seminorm = %e\n', err_h1s(iter)); end
-   elseif (isfield (problem_data, 'uex'))
-     err_l2(iter) = sp_l2_error (hspace, hmsh, u, problem_data.uex);
-     if (plot_data.print_info); fprintf('Error in L2 norm = %e\n', err_l2(iter)); end
-   end
+  if (plot_data.print_info); disp('ESTIMATE:'); end
+  est = adaptivity_estimate_linear_el (u, hmsh, hspace, problem_data, adaptivity_data);
+  est_elem{iter} = est.';
+  gest(iter) = norm (est);
+  if (plot_data.print_info); fprintf('Computed error estimate: %e \n', gest(iter)); end
+  if (isfield (problem_data, 'graduex'))
+    [err_h1(iter), err_l2(iter), err_h1s(iter),~,~,err_h1s_elem{iter}] = sp_h1_error (hspace, hmsh, u, problem_data.uex, problem_data.graduex);
+    if (plot_data.print_info); fprintf('Error in H1 seminorm = %e\n', err_h1s(iter)); end
+  elseif (isfield (problem_data, 'uex'))
+    err_l2(iter) = sp_l2_error (hspace, hmsh, u, problem_data.uex);
+    if (plot_data.print_info); fprintf('Error in L2 norm = %e\n', err_l2(iter)); end
+  end
     
 % STOPPING CRITERIA
   if (gest(iter) < adaptivity_data.tol)

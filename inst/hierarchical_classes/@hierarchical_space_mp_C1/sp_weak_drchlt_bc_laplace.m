@@ -17,8 +17,8 @@
 %
 % INPUTS:
 %     
-%    space:     space object (see sp_vector)
-%    msh:       mesh object (see msh_cartesian)
+%    space:     space object (see hierarchical_space_mp_C1)
+%    msh:       mesh object (see hierarchical_mesh_mp)
 %    bnd_sides: boundary sides on which the Dirichlet condition is imposed
 %    bnd_func:  the condition to be imposed (g in the equations)
 %    coeff:     function handle for the viscosity coefficient (mu in the equation)
@@ -26,8 +26,8 @@
 %   
 % OUTPUT:
 %
-%     N_mat:       the computed matrix, to be added in the left hand-side
-%     N_rhs:       the computed right hand-side
+%    N_mat:       the computed matrix, to be added in the left hand-side
+%    N_rhs:       the computed right hand-side
 %
 % Copyright (C) 2014 Adriano Cortes, Rafael Vazquez
 % Copyright (C) 2015, 2017, 2022 Rafael Vazquez
@@ -62,7 +62,7 @@ function [A, rhs] = sp_weak_drchlt_bc_laplace (hspace, hmsh, bnd_sides, bnd_func
     iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
     for ilev = 1:hmsh.boundary.nlevels
       patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
-      patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
+      % patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
       dofs_on_lev = 1:last_dof(ilev);
 
       for ii = 1:numel(iref_patch_list)

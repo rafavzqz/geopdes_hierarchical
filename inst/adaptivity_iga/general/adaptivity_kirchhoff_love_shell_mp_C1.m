@@ -28,13 +28,14 @@
 %      - nel:        number of elements for each computed iteration
 %      - gest:       global error estimator, for each computed iteration
 %      - err_l2:     error in L2 norm for each iteration, if the exact solution is known
+%      - energy:     computed energy, for each iteration
 %      - flag:       a flag with the stopping criterion satisfied (see adaptivity_laplace_mp_C1).
 %
 % The number of degrees of freedom is 3*hspace.ndof, that is, hspace only
 %  contains scalar valued functions. This is different from the standard
 %  implementation in GeoPDEs with the sp_vector (or sp_multipatch) class.
 %
-% Copyright (C) 2022-2023 Rafael Vazquez
+% Copyright (C) 2022-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -52,7 +53,7 @@
 function [geometry, hmsh, hspace, u, solution_data] = adaptivity_kirchhoff_love_shell_mp_C1 (problem_data, method_data, adaptivity_data, plot_data)
 
 if (nargin == 3)
-  plot_data = struct ('print_info', true, 'plot_hmesh', false, 'plot_discrete_sol', false);
+  plot_data = struct ('print_info', true, 'plot_hmesh', false);
 end
 if (~isfield (plot_data, 'print_info'))
   plot_data.print_info = true;
@@ -60,21 +61,19 @@ end
 if (~isfield (plot_data, 'plot_hmesh'))
   plot_data.plot_hmesh = false;
 end
-if (~isfield (plot_data, 'plot_discrete_sol'))
-  plot_data.plot_discrete_sol = false;
-end
 
 % Initialization of some auxiliary variables
 if (plot_data.plot_hmesh)
   fig_mesh = figure;
 end
-if (plot_data.plot_discrete_sol)
-  fig_sol = figure;
-end
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+1;
 
 % Initialization of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
+if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity ~= 1)
+  warning('Setting interface regularity to C1')
+  method_data.interface_regularity = 1;
+end
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 % ADAPTIVE LOOP
 iter = 0;
@@ -90,22 +89,17 @@ while (1)
     disp('SOLVE:')
     fprintf('Number of elements: %d. Total DOFs: %d. Number of levels: %d \n', hmsh.nel, hspace.ndof, hspace.nlevels);
   end
-  [u, energy(iter)] = adaptivity_solve_kirchhoff_love_shell_mp_C1 (hmsh, hspace, problem_data);
+  [u, energy(iter)] = adaptivity_solve_kirchhoff_love_shell_mp_C1 (hmsh, hspace, problem_data, method_data);
   nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
   if (plot_data.plot_hmesh)
     fig_mesh = hmsh_plot_cells (hmsh, 10, fig_mesh);
     drawnow
   end
-  if (plot_data.plot_discrete_sol)
-    npts = 51 * ones (1, hmsh.ndim);
-    fig_sol = plot_numerical_and_exact_solution (u, hspace, geometry, npts, problem_data.uex, fig_sol); 
-    drawnow
-  end
 
 % ESTIMATE
   if (plot_data.print_info); disp('ESTIMATE:'); end
-  est = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, problem_data, adaptivity_data);
+  est = adaptivity_bubble_estimator_KL_shell (u, hmsh, hspace, problem_data, method_data, adaptivity_data);
   gest(iter) = norm (est);
   if (plot_data.print_info); fprintf('Computed error estimate: %e \n', gest(iter)); end
   if (isfield (problem_data, 'uex'))
@@ -152,5 +146,9 @@ if (exist ('err_l2', 'var'))
   solution_data.err_l2 = err_l2(1:iter);
 end
 solution_data.energy = energy(1:iter);
+
+if (isfield (plot_data, 'pts'))
+  solution_data.displ = displ;
+end
 
 end

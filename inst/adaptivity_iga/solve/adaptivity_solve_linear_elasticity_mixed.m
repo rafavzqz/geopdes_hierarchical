@@ -15,7 +15,7 @@
 %
 % USAGE:
 %
-% [u, press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_mul, method_data)
+% [u, press] = adaptivity_solve_linear_elasticity_mixed (hmsh, hspace, hspace_mul, problem_data)
 %
 % INPUT:
 %
@@ -25,7 +25,7 @@
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
 %    - drchlt_sides: sides with Dirichlet boundary condition
-%    - press_sides:  sides with pressure boundary condition (may be empty)
+%    - press_sides:  NOT IMPLEMENTED!!! sides with pressure boundary condition
 %    - symm_sides:   sides with symmetry boundary condition (may be empty)
 %    - c_diff:       diffusion coefficient (epsilon in the equation)
 %    - lambda_lame:  first Lame' parameter
@@ -175,7 +175,7 @@ mat = [ A(int_dofs, int_dofs),  B(:,int_dofs).';
         B(:,int_dofs),          -M];
 
 rhs(int_dofs) = rhs(int_dofs) - A(int_dofs, dirichlet_dofs)*u_dirichlet;
-rhs_tot = [rhs(int_dofs); B(:, dirichlet_dofs)*u_dirichlet];
+rhs_tot = [rhs(int_dofs); -B(:, dirichlet_dofs)*u_dirichlet];
 
 % Solve the linear system
 u = mat \ rhs_tot;

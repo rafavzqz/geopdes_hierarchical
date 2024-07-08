@@ -39,6 +39,7 @@
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 % Copyright (C) 2017, 2018 Cesare Bracco, Rafael Vazquez
 % Copyright (C) 2020 Ondine Chanon
+% Copyright (C) 2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -127,19 +128,19 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
   [ders2, F] = hspace_eval_hmsh (u, hspace, hmsh, 'hessian');
 
   x = cell (hmsh.rdim, 1);
-  for idim = 1:hmsh.rdim;
+  for idim = 1:hmsh.rdim
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
   end
 
 % Check whether lambda and mu are constants
   if (numel (unique (problem_data.lambda_lame (x{:}))) > 1) || ...
     (numel (unique (problem_data.mu_lame (x{:}))) > 1)
-    warning ('We assume that the Lame coefficients are constants')
+    warning ('We do not consider derivatives of the Lame coefficients in the estimator')
   end
-  lambda = problem_data.lambda_lame(1); %we assume that lambda and mu are constants
-  mu = problem_data.mu_lame(1);
+  lambda = problem_data.lambda_lame(x{:}); %we assume that lambda and mu are constants
+  mu = problem_data.mu_lame(x{:});
 
-  valf = problem_data.f (x{1},x{2});
+  valf = problem_data.f (x{:});
   for ii = 1:hspace.ncomp
     partials_a = 0; partials_b = 0;
     for jj = 1:hspace.ncomp
@@ -148,7 +149,7 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
         partials_b = partials_b + reshape (ders2(ii,jj,jj,:,:), [], hmsh.nel); %second derivatives of ii-th component (except w.r.t. ii-th variable)
       end
     end
-    divergence(ii,:,:) = (2*mu+lambda)*reshape(ders2(ii,ii,ii,:,:), [], hmsh.nel) + (mu+lambda)*partials_a + mu*partials_b;
+    divergence(ii,:,:) = (2*mu+lambda).*reshape(ders2(ii,ii,ii,:,:), [], hmsh.nel) + (mu+lambda).*partials_a + mu.*partials_b;
   end
   aux = (valf + divergence).^2;  %residual
 
@@ -170,6 +171,7 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
       if (hmsh.nel_per_level(ilev) > 0)
         ind_e = (Ne(ilev)+1):Ne(ilev+1);
         sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
+        sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev);
         b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,:,ind_e));
         dofs = 1:ndofs;
         est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
@@ -208,6 +210,7 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
           sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
           msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
           sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'divergence', true);
+          sp_bnd_struct = change_connectivity_localized_Csub (sp_bnd_struct, hspace, ilev);
 
           stress = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'stress', ...
             problem_data.lambda_lame, problem_data.mu_lame);
@@ -229,6 +232,7 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
           elseif (strcmpi (flag, 'functions'))
             msh_side = msh_evaluate_element_list (hmsh.boundary(iside).mesh_of_level(ilev), hmsh.boundary(iside).active{ilev});
             sp_bnd = sp_evaluate_element_list (hspace.boundary(iside).space_of_level(ilev), msh_side, 'value', true);
+            sp_bnd = change_connectivity_localized_Csub (sp_bnd, hspace.boundary(iside), ilev);
             est_level = op_f_v (sp_bnd, msh_side, coeff);
             dofs = hspace.boundary(iside).dofs(1:ndofs(ilev));
             est(dofs) = est(dofs) + hspace.boundary(iside).Csub{ilev}.' * est_level;
@@ -259,6 +263,7 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
           [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
           
           if (~isempty (elements))
+            gnum = hspace.space_of_level(ilev).gnum{iptc};
             msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
 
             msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
@@ -268,7 +273,10 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
             msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
             sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'divergence', true);
 
-            u_patch = u_lev(hspace.space_of_level(ilev).gnum{iptc});
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+            [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{ilev});
+            u_patch = zeros (sp_bnd_struct.ndof, 1);
+            u_patch(pos_gnum) = u_lev(pos_Csub);
             stress = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_from_interior_struct, 'stress', ...
               problem_data.lambda_lame, problem_data.mu_lame);
 
@@ -293,10 +301,11 @@ function est = compute_neumann_terms (u, hmsh, hspace, problem_data, flag)
               sp_patch = hspace.space_of_level(ilev).sp_patch{iptc};
               sp_bnd = sp_evaluate_element_list (sp_patch.boundary(iside), msh_side, 'value', true);
               est_level = op_f_v (sp_bnd, msh_side, coeff);
-              dofs_bnd = hspace.boundary.space_of_level(ilev).gnum{iptc_bnd};
-              Csub = hspace.boundary.Csub{ilev}(dofs_bnd,:);
+              gnum_bnd = hspace.boundary.space_of_level(ilev).gnum{iptc_bnd};
+              [~,pos_gnum_bnd,pos_Csub_bnd] = intersect (gnum_bnd, hspace.boundary.Csub_row_indices{ilev});
+              Csub = hspace.boundary.Csub{ilev}(pos_Csub_bnd,:);
               dofs = hspace.boundary.dofs(1:ndofs(ilev));
-              est(dofs) = est(dofs) + Csub.' * est_level;
+              est(dofs) = est(dofs) + Csub.' * est_level(pos_gnum_bnd);
             end
           end
         end          
@@ -383,7 +392,12 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true, 'divergence', true);
 
-        stress = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+        [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{lev});
+        u_patch = zeros (spp.ndof, 1);
+        u_patch(pos_gnum) = u_lev(pos_Csub);
+
+        stress = sp_eval_msh (u_patch, spp, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
         normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
         stress_normal = reshape (sum (bsxfun (@times, stress, normal), 2), [], msh_side.nqn, msh_side.nel);
         
@@ -394,9 +408,10 @@ function est = integral_term_by_functions (u, hmsh, hspace, interface, interface
       grad_dot_normal{2} = reorder_quad_points (grad_dot_normal{2}, interface, msh_side.nqn_dir);
       grad_dot_normal = grad_dot_normal{1} + grad_dot_normal{2};
 
-% XXXXX I should use a more local numbering, as in the branch localize_Csub
-      b_lev = zeros (hspace.space_of_level(lev).ndof, 1);
-      b_lev(gnum) = op_f_v (spp, msh_side, grad_dot_normal.^2);
+      % Recover the correct numbering for the localized version of Csub
+      b_lev = zeros (numel(hspace.Csub_row_indices{lev}), 1);
+      b_loc = op_f_v (spp, msh_side, grad_dot_normal.^2);
+      b_lev(pos_Csub) = b_loc(pos_gnum);
       est(1:ndof_until_lev) = est(1:ndof_until_lev) + hspace.Csub{lev}.' * b_lev;
     end
   end
@@ -443,9 +458,14 @@ function est_edges = integral_term_by_elements (u, hmsh, hspace, interface, inte
         msh_side_aux = msh_evaluate_element_list (msh_side_int, element_list);
  
         sp_bnd = hspace.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
-        spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true, 'divergence', true);
+        sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'gradient', true, 'divergence', true);
 
-        stress = sp_eval_msh (u_lev(gnum), spp, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+        [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{lev});
+        u_patch = zeros (sp_bnd_struct.ndof, 1);
+        u_patch(pos_gnum) = u_lev(pos_Csub);
+        stress = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_aux, 'stress', coeff_lambda, coeff_mu);
+        
         normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
         stress_normal = reshape (sum (bsxfun (@times, stress, normal), 2), [], msh_side.nqn, msh_side.nel);
 

@@ -8,7 +8,7 @@
 %
 % INPUT:
 %
-%     hspace: the hierarchical space (see hierarchical_space_mp)
+%     hspace: the hierarchical space (see hierarchical_space_mp_C1)
 %     lev:    level of the functions to refine
 %     ind:    indices of the functions in the multipatch space of level lev
 %

@@ -37,7 +37,8 @@
 %
 %   u: computed degrees of freedom
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2015 Eduardo M. Garau
+% Copyright (C) 2015-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -169,3 +170,5 @@ rhs(int_dofs) = rhs(int_dofs) - mat(int_dofs, dirichlet_dofs)*u_dirichlet;
 
 % Solve the linear system
 u(int_dofs) = mat(int_dofs, int_dofs) \ rhs(int_dofs);
+
+end
