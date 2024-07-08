@@ -135,12 +135,12 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
 % Check whether lambda and mu are constants
   if (numel (unique (problem_data.lambda_lame (x{:}))) > 1) || ...
     (numel (unique (problem_data.mu_lame (x{:}))) > 1)
-    warning ('We assume that the Lame coefficients are constants')
+    warning ('We do not consider derivatives of the Lame coefficients in the estimator')
   end
-  lambda = problem_data.lambda_lame(1); %we assume that lambda and mu are constants
-  mu = problem_data.mu_lame(1);
+  lambda = problem_data.lambda_lame(x{:}); %we assume that lambda and mu are constants
+  mu = problem_data.mu_lame(x{:});
 
-  valf = problem_data.f (x{1},x{2});
+  valf = problem_data.f (x{:});
   for ii = 1:hspace.ncomp
     partials_a = 0; partials_b = 0;
     for jj = 1:hspace.ncomp
@@ -149,7 +149,7 @@ function est = compute_residual_terms (u, hmsh, hspace, problem_data, flag)
         partials_b = partials_b + reshape (ders2(ii,jj,jj,:,:), [], hmsh.nel); %second derivatives of ii-th component (except w.r.t. ii-th variable)
       end
     end
-    divergence(ii,:,:) = (2*mu+lambda)*reshape(ders2(ii,ii,ii,:,:), [], hmsh.nel) + (mu+lambda)*partials_a + mu*partials_b;
+    divergence(ii,:,:) = (2*mu+lambda).*reshape(ders2(ii,ii,ii,:,:), [], hmsh.nel) + (mu+lambda).*partials_a + mu.*partials_b;
   end
   aux = (valf + divergence).^2;  %residual
 

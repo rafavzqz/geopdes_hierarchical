@@ -1,5 +1,4 @@
-% ADAPTIVITY_ESTIMATE_LINEAR_EL_MIXED: Computation of a posteriori error indicators for linear elasticity problem, using globally smooth (C^1) hierarchical spaces,
-% in the case of mixed formulation.
+% ADAPTIVITY_ESTIMATE_LINEAR_EL_MIXED: Computation of a posteriori error indicators for linear elasticity problem, in the case of mixed formulation.
 %
 % We consider the linear elasticity problem
 %
@@ -24,7 +23,7 @@
 %    - lambda_lame, mu_lame: function handles of the Lame parameters
 %    - f:             function handle of the source term
 %   adaptivity_data: a structure with the data for the adaptivity method. In particular, it contains the fields:
-%    - flag:          'elements' or 'functions', depending on the refinement strategy.
+%    - flag:          'elements', marking by 'functions' is not implemented.
 %    - C0_est:        multiplicative constant for the error indicators
 %
 %
@@ -91,6 +90,7 @@ switch lower (adaptivity_data.flag)
     est1 = h.^2 .* est1(:) + h .* (jump_est + nmnn_est);
     
   case 'functions'
+    error ('The estimator for the mixed formulation is not implemented for functions.')
     % Compute the mesh size for each level
     ms = zeros (hmsh.nlevels, 1);
     for ilev = 1:hmsh.nlevels
@@ -127,33 +127,32 @@ function [est1, est2] = compute_residual_terms (u, press, hmsh, hspace_u, hspace
   [pressure, gradient_p] = deal (gradient_p{:});
 
   x = cell (hmsh.rdim, 1);
-  for idim = 1:hmsh.rdim;  %rdim is the dimension of the physical domain
+  for idim = 1:hmsh.rdim
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
   end
 
 % Check whether lambda and mu are constants
   if (numel (unique (problem_data.lambda_lame (x{:}))) > 1) || ...
     (numel (unique (problem_data.mu_lame (x{:}))) > 1)
-    warning ('We assume that the Lame coefficients are constants')
+    warning ('We do not consider derivatives of the Lame coefficients in the estimator')
   end
+  lambda = problem_data.lambda_lame(x{:});
+  mu = problem_data.mu_lame(x{:});
 
-  lambda = problem_data.lambda_lame(1); %we assume that lambda and mu are constants
-  mu = problem_data.mu_lame(1);
-
-  valf = problem_data.f (x{1},x{2});
+  valf = problem_data.f (x{:});
   for ii = 1:hspace_u.ncomp
     partials_a = 0;
     partials_b = 0;
     for jj = 1:hspace_u.ncomp
       if (jj ~= ii)
-        partials_a = partials_a + reshape (ders2_u(jj,ii,jj,:,:), [], hmsh.nel); %mixed derivatives of all components (except h-th component)
-        partials_b = partials_b + reshape (ders2_u(ii,jj,jj,:,:), [], hmsh.nel); %second derivatives of h-th component (except w.r.t. h-th variable)
+        partials_a = partials_a + reshape (ders2_u(jj,ii,jj,:,:), [], hmsh.nel); %mixed derivatives of all components (except i-th component)
+        partials_b = partials_b + reshape (ders2_u(ii,jj,jj,:,:), [], hmsh.nel); %second derivatives of i-th component (except w.r.t. i-th variable)
       end
     end
-    divergence(ii,:,:) = (2*mu) * reshape(ders2_u(ii,ii,ii,:,:), [], hmsh.nel) + mu*partials_a + mu*partials_b + reshape(gradient_p(ii,:,:), [], hmsh.nel);
+    divergence(ii,:,:) = (2*mu) .* reshape(ders2_u(ii,ii,ii,:,:), [], hmsh.nel) + mu.*partials_a + mu.*partials_b + reshape(gradient_p(ii,:,:), [], hmsh.nel);
   end
   aux1 = (valf + divergence).^2;  %residual 1
-  aux2 = ((1/lambda)*pressure - divergence_u).^2;   %residual 2
+  aux2 = ((1./lambda).*pressure - divergence_u).^2;   %residual 2
 
   Ne = cumsum([0; hmsh.nel_per_level(:)]);
   if (strcmpi (flag, 'elements'))
@@ -168,7 +167,7 @@ function [est1, est2] = compute_residual_terms (u, press, hmsh, hspace_u, hspace
     end
 
   elseif (strcmpi (flag, 'functions'))
-    error ('The estimator for the mixed formulation is not implemented for functions: decide the output')
+    error ('The estimator for the mixed formulation is not implemented for functions.')
     
     ndofs = 0;
     for ilev = 1:hmsh.nlevels
@@ -198,6 +197,7 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
   elseif (strcmpi (flag, 'functions'))
+    error ('The estimator for the mixed formulation is not implemented for functions.')
     est = zeros (hspace.ndof, 1);
   end
 
@@ -221,8 +221,10 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
           sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
           msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_sfi.active{ilev});
           sp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
+          sp_bnd_struct = change_connectivity_localized_Csub (sp_bnd_struct, hspace, ilev);
           sp_bnd = hspace_p.space_of_level(ilev).constructor (msh_side_from_interior);
           spp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', true);
+          spp_bnd_struct = change_connectivity_localized_Csub (spp_bnd_struct, hspace_p, ilev);
 
           grad = sp_eval_msh (hspace.Csub{ilev}*u(1:last_dof(ilev)), sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
           gradt = permute (grad, [2 1 3 4]);
@@ -246,7 +248,8 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
             [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
             indices = vol_shifting_indices(ilev) + inds;
             est(indices) = est_level;
-%          elseif (strcmpi (flag, 'functions'))
+          elseif (strcmpi (flag, 'functions'))
+            error ('The estimator for the mixed formulation is not implemented for functions.')
 %            msh_side = msh_evaluate_element_list (hmsh.boundary(iside).mesh_of_level(ilev), hmsh.boundary(iside).active{ilev});
 %            sp_bnd = sp_evaluate_element_list (hspace.boundary(iside).space_of_level(ilev), msh_side, 'value', true);
 %            est_level = op_f_v (sp_bnd, msh_side, coeff);
@@ -281,6 +284,8 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
           [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
           
           if (~isempty (elements))
+            gnum = hspace.space_of_level(ilev).gnum{iptc};
+            gnum_p = hspace_p.space_of_level(ilev).gnum{iptc};
             msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
 
             msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
@@ -292,8 +297,16 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
             sp_bnd = hspace_p.space_of_level(ilev).sp_patch{iptc}.constructor (msh_side_from_interior);
             spp_bnd_struct = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', true);
 
-            u_patch = u_lev(hspace.space_of_level(ilev).gnum{iptc});
-            press_patch = press_lev(hspace_p.space_of_level(ilev).gnum{iptc});
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+            [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{ilev});
+            u_patch = zeros (sp_bnd_struct.ndof, 1);
+            u_patch(pos_gnum) = u_lev(pos_Csub);
+            [~,pos_gnum,pos_Csub] = intersect (gnum_p, hspace_p.Csub_row_indices{ilev});
+            press_patch = zeros (spp_bnd_struct.ndof, 1);
+            press_patch(pos_gnum) = press_lev(pos_Csub);
+            
+%            u_patch = u_lev(hspace.space_of_level(ilev).gnum{iptc});
+%            press_patch = press_lev(hspace_p.space_of_level(ilev).gnum{iptc});
             
             grad = sp_eval_msh (u_patch, sp_bnd_struct, msh_side_from_interior_struct, 'gradient');
             gradt = permute (grad, [2 1 3 4]);
@@ -318,7 +331,8 @@ function est = compute_neumann_terms (u, press, hmsh, hspace, hspace_p, problem_
               [~,~,inds] = intersect (inds_level, hmsh.active{ilev});
               indices = vol_shifting_indices(ilev) + inds;
               est(indices) = est_level_patch;
-%            elseif (strcmpi (flag, 'functions'))
+            elseif (strcmpi (flag, 'functions'))
+              error ('The estimator for the mixed formulation is not implemented for functions.')
 %              msh_side = msh_evaluate_element_list (msh_patch.boundary(iside), elements);
 %              sp_patch = hspace.space_of_level(ilev).sp_patch{iptc};
 %              sp_bnd = sp_evaluate_element_list (sp_patch.boundary(iside), msh_side, 'value', true);
@@ -344,6 +358,7 @@ function est = compute_jump_terms (u, press, hmsh, hspace, hspace_p, mu_lame, fl
   if (strcmpi (flag, 'elements'))
     est = zeros (hmsh.nel, 1);
   elseif (strcmpi (flag, 'functions'))
+    error ('The estimator for the mixed formulation is not implemented for functions.')
     est = zeros (hspace.ndof + hspace_p.ndof, 1);
   end
 
@@ -369,6 +384,7 @@ function est = compute_jump_terms (u, press, hmsh, hspace, hspace_p, mu_lame, fl
         est(interface_active_elements(2,ielem)) = est(interface_active_elements(2,ielem)) + est_edges(ielem);
       end
     elseif (strcmpi (flag, 'functions'))
+      error ('The estimator for the mixed formulation is not implemented for functions.')
       est = est + integral_term_by_functions (u, hmsh_aux, hspace_aux, interfaces(iref), interface_elements, lambda_lame, mu_lame);
     end
   end
@@ -496,12 +512,20 @@ function est_edges = integral_term_by_elements (u, press, hmsh, hspace, hspace_p
         sp_bnd = hspace_p.space_of_level(lev).sp_patch{patch(ii)}.constructor (msh_side_int);
         spp = sp_evaluate_element_list (sp_bnd, msh_side_aux, 'value', true);
 
-        grad = sp_eval_msh (u_lev(gnum), spu, msh_side_aux, 'gradient');
+% Take into account the localized version of Csub (replace u_lev(gnum) by u_patch)
+        [~,pos_gnum,pos_Csub] = intersect (gnum, hspace.Csub_row_indices{lev});
+        u_patch = zeros (spu.ndof, 1);
+        u_patch(pos_gnum) = u_lev(pos_Csub);
+        [~,pos_gnum,pos_Csub] = intersect (gnum_p, hspace_p.Csub_row_indices{lev});
+        p_patch = zeros (spp.ndof, 1);
+        p_patch(pos_gnum) = press_lev(pos_Csub);
+        
+        grad = sp_eval_msh (u_patch, spu, msh_side_aux, 'gradient');
         gradt = permute (grad, [2 1 3 4]);
         normal = reshape (msh_side.normal, 1, [], msh_side.nqn, msh_side.nel);
         eps_normal = reshape (sum (bsxfun (@times, grad + gradt, normal), 2), [], msh_side.nqn, msh_side.nel);
         
-        press_val = reshape (sp_eval_msh (press_lev(gnum_p), spp, msh_side_aux, 'value'), 1, msh_side.nqn, msh_side.nel);
+        press_val = reshape (sp_eval_msh (p_patch, spp, msh_side_aux, 'value'), 1, msh_side.nqn, msh_side.nel);
         p_normal = reshape (bsxfun (@times, press_val, msh_side.normal), [], msh_side.nqn, msh_side.nel);
 
         for idim = 1:hmsh.rdim
