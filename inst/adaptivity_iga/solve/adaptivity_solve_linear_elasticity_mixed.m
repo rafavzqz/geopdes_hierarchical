@@ -25,7 +25,7 @@
 %   problem_data: a structure with data of the problem. For this function, it must contain the fields:
 %    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
 %    - drchlt_sides: sides with Dirichlet boundary condition
-%    - press_sides:  sides with pressure boundary condition (may be empty)
+%    - press_sides:  NOT IMPLEMENTED!!! sides with pressure boundary condition
 %    - symm_sides:   sides with symmetry boundary condition (may be empty)
 %    - c_diff:       diffusion coefficient (epsilon in the equation)
 %    - lambda_lame:  first Lame' parameter
