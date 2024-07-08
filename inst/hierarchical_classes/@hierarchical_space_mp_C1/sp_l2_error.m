@@ -4,7 +4,7 @@
 %
 % INPUT:
 %
-%    hspace:  object defining the discrete space (see hierarchical_space_mp)
+%    hspace:  object defining the discrete space (see hierarchical_space_mp_C1)
 %    hmsh:    object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %    u:       vector of dof weights
 %    uex:     function handle to evaluate the exact solution
@@ -15,6 +15,7 @@
 %     errl2_elem:  error in L^2 norm, for each single element
 %
 % Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022-2023 Rafael Vazquez
 %
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by

@@ -1,6 +1,7 @@
 % SP_H2_EQUIV_LAP_ERROR: Evaluate the error in H^2 equivalent seminorm with laplacian, H^1 and L^2 norms.
 %
-%   [errh2, errh1, errl2, errh2s, errh1s, errh2_elem, errh1_elem, errl2_elem, errh2s_elem, errh1s_elem] = sp_h2_equiv_lap_error (hspace, hmsh, u, uex, graduex, lapuex)
+%   [errh2, errh1, errl2, errh2s, errh1s, errh2_elem, errh1_elem, errl2_elem, errh2s_elem, errh1s_elem] = ...
+%     sp_h2_equiv_lap_error (hspace, hmsh, u, uex, graduex, lapuex)
 %
 % INPUT:
 %

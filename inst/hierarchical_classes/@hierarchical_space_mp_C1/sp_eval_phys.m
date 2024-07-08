@@ -5,7 +5,7 @@
 % INPUT:
 %     
 %     u:           vector of dof weights
-%     hspace:      object defining the discrete space (see hierarchical_space_mp)
+%     hspace:      object defining the discrete space (see hierarchical_space_mp_C1)
 %     hmsh:        object defining the hierarchical mesh (see hierarchical_mesh_mp)
 %     geometry:    geometry structure (see mp_geo_load)
 %     pts:         array (rdim x npts) with coordinates of points
@@ -22,7 +22,7 @@
 %                values are computed.
 %  If there is only one output argument, points not on the geometry get a NaN value.
 % 
-% Copyright (C) 2023 Rafael Vazquez
+% Copyright (C) 2023-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

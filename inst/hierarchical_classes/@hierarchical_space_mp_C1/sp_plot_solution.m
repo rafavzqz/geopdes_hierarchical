@@ -6,7 +6,7 @@
 % INPUT:
 %     
 %     u:           vector of dof weights
-%     hspace:      object defining the discrete space (see hierarchical_space_mp)
+%     hspace:      object defining the discrete space (see hierarchical_space_mp_C1)
 %     geometry:    geometry structure (see mp_geo_load)
 %     hmsh:        object defining the hierarchical mesh (see hierarchical_mesh_mp)
 %     pts:         cell array with coordinates of points along each parametric direction
@@ -18,7 +18,7 @@
 %    The current version is very unefficient, as it passes the solution to
 %     the tensor-product space of the finest level.
 %
-% Copyright (C) 2015, 2016 Rafael Vazquez
+% Copyright (C) 2015-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

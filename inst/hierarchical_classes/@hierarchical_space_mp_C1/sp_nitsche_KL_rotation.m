@@ -1,4 +1,4 @@
-% SP_NITSCHE_KL_ROTATION: impose zero rotation for Kirchhoff-Love shells using Nitsche method
+% SP_NITSCHE_KL_ROTATION: impose zero rotation for Kirchhoff-Love shells using Nitsche method.
 %
 %   N_mat = sp_nitsche_KL_rotation (space, msh, bnd_sides, E_coeff, nu_coeff, thickness, C_penalty)
 %
