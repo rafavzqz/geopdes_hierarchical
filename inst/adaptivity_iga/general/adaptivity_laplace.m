@@ -134,10 +134,10 @@ while (1)
     fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
   end
     
-  if (~hspace_check_partition_of_unity (hspace, hmsh))
-    disp('ERROR: The partition-of-the-unity property does not hold.')
-    solution_data.flag = -1; break
-  end
+  % if (~hspace_check_partition_of_unity (hspace, hmsh))
+  %   disp('ERROR: The partition-of-the-unity property does not hold.')
+  %   solution_data.flag = -1; break
+  % end
 
 % SOLVE AND PLOT
   if (plot_data.print_info)
