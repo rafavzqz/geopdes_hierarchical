@@ -4,7 +4,7 @@
 %
 % INPUT:
 %
-%   hspace:  object representing the hierarchical space (see hierarchical_space_mp)
+%   hspace:  object representing the hierarchical space (see hierarchical_space_mp_C1)
 %   hmsh:    object representing the hierarchical mesh, already with the new level (see hierarchical_mesh_mp)
 %
 % OUTPUT:
@@ -62,13 +62,5 @@ if (numel(hspace.space_of_level) == hmsh.nlevels-1)
 else
   warning ('The number of levels of the space in input should be one less than the number of levels of the mesh')
 end
-
-% spc = hspace.space_of_level(end-1).constructor (hmsh.mesh_of_level(end));
-% M = op_u_v_mp (hspace.space_of_level(end), hspace.space_of_level(end), hmsh.mesh_of_level(end));
-% G = op_u_v_mp (spc, hspace.space_of_level(end), hmsh.mesh_of_level(end));
-% C = M \ G;
-% C(abs(C)<1e-12) = 0;
-% 
-% hspace.C_L2{hmsh.nlevels-1} = C;
 
 end

@@ -8,14 +8,14 @@
 %     u:         vector of dof weights
 %     hspace:    object defining the discrete space (see hierarchical_space_mp)
 %     hmsh:      object representing the hierarchical mesh (see hierarchical_mesh_mp)
-%     option:    accepted options are 'value' (default), 'gradient', 'laplacian'
+%     option:    accepted options are 'value' (default), 'gradient', 'laplacian', 'hessian'
 %
 % OUTPUT:
 %
 %     eu: the function evaluated at the points in the hierarchical mesh
 %     F:  grid points in the physical domain, that is, the mapped points
 % 
-% Copyright (C) 2015 Rafael Vazquez
+% Copyright (C) 2015-2024 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
 
 % For vector-valued spaces, the value of catdir is then corrected by adding one
   value = false; gradient = false; laplacian = false;
-  hessian = false; curl = false; divergence = false;
+  hessian = false;% curl = false; divergence = false;
   for iopt = 1:nopts
     switch (lower (options{iopt}))
       case 'value'
@@ -57,30 +57,40 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
         laplacian = true;
         catdir(iopt) = 2;
       case 'hessian'
+        if (hmsh.rdim == 3)
+          flag = iopt;
+          warning ('Hessian not computed for surfaces')
+          continue
+        end
         hessian = true;
         catdir(iopt) = 4;
-      case 'curl' % Only for vectors
-        curl = true;
-        if (hspace.space_of_level(1).sp_patch{1}.ncomp_param == 2)
-          catdir(iopt) = 1;
-        elseif (hspace.space_of_level(1).sp_patch{1}.ncomp_param == 3)
-          catdir(iopt) = 2;
-        end
-      case 'divergence' % Only for vectors
-        divergence = true;
-        catdir(iopt) = 1;
+      % case 'curl' % Only for vectors
+      %   curl = true;
+      %   if (hspace.space_of_level(1).sp_patch{1}.ncomp_param == 2)
+      %     catdir(iopt) = 1;
+      %   elseif (hspace.space_of_level(1).sp_patch{1}.ncomp_param == 3)
+      %     catdir(iopt) = 2;
+      %   end
+      % case 'divergence' % Only for vectors
+      %   divergence = true;
+      %   catdir(iopt) = 1;
       otherwise
         error ('hspace_eval_hmsh: unknown option: %s', options{iopt})
     end
   end
-  if (hspace.ncomp ~= 1)
-    catdir = catdir + 1;
-    eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
-        'value', value, 'gradient', gradient, 'hessian', hessian, 'curl', curl, 'divergence', divergence);
-  else
+
+  if (flag)
+    catdir(flag) = []; options(flag) = []; nopts = nopts -1;
+  end
+
+  % if (hspace.ncomp ~= 1)
+  %   catdir = catdir + 1;
+  %   eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
+  %       'value', value, 'gradient', gradient, 'hessian', hessian, 'curl', curl, 'divergence', divergence);
+  % else
     eval_element_list = @(SP, MSH) sp_evaluate_element_list (SP, MSH, ...
         'value', value, 'gradient', gradient, 'laplacian', laplacian, 'hessian', hessian);
-  end
+  % end
   eval_fun = @(U, SP, MSH) sp_eval_msh (U, SP, MSH, options);
 
   F = []; eu = cell (nopts, 1);
