@@ -6,8 +6,8 @@
 %
 % INPUT:
 %
-%   hspu:  object representing the hierarchical space of trial functions (see hierarchical_space_mp)
-%   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space_mp)
+%   hspu:  object representing the hierarchical space of trial functions (see hierarchical_space_mp_C1)
+%   hspv:  object representing the hierarchical space of test functions  (see hierarchical_space_mp_C1)
 %   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   coeff: function handle to compute the reaction coefficient
 %   patches: list of patches where the integrals have to be computed. By default, all patches are selected.
@@ -24,6 +24,7 @@
 %  op_gradu_gradv_hier for more details.
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

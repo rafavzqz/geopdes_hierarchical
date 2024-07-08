@@ -6,8 +6,8 @@
 %
 % INPUT:
 %
-%   hspu:    object representing the hierarchical space of trial functions (see hierarchical_space_mp)
-%   hspv:    object representing the hierarchical space of test functions  (see hierarchical_space_mp)
+%   hspu:    object representing the hierarchical space of trial functions (see hierarchical_space_mp_C1)
+%   hspv:    object representing the hierarchical space of test functions  (see hierarchical_space_mp_C1)
 %   hmsh:    object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %   epsilon: function handle to compute the diffusion coefficient
 %   patches: list of patches where the integrals have to be computed. By default, all patches are selected.
@@ -25,6 +25,7 @@
 %  using the matrix relation between the basis functions of different levels.
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

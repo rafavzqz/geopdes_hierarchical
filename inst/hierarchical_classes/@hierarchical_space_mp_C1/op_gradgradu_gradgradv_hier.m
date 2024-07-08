@@ -25,7 +25,7 @@
 %  using the matrix relation between the basis functions of different levels.
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
-% Copyright (C) 2018 Rafael Vazquez
+% Copyright (C) 2018-2022 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

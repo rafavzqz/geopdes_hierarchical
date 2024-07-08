@@ -1,12 +1,13 @@
 % OP_KL_SHELLS_HIER: assemble the Kirchhoff-Love shell stiffness matrix.
 %
 %   mat = op_KL_shells_hier (hspu, hspv, hmsh, E_coeff, nu_coeff, t_coeff, [patches]);
+%   [rows, cols, vals] = op_KL_shells_hier (hspu, hspv, hmsh, E_coeff, nu_coeff, t_coeff, [patches]);
 %
 % INPUT:
 %
 %  hspu:     object representing the space of trial functions (see hierarchical_space_mp_C1)
 %  hspv:     object representing the space of test functions (see hierarchical_space_mp_C1)
-%  hmsh:     object defining the domain partition and the quadrature rule (see msh_cartesian)
+%  hmsh:     object defining the domain partition and the quadrature rule (see hierarchical_mesh_mp)
 %  E_coeff:  function handle to compute the Young's modulus
 %  nu_coeff: function handle to compute the Poisson's ratio
 %  t_coeff:  thickness of the shell, scalar value

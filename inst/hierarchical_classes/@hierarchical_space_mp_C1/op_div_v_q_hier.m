@@ -6,9 +6,9 @@
 %
 % INPUT:
 %
-%   hspv:  object representing the vector-valued hierarchical space of trial functions (see hierarchical_space)
-%   hspq:  object representing the scalar-valued hierarchical space of test functions  (see hierarchical_space)
-%   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh)
+%   hspv:  object representing the vector-valued hierarchical space of trial functions (see hierarchical_space_mp_C1)
+%   hspq:  object representing the scalar-valued hierarchical space of test functions  (see hierarchical_space_mp_C1)
+%   hmsh:  object representing the hierarchical mesh (see hierarchical_mesh_mp)
 %
 % OUTPUT:
 %
@@ -22,6 +22,7 @@
 %  op_gradu_gradv_hier for more details.
 %
 % Copyright (C) 2015, 2016, 2018 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2022 Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
