@@ -175,7 +175,7 @@ mat = [ A(int_dofs, int_dofs),  B(:,int_dofs).';
         B(:,int_dofs),          -M];
 
 rhs(int_dofs) = rhs(int_dofs) - A(int_dofs, dirichlet_dofs)*u_dirichlet;
-rhs_tot = [rhs(int_dofs); B(:, dirichlet_dofs)*u_dirichlet];
+rhs_tot = [rhs(int_dofs); -B(:, dirichlet_dofs)*u_dirichlet];
 
 % Solve the linear system
 u = mat \ rhs_tot;
