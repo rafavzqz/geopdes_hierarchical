@@ -147,8 +147,4 @@ if (exist ('err_l2', 'var'))
 end
 solution_data.energy = energy(1:iter);
 
-if (isfield (plot_data, 'pts'))
-  solution_data.displ = displ;
-end
-
 end
