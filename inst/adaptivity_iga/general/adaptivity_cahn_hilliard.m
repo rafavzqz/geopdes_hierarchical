@@ -7,30 +7,17 @@ function [geometry, hmsh, hspace, results] = ...
               adaptivity_cahn_hilliard (problem_data, method_data, adaptivity_data, initial_conditions, save_info)
 
 %%-------------------------------------------------------------------------
-% Extract the fields from the data structures into local variables
-data_names = fieldnames (problem_data);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= problem_data.(data_names{iopt});']);
-end
-data_names = fieldnames (method_data);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= method_data.(data_names{iopt});']);
-end
-data_names = fieldnames (adaptivity_data);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= adaptivity_data.(data_names{iopt});']);
-end
-data_names = fieldnames (initial_conditions);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= initial_conditions.(data_names{iopt});']);
-end
-
-%%-------------------------------------------------------------------------
 % Initialization of some auxiliary variables
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+NaN;
 
 % Initialization of the most coarse level of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
+
+if (exist ('nmnn_sides','var') && ~isempty (nmnn_sides))
+  disp('User defined Neumann sides deleted. Neumann conditions used everywhere.')
+  clear nmnn_sides
+end
+nmnn_sides = 1:2*hmsh.ndim;
 
 % Refine the mesh up to a predefined level
 n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
@@ -38,26 +25,26 @@ n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
 
 %%-------------------------------------------------------------------------
 % initial conditions
-mass_mat = op_u_v_hier(hspace,hspace,hmsh);
+mass_mat = op_u_v_hier (hspace,hspace,hmsh);
 % penalty term (matrix)
-[Pen, ~] = penalty_matrix (hspace, hmsh, pen_projection);
+[Pen, ~] = penalty_matrix (hspace, hmsh, method_data.pen_projection, nmnn_sides);
 mass_proj = mass_mat + Pen;
 
-if (exist('fun_u', 'var'))
-  if (isnumeric(fun_u) == 1)
+if (isfield(initial_conditions,'fun_u'))
+  if (isnumeric(initial_conditions.fun_u) == 1)
     u_0 = fun_u;
   else
-    u_0 = compute_initial_conditions(mass_proj, fun_u, hspace, hmsh);
+    u_0 = compute_initial_conditions(mass_proj, initial_conditions.fun_u, hspace, hmsh);
   end
 else
   u_0 = zeros(hspace.ndof,1);
 end
 
-if (exist('fun_udot', 'var'))
-  if (isnumeric(fun_udot) == 1)
+if (isfield(initial_conditions,'fun_udot'))
+  if (isnumeric(initial_conditions.fun_udot) == 1)
     udot_0 = fun_udot;
   else
-    udot_0 = compute_initial_conditions(mass_proj, fun_udot, hspace, hmsh);
+    udot_0 = compute_initial_conditions(mass_proj, initial_conditions.fun_udot, hspace, hmsh);
   end
 else
   udot_0 = zeros(hspace.ndof,1);
@@ -72,6 +59,7 @@ udot_n = udot_0;
 
 %%-------------------------------------------------------------------------
 % generalized alpha parameters
+rho_inf_gen_alpha = method_data.rho_inf_gen_alpha;
 a_m = .5*((3-rho_inf_gen_alpha)/(1+rho_inf_gen_alpha));
 a_f =  1/(1+rho_inf_gen_alpha);
 gamma =  .5 + a_m - a_f;
@@ -86,30 +74,33 @@ old_space = struct ('modified', 1, 'space', [], 'mesh', [], 'mass_mat', [], ...
 
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
-time = initial_time;
+time = problem_data.initial_time;
 save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, 1)
 save_id = 2;
 results.time = zeros(length(save_info.time_save)+1,1);
 flag_stop_save = false;
 results.time(1) = time;
 
-while time < Time_max
+dt = method_data.dt;
+while time < problem_data.Time_max
 
   disp('----------------------------------------------------------------')
   disp(strcat('time step t=',num2str(time)))
+  disp(strcat('Number of elements =',num2str(hmsh.nel)))
     
   %----------------------------------------------------------------------
   % adaptivity in space
    
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
-                                              dt, a_m, a_f, gamma, lambda, pen_nitsche, ...
-                                              problem_data, adaptivity_data, adaptivity_data_flag, old_space);
+                                              dt, a_m, a_f, gamma, method_data.pen_nitsche, problem_data, ...
+                                              adaptivity_data, adaptivity_data_flag, old_space, nmnn_sides);
 
   %----------------------------------------------------------------------
   % coarsening
   if (time >= adaptivity_data.time_delay)
     if (adaptivity_data_flag == true)
-      [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hmsh, hspace, adaptivity_data,  u_n1, udot_n1, pen_projection, old_space);
+      [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm...
+        (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.pen_projection, old_space, nmnn_sides);
     end
   end
 
@@ -133,8 +124,8 @@ while time < Time_max
   udot_n = udot_n1;
 
   % check max time
-  if (time + dt >Time_max)
-    dt = Time_max-time;
+  if (time + dt > problem_data.Time_max)
+    dt = problem_data.Time_max-time;
   end
     
 end % end loop over time steps
@@ -240,12 +231,15 @@ function [u_0, udot_0] = force_flux_null_weak(hspace, hmsh, u_0, udot_0)
   udot_0 = identity \ udotold;
 end
 
-
 %--------------------------------------------------------------------------
 % adaptivity in space
 %--------------------------------------------------------------------------
 
-function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  dt, a_m, a_f, gamma, lambda, pen, problem_data, adaptivity_data, adaptivity_data_flag, old_space)
+function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
+    (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, pen, problem_data, ...
+    adaptivity_data, adaptivity_data_flag, old_space, nmnn_sides)
+
+  lambda = problem_data.lambda;
   iter = 0;
   while (1)
        
@@ -255,7 +249,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n
     
     %------------------------------------------------------------------
     % solve
-    [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, pen, hspace, hmsh, old_space);
+    [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, pen, hspace, hmsh, old_space, nmnn_sides);
     nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
     %------------------------------------------------------------------
@@ -333,7 +327,7 @@ end
 % coarsening
 %--------------------------------------------------------------------------
 
-function [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hmsh, hspace, adaptivity_data,  u_n1, udot_n1, pen_proje, old_space)
+function [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hmsh, hspace, adaptivity_data,  u_n1, udot_n1, pen_proje, old_space, nmnn_sides)
 
     %------------------------------------------------------------------  
     % mark
@@ -353,7 +347,7 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hm
             old_space.modified = 0;
         else
             % recompute control variables:  (mass+penalty) \ (G * u)
-            [u_n1, udot_n1] = compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje);
+            [u_n1, udot_n1] = compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje, nmnn_sides);
 
             old_space = struct ('modified', 1, 'space', [], 'mesh', [], 'mass_mat', [], ...
                                 'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
@@ -380,19 +374,14 @@ end
 % compute control variables on the coarser mesh by means of L2-projection
 %--------------------------------------------------------------------------
 
-function [u_n_coa, udot_n_coa] = compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n, udot_n, pen_proje)
+function [u_n_coa, udot_n_coa] = ...
+   compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n, udot_n, pen_proje, nmnn_sides)
 
 mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
 
 % penalty term (matrix and vector)
-[Pen, ~] = penalty_matrix (hspace, hmsh, pen_proje);
+[Pen, ~] = penalty_matrix (hspace, hmsh, pen_proje, nmnn_sides);
 mass_coarse = mass_coarse + Pen;
-
-
-
-%G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
-%u_n_coa = mass_coarse\(G*u_n);
-%udot_n_coa = mass_coarse\(G*udot_n);
 
 rhs_u = op_Gu_hier (hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine, hspace_fine, u_n);
 u_n_coa = mass_coarse\rhs_u;
@@ -443,7 +432,7 @@ end
 % generalized alpha
 %--------------------------------------------------------------------------
 
-function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, pen, hspace, hmsh, old_space)
+function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, pen, hspace, hmsh, old_space, nmnn_sides)
 
 %convergence criterion
 n_max_iter = 10;
@@ -462,7 +451,7 @@ for iter = 0:n_max_iter % newton loop
     u_a = u_n + a_f *(u_n1-u_n);
 
     % compute the residual (internal)
-    [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, hmsh, lambda, pen, u_a, udot_a, old_space);
+    [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, hmsh, lambda, pen, u_a, udot_a, old_space, nmnn_sides);
 
     % convergence check
     if iter == 0
@@ -504,37 +493,10 @@ end % end newton loop
 end
 
 %--------------------------------------------------------------------------
-% neumann boundary conditions
-%--------------------------------------------------------------------------
-
-% function [BC, indBC, dof_free] = impose_essential_neumann_weak(hspace, hmsh)
-%     
-% 
-%     nmnn_sides= [1,2,3,4];
-%     BC =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-%     indBC = [];
-%     
-%     for iside=1:length(nmnn_sides)   
-% 
-%         tmp_indBC = hspace.boundary(nmnn_sides(iside)).dofs ;
-%         tmp_indBC = reshape(tmp_indBC, length(tmp_indBC), 1);
-%         indBC = [indBC; tmp_indBC];    
-%      
-%         tmpBC = op_gradv_n_u_hier(hspace, hmsh, nmnn_sides(iside) );
-%         
-%         BC = BC + tmpBC';
-% 
-%     end
-% 
-%     dof_free = setdiff(1:hspace.ndof, indBC);    
-% 
-% end
-
-%--------------------------------------------------------------------------
 % cahn hilliard equation residual and tangent matrix
 %--------------------------------------------------------------------------
 
-function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, hmsh, lambda, pen, u_a, udot_a, old_space)
+function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, hmsh, lambda, pen, u_a, udot_a, old_space, nmnn_sides)
     
     if old_space.modified == 1
     
@@ -548,10 +510,10 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
         term3 = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
     
         % term 4 (matrix)
-        term4 = int_term_4 (hspace, hmsh, lambda);
+        term4 = int_term_4 (hspace, hmsh, lambda, nmnn_sides);
     
         % penalty term (matrix and vector)
-        [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, pen);
+        [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides);
 
 
         % update old_space
@@ -589,16 +551,13 @@ end
 % term 4
 %--------------------------------------------------------------------------
 
-function A = int_term_4 (hspace, hmsh, lambda)
+function A = int_term_4 (hspace, hmsh, lambda, nmnn_sides)
 
-    nmnn_sides= [1,2,3,4];
-    A =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);    
+  A =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);    
     
-    for iside=1:length(nmnn_sides)   
-    
-        A = A + op_gradv_n_laplaceu_hier(hspace, hmsh, nmnn_sides(iside), lambda );        
-            
-    end
+  for iside = 1:length(nmnn_sides)   
+    A = A + op_gradv_n_laplaceu_hier(hspace, hmsh, nmnn_sides(iside), lambda );        
+  end
 
 end
 
@@ -610,14 +569,10 @@ function varargout = op_gradv_n_laplaceu_hier (hspace, hmsh, nmnn_side, coeff)
     coeff = @(varargin) ones (size(varargin{1}));
   end
     
-
- 
-  
   % side with info from the interior for space reconstruction
   hmsh_side_int = hmsh_boundary_side_from_interior (hmsh, nmnn_side);
   shifting_indices = cumsum ([0 hmsh.boundary(nmnn_side).nel_per_level]);
     
-
   K = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
 
   ndofs_u = 0;
@@ -628,42 +583,34 @@ function varargout = op_gradv_n_laplaceu_hier (hspace, hmsh, nmnn_side, coeff)
     ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
 
     if (hmsh.boundary(nmnn_side).nel_per_level(ilev) > 0)
+      % mesh of the selected side
+      elements = shifting_indices(ilev)+1:shifting_indices(ilev+1); 
+      hmsh_side = hmsh_eval_boundary_side (hmsh, nmnn_side, elements);
 
-
-
-        % mesh of the selected side
-        elements = shifting_indices(ilev)+1:shifting_indices(ilev+1); 
-        hmsh_side = hmsh_eval_boundary_side (hmsh, nmnn_side, elements);
-
-        x = cell (hmsh.rdim,1);
-        for idim = 1:hmsh.rdim
-          x{idim} = reshape (hmsh_side.geo_map(idim,:,:), hmsh_side.nqn, hmsh_side.nel);
-        end
+      x = cell (hmsh.rdim,1);
+      for idim = 1:hmsh.rdim
+        x{idim} = reshape (hmsh_side.geo_map(idim,:,:), hmsh_side.nqn, hmsh_side.nel);
+      end
         
-        % reconstruct the part of the space defined on the selected boundary
-        msh_side_from_interior = hmsh_side_int.mesh_of_level(ilev);
-        sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
-        msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_side_int.active{ilev});
+      % reconstruct the part of the space defined on the selected boundary
+      msh_side_from_interior = hmsh_side_int.mesh_of_level(ilev);
+      sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
+      msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_side_int.active{ilev});
         
-        % evaluate the space
-        spu_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'laplacian', true);
-        spv_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
+      % evaluate the space
+      spu_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'laplacian', true);
+      spv_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
         
-        spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
-        spv_lev = change_connectivity_localized_Csub (spv_lev, hspace, ilev);     
+      spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
+      spv_lev = change_connectivity_localized_Csub (spv_lev, hspace, ilev);     
 
+      % compute the matrix
+      K_lev = op_gradv_n_laplaceu (spu_lev, spv_lev, hmsh_side, coeff (x{:}));
 
-           
-        % compute the matrix
-        K_lev = op_gradv_n_laplaceu (spu_lev, spv_lev, hmsh_side, coeff (x{:}));
-
-
-        dofs_u = 1:ndofs_u;  
-        dofs_v = 1:ndofs_v;
-        Ktmp =  hspace.Csub{ilev}.' * K_lev * hspace.Csub{ilev};
-        K(dofs_v,dofs_u) = K(dofs_v,dofs_u) +Ktmp;    
-
-
+      dofs_u = 1:ndofs_u;  
+      dofs_v = 1:ndofs_v;
+      Ktmp =  hspace.Csub{ilev}.' * K_lev * hspace.Csub{ilev};
+      K(dofs_v,dofs_u) = K(dofs_v,dofs_u) +Ktmp;    
     end
   end
 
@@ -940,19 +887,16 @@ end
 %--------------------------------------------------------------------------
 
 
-function [P, rhs] = penalty_matrix (hspace, hmsh, pen)
+function [P, rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides)
     
-    nmnn_sides = [1,2,3,4];
+  P =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
+  rhs = zeros(hspace.ndof,1);
 
-    P =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-    rhs = zeros(hspace.ndof,1);
-
-    for iside = 1:length(nmnn_sides)
-        [mass_pen, rhs_pen] = penalty_grad (hspace, hmsh, nmnn_sides(iside), pen);
-        P = P + mass_pen; 
-        rhs = rhs + rhs_pen;
-
-    end
+  for iside = 1:length(nmnn_sides)
+    [mass_pen, rhs_pen] = penalty_grad (hspace, hmsh, nmnn_sides(iside), pen);
+    P = P + mass_pen; 
+    rhs = rhs + rhs_pen;
+  end
 
 end
 
@@ -1015,7 +959,6 @@ function plot_results(geometry, hmsh, hspace, u, time, filenumber)
 
 npts = [51 51];
 
-
 fig = figure('visible','off');
 % [eu, F] = sp_eval (u, hspace, geometry, npts,{'gradient'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
 % fun_to_plot = reshape(sqrt(eu(1,:,:).^2 + eu(2,:,:).^2), size(F,2), size(F,3));
@@ -1047,40 +990,33 @@ end
 
 function [adaptivity_data_flag, last_mesh] = evaluate_adaptivity_likelihood(hmsh, hspace, u, last_mesh, adaptivity_data)
 
-
-
 u_old = last_mesh.u;
-
 
 level_shared = adaptivity_data.max_level-1;
 [hmsh, hspace, u] = refine_upto_level(hmsh, hspace, u, level_shared, adaptivity_data );
-
 
 uex     = @(x, y) zeros (size (x));
 graduex = @(x, y) cat (1, ...
                    reshape ( zeros (size (x)) , [1, size(x)]), ...
                    reshape ( zeros (size (x)) , [1, size(x)]));
 
-
-
 [~, ~, nume, ~, ~, ~] = sp_h1_error (hspace, hmsh, u-u_old, uex, graduex);
 [~, ~, deno, ~, ~, ~] = sp_h1_error (hspace, hmsh, u, uex, graduex);
 err = nume/deno;
 
-if err> last_mesh.tol_skip_ada
-    adaptivity_data_flag = true;
-    last_mesh.mesh = hmsh;
-    last_mesh.space = hspace;
-    last_mesh.u = u;
+if (err> last_mesh.tol_skip_ada)
+  adaptivity_data_flag = true;
+  last_mesh.mesh = hmsh;
+  last_mesh.space = hspace;
+  last_mesh.u = u;
 else
-    adaptivity_data_flag = false;
+  adaptivity_data_flag = false;
 end
 
 end
 
 
 function [hmsh, hspace, u] = refine_upto_level(hmsh, hspace, u, level, adaptivity_data)
-
 
     for ilev = 1:level
         marked = cell(hmsh.nlevels,1); 
@@ -1130,91 +1066,91 @@ end
 
 
 
-function [deact_marked, num] = mark_elements_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data)
-
-if (~isfield (adaptivity_data, 'coarsening_flag'))
-  adaptivity_data.coarsening_flag = 'all';
-end
-
-if (~isfield(adaptivity_data,'adm_class') || adaptivity_data.adm_class < 2)
-  adm_class = 0;
-else
-  adm_class = adaptivity_data.adm_class;
-end
-
-if (~isfield(adaptivity_data,'adm_type') || isempty (adaptivity_data.adm_type))
-  adm_type = 'T-admissible';
-else
-  adm_type = adaptivity_data.adm_type;
-end
-
-
-deact_marked = cell (hmsh.nlevels, 1);
-
-for lev = hmsh.nlevels-1:-1:1
-  if (~isempty(marked{lev+1}))
-    [parents, flag] = hmsh_get_parent (hmsh, lev+1, marked{lev+1});
-    if (flag ~= 1)
-      error ('Some nonactive elements were marked.')
-    end
-
-    [~,~,children_per_cell] = hmsh_get_children (hmsh, lev, parents);    
-
-    ind = all (ismember (children_per_cell, hmsh.active{lev+1}));
-    parents = parents(ind);
-    children_per_cell = children_per_cell(:,ind);
-
-    if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
-      deact_marked{lev} = parents;
-    elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
-      ind2 = all (ismember (children_per_cell, marked{lev+1}));
-      parents = parents(ind2);
-      children_per_cell = children_per_cell(:,ind2);
-      deact_marked{lev} = parents;
-    else
-      error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
-    end
-    marked{lev+1} = children_per_cell;
-    
-% Algorithm to recover admissible meshes
-    if (adm_class)
-      lev_s = lev + adm_class;
-      if (lev_s > hmsh.nlevels)
-        continue
-      else
-        active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
-        active_and_deact = setdiff (active_and_deact, marked{lev_s});
-        keep_inds = [];
-        
-        if (strcmpi (adm_type, 'T-admissible'))
-          supp_ext = support_extension (hmsh, hspace, children_per_cell(:), lev+1, lev+1);
-          [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
-          for iel = 1:numel(deact_marked{lev})
-            supp_ext_local = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
-            [~,ia,~] = intersect (supp_ext, supp_ext_local);
-            if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
-              keep_inds = [keep_inds, iel];
-            end          
-          end
-          
-        elseif (strcmpi (adm_type, 'H-admissible'))
-          supp_ext = support_extension (hmsh, hspace, deact_marked{lev}, lev, lev);
-          [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev, lev_s);
-          for iel = 1:numel(deact_marked{lev})
-            supp_ext_local = support_extension (hmsh, hspace, deact_marked{lev}(iel), lev, lev);
-            [~,ia,~] = intersect (supp_ext, supp_ext_local);
-            if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
-              keep_inds = [keep_inds, iel];
-            end          
-          end
-        end
-        deact_marked{lev} = deact_marked{lev}(keep_inds);
-      end
-    end
-    
-  end
-end
-  
-num = sum (cellfun (@numel, deact_marked));
-    
-end
+% function [deact_marked, num] = mark_elements_to_reactivate_from_active (marked, hmsh, hspace, adaptivity_data)
+% 
+% if (~isfield (adaptivity_data, 'coarsening_flag'))
+%   adaptivity_data.coarsening_flag = 'all';
+% end
+% 
+% if (~isfield(adaptivity_data,'adm_class') || adaptivity_data.adm_class < 2)
+%   adm_class = 0;
+% else
+%   adm_class = adaptivity_data.adm_class;
+% end
+% 
+% if (~isfield(adaptivity_data,'adm_type') || isempty (adaptivity_data.adm_type))
+%   adm_type = 'T-admissible';
+% else
+%   adm_type = adaptivity_data.adm_type;
+% end
+% 
+% 
+% deact_marked = cell (hmsh.nlevels, 1);
+% 
+% for lev = hmsh.nlevels-1:-1:1
+%   if (~isempty(marked{lev+1}))
+%     [parents, flag] = hmsh_get_parent (hmsh, lev+1, marked{lev+1});
+%     if (flag ~= 1)
+%       error ('Some nonactive elements were marked.')
+%     end
+% 
+%     [~,~,children_per_cell] = hmsh_get_children (hmsh, lev, parents);
+% 
+%     ind = all (ismember (children_per_cell, hmsh.active{lev+1}));
+%     parents = parents(ind);
+%     children_per_cell = children_per_cell(:,ind);
+% 
+%     if (strcmpi (adaptivity_data.coarsening_flag, 'any'))
+%       deact_marked{lev} = parents;
+%     elseif (strcmpi (adaptivity_data.coarsening_flag, 'all'))
+%       ind2 = all (ismember (children_per_cell, marked{lev+1}));
+%       parents = parents(ind2);
+%       children_per_cell = children_per_cell(:,ind2);
+%       deact_marked{lev} = parents;
+%     else
+%       error ('Unknown option for coarsening, in adaptivity_data.coarsening_flag')
+%     end
+%     marked{lev+1} = children_per_cell;
+% 
+% % Algorithm to recover admissible meshes
+%     if (adm_class)
+%       lev_s = lev + adm_class;
+%       if (lev_s > hmsh.nlevels)
+%         continue
+%       else
+%         active_and_deact = union (hmsh.active{lev_s}, hmsh.deactivated{lev_s});
+%         active_and_deact = setdiff (active_and_deact, marked{lev_s});
+%         keep_inds = [];
+% 
+%         if (strcmpi (adm_type, 'T-admissible'))
+%           supp_ext = support_extension (hmsh, hspace, children_per_cell(:), lev+1, lev+1);
+%           [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev+1, lev_s);
+%           for iel = 1:numel(deact_marked{lev})
+%             supp_ext_local = support_extension (hmsh, hspace, children_per_cell(:,iel), lev+1, lev+1);
+%             [~,ia,~] = intersect (supp_ext, supp_ext_local);
+%             if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
+%               keep_inds = [keep_inds, iel];
+%             end          
+%           end
+% 
+%         elseif (strcmpi (adm_type, 'H-admissible'))
+%           supp_ext = support_extension (hmsh, hspace, deact_marked{lev}, lev, lev);
+%           [~, descendants_of_cell] = hmsh_get_descendants (hmsh, supp_ext, lev, lev_s);
+%           for iel = 1:numel(deact_marked{lev})
+%             supp_ext_local = support_extension (hmsh, hspace, deact_marked{lev}(iel), lev, lev);
+%             [~,ia,~] = intersect (supp_ext, supp_ext_local);
+%             if (isempty (intersect (descendants_of_cell(:,ia), active_and_deact)))
+%               keep_inds = [keep_inds, iel];
+%             end          
+%           end
+%         end
+%         deact_marked{lev} = deact_marked{lev}(keep_inds);
+%       end
+%     end
+% 
+%   end
+% end
+% 
+% num = sum (cellfun (@numel, deact_marked));
+% 
+% end

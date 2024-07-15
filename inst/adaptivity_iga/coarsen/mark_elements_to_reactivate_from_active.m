@@ -87,10 +87,6 @@ for lev = hmsh.nlevels-1:-1:1
     end
     marked{lev+1} = children_per_cell;
 
-    
-
-
-    
 % Algorithm to recover admissible meshes
     if (adm_class)
       lev_s = lev + adm_class;
@@ -125,20 +121,22 @@ for lev = hmsh.nlevels-1:-1:1
       end
     end
     
-    % Algorithm to take into account the vertex patch (multipatch C^1 spaces) 
-    for iv=1:numel(hspace.space_of_level(lev).vertices)
-        adj_els=msh_cells_near_vertex (hmsh.mesh_of_level(lev), hspace.space_of_level(lev).vertices(iv));
-        for i_el=1:length(adj_els)
-            patch_of_el=1;
-            while sum(hmsh.mesh_of_level(lev).nel_per_patch(1:patch_of_el))<adj_els(i_el)
-                patch_of_el=patch_of_el+1;
-            end
-            patch_of_el=find(hspace.space_of_level(lev).vertices(iv).patches==patch_of_el); %we need the local (w.r.t. to the vertex) index of the patch
-            if ~ismember(adj_els(i_el),deact_marked{lev}) && ismember(adj_els(i_el),hmsh.deactivated{lev})
-               en=sp_get_vertex_neighbors (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), iv, patch_of_el); 
-               deact_marked{lev}=setdiff(deact_marked{lev},en{1});
-            end
+    % Algorithm to take into account the vertex patch (multipatch C^1 spaces)
+    if (isa(hspace,'hierarchical_space_mp_C1'))
+      for iv = 1:numel(hspace.space_of_level(lev).vertices)
+        adj_els = msh_cells_near_vertex (hmsh.mesh_of_level(lev), hspace.space_of_level(lev).vertices(iv));
+        for i_el = 1:length(adj_els)
+          patch_of_el = 1;
+          while sum(hmsh.mesh_of_level(lev).nel_per_patch(1:patch_of_el))<adj_els(i_el)
+            patch_of_el = patch_of_el + 1;
+          end
+          patch_of_el=find(hspace.space_of_level(lev).vertices(iv).patches==patch_of_el); %we need the local (w.r.t. to the vertex) index of the patch
+          if (~ismember(adj_els(i_el),deact_marked{lev}) && ismember(adj_els(i_el),hmsh.deactivated{lev}))
+            en = sp_get_vertex_neighbors (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), iv, patch_of_el); 
+            deact_marked{lev} = setdiff(deact_marked{lev},en{1});
+          end
         end
+      end
     end
 % TODO: children_per_cell should be updated before marked{lev+1} (as above)
     [~,~,marked{lev+1}] = hmsh_get_children (hmsh, lev, deact_marked{lev});

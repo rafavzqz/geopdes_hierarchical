@@ -9,13 +9,9 @@ problem_data.geo_name = 'geo_square.txt';
 lambda = 6.15e-4;
 problem_data.lambda = @(x, y) lambda* ones(size(x));
 
-% penalty parameters
-problem_data.pen_nitsche = 1e4 * lambda; % Nitsche's  penalty constant 
-problem_data.pen_projection = 1000;      % penalty value to constrain the flux in L2 projection
-
 % time  
 problem_data.initial_time = 0;
-problem_data.Time_max = 1;    
+problem_data.Time_max = 0.021;    
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
@@ -28,6 +24,10 @@ method_data.nquad      = [p+1 p+1];     % Points for the Gaussian quadrature rul
 % time integration parameters
 method_data.rho_inf_gen_alpha = 0.5;
 method_data.dt = 1e-3;
+
+% penalty parameters
+method_data.pen_nitsche = 1e4 * lambda; % Nitsche's  penalty constant 
+method_data.pen_projection = 1000;      % penalty value to constrain the flux in L2 projection
 
 % hierarchical structure
 nel = 1;
@@ -60,7 +60,7 @@ clear initial_conditions
 mean = 0.4;
 var = 0.005;
 ic_fun = @(x, y) mean + (rand(size(x))*2-1)*var;
-%ic_fun = @(x, y) 0.1 * cos(2*pi*x) .* cos(2*pi*y);
+ic_fun = @(x, y) 0.1 * cos(2*pi*x) .* cos(2*pi*y);
 
 
 %ic_fun = load("initial_conditions_nel_64_64_p_2_2.mat");
@@ -75,7 +75,7 @@ status = rmdir(folder_name);
 status = mkdir(folder_name);
 
 save_info.folder_name = folder_name;
-save_info.time_save = linspace(-.000001,problem_data.Time_max,11);
+save_info.time_save = linspace(-.000001,problem_data.Time_max,3);
 
 % 3) CALL TO THE SOLVER
 [geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
