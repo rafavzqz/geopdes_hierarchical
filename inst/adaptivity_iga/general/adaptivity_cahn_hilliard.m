@@ -1,4 +1,7 @@
-
+%%%%%%%
+%%%%%%%
+%%%%%%%
+%%%%%%%
 
 function [geometry, hmsh, hspace, results] = ...
               adaptivity_cahn_hilliard (problem_data, method_data, adaptivity_data, initial_conditions, save_info)
@@ -22,7 +25,6 @@ for iopt  = 1:numel (data_names)
   eval ([data_names{iopt} '= initial_conditions.(data_names{iopt});']);
 end
 
-
 %%-------------------------------------------------------------------------
 % Initialization of some auxiliary variables
 nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+NaN;
@@ -31,9 +33,8 @@ nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+NaN;
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 % Refine the mesh up to a predefined level
-n_refininements = adaptivity_data.max_level-1; % number of uniform refinements
-[hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adaptivity_data);
-
+n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
+[hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data);
 
 %%-------------------------------------------------------------------------
 % initial conditions
@@ -43,129 +44,98 @@ mass_mat = op_u_v_hier(hspace,hspace,hmsh);
 mass_proj = mass_mat + Pen;
 
 if (exist('fun_u', 'var'))
-    if isnumeric(fun_u) == 1    
-        u_0 = fun_u;
-    else
-        u_0 = compute_initial_conditions(mass_proj, fun_u, hspace, hmsh);
-    end
+  if (isnumeric(fun_u) == 1)
+    u_0 = fun_u;
+  else
+    u_0 = compute_initial_conditions(mass_proj, fun_u, hspace, hmsh);
+  end
 else
-    u_0 = zeros(hspace.ndof,1);
+  u_0 = zeros(hspace.ndof,1);
 end
 
 if (exist('fun_udot', 'var'))
-    if isnumeric(fun_u) == 1    
-        udot_0 = fun_udot;
-    else
-        udot_0 = compute_initial_conditions(mass_proj, fun_udot, hspace, hmsh);
-    end
+  if (isnumeric(fun_udot) == 1)
+    udot_0 = fun_udot;
+  else
+    udot_0 = compute_initial_conditions(mass_proj, fun_udot, hspace, hmsh);
+  end
 else
-    udot_0 = zeros(hspace.ndof,1);
+  udot_0 = zeros(hspace.ndof,1);
 end
+clear mass_proj
 
 norm_flux_initial = check_flux_phase_field(hspace, hmsh, u_0);
 disp(strcat('initial flux =',num2str(norm_flux_initial)))
 
-
 u_n = u_0;
 udot_n = udot_0;
 
-%filenumber=1;
-%plot_results(geometry,hmsh,hspace, u_0, time, filenumber)
-
-
 %%-------------------------------------------------------------------------
-% generealized alpha parameters
+% generalized alpha parameters
 a_m = .5*((3-rho_inf_gen_alpha)/(1+rho_inf_gen_alpha));
 a_f =  1/(1+rho_inf_gen_alpha);
 gamma =  .5 + a_m - a_f;
-
-
 
 %%-------------------------------------------------------------------------
 % loop over time steps
 
 adaptivity_data_flag = true; % if false, the mesh refinement/coarsening is skipped
 
-
-old_space.modified = 1;
-old_space.space =    [];
-old_space.mesh =     [];
-old_space.mass_mat = [];
-old_space.term3 =    [];
-old_space.term4 =    [];
-old_space.Pen   =    [];
-old_space.pen_rhs =  [];
-
-
-counter_plot = 1;
-
+old_space = struct ('modified', 1, 'space', [], 'mesh', [], 'mass_mat', [], ...
+  'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
 
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
-save_results_step(u_n, udot_n,time, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, 1)
+time = initial_time;
+save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, 1)
 save_id = 2;
 results.time = zeros(length(save_info.time_save)+1,1);
 flag_stop_save = false;
 results.time(1) = time;
 
-
-
-
 while time < Time_max
 
-    disp('----------------------------------------------------------------')
-    disp(strcat('time step t=',num2str(time)))
+  disp('----------------------------------------------------------------')
+  disp(strcat('time step t=',num2str(time)))
     
-    %----------------------------------------------------------------------
-    % adaptivity in space
+  %----------------------------------------------------------------------
+  % adaptivity in space
    
-    [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
-                                                dt, a_m, a_f, gamma, lambda, pen_nitsche, ...
-                                                problem_data, adaptivity_data, adaptivity_data_flag, old_space);
+  [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
+                                              dt, a_m, a_f, gamma, lambda, pen_nitsche, ...
+                                              problem_data, adaptivity_data, adaptivity_data_flag, old_space);
 
-    %----------------------------------------------------------------------
-    % coarsening
-    if time >= adaptivity_data.time_delay
-    if adaptivity_data_flag == true
-        [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hmsh, hspace, adaptivity_data,  u_n1, udot_n1, pen_projection, old_space);
+  %----------------------------------------------------------------------
+  % coarsening
+  if (time >= adaptivity_data.time_delay)
+    if (adaptivity_data_flag == true)
+      [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hmsh, hspace, adaptivity_data,  u_n1, udot_n1, pen_projection, old_space);
     end
+  end
+
+  % Store results
+  if (flag_stop_save == false)
+    if (time + dt >= save_info.time_save(save_id))
+      save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
+      if (save_id > length(save_info.time_save))
+        flag_stop_save = true;
+      end
+      save_id = save_id + 1;
     end
-
-    %----------------------------------------------------------------------
-    % plot results
-%     if counter_plot == 10
-%         filenumber=filenumber+1;
-%         plot_results(geometry,hmsh,hspace, u_n1, time+dt, filenumber)
-%         counter_plot = 0;
-%     end
-% 
-%     counter_plot = counter_plot +1;
-
-    % Store results
-    if (flag_stop_save == false)
-        if (time +dt >= save_info.time_save(save_id))  
-
-          save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
-
-          if (save_id > length(save_info.time_save))
-            flag_stop_save = true;
-          end
-          save_id = save_id + 1;
-        end
-    end
+  end
     
-    %----------------------------------------------------------------------
-    % update time
-    time = time + dt;
+  %----------------------------------------------------------------------
+  % update time
+  time = time + dt;
 
-    % update
-    u_n = u_n1;
-    udot_n = udot_n1;
+  % update
+  u_n = u_n1;
+  udot_n = udot_n1;
 
-    % check max time
-    if time + dt >Time_max
-        dt = Time_max-time;
-    end
+  % check max time
+  if (time + dt >Time_max)
+    dt = Time_max-time;
+  end
     
 end % end loop over time steps
 
@@ -177,38 +147,20 @@ disp('----------------------------------------------------------------')
 % crop results
 results.time = results.time(1:save_id-1);
 
-
 end
 
-
-
-
-
-
-%--------------------------------------------------------------------------
-%
-%
-%
 %--------------------------------------------------------------------------
 % FUNCTIONS
 %--------------------------------------------------------------------------
-%
-%
-%
-%--------------------------------------------------------------------------
 
 % save and plot results
-function save_results_step(field, field_dot,time, hspace, hmsh, geometry, save_info, estimator_type, counter)
+function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_info, estimator_type, counter)
 
 
 vtk_pts = {linspace(0, 1, 32*4), linspace(0, 1, 32*4)};
     
 % save numerical results in a file
       
-
-
-
-    
 output_file = strcat( save_info.folder_name,'/Square_cahn_hilliard_adaptive_',estimator_type,'_', num2str(counter)  );
 fprintf ('The result is saved in the file %s \n \n', output_file);
 sp_to_vtk (field, hspace, geometry, vtk_pts, output_file ,{'solution', 'gradient'}, {'value', 'gradient'})    
@@ -240,27 +192,20 @@ end
 % multiple refinements marking all the elements 
 %--------------------------------------------------------------------------
 
-function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adaptivity_data)
+function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data)
 
-    if n_refininements >= 1
-       
-        for i = 1:n_refininements
+  if (n_refinements >= 1)
+    for i = 1:n_refinements
+      if (hmsh.nlevels >= adaptivity_data.max_level) % check max depth
+        disp('Uniform refinement limited by max_level')
+        break
+      end
 
-            if hmsh.nlevels >= adaptivity_data.max_level % check max depth        
-                disp('Uniform refinement limited by max_level')
-                break
-            end
-
-            marked = cell(hmsh.nlevels,1); 
-            for ilev =1:hmsh.nlevels
-                elements = hmsh.active{ilev};  % mark all the active elements
-                marked{ilev} = elements;
-            end
-            [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-            %hmsh_plot_cells (hmsh)
-        end
-    
+      marked = cell (hmsh.nlevels,1);
+      marked{hmsh.nlevels} = hmsh.active{hmsh.nlevels};
+      [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     end
+  end
 end
 
 
@@ -269,8 +214,8 @@ end
 %--------------------------------------------------------------------------
 
 function u_n = compute_initial_conditions(mass_mat, fun_u, hspace, hmsh)
-    rhs = op_f_v_hier(hspace,hmsh, fun_u);
-    u_n = mass_mat\rhs;
+  rhs = op_f_v_hier(hspace,hmsh, fun_u);
+  u_n = mass_mat \ rhs;
 end
 
 
@@ -280,20 +225,19 @@ end
 
 function [u_0, udot_0] = force_flux_null_weak(hspace, hmsh, u_0, udot_0)
 
-    [BC, indBC, ~] = impose_essential_neumann_weak(hspace, hmsh);
+  [BC, indBC, ~] = impose_essential_neumann_weak(hspace, hmsh);
     
-    identity = speye(hspace.ndof);
-    identity(indBC,:)= 0;
-    identity = identity + BC;
+  identity = speye(hspace.ndof);
+  identity(indBC,:)= 0;
+  identity = identity + BC;
 
-    uold = u_0;
-    uold(indBC) = 0;
-    u_0 = identity\uold;
+  uold = u_0;
+  uold(indBC) = 0;
+  u_0 = identity \ uold;
 
-    udotold = udot_0;
-    udotold(indBC) = 0;
-    udot_0 = identity\udotold;
-
+  udotold = udot_0;
+  udotold(indBC) = 0;
+  udot_0 = identity \ udotold;
 end
 
 
@@ -302,125 +246,86 @@ end
 %--------------------------------------------------------------------------
 
 function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  dt, a_m, a_f, gamma, lambda, pen, problem_data, adaptivity_data, adaptivity_data_flag, old_space)
-    iter = 0;
-    while (1)
-        
-        iter = iter + 1;
+  iter = 0;
+  while (1)
+       
+    iter = iter + 1;
 
-        disp(strcat('%%%%%%%%%%%%%%%%% Adaptivity iteration ',num2str(iter),' %%%%%%%%%%%%%%%%%'));
+    disp(strcat('%%%%%%%%%%%%%%%%% Adaptivity iteration ',num2str(iter),' %%%%%%%%%%%%%%%%%'));
     
-        %------------------------------------------------------------------
-        % check space
-        if (~hspace_check_partition_of_unity (hspace, hmsh))
-            disp('ERROR: The partition-of-the-unity property does not hold.')
-            solution_data.flag = -1; break
-        end
+    %------------------------------------------------------------------
+    % solve
+    [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, pen, hspace, hmsh, old_space);
+    nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
+
+    %------------------------------------------------------------------
+    % skip adaptivity
+    if (adaptivity_data_flag == false)
+      est = zeros(hmsh.nel, 1);
+      disp('No adaptivity')
+      break
+    end
+
+    %------------------------------------------------------------------
+    %estimate
+    est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, problem_data, adaptivity_data);
+    gest(iter) = norm (est);
+
+    %------------------------------------------------------------------
+    % stopping criteria
+    if (iter == adaptivity_data.num_max_iter)
+      disp('Warning: reached the maximum number of iterations')
+      solution_data.flag = 2;
+      break
+    elseif (hmsh.nlevels > adaptivity_data.max_level)
+      disp(strcat('number of levels =',num2str(hmsh.nlevels))) 
+      disp('Warning: reached the maximum number of levels')
+      solution_data.flag = 3; break                
+    end
         
-        %------------------------------------------------------------------
-        % solve
-        [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, pen, hspace, hmsh, old_space);
-        nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
-
-
-        %------------------------------------------------------------------
-        % skip adaptivity
-        if adaptivity_data_flag == false
-            est = zeros(hmsh.nel, 1);
-            disp('No adaptivity')
-            break
-        end
-
-        %------------------------------------------------------------------
-        %estimate
-        est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, problem_data, adaptivity_data);
-        gest(iter) = norm (est);
-
-        %------------------------------------------------------------------
-        % stopping criteria
-%         if (gest(iter) < adaptivity_data.tol)
-%           disp('Success: The error estimation reached the desired tolerance'); 
-%           solution_data.flag = 1; break
-        if (iter == adaptivity_data.num_max_iter)
-          disp('Warning: reached the maximum number of iterations')
-          solution_data.flag = 2; break
-        elseif (hmsh.nlevels > adaptivity_data.max_level)
-          disp(strcat('number of levels =',num2str(hmsh.nlevels))) 
-          disp('Warning: reached the maximum number of levels')
-          solution_data.flag = 3; break                
-        %elseif (hspace.ndof > adaptivity_data.max_ndof)
-         % disp('Warning: reached the maximum number of DOFs')
-         % solution_data.flag = 4; break
-        %elseif (hmsh.nel > adaptivity_data.max_nel)
-        %  disp('Warning: reached the maximum number of elements')
-        %  solution_data.flag = 5; break        
-        end
-        
-        % stopping criterion
-        if hmsh.nlevels == adaptivity_data.max_level
+    if (hmsh.nlevels == adaptivity_data.max_level)
             % check if there are active elements in the coarse levels
-            continue_flag = 0;
-            for ilev = 1:hmsh.nlevels - 1
-                if isempty(hmsh.active{ilev}) == 0
-                    continue_flag = 1;
-                    break
-                end
-            end
+      continue_flag = 0;
+      for ilev = 1:hmsh.nlevels - 1
+        if (isempty(hmsh.active{ilev}) == 0)
+          continue_flag = 1;
+          break
         end
+      end
+    end
 
-        if hmsh.nlevels == adaptivity_data.max_level && continue_flag == 0
-            disp('Mesh completely refined at the maximum level')
-            break
-        end
+    if (hmsh.nlevels == adaptivity_data.max_level && continue_flag == 0)
+      disp('Mesh completely refined at the maximum level')
+      break
+    end
 
-        
-
-        %------------------------------------------------------------------
-        % refinement
-        % mark
-        [marked, num_marked_ref] = adaptivity_mark_cahn_hilliard (est, hmsh, hspace, adaptivity_data);
-        % limit the maximum refienment depth
-        if hmsh.nlevels == adaptivity_data.max_level
-            num_deleted = numel(marked{hmsh.nlevels});
-            marked{hmsh.nlevels} = [];
-            num_marked_ref = num_marked_ref - num_deleted ;
-        end
+    %------------------------------------------------------------------
+    % refinement
+    % mark
+    [marked, num_marked_ref] = adaptivity_mark_cahn_hilliard (est, hmsh, hspace, adaptivity_data);
+    % limit the maximum refinement depth
+    if (hmsh.nlevels == adaptivity_data.max_level)
+      num_deleted = numel(marked{hmsh.nlevels});
+      marked{hmsh.nlevels} = [];
+      num_marked_ref = num_marked_ref - num_deleted ;
+    end
 
         % stopping criterion
-        if num_marked_ref == 0
-            disp('No element is refined')
-            break  
-        end
+    if (num_marked_ref == 0)
+      disp('No element is refined')
+      break  
+    end
 
         % refine
-        [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-        old_space.modified = 1;
-        old_space.space =    [];
-        old_space.mesh =     [];
-        old_space.mass_mat = [];
-        old_space.term3 =    [];
-        old_space.term4 =    [];
-        old_space.Pen   =    [];
-        old_space.pen_rhs =  [];
+    [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+    old_space = struct ('modified', 1, 'space', [], 'mesh', [], 'mass_mat', [], ...
+                        'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
 
-
-        % recompute control variables
-        [u_n, udot_n] = compute_control_variables_new_mesh(u_n, udot_n, Cref);
+    % recompute control variables
+    [u_n, udot_n] = compute_control_variables_new_mesh(u_n, udot_n, Cref);
 
    
-    end % end loop adaptivity
-    %----------------------------------------------------------------------
-    
-%     fig=figure(10);
-%     hmsh_plot_cells (hmsh)
-%     view(0,90);
-
-    %----------------------------------------------------------------------
-    % save info
-%     solution_data.iter = iter;
-%     solution_data.gest = gest(1:iter);
-%     solution_data.ndof = ndof(1:iter);
-%     solution_data.nel  = nel(1:iter);
-
+  end % end loop adaptivity
 end
 
 
@@ -450,14 +355,8 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm(est, hm
             % recompute control variables:  (mass+penalty) \ (G * u)
             [u_n1, udot_n1] = compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje);
 
-            old_space.modified = 1;
-            old_space.space =    [];
-            old_space.mesh =     [];
-            old_space.mass_mat = [];
-            old_space.term3 =    [];
-            old_space.term4 =    [];
-            old_space.Pen   =    [];
-            old_space.pen_rhs =  [];
+            old_space = struct ('modified', 1, 'space', [], 'mesh', [], 'mass_mat', [], ...
+                                'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
         end
         clear hmsh_fine hspace_fine
 
@@ -1319,9 +1218,3 @@ end
 num = sum (cellfun (@numel, deact_marked));
     
 end
-
-
-
-
-
-

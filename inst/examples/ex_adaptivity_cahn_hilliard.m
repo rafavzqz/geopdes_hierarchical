@@ -1,11 +1,4 @@
-% clc
-% close all
-% clear all
-
-
-
 nel =1;
-p= 2;
 
 % 1) PHYSICAL DATA OF THE PROBLEM
 clear problem_data  
@@ -21,11 +14,12 @@ problem_data.pen_nitsche = 1e4 * lambda; % Nitsche's  penalty constant
 problem_data.pen_projection = 1000;      % penalty value to constrain the flux in L2 projection
 
 % time  
-problem_data.time = 0;
+problem_data.initial_time = 0;
 problem_data.Time_max = 1;    
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
+p = 2;
 method_data.degree     = [p p];         % Degree of the splines
 method_data.regularity = [p-1 p-1];     % Regularity of the splines
 %method_data.nsub       = [nel nel];     % Number of subdivisions
@@ -33,27 +27,24 @@ method_data.nquad      = [p+1 p+1];     % Points for the Gaussian quadrature rul
 
 % time integration parameters
 method_data.rho_inf_gen_alpha = 0.5;
-method_data.dt =1e-3;
+method_data.dt = 1e-3;
 
 % hierarchical structure
+nel = 1;
 method_data.nsub_coarse = [nel nel];    % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
 method_data.space_type  = 'standard';   % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 1;            % 0: False, 1: True
-
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
 adaptivity_data.flag = 'elements';
 adaptivity_data.C0_est = 1.0;
 
-
 adaptivity_data.estimator_type = 'field';
 adaptivity_data.mark_param = .2;
 adaptivity_data.mark_param_coarsening = .2;
-adaptivity_data.adm_class = 2;
 adaptivity_data.time_delay = 0.;
-
 
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 5;
@@ -61,9 +52,8 @@ adaptivity_data.max_ndof = 5000;
 adaptivity_data.num_max_iter = 10;
 adaptivity_data.max_nel = 500;
 adaptivity_data.tol = 1e-5;
-
-
 adaptivity_data.adm_type = 'T-admissible';
+adaptivity_data.adm_class = 2;
 
 % 3) INITIAL CONDITIONS 
 clear initial_conditions
