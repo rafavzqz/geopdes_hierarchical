@@ -77,19 +77,19 @@ for ilev = 1:hmsh.nlevels
       end
     elseif (hmsh.ndim == 3)
       for iel = 1:msh_level.nel
-        plot3 (x{1}(1,1,:,iel), x{2}(1,1,:,iel), x{3}(1,1,:,iel), 'k');
+        plot3 (squeeze(x{1}(1,1,:,iel)), squeeze(x{2}(1,1,:,iel)), squeeze(x{3}(1,1,:,iel)), 'k');
         hold on
-        plot3 (x{1}(end,1,:,iel), x{2}(end,1,:,iel), x{3}(end,1,:,iel), 'k');
-        plot3 (x{1}(1,end,:,iel), x{2}(1,end,:,iel), x{3}(1,end,:,iel), 'k');
-        plot3 (x{1}(end,end,:,iel), x{2}(end,end,:,iel), x{3}(end,end,:,iel), 'k');
-        plot3 (x{1}(1,:,1,iel), x{2}(1,:,1,iel), x{3}(1,:,1,iel), 'k');
-        plot3 (x{1}(end,:,1,iel), x{2}(end,:,1,iel), x{3}(end,:,1,iel), 'k');
-        plot3 (x{1}(1,:,end,iel), x{2}(1,:,end,iel), x{3}(1,:,end,iel), 'k');
-        plot3 (x{1}(end,:,end,iel), x{2}(end,:,end,iel), x{3}(end,:,end,iel), 'k');
-        plot3 (x{1}(:,1,1,iel), x{2}(:,1,1,iel), x{3}(:,1,1,iel), 'k');
-        plot3 (x{1}(:,end,1,iel), x{2}(:,end,1,iel), x{3}(:,end,1,iel), 'k');
-        plot3 (x{1}(:,1,end,iel), x{2}(:,1,end,iel), x{3}(:,1,end,iel), 'k');
-        plot3 (x{1}(:,end,end,iel), x{2}(:,end,end,iel), x{3}(:,end,end,iel), 'k');
+        plot3 (squeeze(x{1}(end,1,:,iel)), squeeze(x{2}(end,1,:,iel)), squeeze(x{3}(end,1,:,iel)), 'k');
+        plot3 (squeeze(x{1}(1,end,:,iel)), squeeze(x{2}(1,end,:,iel)), squeeze(x{3}(1,end,:,iel)), 'k');
+        plot3 (squeeze(x{1}(end,end,:,iel)), squeeze(x{2}(end,end,:,iel)), squeeze(x{3}(end,end,:,iel)), 'k');
+        plot3 (squeeze(x{1}(1,:,1,iel)), squeeze(x{2}(1,:,1,iel)), squeeze(x{3}(1,:,1,iel)), 'k');
+        plot3 (squeeze(x{1}(end,:,1,iel)), squeeze(x{2}(end,:,1,iel)), squeeze(x{3}(end,:,1,iel)), 'k');
+        plot3 (squeeze(x{1}(1,:,end,iel)), squeeze(x{2}(1,:,end,iel)), squeeze(x{3}(1,:,end,iel)), 'k');
+        plot3 (squeeze(x{1}(end,:,end,iel)), squeeze(x{2}(end,:,end,iel)), squeeze(x{3}(end,:,end,iel)), 'k');
+        plot3 (squeeze(x{1}(:,1,1,iel)), squeeze(x{2}(:,1,1,iel)), squeeze(x{3}(:,1,1,iel)), 'k');
+        plot3 (squeeze(x{1}(:,end,1,iel)), squeeze(x{2}(:,end,1,iel)), squeeze(x{3}(:,end,1,iel)), 'k');
+        plot3 (squeeze(x{1}(:,1,end,iel)), squeeze(x{2}(:,1,end,iel)), squeeze(x{3}(:,1,end,iel)), 'k');
+        plot3 (squeeze(x{1}(:,end,end,iel)), squeeze(x{2}(:,end,end,iel)), squeeze(x{3}(:,end,end,iel)), 'k');
       end
     end
   end
