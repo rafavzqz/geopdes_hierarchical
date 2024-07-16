@@ -119,7 +119,7 @@ else
   end
     
   if (exist('fun_udot', 'var') && ~isempty(fun_udot))
-    rhs = op_f_v_hier (space, msh, fun_udot);
+    rhs = op_f_v_hier (hspace, hmsh, fun_udot);
     udot_n = mass_proj \ rhs;
   else
     udot_n = zeros(hspace.ndof, 1);
