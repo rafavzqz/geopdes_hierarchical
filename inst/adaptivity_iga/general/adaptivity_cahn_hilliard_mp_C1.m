@@ -101,17 +101,16 @@ gamma =  .5 + a_m - a_f;
 % Construct geometry structure, and information for interfaces and boundaries
 
 % Initialization of the most coarse level of the hierarchical mesh and space
-[hmsh, hspace, geometry] = adaptivity_initialize_laplace_mp_C1 (problem_data, method_data);
+if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity ~= 1)
+  warning('Setting interface regularity to C1')
+  method_data.interface_regularity = 1;
+end
+[hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
-if  initial_conditions.restart_flag == 1
-    % skip refinement
-
-else   
-    
-    % Refine the mesh up to a predefined level
-    n_refininements = adaptivity_data.max_level-1; % number of uniform refinements
-    [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adaptivity_data);
-
+if (initial_conditions.restart_flag == false)
+  % Refine the mesh up to a predefined level
+  n_refinements = adaptivity_data.max_level-1; % number of uniform refinements
+  [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data);
 end
 
 %%-------------------------------------------------------------------------
@@ -257,28 +256,20 @@ end
 %--------------------------------------------------------------------------
 % multiple refinements marking all the elements 
 %--------------------------------------------------------------------------
+function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data)
 
-function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refininements, adaptivity_data)
+  if (n_refinements >= 1)
+    for ii = 1:n_refinements
+      if (hmsh.nlevels >= adaptivity_data.max_level) % check max depth
+        disp('Uniform refinement limited by max_level')
+        break
+      end
 
-    if n_refininements >= 1
-       
-        for i = 1:n_refininements
-
-            if hmsh.nlevels >= adaptivity_data.max_level % check max depth        
-                disp('uniform refinement limited by max_level')
-                break
-            end
-
-            marked = cell(hmsh.nlevels,1); 
-            for ilev =1:hmsh.nlevels
-                elements = hmsh.active{ilev};  % mark all the active elements
-                marked{ilev} = elements;
-            end
-            [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-
-        end
-    
+      marked = cell (hmsh.nlevels,1);
+      marked{hmsh.nlevels} = hmsh.active{hmsh.nlevels};
+      [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     end
+  end
 end
 
 %--------------------------------------------------------------------------
@@ -315,7 +306,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n
 
         %------------------------------------------------------------------
         %estimate
-        est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, problem_data, adaptivity_data);
+        est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, adaptivity_data);
         gest(iter) = norm (est);
 
         %------------------------------------------------------------------
