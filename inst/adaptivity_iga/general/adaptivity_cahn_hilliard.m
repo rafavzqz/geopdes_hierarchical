@@ -7,10 +7,7 @@ function [geometry, hmsh, hspace, results] = ...
               adaptivity_cahn_hilliard (problem_data, method_data, adaptivity_data, initial_conditions, save_info)
 
 %%-------------------------------------------------------------------------
-% Initialization of some auxiliary variables
-nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel;
-
-% Initialization of the most coarse level of the hierarchical mesh and space
+% Initialization of the coarsest level of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
 if (exist ('nmnn_sides','var') && ~isempty (nmnn_sides))
@@ -24,38 +21,36 @@ n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
 [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data);
 
 %%-------------------------------------------------------------------------
-% initial conditions
+% initial conditions, with a penalty term
 mass_mat = op_u_v_hier (hspace,hspace,hmsh);
-% penalty term (matrix)
-[Pen, ~] = penalty_matrix (hspace, hmsh, method_data.pen_projection, nmnn_sides);
+[Pen, ~] = penalty_matrix (hspace, hmsh, method_data.Cpen_projection, nmnn_sides);
 mass_proj = mass_mat + Pen;
 
 if (isfield(initial_conditions,'fun_u'))
   if (isnumeric(initial_conditions.fun_u) == 1)
-    u_0 = fun_u;
+    u_n = fun_u;
   else
-    u_0 = compute_initial_conditions(mass_proj, initial_conditions.fun_u, hspace, hmsh);
+    rhs = op_f_v_hier(hspace,hmsh, initial_conditions.fun_u);
+    u_n = mass_proj \ rhs;
   end
 else
-  u_0 = zeros(hspace.ndof,1);
+  u_n = zeros(hspace.ndof,1);
 end
 
 if (isfield(initial_conditions,'fun_udot'))
   if (isnumeric(initial_conditions.fun_udot) == 1)
-    udot_0 = fun_udot;
+    udot_n = fun_udot;
   else
-    udot_0 = compute_initial_conditions(mass_proj, initial_conditions.fun_udot, hspace, hmsh);
+    rhs = op_f_v_hier(hspace,hmsh, initial_conditions.fun_udot);
+    udot_n = mass_proj \ rhs;
   end
 else
-  udot_0 = zeros(hspace.ndof,1);
+  udot_n = zeros(hspace.ndof,1);
 end
 clear mass_proj
 
-norm_flux_initial = check_flux_phase_field(hspace, hmsh, u_0, nmnn_sides);
+norm_flux_initial = check_flux_phase_field(hspace, hmsh, u_n, nmnn_sides);
 disp(strcat('initial flux =',num2str(norm_flux_initial)))
-
-u_n = u_0;
-udot_n = udot_0;
 
 %%-------------------------------------------------------------------------
 % generalized alpha parameters
@@ -65,12 +60,12 @@ a_f =  1/(1+rho_inf_gen_alpha);
 gamma =  .5 + a_m - a_f;
 
 %%-------------------------------------------------------------------------
-% loop over time steps
+% save matrices previous mesh
 
 adaptivity_data_flag = true; % if false, the mesh refinement/coarsening is skipped
 
 old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-  'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+  'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
 
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
@@ -81,6 +76,8 @@ results.time = zeros(length(save_info.time_save)+1,1);
 flag_stop_save = false;
 results.time(1) = time;
 
+%%-------------------------------------------------------------------------
+% Loop over time steps
 dt = method_data.dt;
 while time < problem_data.Time_max
 
@@ -91,7 +88,7 @@ while time < problem_data.Time_max
   %----------------------------------------------------------------------
   % adaptivity in space   
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
-                                              dt, a_m, a_f, gamma, method_data.pen_nitsche, problem_data, ...
+                                              dt, a_m, a_f, gamma, method_data.Cpen_nitsche, problem_data, ...
                                               adaptivity_data, adaptivity_data_flag, old_space, nmnn_sides);
 
   %----------------------------------------------------------------------
@@ -99,7 +96,7 @@ while time < problem_data.Time_max
   if (time >= adaptivity_data.time_delay)
     if (adaptivity_data_flag)
       [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm...
-        (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.pen_projection, old_space, nmnn_sides);
+        (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space, nmnn_sides);
     end
   end
 
@@ -115,10 +112,8 @@ while time < problem_data.Time_max
   end
     
   %----------------------------------------------------------------------
-  % update time
-  time = time + dt;
-
   % update
+  time = time + dt;
   u_n = u_n1;
   udot_n = udot_n1;
 
@@ -128,7 +123,6 @@ while time < problem_data.Time_max
   end
     
 end % end loop over time steps
-
 
 disp('----------------------------------------------------------------')
 disp(strcat('END ANALYSIS t=',num2str(time)))
@@ -142,7 +136,7 @@ end
 %--------------------------------------------------------------------------
 % FUNCTIONS
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % save and plot results 
 function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_info, estimator_type, counter)
 
@@ -195,14 +189,6 @@ function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adapti
       [hmsh, hspace] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     end
   end
-end
-
-%--------------------------------------------------------------------------
-% initial conditions
-%--------------------------------------------------------------------------
-function u_n = compute_initial_conditions(mass_mat, fun_u, hspace, hmsh)
-  rhs = op_f_v_hier(hspace,hmsh, fun_u);
-  u_n = mass_mat \ rhs;
 end
 
 %--------------------------------------------------------------------------
@@ -274,10 +260,11 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % refine
     [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-                        'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+                        'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
 
     % recompute control variables
-    [u_n, udot_n] = compute_control_variables_new_mesh(u_n, udot_n, Cref);
+    u_n = Cref * u_n;       
+    udot_n = Cref * udot_n;
 
   end % end loop adaptivity
 end
@@ -306,22 +293,15 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
       old_space.modified = false;
     else
       % recompute control variables:  (mass+penalty) \ (G * u)
-      [u_n1, udot_n1] = compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje, nmnn_sides);
+      [u_n1, udot_n1] = compute_control_variables_coarse_mesh...
+        (hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje, nmnn_sides);
 
       old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-                          'term3', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+                          'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
     end
     clear hmsh_fine hspace_fine
 
   end
-end
-
-%--------------------------------------------------------------------------
-% compute control variables on the new mesh (given the transformation matrix)
-%--------------------------------------------------------------------------
-function [u_n_ref, udot_n_ref] = compute_control_variables_new_mesh(u_n, udot_n, Cref)
-  u_n_ref = Cref * u_n;       
-  udot_n_ref = Cref * udot_n;
 end
 
 %--------------------------------------------------------------------------
@@ -454,7 +434,7 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     [term2, term2K] = op_gradfu_gradv_hier (hspace, hmsh, u_a, mu, dmu);
      
     % laplacian (matrix)
-    term3 = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
+    lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
     
     % term 4 (matrix)
     term4 = int_term_4 (hspace, hmsh, lambda, nmnn_sides);
@@ -464,11 +444,11 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
 
     % update old_space
     old_space = struct ('modified', false, 'space', hspace, 'mesh', hmsh, ...
-      'mass_mat', mass_mat, 'term3', term3, 'term4', term4, 'Pen', Pen, 'pen_rhs', pen_rhs);
+      'mass_mat', mass_mat, 'lapl_mat', lapl_mat, 'term4', term4, 'Pen', Pen, 'pen_rhs', pen_rhs);
 
   elseif (old_space.modified == false)
     mass_mat =  old_space.mass_mat;
-    term3 =  old_space.term3;
+    lapl_mat =  old_space.lapl_mat;
     term4 =  old_space.term4;
     Pen = old_space.Pen;
     pen_rhs =  old_space.pen_rhs;
@@ -477,10 +457,10 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
   end
 
   % residual
-  Res_gl = mass_mat*udot_a + term2*u_a + term3*u_a - (term4 + term4')*u_a + Pen*u_a - pen_rhs;
+  Res_gl = mass_mat*udot_a + term2*u_a + lapl_mat*u_a - (term4 + term4')*u_a + Pen*u_a - pen_rhs;
 
   % tangent stiffness matrix (mass is not considered here)
-  stiff_mat = term2 + term2K + term3 - (term4 + term4') + Pen;
+  stiff_mat = term2 + term2K + lapl_mat - (term4 + term4') + Pen;
 
 end
 
