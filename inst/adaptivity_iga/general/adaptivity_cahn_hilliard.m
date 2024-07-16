@@ -340,7 +340,7 @@ function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
     if (hmsh_fine.nel_per_level(ilev) > 0)
       x = cell (hmsh_fine.rdim, 1);
       for idim = 1:hmsh_fine.rdim
-        x{idim} = reshape (hmsh_fine.msh_lev{ilev}.geo_map(idim,:,:), hmsh_fine.mesh_of_level(ilev).nqn, hmsh_fine.nel_per_level(ilev));
+        x{idim} = reshape (hmsh_fine.msh_lev{ilev}.geo_map(idim,:,:), hmsh_fine.msh_lev{ilev}.nqn, hmsh_fine.nel_per_level(ilev));
       end
 
       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh_fine.msh_lev{ilev}, 'value', true);      
@@ -364,21 +364,22 @@ function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
 end
 
 %--------------------------------------------------------------------------
-% generalized alpha
+% One step of generalized alpha method
 %--------------------------------------------------------------------------
 function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, ...
                                        lambda, mu, dmu, pen, hspace, hmsh, old_space, nmnn_sides)
 
-% convergence criteria
+  % Convergence criteria
   n_max_iter = 20;
   tol_rel_res = 1e-10;
   tol_abs_res = 1e-10;
 
-% predictor step
+  % Predictor step
   u_n1 = u_n;
   udot_n1 = (gamma-1)/gamma * udot_n; 
 
-  for iter = 0:n_max_iter % newton loop
+  % Newton loop
+  for iter = 0:n_max_iter
 
     % field at alpha level
     udot_a = udot_n + a_m *(udot_n1-udot_n);
@@ -392,21 +393,21 @@ function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_
     if (iter == 0)
       norm_res_0 = norm(Res_gl);
     end
-    norm_res =norm(Res_gl);
+    norm_res = norm(Res_gl);
     
-    if (norm_res/norm_res_0 < tol_rel_res) %relative tolerance
+    if (norm_res/norm_res_0 < tol_rel_res) % relative tolerance
       disp(strcat('iteration n°=',num2str(iter)))
-      disp(strcat('norm residual=',num2str(norm_res)))
+      disp(strcat('norm (abs) residual=',num2str(norm_res)))
       break
     end
     if (norm_res<tol_abs_res) % absolute tolerance
       disp(strcat('iteration n°=',num2str(iter)))
-      disp(strcat('norm residual=',num2str(norm_res)))
+      disp(strcat('norm absolute residual=',num2str(norm_res)))
       break
     end
     if (iter == n_max_iter) % maximum iterations
-        disp(strcat('stop max number of iterations'))
-        disp(strcat('norm residual=',num2str(norm_res)))
+      disp(strcat('Newton reached the maximum number of iterations'))
+      disp(strcat('norm residual=',num2str(norm_res)))
     end
     
     % Compute the update, and update the solution
@@ -456,10 +457,10 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     [term2, term2K] = op_gradfu_gradv_hier(old_space.space, old_space.mesh, u_a, mu, dmu);
   end
 
-  % residual
+  % Residual
   Res_gl = mass_mat*udot_a + term2*u_a + lapl_mat*u_a - (term4 + term4')*u_a + Pen*u_a - pen_rhs;
 
-  % tangent stiffness matrix (mass is not considered here)
+  % Tangent stiffness matrix (mass is not considered here)
   stiff_mat = term2 + term2K + lapl_mat - (term4 + term4') + Pen;
 
 end
