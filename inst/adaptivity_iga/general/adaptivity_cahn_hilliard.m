@@ -8,7 +8,7 @@ function [geometry, hmsh, hspace, results] = ...
 
 %%-------------------------------------------------------------------------
 % Initialization of some auxiliary variables
-nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel; gest = nel+NaN;
+nel = zeros (1, adaptivity_data.num_max_iter); ndof = nel;
 
 % Initialization of the most coarse level of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
@@ -224,7 +224,6 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % solve
     [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, mu, dmu, ...
                                                         pen, hspace, hmsh, old_space, nmnn_sides);
-    nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
 
     %------------------------------------------------------------------
     % skip adaptivity
@@ -238,18 +237,16 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % estimate
 %%%%%%%%%%%%%%%%%%%%%%%%%% TODO: write the help of the function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, adaptivity_data);
-    gest(iter) = norm (est);
 
     %------------------------------------------------------------------
     % stopping criteria
     if (iter == adaptivity_data.num_max_iter)
       disp('Warning: reached the maximum number of iterations')
-      solution_data.flag = 2;
       break
     elseif (hmsh.nlevels > adaptivity_data.max_level)
       disp(strcat('number of levels =',num2str(hmsh.nlevels))) 
       disp('Warning: reached the maximum number of levels')
-      solution_data.flag = 3; break                
+      break                
     end
         
     if (hmsh.nlevels == adaptivity_data.max_level && hmsh.nel == hmsh.nel_per_level(end))
