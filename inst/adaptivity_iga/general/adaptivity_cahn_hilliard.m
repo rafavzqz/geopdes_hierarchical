@@ -457,7 +457,7 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     mass_mat = op_u_v_hier (hspace,hspace,hmsh);
     
     % double well (matrices)
-    [term2, term2K] = op_gradmu_gradv_hier (hspace, hmsh, u_a, mu, dmu);
+    [term2, term2K] = op_gradfu_gradv_hier (hspace, hmsh, u_a, mu, dmu);
      
     % laplacian (matrix)
     term3 = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
@@ -479,7 +479,7 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     Pen = old_space.Pen;
     pen_rhs =  old_space.pen_rhs;
 
-    [term2, term2K] = op_gradmu_gradv_hier(old_space.space, old_space.mesh, u_a, mu, dmu);
+    [term2, term2K] = op_gradfu_gradv_hier(old_space.space, old_space.mesh, u_a, mu, dmu);
   end
 
   %----------------------------------------------------------------------
@@ -624,7 +624,7 @@ end
 % integral of the double-well function
 %--------------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [A, B] = op_gradmu_gradv_hier (hspace, hmsh, uhat, f, df)
+function [A, B] = op_gradfu_gradv_hier (hspace, hmsh, uhat, f, df)
 
   A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
   B = spalloc (hspace.ndof, hspace.ndof, 6*hspace.ndof);
