@@ -181,11 +181,10 @@ end
 %--------------------------------------------------------------------------
 % multiple refinements marking all the elements 
 %--------------------------------------------------------------------------
-
 function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data)
 
   if (n_refinements >= 1)
-    for i = 1:n_refinements
+    for ii = 1:n_refinements
       if (hmsh.nlevels >= adaptivity_data.max_level) % check max depth
         disp('Uniform refinement limited by max_level')
         break
@@ -198,11 +197,9 @@ function [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adapti
   end
 end
 
-
 %--------------------------------------------------------------------------
 % initial conditions
 %--------------------------------------------------------------------------
-
 function u_n = compute_initial_conditions(mass_mat, fun_u, hspace, hmsh)
   rhs = op_f_v_hier(hspace,hmsh, fun_u);
   u_n = mass_mat \ rhs;
@@ -239,8 +236,8 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
 
     %------------------------------------------------------------------
     % estimate
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, problem_data, adaptivity_data);
+%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: write the help of the function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, adaptivity_data);
     gest(iter) = norm (est);
 
     %------------------------------------------------------------------
@@ -482,7 +479,6 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     [term2, term2K] = op_gradfu_gradv_hier(old_space.space, old_space.mesh, u_a, mu, dmu);
   end
 
-  %----------------------------------------------------------------------
   % residual
   Res_gl = mass_mat*udot_a + term2*u_a + term3*u_a - (term4 + term4')*u_a + Pen*u_a - pen_rhs;
 
@@ -502,7 +498,8 @@ function A = int_term_4 (hspace, hmsh, lambda, nmnn_sides)
 end
 
 %--------------------------------------------------------------------------
-% OP_GRADVN_LAPLACEU_HIER: assemble the matrix A = [a(i,j)], a(i,j) = (epsilon (grad v n)_j, Delta u_i), with n the normal vector.
+% OP_GRADVN_LAPLACEU_HIER: assemble the matrix A = [a(i,j)], a(i,j) = (epsilon (grad v n)_j, Delta u_i), 
+%  with n the normal vector to the boundary.
 %--------------------------------------------------------------------------
 function varargout = op_gradv_n_laplaceu_hier (hspace, hmsh, nmnn_side, coeff)
 
@@ -670,85 +667,81 @@ function [A, B] = op_gradfu_gradv_hier (hspace, hmsh, uhat, f, df)
 
 end
 
-%--------------------------------------------------------------------------
-% operator for boundary conditions
-%--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function varargout = op_gradv_n_u_hier (hspace, hmsh, nmnn_side, coeff)
-
-  if (nargin == 3)
-    coeff = @(varargin) ones (size(varargin{1}));
-  end
-    
-  % side with info from the interior for space reconstruction
-  hmsh_side_int = hmsh_boundary_side_from_interior (hmsh, nmnn_side);
-  shifting_indices = cumsum ([0 hmsh.boundary(nmnn_side).nel_per_level]);
-
-  K = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-
-  ndofs_u = 0;
-  ndofs_v = 0;
-  for ilev = 1:hmsh.boundary(nmnn_side).nlevels
-
-    ndofs_u = ndofs_u + hspace.ndof_per_level(ilev);
-    ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
-
-    if (hmsh.boundary(nmnn_side).nel_per_level(ilev) > 0)
-
-      % mesh of the selected side
-      elements = shifting_indices(ilev)+1:shifting_indices(ilev+1); 
-      hmsh_side = hmsh_eval_boundary_side (hmsh, nmnn_side, elements);
-
-      x = cell (hmsh.rdim,1);
-      for idim = 1:hmsh.rdim
-        x{idim} = reshape (hmsh_side.geo_map(idim,:,:), hmsh_side.nqn, hmsh_side.nel);
-      end
-        
-      % reconstruct the part of the space defined on the selected boundary
-      msh_side_from_interior = hmsh_side_int.mesh_of_level(ilev);
-      sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
-      msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_side_int.active{ilev});
-        
-      % evaluate the space
-      spu_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', true);
-      spv_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
-        
-      spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
-      spv_lev = change_connectivity_localized_Csub (spv_lev, hspace, ilev);     
-
-      % compute the matrix
-      K_lev = op_gradv_n_u (spu_lev, spv_lev, hmsh_side, coeff (x{:}));
-
-      dofs_u = 1:ndofs_u;  
-      dofs_v = 1:ndofs_v;
-      Ktmp =  hspace.Csub{ilev}.' * K_lev * hspace.Csub{ilev};
-      K(dofs_v,dofs_u) = K(dofs_v,dofs_u) +Ktmp;    
-    end
-  end
-
-  if (nargout == 1)
-    varargout{1} = K;
-  elseif (nargout == 3)
-    [rows, cols, vals] = find (K);
-    varargout{1} = rows;
-    varargout{2} = cols;
-    varargout{3} = vals;
-  end
-
-end
+% %--------------------------------------------------------------------------
+% % operator for boundary conditions
+% %--------------------------------------------------------------------------
+% function varargout = op_gradv_n_u_hier (hspace, hmsh, nmnn_side, coeff)
+% 
+%   if (nargin == 3)
+%     coeff = @(varargin) ones (size(varargin{1}));
+%   end
+% 
+%   % side with info from the interior for space reconstruction
+%   hmsh_side_int = hmsh_boundary_side_from_interior (hmsh, nmnn_side);
+%   shifting_indices = cumsum ([0 hmsh.boundary(nmnn_side).nel_per_level]);
+% 
+%   K = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
+% 
+%   ndofs_u = 0;
+%   ndofs_v = 0;
+%   for ilev = 1:hmsh.boundary(nmnn_side).nlevels
+% 
+%     ndofs_u = ndofs_u + hspace.ndof_per_level(ilev);
+%     ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
+% 
+%     if (hmsh.boundary(nmnn_side).nel_per_level(ilev) > 0)
+% 
+%       % mesh of the selected side
+%       elements = shifting_indices(ilev)+1:shifting_indices(ilev+1); 
+%       hmsh_side = hmsh_eval_boundary_side (hmsh, nmnn_side, elements);
+% 
+%       x = cell (hmsh.rdim,1);
+%       for idim = 1:hmsh.rdim
+%         x{idim} = reshape (hmsh_side.geo_map(idim,:,:), hmsh_side.nqn, hmsh_side.nel);
+%       end
+% 
+%       % reconstruct the part of the space defined on the selected boundary
+%       msh_side_from_interior = hmsh_side_int.mesh_of_level(ilev);
+%       sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
+%       msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_side_int.active{ilev});
+% 
+%       % evaluate the space
+%       spu_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', true);
+%       spv_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true);
+% 
+%       spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
+%       spv_lev = change_connectivity_localized_Csub (spv_lev, hspace, ilev);     
+% 
+%       % compute the matrix
+%       K_lev = op_gradv_n_u (spu_lev, spv_lev, hmsh_side, coeff (x{:}));
+% 
+%       dofs_u = 1:ndofs_u;  
+%       dofs_v = 1:ndofs_v;
+%       Ktmp =  hspace.Csub{ilev}.' * K_lev * hspace.Csub{ilev};
+%       K(dofs_v,dofs_u) = K(dofs_v,dofs_u) +Ktmp;    
+%     end
+%   end
+% 
+%   if (nargout == 1)
+%     varargout{1} = K;
+%   elseif (nargout == 3)
+%     [rows, cols, vals] = find (K);
+%     varargout{1} = rows;
+%     varargout{2} = cols;
+%     varargout{3} = vals;
+%   end
+% 
+% end
 
 %--------------------------------------------------------------------------
 % check flux through the boundaries
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function norm_flux = check_flux_phase_field(hspace, hmsh, uhat, sides)
-
   norm_flux = 0;
   for iside=1:length(sides) 
     norm_flux_side = flux_side(hspace, hmsh, uhat, sides(iside));
     norm_flux = norm_flux + norm_flux_side;
   end
-
 end
 
 %---------------------------
@@ -797,7 +790,6 @@ end
 %--------------------------------------------------------------------------
 % penalty term
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [P, rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides)
     
   P =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
@@ -811,7 +803,7 @@ function [P, rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides)
 
 end
 
-
+%--------------------------------------------------------------------------
 function [mass_pen, rhs_pen] = penalty_grad (hspace, hmsh, nmnn_side, pen)
 
   hmsh_side_int = hmsh_boundary_side_from_interior (hmsh, nmnn_side ) ;
@@ -836,7 +828,7 @@ function [mass_pen, rhs_pen] = penalty_grad (hspace, hmsh, nmnn_side, pen)
       msh_side_from_interior = hmsh_side_int.mesh_of_level(ilev);
       sp_bnd = hspace.space_of_level(ilev).constructor (msh_side_from_interior);
       msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, hmsh_side_int.active{ilev});
-        
+
       % evaluate the space
       spu_lev = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'gradient', true);
       spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
@@ -846,10 +838,10 @@ function [mass_pen, rhs_pen] = penalty_grad (hspace, hmsh, nmnn_side, pen)
       coe_side = pen .* coe_side;
       K_lev = op_gradu_n_gradv_n(spu_lev, spu_lev, hmsh_side, coe_side);
 
-      dofs_u = 1:ndofs_u;  
+      dofs_u = 1:ndofs_u;
       dofs_v = 1:ndofs_v;
       Ktmp =  hspace.Csub{ilev}.' * K_lev * hspace.Csub{ilev};
-      mass_pen(dofs_v,dofs_u) = mass_pen(dofs_v,dofs_u) +Ktmp;    
+      mass_pen(dofs_v,dofs_u) = mass_pen(dofs_v,dofs_u) + Ktmp;
     end
   end
 

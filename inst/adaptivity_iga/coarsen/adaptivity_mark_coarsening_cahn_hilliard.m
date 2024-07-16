@@ -44,14 +44,13 @@ switch adaptivity_data.flag
     otherwise, error ('adaptivity_mark: Unknown option %s', adaptivity_data.flag)
 end
 
-
 aux_marked = zeros (size (est));
 
 switch adaptivity_data.mark_strategy
  case 'GR'
   aux_marked = ones (size (est));
-case 'MS'
- aux_marked(est < adaptivity_data.mark_param_coarsening) = 1;
+ case 'MS'
+  aux_marked(est < adaptivity_data.mark_param_coarsening) = 1;
 end
 
 marked_list = find (aux_marked);
