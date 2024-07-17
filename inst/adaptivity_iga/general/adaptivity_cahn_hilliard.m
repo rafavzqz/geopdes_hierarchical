@@ -27,7 +27,7 @@ mass_mat = op_u_v_hier (hspace,hspace,hmsh);
 mass_proj = mass_mat + Pen;
 
 if (isfield(initial_conditions,'fun_u'))
-  if (isnumeric(initial_conditions.fun_u) == 1)
+  if (isnumeric(initial_conditions.fun_u))
     u_n = fun_u;
   else
     rhs = op_f_v_hier(hspace,hmsh, initial_conditions.fun_u);
@@ -38,7 +38,7 @@ else
 end
 
 if (isfield(initial_conditions,'fun_udot'))
-  if (isnumeric(initial_conditions.fun_udot) == 1)
+  if (isnumeric(initial_conditions.fun_udot))
     udot_n = fun_udot;
   else
     rhs = op_f_v_hier(hspace,hmsh, initial_conditions.fun_udot);

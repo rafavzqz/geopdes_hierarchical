@@ -68,19 +68,19 @@ function [geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard_mp_C1 (pro
 
 %%-------------------------------------------------------------------------
 % Extract the fields from the data structures into local variables
-data_names = fieldnames (problem_data);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= problem_data.(data_names{iopt});']);
-end
-data_names = fieldnames (method_data);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= method_data.(data_names{iopt});']);
-end
+%data_names = fieldnames (problem_data);
+%for iopt  = 1:numel (data_names)
+%  eval ([data_names{iopt} '= problem_data.(data_names{iopt});']);
+%end
+%data_names = fieldnames (method_data);
+%for iopt  = 1:numel (data_names)
+%  eval ([data_names{iopt} '= method_data.(data_names{iopt});']);
+%end
 
-data_names = fieldnames (initial_conditions);
-for iopt  = 1:numel (data_names)
-  eval ([data_names{iopt} '= initial_conditions.(data_names{iopt});']);
-end
+%data_names = fieldnames (initial_conditions);
+%for iopt  = 1:numel (data_names)
+%  eval ([data_names{iopt} '= initial_conditions.(data_names{iopt});']);
+%end
 
 %%-------------------------------------------------------------------------
 % Initialization of the coarsest level of the hierarchical mesh and space
@@ -111,15 +111,15 @@ else
   [Pen, ~] = penalty_matrix (hspace, hmsh, bou, method_data.Cpen_projection);
   mass_proj = mass_mat + Pen;
 
-  if (exist('fun_u', 'var') && ~isempty(fun_u))
-    rhs = op_f_v_hier (hspace, hmsh, fun_u);
+  if (isfield(initial_conditions,'fun_u') && ~isempty(initial_conditions.fun_u))
+    rhs = op_f_v_hier (hspace, hmsh, initial_conditions.fun_u);
     u_n = mass_proj \ rhs;
   else
     u_n = zeros(hspace.ndof, 1);
   end
     
-  if (exist('fun_udot', 'var') && ~isempty(fun_udot))
-    rhs = op_f_v_hier (hspace, hmsh, fun_udot);
+  if (isfield(initial_conditions,'fun_udot') && ~isempty(initial_conditions.fun_udot))
+    rhs = op_f_v_hier (hspace, hmsh, initial_conditions.fun_udot);
     udot_n = mass_proj \ rhs;
   else
     udot_n = zeros(hspace.ndof, 1);
@@ -129,6 +129,7 @@ end
 
 %%-------------------------------------------------------------------------
 % Generalized alpha parameters
+rho_inf_gen_alpha = method_data.rho_inf_gen_alpha;
 a_m = .5*((3-rho_inf_gen_alpha)/(1+rho_inf_gen_alpha));
 a_f =  1/(1+rho_inf_gen_alpha);
 gamma =  .5 + a_m - a_f;
@@ -161,10 +162,9 @@ while time < problem_data.Time_max
 
   %----------------------------------------------------------------------
   % adaptivity in space
-%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: fix the input (problem_data)
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
-                                              dt, a_m, a_f, gamma, lambda, mu, dmu, Cpen_nitsche, ...
-                                              problem_data, adaptivity_data, adaptivity_data_flag, old_space);
+                                              dt, a_m, a_f, gamma, method_data.Cpen_nitsche, problem_data, ...
+                                              adaptivity_data, adaptivity_data_flag, old_space);
     
   %----------------------------------------------------------------------
   % coarsening
@@ -237,7 +237,7 @@ end
 %--------------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO:identical to single-patch? %%%%%%%%
 function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
-  (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, lambda, mu, dmu, Cpen, ...
+  (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, Cpen, ...
    problem_data, adaptivity_data, adaptivity_data_flag, old_space)
 
   lambda = problem_data.lambda;
