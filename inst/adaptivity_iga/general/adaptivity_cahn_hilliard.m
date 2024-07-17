@@ -23,7 +23,7 @@ n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
 %%-------------------------------------------------------------------------
 % initial conditions, with a penalty term
 mass_mat = op_u_v_hier (hspace,hspace,hmsh);
-[Pen, ~] = penalty_matrix (hspace, hmsh, method_data.Cpen_projection, nmnn_sides);
+[Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
 mass_proj = mass_mat + Pen;
 
 if (isfield(initial_conditions,'fun_u'))
@@ -300,7 +300,7 @@ function [u_n_coa, udot_n_coa] = ...
   mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
 
   % penalty term (matrix and vector)
-  [Pen, ~] = penalty_matrix (hspace, hmsh, pen_proje, nmnn_sides);
+  [Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, pen_proje);
   mass_coarse = mass_coarse + Pen;
 
   hspace_in_hmsh_fine = hspace_in_finer_mesh(hspace, hmsh, hmsh_fine);
@@ -418,17 +418,15 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     % mass matrix
     mass_mat = op_u_v_hier (hspace,hspace,hmsh);
     
-    % double well (matrices)
+    % Double well (matrices)
     [term2, term2K] = op_gradfu_gradv_hier (hspace, hmsh, u_a, mu, dmu);
      
-    % laplacian (matrix)
+    % bilaplacian (matrix)
     lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
     
-    % term 4 (matrix)
+    % Compute the boundary term (Nitsche method)
     bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_sides);
-    
-    % penalty term (matrix and vector)
-    [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides);
+    [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, pen);
 
     % update old_space
     old_space = struct ('modified', false, 'space', hspace, 'mesh', hmsh, ...
@@ -441,7 +439,7 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     Pen = old_space.Pen;
     pen_rhs =  old_space.pen_rhs;
 
-    [term2, term2K] = op_gradfu_gradv_hier(old_space.space, old_space.mesh, u_a, mu, dmu);
+    [term2, term2K] = op_gradfu_gradv_hier (old_space.space, old_space.mesh, u_a, mu, dmu);
   end
 
   % Residual
@@ -754,7 +752,7 @@ end
 %--------------------------------------------------------------------------
 % penalty term
 %--------------------------------------------------------------------------
-function [P, rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides)
+function [P, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, pen)
     
   P =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
   rhs = zeros(hspace.ndof,1);
