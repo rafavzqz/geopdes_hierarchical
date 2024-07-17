@@ -49,8 +49,8 @@ else
 end
 clear mass_proj
 
-norm_flux_initial = check_flux_phase_field(hspace, hmsh, u_n, nmnn_sides);
-disp(strcat('initial flux =',num2str(norm_flux_initial)))
+% norm_flux_initial = check_flux_phase_field(hspace, hmsh, u_n, nmnn_sides);
+% disp(strcat('initial flux =',num2str(norm_flux_initial)))
 
 %%-------------------------------------------------------------------------
 % generalized alpha parameters
@@ -61,9 +61,6 @@ gamma =  .5 + a_m - a_f;
 
 %%-------------------------------------------------------------------------
 % save matrices previous mesh
-
-adaptivity_data_flag = true; % if false, the mesh refinement/coarsening is skipped
-
 old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
   'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
@@ -89,15 +86,13 @@ while time < problem_data.Time_max
   % adaptivity in space   
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
                                               dt, a_m, a_f, gamma, method_data.Cpen_nitsche, problem_data, ...
-                                              adaptivity_data, adaptivity_data_flag, old_space, nmnn_sides);
+                                              adaptivity_data, old_space, nmnn_sides);
 
   %----------------------------------------------------------------------
   % coarsening
   if (time >= adaptivity_data.time_delay)
-    if (adaptivity_data_flag)
-      [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm...
-        (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space, nmnn_sides);
-    end
+    [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm...
+      (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space, nmnn_sides);
   end
 
   % Store results
@@ -196,7 +191,7 @@ end
 %--------------------------------------------------------------------------
 function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, pen, problem_data, ...
-    adaptivity_data, adaptivity_data_flag, old_space, nmnn_sides)
+    adaptivity_data, old_space, nmnn_sides)
 
   lambda = problem_data.lambda;
   mu = problem_data.mu;
@@ -210,14 +205,6 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % solve
     [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, mu, dmu, ...
                                                         pen, hspace, hmsh, old_space, nmnn_sides);
-
-    %------------------------------------------------------------------
-    % skip adaptivity
-    if (~adaptivity_data_flag)
-      est = zeros(hmsh.nel, 1);
-      disp('No adaptivity')
-      break
-    end
 
     %------------------------------------------------------------------
     % estimate
@@ -288,7 +275,7 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
     hmsh_fine = hmsh;
     hspace_fine = hspace;
     [hmsh, hspace] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data);    
-        
+
     if (hspace.ndof == hspace_fine.ndof)
       old_space.modified = false;
     else

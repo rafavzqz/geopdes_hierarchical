@@ -67,28 +67,18 @@
 function [geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard_mp_C1 (problem_data, method_data, adaptivity_data, initial_conditions, save_info)
 
 %%-------------------------------------------------------------------------
-% Extract the fields from the data structures into local variables
-%data_names = fieldnames (problem_data);
-%for iopt  = 1:numel (data_names)
-%  eval ([data_names{iopt} '= problem_data.(data_names{iopt});']);
-%end
-%data_names = fieldnames (method_data);
-%for iopt  = 1:numel (data_names)
-%  eval ([data_names{iopt} '= method_data.(data_names{iopt});']);
-%end
-
-%data_names = fieldnames (initial_conditions);
-%for iopt  = 1:numel (data_names)
-%  eval ([data_names{iopt} '= initial_conditions.(data_names{iopt});']);
-%end
-
-%%-------------------------------------------------------------------------
 % Initialization of the coarsest level of the hierarchical mesh and space
 if (~isfield(method_data, 'interface_regularity') || method_data.interface_regularity ~= 1)
   warning('Setting interface regularity to C1')
   method_data.interface_regularity = 1;
 end
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
+
+if (exist ('nmnn_sides','var') && ~isempty (nmnn_sides))
+  disp('User defined Neumann sides deleted. Neumann conditions used everywhere.')
+  clear nmnn_sides
+end
+nmnn_sides = 1:numel(hmsh.mesh_of_level(1).boundaries);
 
 if (initial_conditions.restart_flag == false)
   % Refine the mesh up to a predefined level
@@ -98,7 +88,7 @@ end
 
 %%-------------------------------------------------------------------------
 % Initial conditions, with a penalty term
-if (initial_conditions.restart_flag == 1)
+if (initial_conditions.restart_flag == true)
   disp('restart analysis')
   hspace = initial_conditions.space_reload;
   hmsh = initial_conditions.mesh_reload;
@@ -107,8 +97,7 @@ if (initial_conditions.restart_flag == 1)
   time = initial_conditions.time;
 else
   mass_mat = op_u_v_hier (hspace,hspace,hmsh);
-  bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
-  [Pen, ~] = penalty_matrix (hspace, hmsh, bou, method_data.Cpen_projection);
+  [Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
   mass_proj = mass_mat + Pen;
 
   if (isfield(initial_conditions,'fun_u') && ~isempty(initial_conditions.fun_u))
@@ -136,9 +125,6 @@ gamma =  .5 + a_m - a_f;
 
 %%-------------------------------------------------------------------------
 % save matrices previous mesh
-
-adaptivity_data_flag = true; % if false, the mesh refinement/coarsening is skipped
-
 old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
   'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
@@ -164,16 +150,14 @@ while time < problem_data.Time_max
   % adaptivity in space
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
                                               dt, a_m, a_f, gamma, method_data.Cpen_nitsche, problem_data, ...
-                                              adaptivity_data, adaptivity_data_flag, old_space);
+                                              adaptivity_data, old_space);
     
   %----------------------------------------------------------------------
   % coarsening
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: check the input (nmnn_sides)
   if (time >= adaptivity_data.time_delay)
-    if (adaptivity_data_flag)
-      [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm ...
-        (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space);
-    end
+    [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm ...
+      (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space);
   end
     
   % Store results
@@ -238,7 +222,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO:identical to single-patch? %%%%%%%%
 function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
   (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, Cpen, ...
-   problem_data, adaptivity_data, adaptivity_data_flag, old_space)
+   problem_data, adaptivity_data, old_space)
 
   lambda = problem_data.lambda;
   mu = problem_data.mu;
@@ -252,14 +236,6 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % solve
     [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, mu, dmu, ...
                                                         Cpen, hspace, hmsh, old_space);
-
-    %------------------------------------------------------------------
-    % skip adaptivity
-    if (adaptivity_data_flag == false)
-      est = zeros(hmsh.nel, 1);
-      disp('No adaptivity')
-      break
-    end
 
     %------------------------------------------------------------------
     %estimate
@@ -468,7 +444,7 @@ end
 %--------------------------------------------------------------------------
 % Cahn-Hilliard equation residual and tangent matrix
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO (nmnn_sides, op_gradfu_gradv_hier_C1)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO (nmnn_sides)
 function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, ...
                                                       mu, dmu, old_space)
 
@@ -632,56 +608,6 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
 end
 
 %--------------------------------------------------------------------------
-% double-well function
-%--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function [A, B] = op_gradfu_gradv_hier (hspace, hmsh, uhat, f, df)
-% 
-%   A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-%   B = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-%   patch_list = 1:hmsh.npatch;
-% 
-%   ndofs_u = 0;
-%   ndofs_v = 0;
-%   last_dof = cumsum (hspace.ndof_per_level);
-% 
-%   for ilev = 1:hmsh.nlevels
-%     ndofs_u = ndofs_u + hspace.ndof_per_level(ilev);
-%     ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
-%     if (hmsh.nel_per_level(ilev) > 0)
-%       msh_lev = msh_restrict_to_patches (hmsh.msh_lev{ilev}, patch_list);
-% 
-%       if (msh_lev.nel > 0)
-%         spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_lev, 'value', true, 'gradient', true);
-%         spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
-% 
-%         uhat_lev = hspace.Csub{ilev}*uhat(1:last_dof(ilev));
-%         utemp = sp_eval_msh (uhat_lev, spu_lev, msh_lev, {'value', 'gradient'});
-%         u = utemp{1};
-%         gradu = utemp{2};
-% 
-%         coeffs_A = f(u);
-%         coeffs_B = df(u);
-%         coeffs_Bv = gradu;
-%         for idim = 1:hmsh.ndim
-%           coeffs_Bv(idim,:,:) = coeffs_Bv(idim,:,:) .* reshape(coeffs_B, 1, size(coeffs_B,1), size(coeffs_B,2));
-%         end
-% 
-%         A_lev = op_gradu_gradv (spu_lev, spu_lev, msh_lev, coeffs_A);
-%         B_lev = op_vel_dot_gradu_v (spu_lev, spu_lev, msh_lev, coeffs_Bv).';
-% 
-%         dofs_u = 1:ndofs_u;
-%         dofs_v = 1:ndofs_v;
-% 
-%         A(dofs_v,dofs_u) = A(dofs_v,dofs_u) + hspace.Csub{ilev}.' * A_lev * hspace.Csub{ilev};
-%         B(dofs_v,dofs_u) = B(dofs_v,dofs_u) + hspace.Csub{ilev}.' * B_lev * hspace.Csub{ilev};
-%       end
-%     end
-%   end
-% 
-% end
-
-%--------------------------------------------------------------------------
 % save and plot results
 %--------------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -715,4 +641,3 @@ function save_results_step(field, field_dot,time, hspace, hmsh, geometry, save_i
 %     close(fig)
 
 end
-
