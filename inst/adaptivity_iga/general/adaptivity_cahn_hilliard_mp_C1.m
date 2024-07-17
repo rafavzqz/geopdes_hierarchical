@@ -150,14 +150,13 @@ while time < problem_data.Time_max
   % adaptivity in space
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive(u_n, udot_n, hspace, hmsh,  ...
                                               dt, a_m, a_f, gamma, method_data.Cpen_nitsche, problem_data, ...
-                                              adaptivity_data, old_space);
+                                              adaptivity_data, old_space, nmnn_sides);
     
   %----------------------------------------------------------------------
   % coarsening
-%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: check the input (nmnn_sides)
   if (time >= adaptivity_data.time_delay)
     [u_n1, udot_n1, hspace, hmsh, old_space] = coarsening_algorithm ...
-      (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space);
+      (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space, nmnn_sides);
   end
     
   % Store results
@@ -222,7 +221,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO:identical to single-patch? %%%%%%%%
 function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
   (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, Cpen, ...
-   problem_data, adaptivity_data, old_space)
+   problem_data, adaptivity_data, old_space, nmnn_sides)
 
   lambda = problem_data.lambda;
   mu = problem_data.mu;
@@ -235,7 +234,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     %------------------------------------------------------------------
     % solve
     [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, mu, dmu, ...
-                                                        Cpen, hspace, hmsh, old_space);
+                                                        Cpen, hspace, hmsh, old_space, nmnn_sides);
 
     %------------------------------------------------------------------
     %estimate
@@ -287,10 +286,9 @@ end
 %--------------------------------------------------------------------------
 % coarsening
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: check input (nmnn_sides) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: except nmnn_sides, identical to single patch?
 function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
-  coarsening_algorithm(est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, pen_proje, old_space)
+  coarsening_algorithm(est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, pen_proje, old_space, nmnn_sides)
 
   %------------------------------------------------------------------  
   % mark
@@ -309,9 +307,8 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
       old_space.modified = false;
     else
       % recompute control variables:  (mass+penalty) \ (G * u)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: check input (nmnn_sides) %%%%%%%%%
       [u_n1, udot_n1] = compute_control_variables_coarse_mesh...
-        (hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje);
+        (hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje, nmnn_sides);
 
       old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
                           'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
@@ -324,15 +321,14 @@ end
 %--------------------------------------------------------------------------
 % compute control variables on the coarser mesh by means of L2-projection
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch, except bou/nmnn_sides
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch
 function [u_n_coa, udot_n_coa] = ...
-  compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n, udot_n, pen_proje)
+  compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n, udot_n, pen_proje, nmnn_sides)
 
   mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
 
   % penalty term (matrix and vector)
-  bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
-  [Pen, ~] = penalty_matrix (hspace, hmsh, bou, pen_proje);
+  [Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, pen_proje);
   mass_coarse = mass_coarse + Pen;
 
   hspace_in_hmsh_fine = hspace_in_finer_mesh(hspace, hmsh, hmsh_fine);
@@ -386,9 +382,9 @@ end
 %--------------------------------------------------------------------------
 % One step of generalized alpha method
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch (except sides)? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, ...
-                                       lambda, mu, dmu, Cpen, hspace, hmsh, old_space)
+                                       lambda, mu, dmu, Cpen, hspace, hmsh, old_space, nmnn_sides)
 
   % Convergence criteria
   n_max_iter = 20;
@@ -408,7 +404,7 @@ function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_
 
     % Compute the residual (internal)
     [Res_gl, stiff_mat, mass_mat, old_space] = ...
-      Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, mu, dmu, old_space);
+      Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, mu, dmu, old_space, nmnn_sides);
 
     % Convergence check
     if (iter == 0)
@@ -444,11 +440,9 @@ end
 %--------------------------------------------------------------------------
 % Cahn-Hilliard equation residual and tangent matrix
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO (nmnn_sides)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch (except internal functions)?
 function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, ...
-                                                      mu, dmu, old_space)
-
-  nmnn_bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
+                                                      mu, dmu, old_space, nmnn_sides)
 
   if (old_space.modified == true)
     
@@ -458,12 +452,12 @@ function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace,
     % Double well (matrices)
     [term2, term2K] = op_gradfu_gradv_hier (hspace, hmsh, u_a, mu, dmu);   
 
-    % laplacian (matrix)
+    % bilaplacian (matrix)
     lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
 
-    % Compute the boundary term (nitsche method)
-    bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_bou);
-    [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, nmnn_bou, Cpen);
+    % Compute the boundary term (Nitsche method)
+    bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_sides);
+    [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen);
 
     % update old_space
     old_space = struct ('modified', false, 'space', hspace, 'mesh', hmsh, ...
@@ -491,7 +485,7 @@ end
 %--------------------------------------------------------------------------
 % Boundary term, \int_\Gamma (\Delta u) (\partial v / \partial n)
 %--------------------------------------------------------------------------
-function [A] = int_boundary_term (hspace, hmsh,  lambda, nmnn_sides)
+function [A] = int_boundary_term (hspace, hmsh, lambda, nmnn_sides)
 
   if (~isempty(nmnn_sides))
 
@@ -583,10 +577,6 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
           msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
           sp_bnd = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', true, 'gradient', true);
 
-%           for idim = 1:hmsh.rdim
-%             x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
-%           end
-%           
           % For simplicity I replaced charlen by 2^(-level)
 %           coeff_at_qnodes =  coeff_at_qnodes * Cpen ./ msh_side.charlen;
           coeff_at_qnodes = Cpen * ones(msh_side.nqn, msh_side.nel)/ 2^(-ilev);
@@ -599,7 +589,6 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
           tmp = Caux.' * tmp * Caux;
 
           A(dofs_on_lev,dofs_on_lev) = A(dofs_on_lev, dofs_on_lev) + tmp;
-%           rhs(dofs_on_lev) = rhs(dofs_on_lev) + Caux.' * (tmp_rhs);
         end
       end
     end
