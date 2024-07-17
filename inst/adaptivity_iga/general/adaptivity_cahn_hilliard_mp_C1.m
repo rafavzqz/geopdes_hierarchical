@@ -139,7 +139,7 @@ gamma =  .5 + a_m - a_f;
 adaptivity_data_flag = true; % if false, the mesh refinement/coarsening is skipped
 
 old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-  'lapl_mat', [], 'bnd_mat', [], 'pen', [], 'pen_rhs', []);
+  'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
@@ -299,7 +299,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % refine
     [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-                        'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+                        'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
     % recompute control variables
     u_n = Cref * u_n;       
@@ -338,7 +338,7 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
         (hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje);
 
       old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-                          'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+                          'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
     end
     clear hmsh_fine hspace_fine
 
@@ -348,40 +348,33 @@ end
 %--------------------------------------------------------------------------
 % compute control variables on the coarser mesh by means of L2-projection
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch, except bou/nmnn_sides
 function [u_n_coa, udot_n_coa] = ...
   compute_control_variables_coarse_mesh(hmsh, hspace, hmsh_fine, hspace_fine, u_n, udot_n, pen_proje)
 
-mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
+  mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
 
-% penalty term (matrix and vector)
-bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
-[Pen, ~] = penalty_matrix (hspace, hmsh, bou, pen_proje);
+  % penalty term (matrix and vector)
+  bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
+  [Pen, ~] = penalty_matrix (hspace, hmsh, bou, pen_proje);
+  mass_coarse = mass_coarse + Pen;
 
-% disp (condest(mass_coarse))
+  hspace_in_hmsh_fine = hspace_in_finer_mesh(hspace, hmsh, hmsh_fine);
+  rhs_u = op_Gu_hier (hspace_in_hmsh_fine, hmsh_fine, hspace_fine, u_n);
+  u_n_coa = mass_coarse\rhs_u;
 
-mass_coarse = mass_coarse + Pen;
-
-% disp (condest(mass_coarse))
-
-%G = op_u_v_hier (hspace_fine, hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine);
-%u_n_coa = mass_coarse\(G*u_n);
-%udot_n_coa = mass_coarse\(G*udot_n);
-
-rhs_u = op_Gu_hier (hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine, hspace_fine, u_n);
-u_n_coa = mass_coarse\rhs_u;
-
-rhs_udot = op_Gu_hier (hspace_in_finer_mesh(hspace, hmsh, hmsh_fine), hmsh_fine, hspace_fine, udot_n);
-udot_n_coa = mass_coarse\rhs_udot;
-
+  rhs_udot = op_Gu_hier (hspace_in_hmsh_fine, hmsh_fine, hspace_fine, udot_n);
+  udot_n_coa = mass_coarse\rhs_udot;
 
 end
 
-%---------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------------------
+% Compute a rhs-vector of the form b_i = (B_i, u) = (B_i, sum_j u_j D_j), 
+% with B_i a basis of one (coarse) space, and u written as a combination of 
+% basis functions of a second (fine) space, using the finer mesh
+%--------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: identical to single-patch
 function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
-
-
 
   rhs = zeros (hspace.ndof, 1);
 
@@ -397,7 +390,6 @@ function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
       sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh_fine.msh_lev{ilev}, 'value', true);      
       sp_lev = change_connectivity_localized_Csub (sp_lev, hspace, ilev);
 
-
       % coefficients
       ndof_until_lev = sum (hspace_fine.ndof_per_level(1:ilev));
       uhat_lev = hspace_fine.Csub{ilev} * uhat_fine(1:ndof_until_lev);
@@ -406,10 +398,7 @@ function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
       utemp = sp_eval_msh (uhat_lev, sp_lev_fine, hmsh_fine.msh_lev{ilev}, {'value'});
       u_fine = utemp{1};
 
-      % 
       b_lev = op_f_v (sp_lev, hmsh_fine.msh_lev{ilev}, u_fine);
-
-
 
       dofs = 1:ndofs;
       rhs(dofs) = rhs(dofs) + hspace.Csub{ilev}.' * b_lev;
@@ -421,9 +410,9 @@ end
 %--------------------------------------------------------------------------
 % One step of generalized alpha method
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: same as single patch (except sides)? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, ...
-    lambda, mu, dmu, Cpen, hspace, hmsh, old_space)
+                                       lambda, mu, dmu, Cpen, hspace, hmsh, old_space)
 
   % Convergence criteria
   n_max_iter = 20;
@@ -442,26 +431,26 @@ function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_
     u_a = u_n + a_f *(u_n1-u_n);
 
     % Compute the residual (internal)
-    [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, mu, dmu, old_space);
+    [Res_gl, stiff_mat, mass_mat, old_space] = ...
+      Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, mu, dmu, old_space);
 
     % Convergence check
-    if iter == 0
+    if (iter == 0)
       norm_res_0 = norm(Res_gl);
     end
     norm_res = norm(Res_gl);
-    
 
-    if norm_res/norm_res_0 < tol_rel_res
+    if (norm_res/norm_res_0 < tol_rel_res) % relative tolerance
       disp(strcat('iteration n°=',num2str(iter)))
       disp(strcat('norm (abs) residual=',num2str(norm_res)))
       break
     end
-    if norm_res<tol_abs_res
+    if (norm_res<tol_abs_res) % absolute tolerance
       disp(strcat('iteration n°=',num2str(iter)))
       disp(strcat('norm absolute residual=',num2str(norm_res)))
       break
     end
-    if iter == n_max_iter
+    if (iter == n_max_iter)
       disp(strcat('Newton reached the maximum number of iterations'))
       disp(strcat('norm residual=',num2str(norm_res)))
     end
@@ -477,124 +466,105 @@ function [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_
 end
 
 %--------------------------------------------------------------------------
-% Canh-Hilliard residual and tangent matrix
+% Cahn-Hilliard equation residual and tangent matrix
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, mu, dmu, old_space)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO (nmnn_sides, op_gradfu_gradv_hier_C1)
+function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, ...
+                                                      mu, dmu, old_space)
 
+  nmnn_bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
 
-    % No flux b.c. (essential boundary condition)
-    % Set Neumann boundary conditions for non-periodic sides    
-    nmnn_bou   = 1:numel(hmsh.mesh_of_level(1).boundaries);
-
-
-    if old_space.modified == true
+  if (old_space.modified == true)
     
-      % mass matrix
-      mass_mat = op_u_v_hier(hspace,hspace,hmsh);
+    % mass matrix
+    mass_mat = op_u_v_hier (hspace,hspace,hmsh);
 
-      % Double well (matrices)
-      [term2, term2K] = op_gradfu_gradv_hier_C1(hspace, hmsh, u_a, mu, dmu);   
+    % Double well (matrices)
+    [term2, term2K] = op_gradfu_gradv_hier (hspace, hmsh, u_a, mu, dmu);   
 
-      % laplacian (matrix)
-      lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
+    % laplacian (matrix)
+    lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
 
-      % Compute the boundary term (nitsche method)
-      bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_bou);
-      [pen, pen_rhs] = penalty_matrix (hspace, hmsh, nmnn_bou, Cpen);
+    % Compute the boundary term (nitsche method)
+    bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_bou);
+    [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, nmnn_bou, Cpen);
 
+    % update old_space
+    old_space = struct ('modified', false, 'space', hspace, 'mesh', hmsh, ...
+      'mass_mat', mass_mat, 'lapl_mat', lapl_mat, 'bnd_mat', bnd_mat, 'Pen', Pen, 'pen_rhs', pen_rhs);
+      
+  elseif (old_space.modified == false)
+    mass_mat =  old_space.mass_mat;
+    lapl_mat =  old_space.lapl_mat;
+    bnd_mat =  old_space.bnd_mat;
+    Pen = old_space.Pen;
+    pen_rhs =  old_space.pen_rhs;
 
-      % update old_space
-      old_space.modified = false;
-      old_space.space = hspace;
-      old_space.mesh = hmsh;
-      old_space.mass_mat = mass_mat;
-      old_space.lapl_mat = lapl_mat;
-      old_space.bnd_mat = bnd_mat;
-      old_space.pen   = pen;
-      old_space.pen_rhs = pen_rhs;
-     
-    elseif old_space.modified == false
-      mass_mat =  old_space.mass_mat;
-      lapl_mat =  old_space.lapl_mat;
-      bnd_mat =  old_space.bnd_mat;
-      pen = old_space.pen;
-      pen_rhs =  old_space.pen_rhs;
-      [term2, term2K] = op_gradfu_gradv_hier_C1(old_space.space, old_space.mesh, u_a, mu, dmu);
+    [term2, term2K] = op_gradfu_gradv_hier (old_space.space, old_space.mesh, u_a, mu, dmu);
+  end
 
-    end
+  %----------------------------------------------------------------------
+  % Residual
+  Res_gl = mass_mat*udot_a + term2*u_a + lapl_mat*u_a - (bnd_mat + bnd_mat.')*u_a + Pen*u_a - pen_rhs;
 
-    %----------------------------------------------------------------------
-    % Residual
-    Res_gl = mass_mat*udot_a   + lapl_mat*u_a + term2*u_a;
+  % Tangent stiffness matrix (mass is not considered here)
+  stiff_mat = term2 + term2K + lapl_mat - (bnd_mat + bnd_mat.') + Pen;
 
-    % Tangent stiffness matrix (mass is not considered here)
-    stiff_mat =  lapl_mat + term2 + term2K ;
-
-    % nitsche method to impose Neumann B.C.
-    Res_gl = Res_gl - (bnd_mat + bnd_mat.') * u_a + pen*u_a - pen_rhs;
-    stiff_mat = stiff_mat - (bnd_mat + bnd_mat.') + pen;
-
-
-    
 end
 
 %--------------------------------------------------------------------------
 % Boundary term, \int_\Gamma (\Delta u) (\partial v / \partial n)
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [A] = int_boundary_term (hspace, hmsh,  lambda, nmnn_sides)
 
   if (~isempty(nmnn_sides))
 
-      A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
+    A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
 
-    
-      boundaries = hmsh.mesh_of_level(1).boundaries;
-      Nbnd = cumsum ([0, boundaries.nsides]);
-      last_dof = cumsum (hspace.ndof_per_level);
-        
-      for iref = nmnn_sides
-        iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
-        for ilev = 1:hmsh.boundary.nlevels
-          patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
-          patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
-          dofs_on_lev = 1:last_dof(ilev);
-    
-          for ii = 1:numel(iref_patch_list)
-            iptc_bnd = iref_patch_list(ii);
-            iptc = boundaries(iref).patches(ii);
-            iside = boundaries(iref).faces(ii);
-            elems_patch = patch_bnd_shifting(iptc_bnd)+1:patch_bnd_shifting(iptc_bnd+1);
-            [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
-    
-            if (~isempty (elements))
-              msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
-    
-              msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
-              msh_side_from_interior = msh_boundary_side_from_interior (msh_patch, iside);
-    
-              sp_bnd = hspace.space_of_level(ilev).sp_patch{iptc}.constructor (msh_side_from_interior);
-              msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
-              sp_bnd = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'laplacian', true);
-    
-              for idim = 1:hmsh.rdim
-                x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
-              end
-              coe_side = lambda (x{:});
+    boundaries = hmsh.mesh_of_level(1).boundaries;
+    Nbnd = cumsum ([0, boundaries.nsides]);
+    last_dof = cumsum (hspace.ndof_per_level);
 
-              [Cpatch, Cpatch_cols_lev] = sp_compute_Cpatch (hspace.space_of_level(ilev), iptc);
-              [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, Cpatch_cols_lev);
-              Caux = Cpatch(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
+    for iref = nmnn_sides
+      iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
+      for ilev = 1:hmsh.boundary.nlevels
+        patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
+%        patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
+        dofs_on_lev = 1:last_dof(ilev);
 
+        for ii = 1:numel(iref_patch_list)
+          iptc_bnd = iref_patch_list(ii);
+          iptc = boundaries(iref).patches(ii);
+          iside = boundaries(iref).faces(ii);
+          elems_patch = patch_bnd_shifting(iptc_bnd)+1:patch_bnd_shifting(iptc_bnd+1);
+          [~, ~, elements] = intersect (hmsh.boundary.active{ilev}, elems_patch);
 
-              tmp = op_gradv_n_laplaceu(sp_bnd ,sp_bnd ,msh_side, coe_side);   
+          if (~isempty (elements))
+            msh_patch = hmsh.mesh_of_level(ilev).msh_patch{iptc};
 
-              A(dofs_on_lev,dofs_on_lev) = A(dofs_on_lev, dofs_on_lev) + Caux.' * tmp * Caux;
-             end
-           end
+            msh_side = msh_eval_boundary_side (msh_patch, iside, elements);
+            msh_side_from_interior = msh_boundary_side_from_interior (msh_patch, iside);
+
+            sp_bnd = hspace.space_of_level(ilev).sp_patch{iptc}.constructor (msh_side_from_interior);
+            msh_side_from_interior_struct = msh_evaluate_element_list (msh_side_from_interior, elements);
+            sp_bnd = sp_evaluate_element_list (sp_bnd, msh_side_from_interior_struct, 'value', false, 'gradient', true, 'laplacian', true);
+
+            for idim = 1:hmsh.rdim
+              x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+            end
+            coe_side = lambda (x{:});
+
+            [Cpatch, Cpatch_cols_lev] = sp_compute_Cpatch (hspace.space_of_level(ilev), iptc);
+            [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, Cpatch_cols_lev);
+            Caux = Cpatch(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
+
+            tmp = op_gradv_n_laplaceu(sp_bnd ,sp_bnd ,msh_side, coe_side);
+
+            A(dofs_on_lev,dofs_on_lev) = A(dofs_on_lev, dofs_on_lev) + Caux.' * tmp * Caux;
+          end
         end
       end
+    end
 
   else
     A = [];
@@ -604,9 +574,7 @@ end
 %--------------------------------------------------------------------------
 % penalty term
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
-
 
   A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
   rhs = zeros (hspace.ndof, 1);
@@ -614,12 +582,12 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
   boundaries = hmsh.mesh_of_level(1).boundaries;
   Nbnd = cumsum ([0, boundaries.nsides]);
   last_dof = cumsum (hspace.ndof_per_level);
-    
+
   for iref = nmnn_sides
     iref_patch_list = Nbnd(iref)+1:Nbnd(iref+1);
     for ilev = 1:hmsh.boundary.nlevels
       patch_bnd_shifting = cumsum ([0 hmsh.boundary.mesh_of_level(ilev).nel_per_patch]);
-      patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
+%      patch_shifting = cumsum ([0 hmsh.mesh_of_level(ilev).nel_per_patch]);
       dofs_on_lev = 1:last_dof(ilev);
 
       for ii = 1:numel(iref_patch_list)
@@ -650,8 +618,7 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
           [Cpatch, Cpatch_cols_lev] = sp_compute_Cpatch (hspace.space_of_level(ilev), iptc);
           [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, Cpatch_cols_lev);
           Caux = Cpatch(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
-          
-          
+
           tmp = op_gradu_n_gradv_n(sp_bnd, sp_bnd, msh_side, coeff_at_qnodes);
           tmp = Caux.' * tmp * Caux;
 
@@ -662,70 +629,57 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
     end
   end
 
-
-
 end
 
 %--------------------------------------------------------------------------
 % double-well function
 %--------------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [A, B] = op_gradfu_gradv_hier_C1(hspace, hmsh, uhat, f, df)
-
-  A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-  B = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
-  patch_list = 1:hmsh.npatch;
-
-  ndofs_u = 0;
-  ndofs_v = 0;
-  last_dof = cumsum (hspace.ndof_per_level);
-
-
-
-  for ilev = 1:hmsh.nlevels
-    ndofs_u = ndofs_u + hspace.ndof_per_level(ilev);
-    ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
-    if (hmsh.nel_per_level(ilev) > 0)
-      msh_lev = msh_restrict_to_patches (hmsh.msh_lev{ilev}, patch_list);
-
-      if (msh_lev.nel > 0)
-        x = cell(msh_lev.rdim,1);
-        for idim = 1:hmsh.rdim
-          x{idim} = reshape (msh_lev.geo_map(idim,:,:), msh_lev.nqn, msh_lev.nel);
-        end
-        spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_lev, 'value', true, 'gradient', true);
-        spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
-
-        dofs_u = 1:ndofs_u;
-        dofs_v = 1:ndofs_v;
-
-
-        % Evaluate the field and its gradient at the Gaussian points
-        uhat_lev = hspace.Csub{ilev}*uhat(1:last_dof(ilev));
-        utemp = sp_eval_msh (uhat_lev, spu_lev, msh_lev, {'value', 'gradient'});
-        u = utemp{1};
-        gradu = utemp{2};
-        
-
-        % double-well
-        coeffs_A = f(u);
-        A_lev = op_gradu_gradv (spu_lev, spu_lev, msh_lev, coeffs_A);
-        A(dofs_v,dofs_u) = A(dofs_v,dofs_u) + hspace.Csub{ilev}.' * A_lev * hspace.Csub{ilev};
-
-        coeffs_B = df(u);
-        coeffs_Bv = gradu;
-        for idim = 1:hmsh.ndim
-          coeffs_Bv(idim,:,:) = coeffs_Bv(idim,:,:) .* reshape(coeffs_B, 1, size(coeffs_B,1), size(coeffs_B,2));
-        end
-        B_lev = op_vel_dot_gradu_v (spu_lev, spu_lev, msh_lev, coeffs_Bv).';     
-        B(dofs_v,dofs_u) = B(dofs_v,dofs_u) + hspace.Csub{ilev}.' * B_lev * hspace.Csub{ilev};
-
-
-      end
-    end
-  end
-
-end
+% function [A, B] = op_gradfu_gradv_hier (hspace, hmsh, uhat, f, df)
+% 
+%   A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
+%   B = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
+%   patch_list = 1:hmsh.npatch;
+% 
+%   ndofs_u = 0;
+%   ndofs_v = 0;
+%   last_dof = cumsum (hspace.ndof_per_level);
+% 
+%   for ilev = 1:hmsh.nlevels
+%     ndofs_u = ndofs_u + hspace.ndof_per_level(ilev);
+%     ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
+%     if (hmsh.nel_per_level(ilev) > 0)
+%       msh_lev = msh_restrict_to_patches (hmsh.msh_lev{ilev}, patch_list);
+% 
+%       if (msh_lev.nel > 0)
+%         spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), msh_lev, 'value', true, 'gradient', true);
+%         spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
+% 
+%         uhat_lev = hspace.Csub{ilev}*uhat(1:last_dof(ilev));
+%         utemp = sp_eval_msh (uhat_lev, spu_lev, msh_lev, {'value', 'gradient'});
+%         u = utemp{1};
+%         gradu = utemp{2};
+% 
+%         coeffs_A = f(u);
+%         coeffs_B = df(u);
+%         coeffs_Bv = gradu;
+%         for idim = 1:hmsh.ndim
+%           coeffs_Bv(idim,:,:) = coeffs_Bv(idim,:,:) .* reshape(coeffs_B, 1, size(coeffs_B,1), size(coeffs_B,2));
+%         end
+% 
+%         A_lev = op_gradu_gradv (spu_lev, spu_lev, msh_lev, coeffs_A);
+%         B_lev = op_vel_dot_gradu_v (spu_lev, spu_lev, msh_lev, coeffs_Bv).';
+% 
+%         dofs_u = 1:ndofs_u;
+%         dofs_v = 1:ndofs_v;
+% 
+%         A(dofs_v,dofs_u) = A(dofs_v,dofs_u) + hspace.Csub{ilev}.' * A_lev * hspace.Csub{ilev};
+%         B(dofs_v,dofs_u) = B(dofs_v,dofs_u) + hspace.Csub{ilev}.' * B_lev * hspace.Csub{ilev};
+%       end
+%     end
+%   end
+% 
+% end
 
 %--------------------------------------------------------------------------
 % save and plot results

@@ -65,7 +65,7 @@ gamma =  .5 + a_m - a_f;
 adaptivity_data_flag = true; % if false, the mesh refinement/coarsening is skipped
 
 old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-  'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+  'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
@@ -260,7 +260,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive...
     % refine
     [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
     old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-                        'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+                        'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
     % recompute control variables
     u_n = Cref * u_n;       
@@ -297,7 +297,7 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
         (hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje, nmnn_sides);
 
       old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
-                          'lapl_mat', [], 'term4', [], 'Pen', [], 'pen_rhs', []);
+                          'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
     end
     clear hmsh_fine hspace_fine
 
@@ -438,19 +438,19 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
     lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
     
     % term 4 (matrix)
-    term4 = int_term_4 (hspace, hmsh, lambda, nmnn_sides);
+    bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_sides);
     
     % penalty term (matrix and vector)
     [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, pen, nmnn_sides);
 
     % update old_space
     old_space = struct ('modified', false, 'space', hspace, 'mesh', hmsh, ...
-      'mass_mat', mass_mat, 'lapl_mat', lapl_mat, 'term4', term4, 'Pen', Pen, 'pen_rhs', pen_rhs);
+      'mass_mat', mass_mat, 'lapl_mat', lapl_mat, 'bnd_mat', bnd_mat, 'Pen', Pen, 'pen_rhs', pen_rhs);
 
   elseif (old_space.modified == false)
     mass_mat =  old_space.mass_mat;
     lapl_mat =  old_space.lapl_mat;
-    term4 =  old_space.term4;
+    bnd_mat =  old_space.bnd_mat;
     Pen = old_space.Pen;
     pen_rhs =  old_space.pen_rhs;
 
@@ -458,17 +458,17 @@ function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, 
   end
 
   % Residual
-  Res_gl = mass_mat*udot_a + term2*u_a + lapl_mat*u_a - (term4 + term4')*u_a + Pen*u_a - pen_rhs;
+  Res_gl = mass_mat*udot_a + term2*u_a + lapl_mat*u_a - (bnd_mat + bnd_mat.')*u_a + Pen*u_a - pen_rhs;
 
   % Tangent stiffness matrix (mass is not considered here)
-  stiff_mat = term2 + term2K + lapl_mat - (term4 + term4') + Pen;
+  stiff_mat = term2 + term2K + lapl_mat - (bnd_mat + bnd_mat.') + Pen;
 
 end
 
 %--------------------------------------------------------------------------
-% term 4
+% Boundary term, \int_\Gamma (\Delta u) (\partial v / \partial n)
 %--------------------------------------------------------------------------
-function A = int_term_4 (hspace, hmsh, lambda, nmnn_sides)
+function A = int_boundary_term (hspace, hmsh, lambda, nmnn_sides)
   A =  spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);    
   for iside = 1:length(nmnn_sides)   
     A = A + op_gradv_n_laplaceu_hier(hspace, hmsh, nmnn_sides(iside), lambda );        
