@@ -41,19 +41,17 @@ function [A, B] = op_gradfu_gradv_hier (hspace, hmsh, uhat, f, df)
 
   ndofs_u = 0;
   ndofs_v = 0;
+  last_dof = cumsum (hspace.ndof_per_level);
+
   for ilev = 1:hmsh.nlevels
     ndofs_u = ndofs_u + hspace.ndof_per_level(ilev);
     ndofs_v = ndofs_v + hspace.ndof_per_level(ilev);
-    if (hmsh.nel_per_level(ilev) > 0)
 
-      % space
-      spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true, 'laplacian', true);
+    if (hmsh.nel_per_level(ilev) > 0)
+      spu_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
       spu_lev = change_connectivity_localized_Csub (spu_lev, hspace, ilev);
 
-      % coefficients
-      ndof_until_lev = sum (hspace.ndof_per_level(1:ilev));
-      uhat_lev = hspace.Csub{ilev} * uhat(1:ndof_until_lev);
-
+      uhat_lev = hspace.Csub{ilev} * uhat(1:last_dof(ilev));
       utemp = sp_eval_msh (uhat_lev, spu_lev, hmsh.msh_lev{ilev}, {'value', 'gradient'});
       u = utemp{1};
       gradu = utemp{2};
@@ -65,11 +63,9 @@ function [A, B] = op_gradfu_gradv_hier (hspace, hmsh, uhat, f, df)
         coeffs_Bv(idim,:,:)=coeffs_Bv(idim,:,:) .* reshape(coeffs_B, 1, size(coeffs_B,1), size(coeffs_B,2) );
       end
 
-      % matrices
       A_lev = op_gradu_gradv (spu_lev, spu_lev, hmsh.msh_lev{ilev}, coeffs_A);
       B_lev = op_vel_dot_gradu_v (spu_lev, spu_lev, hmsh.msh_lev{ilev}, coeffs_Bv)';
         
-      % assemble
       dofs_u = 1:ndofs_u;
       dofs_v = 1:ndofs_v;
 
