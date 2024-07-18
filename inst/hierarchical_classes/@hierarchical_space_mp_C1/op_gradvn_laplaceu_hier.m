@@ -1,8 +1,35 @@
-%--------------------------------------------------------------------------
 % OP_GRADVN_LAPLACEU_HIER: assemble the matrix A = [a(i,j)], a(i,j) = (epsilon (grad v n)_j, Delta u_i), 
-%  with n the normal vector to the boundary.
-%--------------------------------------------------------------------------
-function A = int_boundary_term (hspace, hmsh, lambda, nmnn_sides)
+%  with n the normal vector to the boundary, using the same space for trial and test functions.
+%
+%   mat = op_gradvn_laplaceu_hier (hspace, hmsh, sides, [coeff]);
+%
+% INPUT:
+%
+%  hspace: object representing the space of trial functions (see hierarchical_space_mp_C1)
+%  hmsh:   object defining the hierarchical mesh (see hierarchical_mesh_mp_C1)
+%  sides:  boundary sides on which to compute the integrals
+%  coeff:  function handle to compute the epsilon coefficient. If empty, it is taken equal to one.
+%
+% OUTPUT:
+%
+%  mat:    assembled matrix
+% 
+% Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+function A = op_gradvn_laplaceu_hier (hspace, hmsh, nmnn_sides, lambda)
 
   if (~isempty(nmnn_sides))
 
@@ -45,7 +72,7 @@ function A = int_boundary_term (hspace, hmsh, lambda, nmnn_sides)
             [~,Csub_rows,Cpatch_cols] = intersect (hspace.Csub_row_indices{ilev}, Cpatch_cols_lev);
             Caux = Cpatch(:,Cpatch_cols) * hspace.Csub{ilev}(Csub_rows,:);
 
-            tmp = op_gradv_n_laplaceu(sp_bnd ,sp_bnd ,msh_side, coe_side);
+            tmp = op_gradv_n_laplaceu(sp_bnd, sp_bnd, msh_side, coe_side);
 
             A(dofs_on_lev,dofs_on_lev) = A(dofs_on_lev, dofs_on_lev) + Caux.' * tmp * Caux;
           end

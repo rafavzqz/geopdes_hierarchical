@@ -16,7 +16,7 @@ function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace,
     lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
 
     % Compute the boundary term (Nitsche method). The right-hand side is set to zero.
-    bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_sides);
+    bnd_mat = op_gradvn_laplaceu_hier (hspace, hmsh, nmnn_sides, lambda);
     [Pen, pen_rhs] = op_penalty_dudn (hspace, hmsh, nmnn_sides, Cpen);
 
     % update old_space
