@@ -97,7 +97,7 @@ if (initial_conditions.restart_flag == true)
   time = initial_conditions.time;
 else
   mass_mat = op_u_v_hier (hspace,hspace,hmsh);
-  [Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
+  [Pen, ~] = op_penalty_dudn (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
   mass_proj = mass_mat + Pen;
 
   if (isfield(initial_conditions,'fun_u') && ~isempty(initial_conditions.fun_u))

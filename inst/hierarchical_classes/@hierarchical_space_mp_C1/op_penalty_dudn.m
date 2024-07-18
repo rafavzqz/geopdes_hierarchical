@@ -1,7 +1,38 @@
-%--------------------------------------------------------------------------
-% penalty term
-%--------------------------------------------------------------------------
-function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
+% OP_PENALTY_DUDN: matrix and right-hand side to compute penalty terms to impose du/dn = f.
+%  It computes the terms of the form Cp*(du/dn, dv/dn) and Cp*(f, dv/dn), 
+%  using the same space for trial and test functions.
+%
+%   [mat, rhs] = op_penalty_dudn (hspace, hmsh, sides, Cpen, [coeff]);
+%
+% INPUT:
+%
+%  hspace: object representing the space of trial functions (see hierarchical_space_mp_C1)
+%  hmsh:   object defining the domain partition and the quadrature rule (see hierarchical_mesh_mp)
+%  sides:  boundary sides on which to compute the integrals
+%  Cpen:   penalization parameter, Cp in the equation above
+%  coeff:  function handle to compute the Neumann condition. If empty, the returned rhs will be zero.
+%
+% OUTPUT:
+%
+%  mat:    assembled mass matrix
+%  rhs:    assembled right-hand side
+% 
+% Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+function [A, rhs] = op_penalty_dudn (hspace, hmsh, nmnn_sides, Cpen, coeff)
 
   A = spalloc (hspace.ndof, hspace.ndof, 3*hspace.ndof);
   rhs = zeros (hspace.ndof, 1);
@@ -46,6 +77,16 @@ function [A, rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen)
           tmp = Caux.' * tmp * Caux;
 
           A(dofs_on_lev,dofs_on_lev) = A(dofs_on_lev, dofs_on_lev) + tmp;
+
+          if (nargin == 5)
+            x = cell (hmsh.rdim, 1);
+            for idim = 1:hmsh.rdim
+              x{idim} = reshape (msh_side.geo_map(idim,:,:), msh_side.nqn, msh_side.nel);
+            end
+            rhs(dofs_on_lev) = rhs(dofs_on_lev) + ...
+              Caux.' *op_gradv_n_f (sp_bnd, msh_side, Cpen*coeff(x{:}));
+          end
+
         end
       end
     end

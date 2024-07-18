@@ -24,6 +24,8 @@ n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
 % initial conditions, with a penalty term
 mass_mat = op_u_v_hier (hspace,hspace,hmsh);
 [Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
+[Pen2, ~] = op_penalty_dudn (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
+[Pen2, rhs2] = op_penalty_dudn (hspace, hmsh, nmnn_sides, method_data.Cpen_projection, @(x,y) cos(x)+3*sin(y));
 mass_proj = mass_mat + Pen;
 
 if (isfield(initial_conditions,'fun_u'))

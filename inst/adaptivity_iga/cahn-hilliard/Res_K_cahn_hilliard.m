@@ -15,9 +15,9 @@ function [Res_gl, stiff_mat, mass_mat, old_space] =  Res_K_cahn_hilliard(hspace,
     % bilaplacian (matrix)
     lapl_mat = op_laplaceu_laplacev_hier (hspace, hspace, hmsh, lambda);
 
-    % Compute the boundary term (Nitsche method)
+    % Compute the boundary term (Nitsche method). The right-hand side is set to zero.
     bnd_mat = int_boundary_term (hspace, hmsh, lambda, nmnn_sides);
-    [Pen, pen_rhs] = penalty_matrix (hspace, hmsh, nmnn_sides, Cpen);
+    [Pen, pen_rhs] = op_penalty_dudn (hspace, hmsh, nmnn_sides, Cpen);
 
     % update old_space
     old_space = struct ('modified', false, 'space', hspace, 'mesh', hmsh, ...

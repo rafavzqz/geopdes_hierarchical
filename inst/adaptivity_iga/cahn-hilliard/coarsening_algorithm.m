@@ -41,8 +41,8 @@ function [u_n_coa, udot_n_coa] = ...
 
   mass_coarse = op_u_v_hier(hspace,hspace,hmsh);
 
-  % penalty term (matrix and vector)
-  [Pen, ~] = penalty_matrix (hspace, hmsh, nmnn_sides, pen_proje);
+  % penalty term (matrix and vector). The right-hand side is set to zero.
+  [Pen, ~] = op_penalty_dudn (hspace, hmsh, nmnn_sides, pen_proje);
   mass_coarse = mass_coarse + Pen;
 
   hspace_in_hmsh_fine = hspace_in_finer_mesh(hspace, hmsh, hmsh_fine);
