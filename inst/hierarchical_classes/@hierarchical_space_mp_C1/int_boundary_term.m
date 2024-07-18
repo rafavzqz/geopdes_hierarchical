@@ -1,7 +1,8 @@
 %--------------------------------------------------------------------------
-% Boundary term, \int_\Gamma (\Delta u) (\partial v / \partial n)
+% OP_GRADVN_LAPLACEU_HIER: assemble the matrix A = [a(i,j)], a(i,j) = (epsilon (grad v n)_j, Delta u_i), 
+%  with n the normal vector to the boundary.
 %--------------------------------------------------------------------------
-function [A] = int_boundary_term (hspace, hmsh, lambda, nmnn_sides)
+function A = int_boundary_term (hspace, hmsh, lambda, nmnn_sides)
 
   if (~isempty(nmnn_sides))
 
