@@ -83,7 +83,7 @@ while time < problem_data.Time_max
   disp(strcat('Number of elements = ', num2str(hmsh.nel)))
     
   %----------------------------------------------------------------------
-  % adaptivity in space   
+  % one time step with adaptivity (refinement) in space
   [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cahn_hilliard ...
                               (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, ...
                                method_data.Cpen_nitsche, problem_data, ...
@@ -223,7 +223,7 @@ end
 %--------------------------------------------------------------------------
 % plot results
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO TODO TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function plot_results(geometry, hmsh, hspace, u, time, filenumber)
 
 npts = [51 51];

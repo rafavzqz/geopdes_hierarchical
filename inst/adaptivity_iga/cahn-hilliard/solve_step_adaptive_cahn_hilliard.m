@@ -1,6 +1,5 @@
 % SOLVE_STEP_ADAPTIVE_CAHN_HILLIARD: perform one step of the generalized alpha method
-%  for the solution of the Cahn-Hilliard equation, and adapts the mesh,
-%  doing both refinement and coarsening.
+%  for the solution of the Cahn-Hilliard equation, and adapts the mesh doing refinement.
 %  It is called from adaptive_cahn_hilliard or adaptive_cahn_hilliard_mp_C1
 %
 % INPUT:

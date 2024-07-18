@@ -95,7 +95,6 @@ end
 % with B_i a basis of one (coarse) space, and u written as a combination of 
 % basis functions of a second (fine) space, using the finer mesh
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO: identical to single-patch
 function rhs = op_Gu_hier (hspace, hmsh_fine, hspace_fine, uhat_fine)
 
   rhs = zeros (hspace.ndof, 1);
