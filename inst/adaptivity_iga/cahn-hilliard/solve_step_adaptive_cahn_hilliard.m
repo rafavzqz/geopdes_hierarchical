@@ -1,5 +1,6 @@
-% SOLVE_STEP_ADAPTIVE_CH: performs one step of the generalized alpha method
-%  for the solution of the Cahn-Hilliear equation.
+% SOLVE_STEP_ADAPTIVE_CAHN_HILLIARD: performs one step of the generalized alpha method
+%  for the solution of the Cahn-Hilliard equation, and adapts the mesh,
+%  doing both refinement and coarsening.
 %  It is called from adaptive_cahn_hilliard or adaptive_cahn_hilliard_mp_C1
 %
 % INPUT:
@@ -27,7 +28,7 @@
 %  est:       refinement indicator
 %  old_space: space of the previous iteration, updated
 %
-% Copyright (C) 2023 Michele Torre, Rafael Vazquez
+% Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -42,7 +43,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_CH...
+function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cahn_hilliard...
   (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, Cpen, ...
    problem_data, adaptivity_data, old_space, nmnn_sides)
 
@@ -56,8 +57,9 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_CH.
         
     %------------------------------------------------------------------
     % solve
-    [u_n1, udot_n1, old_space] = generalized_alpha_step(u_n, udot_n, dt, a_m, a_f, gamma, lambda, mu, dmu, ...
-                                                        Cpen, hspace, hmsh, old_space, nmnn_sides);
+    [u_n1, udot_n1, old_space] = generalized_alpha_step_cahn_hilliard...
+                                  (u_n, udot_n, dt, a_m, a_f, gamma, lambda, mu, dmu, ...
+                                   Cpen, hspace, hmsh, old_space, nmnn_sides);
 
     %------------------------------------------------------------------
     %estimate
