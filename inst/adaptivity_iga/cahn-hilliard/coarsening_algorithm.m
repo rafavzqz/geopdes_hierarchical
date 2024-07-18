@@ -1,6 +1,42 @@
-%--------------------------------------------------------------------------
-% coarsening
-%--------------------------------------------------------------------------
+% COARSENING_ALGORITHM: perform a coarsening algorithm based on some indicator,
+%  and project the variable in the hierarchical space of the coarsened mesh.
+%  Used for Cahn-Hilliard equation, it projects two variables. It also
+%  includes a penalization term on the boundary for the projection.
+%
+% INPUT:
+%
+%  est:        the error indicator
+%  hmsh:       mesh object (see hierarchical_mesh or hierarchical_mesh_mp).
+%  hspace:     space object (see hierarchical_space or hierarchical_space_mp_C1).
+%  u_n:        field at the previous time step.
+%  u_dotn:     time derivative at the previous time step.
+%  Cpen:       penalization parameter for the penalty term.
+%  old_space:  space from previous iterations. If not changed, some matrices are not recomputed.
+%  nmnn_sides: sides where to impose the penalty term.
+%
+% OUTPUT:
+%
+%  u_n:       field on the coarsened mesh.
+%  u_dotn:    time derivative on the coarsened mesh.
+%  hspace:    coarsened space object (see hierarchical_space or hierarchical_space_mp_C1).
+%  hmsh:      coarsened mesh object (see hierarchical_mesh or hierarchical_mesh_mp).
+%  old_space: space of the previous iteration, updated.
+%
+% Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
   coarsening_algorithm(est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, pen_proje, old_space, nmnn_sides)
 

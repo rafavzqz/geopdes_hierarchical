@@ -1,5 +1,5 @@
-% GENERALIZED_ALPHA_STEP_CAHN_HILLIARD: performs one step of the generalized alpha method
-%  for the solution of the Cahn-Hilliard equation.
+% GENERALIZED_ALPHA_STEP_CAHN_HILLIARD: perform one step of the generalized alpha method
+%  for the solution of the Cahn-Hilliard equation, solving the nonlinear equation with Newton's method.
 %  It is called from solve_step_adaptive_CH.
 %
 % INPUT:
@@ -12,15 +12,15 @@
 %  lambda:       parameter from the Cahn-Hilliard equation
 %  mu, dmu:      function handle for value and derivative of the mu coefficient
 %  Cpen:         penalization parameter for Nitsche's method
-%  hspace:       space object (see hierarhical_space or hierarchical_space_mp_C1)
+%  hspace:       space object (see hierarchical_space or hierarchical_space_mp_C1)
 %  hmsh:         mesh object (see hierarchical_mesh or hierarchical_mesh_mp)
 %  old_space:    space from previous iterations. If not changed, some matrices are not recomputed.
 %  nmnn_sides:   sides where to impose the Neumann condition.
 %
 % OUTPUT:
 %
-%  u_n1:      field at the previous time step.
-%  u_dotn1:   time derivative at the previous time step.
+%  u_n1:      field at the new step.
+%  u_dotn1:   time derivative at the new step.
 %  old_space: space of the previous iteration, updated
 %
 % Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez

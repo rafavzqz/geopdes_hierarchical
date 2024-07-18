@@ -1,4 +1,4 @@
-% SOLVE_STEP_ADAPTIVE_CAHN_HILLIARD: performs one step of the generalized alpha method
+% SOLVE_STEP_ADAPTIVE_CAHN_HILLIARD: perform one step of the generalized alpha method
 %  for the solution of the Cahn-Hilliard equation, and adapts the mesh,
 %  doing both refinement and coarsening.
 %  It is called from adaptive_cahn_hilliard or adaptive_cahn_hilliard_mp_C1
@@ -7,7 +7,7 @@
 %
 %  u_n:          field at the previous time step.
 %  u_dotn:       time derivative at the previous time step.
-%  hspace:       space object (see hierarhical_space or hierarchical_space_mp_C1)
+%  hspace:       space object (see hierarchical_space or hierarchical_space_mp_C1)
 %  hmsh:         mesh object (see hierarchical_mesh or hierarchical_mesh_mp)
 %  dt:           time step size
 %  a_m:          parameter for the generalized alpha method
@@ -21,8 +21,8 @@
 %
 % OUTPUT:
 %
-%  u_n1:      field at the previous time step.
-%  u_dotn1:   time derivative at the previous time step.
+%  u_n1:      field at the new time step.
+%  u_dotn1:   time derivative at the new time step.
 %  hspace:    space object, it can be refined or coarsened (see hierarhical_space or hierarchical_space_mp_C1)
 %  hmsh:      mesh object, it can be refined or coarsened (see hierarchical_mesh or hierarchical_mesh_mp)
 %  est:       refinement indicator
