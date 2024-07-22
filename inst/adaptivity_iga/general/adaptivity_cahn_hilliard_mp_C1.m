@@ -131,7 +131,7 @@ old_space = struct ('modified', true, 'mass_mat', [], ...
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
 time = problem_data.initial_time;
-save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, 1)
+save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, 1)
 save_id = 2;
 results.time = zeros(length(save_info.time_save)+1,1);
 flag_stop_save = false;
@@ -163,7 +163,7 @@ while time < problem_data.Time_max
   % Store results
   if (flag_stop_save == false)
     if (time +dt >= save_info.time_save(save_id))  
-      save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
+      save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, save_id)
       if (save_id > length(save_info.time_save))
         flag_stop_save = true;
       end
@@ -196,37 +196,37 @@ end
 %--------------------------------------------------------------------------
 % FUNCTIONS
 %--------------------------------------------------------------------------
-%--------------------------------------------------------------------------
 % save and plot results
-%--------------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function save_results_step(field, field_dot,time, hspace, hmsh, geometry, save_info, estimator_type, counter)
+function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_info, counter)
 
-    
-    vtk_pts = {linspace(0, 1, 32*4), linspace(0, 1, 32*4)};
-        
-    % save numerical results in a file     
-        
-    output_file = strcat( save_info.folder_name,'/Square_cahn_hilliard_adaptive_',estimator_type,'_', num2str(counter)  );
-    fprintf ('The result is saved in the file %s \n \n', output_file);
-    sp_to_vtk (field, hspace, geometry, vtk_pts, output_file ,{'solution', 'gradient'}, {'value', 'gradient'})    
-    
-    save(output_file,'field', 'field_dot', 'time','hspace','hmsh')
-
-%     
-%     fig = figure('visible','off');
-%     sp_plot_solution (field, hspace, geometry,vtk_pts)
-%     alpha(0.5)
-%     shading interp
-%     hold on
-%     colorbar
-%     
-%     hmsh_plot_cells (hmsh)
-%     
-%     title(time)
-%     view(0,90);
-%     grid off
-%     saveas(fig , strcat(save_info.folder_name,'/mesh_time_',num2str(time),'.png') )
-%     close(fig)
-
+  if (~isfield(save_info, 'vtk_pts') || isempty (save_info.vtk_pts))
+    vtk_pts = {linspace(0, 1, 50), linspace(0, 1, 50)};
+  else
+    vtk_pts = save_info.vtk_pts;
+  end
+  
+  % save numerical results in a file
+  output_file = strcat (save_info.folder_name, '/', save_info.file_name, num2str(counter));
+  
+  fprintf ('The result is saved in the file %s \n \n', output_file);
+  sp_to_vtk (field, hspace, geometry, vtk_pts, output_file ,{'solution', 'gradient'}, {'value', 'gradient'})
+  
+  save(output_file, 'field', 'field_dot', 'time', 'hspace','hmsh')
+  
+  fig = figure('visible','on');
+  sp_plot_solution (field, hspace, geometry,vtk_pts)
+  alpha(0.65)
+  shading interp
+  hold on
+  colorbar
+  
+  hmsh_plot_cells (hmsh)
+  
+  title(strcat ('Time: ', num2str(time)))
+  view(0,90);
+  grid off
+  
+  saveas(fig , strcat(save_info.folder_name,'/mesh_time_',num2str(time),'.png') )
+  close(fig)
 end

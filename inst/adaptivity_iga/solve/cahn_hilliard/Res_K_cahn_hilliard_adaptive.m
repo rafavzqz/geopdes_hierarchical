@@ -1,5 +1,6 @@
 % RES_K_CAHN_HILLIARD_ADAPTIVE: Cahn-Hilliard equation, computation of the residual
 % for Newton's method, and of some necessary matrices for the method. 
+%  It is called from generalized_alpha_step_cahn_hilliard_adaptive.
 %
 % Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
 %

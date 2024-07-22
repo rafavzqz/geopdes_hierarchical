@@ -67,7 +67,7 @@ old_space = struct ('modified', true, 'mass_mat', [], ...
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
 time = problem_data.initial_time;
-save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, 1)
+save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, 1)
 save_id = 2;
 results.time = zeros(length(save_info.time_save)+1,1);
 flag_stop_save = false;
@@ -99,7 +99,7 @@ while time < problem_data.Time_max
   % Store results
   if (~flag_stop_save)
     if (time + dt >= save_info.time_save(save_id))
-      save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, adaptivity_data.estimator_type, save_id)
+      save_results_step(u_n1, udot_n1, time+dt, hspace, hmsh, geometry, save_info, save_id)
       if (save_id > length(save_info.time_save))
         flag_stop_save = true;
       end
@@ -132,40 +132,39 @@ end
 %--------------------------------------------------------------------------
 % FUNCTIONS
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % save and plot results 
-function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_info, estimator_type, counter)
+function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_info, counter)
 
-
-vtk_pts = {linspace(0, 1, 32*4), linspace(0, 1, 32*4)};
-    
-% save numerical results in a file
-      
-output_file = strcat( save_info.folder_name,'/Square_cahn_hilliard_adaptive_',estimator_type,'_', num2str(counter)  );
-fprintf ('The result is saved in the file %s \n \n', output_file);
-sp_to_vtk (field, hspace, geometry, vtk_pts, output_file ,{'solution', 'gradient'}, {'value', 'gradient'})    
-
-save(output_file,'field', 'field_dot', 'time','hspace','hmsh')
-
-fig = figure('visible','off');
-% [eu, F] = sp_eval (u, hspace, geometry, npts,{'gradient'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
-% fun_to_plot = reshape(sqrt(eu(1,:,:).^2 + eu(2,:,:).^2), size(F,2), size(F,3));
-[eu, F] = sp_eval (field, hspace, geometry, vtk_pts,{'value'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
-fun_to_plot = eu;
-surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), fun_to_plot, 'FaceAlpha',0.5);
-shading interp
-hold on
-colorbar
-
-hmsh_plot_cells (hmsh)
-
-title(time)
-view(0,90);
-grid off
-
-saveas(fig , strcat(save_info.folder_name,'/mesh_time_',num2str(time),'.png') )
-close(fig)
-
+  if (~isfield(save_info, 'vtk_pts') || isempty (save_info.vtk_pts))
+    vtk_pts = {linspace(0, 1, 100), linspace(0, 1, 100)};
+  else
+    vtk_pts = save_info.vtk_pts;
+  end
+  
+  % save numerical results in a file
+  output_file = strcat (save_info.folder_name, '/', save_info.file_name, num2str(counter));
+  
+  %output_file = strcat( save_info.folder_name,'/Square_cahn_hilliard_adaptive_', num2str(counter)  );
+  fprintf ('The result is saved in the file %s \n \n', output_file);
+  sp_to_vtk (field, hspace, geometry, vtk_pts, output_file ,{'solution', 'gradient'}, {'value', 'gradient'})
+  
+  save(output_file, 'field', 'field_dot', 'time', 'hspace','hmsh')
+  
+  fig = figure('visible','on');
+  sp_plot_solution (field, hspace, geometry, vtk_pts);
+  alpha (0.65)
+  shading interp
+  hold on
+  colorbar
+  
+  hmsh_plot_cells (hmsh)
+  
+  title(strcat ('Time: ', num2str(time)))
+  view(0,90);
+  grid off
+  
+  saveas(fig , strcat(save_info.folder_name,'/mesh_time_',num2str(time),'.png') )
+  close(fig)
 end
 
 %--------------------------------------------------------------------------
@@ -223,31 +222,30 @@ end
 %--------------------------------------------------------------------------
 % plot results
 %--------------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plot_results(geometry, hmsh, hspace, u, time, filenumber)
-
-npts = [51 51];
-
-fig = figure('visible','off');
-% [eu, F] = sp_eval (u, hspace, geometry, npts,{'gradient'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
-% fun_to_plot = reshape(sqrt(eu(1,:,:).^2 + eu(2,:,:).^2), size(F,2), size(F,3));
-[eu, F] = sp_eval (u, hspace, geometry, npts,{'value'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
-fun_to_plot = eu;
-surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), fun_to_plot, 'FaceAlpha',0.5);
-shading interp
-hold on
-colorbar
-
-hmsh_plot_cells (hmsh)
-
-title(time)
-view(0,90);
-grid off
-
-saveas(fig , strcat('results_adaptive/mesh_time_',num2str(time),'.png') )
-close(fig)
-
-output_file =  strcat('results_adaptive/cahn_hilliard_adaptive_order_',num2str(filenumber) ) ;
-sp_to_vtk (u, hspace, geometry, npts, output_file,{'u', 'grad_u'}, {'value', 'gradient'})
-
-end
+% function plot_results(geometry, hmsh, hspace, u, time, filenumber)
+% 
+% npts = [51 51];
+% 
+% fig = figure('visible','off');
+% % [eu, F] = sp_eval (u, hspace, geometry, npts,{'gradient'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
+% % fun_to_plot = reshape(sqrt(eu(1,:,:).^2 + eu(2,:,:).^2), size(F,2), size(F,3));
+% [eu, F] = sp_eval (u, hspace, geometry, npts,{'value'}); % sp_eval (u, hspace, geometry, npts,{'value', 'gradient'});
+% fun_to_plot = eu;
+% surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), fun_to_plot, 'FaceAlpha',0.5);
+% shading interp
+% hold on
+% colorbar
+% 
+% hmsh_plot_cells (hmsh)
+% 
+% title(time)
+% view(0,90);
+% grid off
+% 
+% saveas(fig , strcat('results_adaptive/mesh_time_',num2str(time),'.png') )
+% close(fig)
+% 
+% output_file =  strcat('results_adaptive/cahn_hilliard_adaptive_order_',num2str(filenumber) ) ;
+% sp_to_vtk (u, hspace, geometry, npts, output_file,{'u', 'grad_u'}, {'value', 'gradient'})
+% 
+% end

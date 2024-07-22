@@ -1,6 +1,6 @@
 % GENERALIZED_ALPHA_STEP_CAHN_HILLIARD_ADAPTIVE: perform one step of the generalized alpha method
 %  for the solution of the Cahn-Hilliard equation, solving the nonlinear equation with Newton's method.
-%  It is called from solve_step_adaptive_CH.
+%  It is called from solve_step_adaptive_cahn_hilliard.
 %
 % INPUT:
 %
@@ -9,6 +9,7 @@
 %  dt:           time step size
 %  a_m:          parameter for the generalized alpha method
 %  a_f:          parameter for the generalized alpha method
+%  gamma:        parameter for the generalized alpha method
 %  lambda:       parameter from the Cahn-Hilliard equation
 %  mu, dmu:      function handle for value and derivative of the mu coefficient
 %  Cpen:         penalization parameter for Nitsche's method
