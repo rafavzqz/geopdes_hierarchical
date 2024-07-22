@@ -1,4 +1,4 @@
-% GENERALIZED_ALPHA_STEP_CAHN_HILLIARD: perform one step of the generalized alpha method
+% GENERALIZED_ALPHA_STEP_CAHN_HILLIARD_ADAPTIVE: perform one step of the generalized alpha method
 %  for the solution of the Cahn-Hilliard equation, solving the nonlinear equation with Newton's method.
 %  It is called from solve_step_adaptive_CH.
 %
@@ -38,7 +38,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u_n1, udot_n1, old_space] = generalized_alpha_step_cahn_hilliard (u_n, udot_n, dt, a_m, a_f, gamma, ...
+function [u_n1, udot_n1, old_space] = generalized_alpha_step_cahn_hilliard_adaptive (u_n, udot_n, dt, a_m, a_f, gamma, ...
                                        lambda, mu, dmu, Cpen, hspace, hmsh, old_space, nmnn_sides)
 
   % Convergence criteria
@@ -59,7 +59,8 @@ function [u_n1, udot_n1, old_space] = generalized_alpha_step_cahn_hilliard (u_n,
 
     % Compute the residual (internal)
     [Res_gl, stiff_mat, mass_mat, old_space] = ...
-      Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, mu, dmu, old_space, nmnn_sides);
+      Res_K_cahn_hilliard_adaptive(hspace, hmsh, lambda, ...
+      Cpen, u_a, udot_a, mu, dmu, old_space, nmnn_sides);
 
     % Convergence check
     if (iter == 0)

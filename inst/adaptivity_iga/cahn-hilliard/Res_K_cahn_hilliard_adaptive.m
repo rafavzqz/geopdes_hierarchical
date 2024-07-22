@@ -1,4 +1,4 @@
-% RES_K_CAHN_HILLIARD: Cahn-Hilliard equation, computation of the residual
+% RES_K_CAHN_HILLIARD_ADAPTIVE: Cahn-Hilliard equation, computation of the residual
 % for Newton's method, and of some necessary matrices for the method. 
 %
 % Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
@@ -16,7 +16,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard(hspace, hmsh, lambda, Cpen, u_a, udot_a, ...
+function [Res_gl, stiff_mat, mass_mat, old_space] = Res_K_cahn_hilliard_adaptive(hspace, hmsh, lambda, Cpen, u_a, udot_a, ...
                                                       mu, dmu, old_space, nmnn_sides)
 
   % Double well (matrices)
