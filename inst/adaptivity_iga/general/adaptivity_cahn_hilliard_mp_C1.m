@@ -125,7 +125,7 @@ gamma =  .5 + a_m - a_f;
 
 %%-------------------------------------------------------------------------
 % save matrices previous mesh
-old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
+old_space = struct ('modified', true, 'mass_mat', [], ...
   'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
 %%-------------------------------------------------------------------------

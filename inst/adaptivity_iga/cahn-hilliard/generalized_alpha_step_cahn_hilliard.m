@@ -14,14 +14,14 @@
 %  Cpen:         penalization parameter for Nitsche's method
 %  hspace:       space object (see hierarchical_space or hierarchical_space_mp_C1)
 %  hmsh:         mesh object (see hierarchical_mesh or hierarchical_mesh_mp)
-%  old_space:    space from previous iterations. If not changed, some matrices are not recomputed.
+%  old_space:    matrices from the space of previous iterations. If not changed, some matrices are not recomputed.
 %  nmnn_sides:   sides where to impose the Neumann condition.
 %
 % OUTPUT:
 %
 %  u_n1:      field at the new step.
 %  u_dotn1:   time derivative at the new step.
-%  old_space: space of the previous iteration, updated
+%  old_space: matrices from the space of the previous iteration, updated
 %
 % Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
 %

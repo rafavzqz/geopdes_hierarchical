@@ -11,7 +11,7 @@
 %  u_n:        field at the previous time step.
 %  u_dotn:     time derivative at the previous time step.
 %  Cpen:       penalization parameter for the penalty term.
-%  old_space:  space from previous iterations. If not changed, some matrices are not recomputed.
+%  old_space:  matrices from the space of previous iterations. If not changed, some matrices are not recomputed.
 %  nmnn_sides: sides where to impose the penalty term.
 %
 % OUTPUT:
@@ -20,7 +20,7 @@
 %  u_dotn:    time derivative on the coarsened mesh.
 %  hspace:    coarsened space object (see hierarchical_space or hierarchical_space_mp_C1).
 %  hmsh:      coarsened mesh object (see hierarchical_mesh or hierarchical_mesh_mp).
-%  old_space: space of the previous iteration, updated.
+%  old_space: matrices from the space of the previous iteration, updated.
 %
 % Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
 %
@@ -61,7 +61,7 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
       [u_n1, udot_n1] = compute_control_variables_coarse_mesh...
         (hmsh, hspace, hmsh_fine, hspace_fine, u_n1, udot_n1, pen_proje, nmnn_sides);
 
-      old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
+      old_space = struct ('modified', true, 'mass_mat', [], ...
                           'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
     end
     clear hmsh_fine hspace_fine

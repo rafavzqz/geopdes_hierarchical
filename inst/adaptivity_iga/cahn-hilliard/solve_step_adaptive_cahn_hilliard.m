@@ -15,7 +15,7 @@
 %  Cpen:         penalization parameter for Nitsche's method
 %  problem_data: a structure with data of the problem.
 %  adaptivity_data: a structure with data for adaptivity (in space).
-%  old_space:    space from previous iterations. If not changed, some matrices are not recomputed.
+%  old_space:    matrices from the space of previous iterations. If not changed, some matrices are not recomputed.
 %  nmnn_sides:   sides where to impose the Neumann condition.
 %
 % OUTPUT:
@@ -25,7 +25,7 @@
 %  hspace:    space object, it can be refined or coarsened (see hierarhical_space or hierarchical_space_mp_C1)
 %  hmsh:      mesh object, it can be refined or coarsened (see hierarchical_mesh or hierarchical_mesh_mp)
 %  est:       refinement indicator
-%  old_space: space of the previous iteration, updated
+%  old_space: matrices from the space of the previous iteration, updated
 %
 % Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
 %
@@ -99,7 +99,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cah
 
     % refine
     [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-    old_space = struct ('modified', true, 'space', [], 'mesh', [], 'mass_mat', [], ...
+    old_space = struct ('modified', true, 'mass_mat', [], ...
                         'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
     % recompute control variables
