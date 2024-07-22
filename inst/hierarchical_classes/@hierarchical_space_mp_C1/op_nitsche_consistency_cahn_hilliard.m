@@ -1,7 +1,7 @@
-% OP_GRADVN_LAPLACEU_HIER: assemble the matrix A = [a(i,j)], a(i,j) = (epsilon (grad v n)_j, Delta u_i), 
+% OP_NITSCHE_CONSISTENCY_CAHN_HILLIARD: assemble the matrix A = [a(i,j)], a(i,j) = (epsilon (grad v n)_j, Delta u_i), 
 %  with n the normal vector to the boundary, using the same space for trial and test functions.
 %
-%   mat = op_gradvn_laplaceu_hier (hspace, hmsh, sides, [coeff]);
+%   mat = op_nitsche_consistency_cahn_hilliard (hspace, hmsh, sides, [coeff]);
 %
 % INPUT:
 %
@@ -29,7 +29,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function A = op_gradvn_laplaceu_hier (hspace, hmsh, nmnn_sides, lambda)
+function A = op_nitsche_consistency_cahn_hilliard (hspace, hmsh, nmnn_sides, lambda)
 
   if (~isempty(nmnn_sides))
 
