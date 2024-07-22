@@ -1,16 +1,95 @@
-%%%%%%%
-%%%%%%%
-%%%%%%%
-%%%%%%%
+% ADAPTIVITY_CAHN_HILLIARD: solve the Cahn-Hilliard equation, with a generalized alpha discretization in time, 
+%  and adaptive (refining and coarsening) hierarchical splines in space.
+%
+% The function solves the problem of finding u such that
+%
+%  du/dt - Delta (mu(u) - lambda*Delta u) = 0
+%
+% with Delta the Laplacian, and mu(u) = alpha u^3 - beta u, and Neumann boundary conditions.
+%
+% For details on the problem and the formulation, see
+%  H. Gomez, V.M. Calo, Y. Bazilevs, T.J.R. Hughes, CMAME 197 (2008), 4333-4352.
+%  H. Gomez, A. Reali, G. Sangalli, J. Comput. Physics 262 (2014), 153-171.
+%  C. Bracco, C. Giannelli, A. Reali, M. Torre, R. Vazquez, CMAME 417 (2023), 116355. 
+%
+% USAGE:
+%
+%   [geometry, msh, space, results] = adaptivity_cahn_hilliard (problem_data, ...
+%                  method_data, adaptivity_data, save_info)
+%
+% INPUT:
+%
+%  problem_data: a structure with data of the problem. It contains the fields:
+%    - geo_name:     name of the file containing the geometry
+%    - lambda:       parameter representing the length scale of the problem, and the width of the interface
+%    - mu:           function handle to compute mu (from the double well function)
+%    - dmu:          function handle to compute the derivative of mu
+%    - initial_time: initial time of the simulation
+%    - Time_max:     final time
+%    - fun_u:        initial condition. Equal to zero by default.
+%    - fun_udot:     initial condition for time derivative. Equal to zero by default.
+%
+%  method_data : a structure with discretization data. Its fields are:
+%    - degree:      degree of the spline functions.
+%    - regularity:  continuity of the spline functions.
+%    - nsub_coarse: number of subelements with respect to the geometry mesh (1 leaves the mesh unchanged)
+%    - nsub_refine: number of subelements to be added at each refinement step (2 for dyadic)
+%    - nquad:       number of points for Gaussian quadrature rule
+%    - space_type:  'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
+%    - truncated:   false (classical basis) or true (truncated basis)
+%    - XXXXX interface_regularity
+%    - dt:          time step size for generalized-alpha method
+%    - rho_inf_gen_alpha: parameter in [0,1], which governs numerical damping of the generalized alpha method
+%    - Cpen_projection: penalty parameter to impose zero flux at the initial condition
+%    - Cpen_Nitsche:    penalty parameter for Nitsche's method
+%
+%  adaptivity_data: a structure with data for the adaptive method. It contains the fields:
+%
+%    - flag:          refinement procedure, based either on 'elements' or on 'functions'
+%    - mark_strategy: marking strategy. See 'adaptivity_mark' for details
+%    - mark_param:    a parameter to decide how many entities should be marked. See 'adaptivity_mark' for details
+%    - max_level:     stopping criterium, maximum number of levels allowed during refinement
+%    - num_max_iter:  stopping criterium, maximum number of iterations allowed
+%    - adm_class:     admissibility class, to control the interaction of functions of different levels;
+%    - adm_type:      either 'T-admissible' or 'H-admissible'
+%    - time_delay:    decide how frequently try to do coarsening
+%
+% OUTPUT:
+%
+%  geometry: geometry structure (see geo_load)
+%  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
+%  space:    space object that defines the discrete space (see sp_scalar)
+%  results:  a struct with the saved results, containing the following fields:
+%    - time: (array of length Ntime) time at which the solution was saved
+%    - u:    (size ndof x Ntime) degrees of freedom for the solution
+%    - udot: (size ndof x Ntime) degrees of freedom for the time derivative
+%
+% Only periodic and Neumann boundary conditions are implemented. Neumann
+%  conditions are considered by default.
+%
+% Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function [geometry, hmsh, hspace, results] = ...
-              adaptivity_cahn_hilliard (problem_data, method_data, adaptivity_data, initial_conditions, save_info)
+              adaptivity_cahn_hilliard (problem_data, method_data, adaptivity_data, save_info)
 
 %%-------------------------------------------------------------------------
 % Initialization of the coarsest level of the hierarchical mesh and space
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 
-if (exist ('nmnn_sides','var') && ~isempty (nmnn_sides))
+if (isfield (problem_data, 'nmnn_sides') && ~isempty (problem_data.nmnn_sides))
   disp('User defined Neumann sides deleted. Neumann conditions used everywhere.')
   clear nmnn_sides
 end
@@ -26,22 +105,22 @@ mass_mat = op_u_v_hier (hspace,hspace,hmsh);
 [Pen, ~] = op_penalty_dudn (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
 mass_proj = mass_mat + Pen;
 
-if (isfield(initial_conditions,'fun_u'))
-  if (isnumeric(initial_conditions.fun_u))
+if (isfield(problem_data,'fun_u'))
+  if (isnumeric(problem_data.fun_u))
     u_n = fun_u;
   else
-    rhs = op_f_v_hier(hspace,hmsh, initial_conditions.fun_u);
+    rhs = op_f_v_hier(hspace, hmsh, problem_data.fun_u);
     u_n = mass_proj \ rhs;
   end
 else
   u_n = zeros(hspace.ndof,1);
 end
 
-if (isfield(initial_conditions,'fun_udot'))
-  if (isnumeric(initial_conditions.fun_udot))
+if (isfield(problem_data,'fun_udot'))
+  if (isnumeric(problem_data.fun_udot))
     udot_n = fun_udot;
   else
-    rhs = op_f_v_hier(hspace,hmsh, initial_conditions.fun_udot);
+    rhs = op_f_v_hier(hspace, hmsh, problem_data.fun_udot);
     udot_n = mass_proj \ rhs;
   end
 else
@@ -150,7 +229,7 @@ function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_
   
   save(output_file, 'field', 'field_dot', 'time', 'hspace','hmsh')
   
-  fig = figure('visible','on');
+  fig = figure('visible','off');
   sp_plot_solution (field, hspace, geometry, vtk_pts);
   alpha (0.65)
   shading interp
