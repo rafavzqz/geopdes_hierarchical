@@ -1,55 +1,79 @@
-% MP_SOLVE_CAHN_HILLIARD_C1: solve the Cahn-Hilliard equation, with C^1 multipatch splines, and a generalized alpha discretization in time.
+% ADAPTIVITY_CAHN_HILLIARD_MP_C1: solve the Cahn-Hilliard equation, with a generalized alpha discretization in time, 
+%  and adaptive (refining and coarsening) C1-multipatch hierarchical splines in space.
 %
-% The functions solves the problem of finding u such that
+% The function solves the problem of finding u such that
 %
 %  du/dt - Delta (mu(u) - lambda*Delta u) = 0
 %
 % with Delta the Laplacian, and mu(u) = alpha u^3 - beta u, and Neumann boundary conditions.
 %
-% The values of alpha and beta (or mu itself) can be changed in op_gradmu_gradv_tp.
-%
 % For details on the problem and the formulation, see
 %  H. Gomez, V.M. Calo, Y. Bazilevs, T.J.R. Hughes, CMAME 197 (2008), 4333-4352.
 %  H. Gomez, A. Reali, G. Sangalli, J. Comput. Physics 262 (2014), 153-171.
+%  C. Bracco, C. Giannelli, A. Reali, M. Torre, R. Vazquez, CMAME 417 (2023), 116355. 
 %
 % USAGE:
 %
-%   [geometry, msh, space, results] = mp_solve_cahn_hilliard_C1 (problem_data, method_data, save_info)
+%   [geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard (problem_data, ...
+%                  method_data, adaptivity_data, save_info)
 %
 % INPUT:
 %
 %  problem_data: a structure with data of the problem. It contains the fields:
 %    - geo_name:     name of the file containing the geometry
-%    - periodic_directions: parametric directions along which to apply periodic conditions (may be empty)
 %    - lambda:       parameter representing the length scale of the problem, and the width of the interface
+%    - mu:           function handle to compute mu (from the double well function)
+%    - dmu:          function handle to compute the derivative of mu
+%    - initial_time: initial time of the simulation
 %    - Time_max:     final time
 %    - fun_u:        initial condition. Equal to zero by default.
 %    - fun_udot:     initial condition for time derivative. Equal to zero by default.
-%    - nmnn_sides:   sides with Neumann boundary condition (may be empty)
 %
 %  method_data : a structure with discretization data. Its fields are:
-%    - degree:     degree of the spline functions.
-%    - regularity: continuity of the spline functions (at most degree minus two).
-%    - nsub:       number of subelements with respect to the geometry mesh 
-%                   (nsub=1 leaves the mesh unchanged)
-%    - nquad:      number of points for Gaussian quadrature rule
-%    - dt:         time step size for generalized-alpha method
+%    - degree:      degree of the spline functions.
+%    - regularity:  continuity of the spline functions.
+%    - nsub_coarse: number of subelements with respect to the geometry mesh (1 leaves the mesh unchanged)
+%    - nsub_refine: number of subelements to be added at each refinement step (2 for dyadic)
+%    - nquad:       number of points for Gaussian quadrature rule
+%    - space_type:  'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
+%    - truncated:   false (classical basis) or true (truncated basis)
+%    - interface_regularity: must be set to 1.
+%    - dt:          time step size for generalized-alpha method
 %    - rho_inf_gen_alpha: parameter in [0,1], which governs numerical damping of the generalized alpha method
+%    - Cpen_projection: penalty parameter to impose zero flux at the initial condition
+%    - Cpen_Nitsche:    penalty parameter for Nitsche's method
+%
+%  adaptivity_data: a structure with data for the adaptive method. It contains the fields:
+%    - flag:          refinement procedure, based either on 'elements' or on 'functions'
+%    - mark_strategy: marking strategy. See 'adaptivity_mark' for details
+%    - mark_param:    a parameter to decide how many entities should be marked. See 'adaptivity_mark' for details
+%    - max_level:     stopping criterium, maximum number of levels allowed during refinement
+%    - num_max_iter:  stopping criterium, maximum number of iterations allowed
+%    - estimator_type: either 'field' or 'gradient'
+%    - adm_class:     admissibility class, to control the interaction of functions of different levels;
+%    - adm_type:      either 'T-admissible' or 'H-admissible'
+%    - time_delay:    decide how frequently try to do coarsening
+%
+%  save_info: a structure with information about when and where to save the results
+%    - folder_name: folder in which to save the results.
+%    - file_name:   name of the files, a number will be appended to this.
+%    - time_save:   time steps at which the solution should be saved.
+%    - vtk_pts:     cell-array with the univariate points to export the VTK file (see sp_to_vtk)
 %
 % OUTPUT:
 %
 %  geometry: geometry structure (see geo_load)
-%  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
-%  space:    space object that defines the discrete space (see sp_scalar)
+%  hmsh:     hierarchical mesh object at the last computed step (see hierarchical_mesh)
+%  hspace:   hierarchical space object at the last computed step (see hierarchical_space)
 %  results:  a struct with the saved results, containing the following fields:
 %    - time: (array of length Ntime) time at which the solution was saved
-%    - u:    (size ndof x Ntime) degrees of freedom for the solution
-%    - udot: (size ndof x Ntime) degrees of freedom for the time derivative
+%    Since the mesh and space are changed during the simulation, to reduce the memory usage
+%     they are saved in files corresponding to the time in results.time (see save_info)
 %
 % Only periodic and Neumann boundary conditions are implemented. Neumann
 %  conditions are considered by default.
 %
-% Copyright (C) 2023 Michele Torre, Rafael Vazquez
+% Copyright (C) 2023, 2024 Michele Torre, Rafael Vazquez
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -214,7 +238,7 @@ function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_
   
   save(output_file, 'field', 'field_dot', 'time', 'hspace','hmsh')
   
-  fig = figure('visible','on');
+  fig = figure('visible','off');
   sp_plot_solution (field, hspace, geometry,vtk_pts)
   alpha(0.65)
   shading interp

@@ -14,7 +14,7 @@
 %
 % USAGE:
 %
-%   [geometry, msh, space, results] = adaptivity_cahn_hilliard (problem_data, ...
+%   [geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard (problem_data, ...
 %                  method_data, adaptivity_data, save_info)
 %
 % INPUT:
@@ -37,32 +37,37 @@
 %    - nquad:       number of points for Gaussian quadrature rule
 %    - space_type:  'simplified' (only children of removed functions) or 'standard' (full hierarchical basis)
 %    - truncated:   false (classical basis) or true (truncated basis)
-%    - XXXXX interface_regularity
 %    - dt:          time step size for generalized-alpha method
 %    - rho_inf_gen_alpha: parameter in [0,1], which governs numerical damping of the generalized alpha method
 %    - Cpen_projection: penalty parameter to impose zero flux at the initial condition
 %    - Cpen_Nitsche:    penalty parameter for Nitsche's method
 %
 %  adaptivity_data: a structure with data for the adaptive method. It contains the fields:
-%
 %    - flag:          refinement procedure, based either on 'elements' or on 'functions'
 %    - mark_strategy: marking strategy. See 'adaptivity_mark' for details
 %    - mark_param:    a parameter to decide how many entities should be marked. See 'adaptivity_mark' for details
 %    - max_level:     stopping criterium, maximum number of levels allowed during refinement
 %    - num_max_iter:  stopping criterium, maximum number of iterations allowed
+%    - estimator_type: either 'field' or 'gradient'
 %    - adm_class:     admissibility class, to control the interaction of functions of different levels;
 %    - adm_type:      either 'T-admissible' or 'H-admissible'
 %    - time_delay:    decide how frequently try to do coarsening
 %
+%  save_info: a structure with information about when and where to save the results
+%    - folder_name: folder in which to save the results.
+%    - file_name:   name of the files, a number will be appended to this.
+%    - time_save:   time steps at which the solution should be saved.
+%    - vtk_pts:     cell-array with the univariate points to export the VTK file (see sp_to_vtk)
+%
 % OUTPUT:
 %
 %  geometry: geometry structure (see geo_load)
-%  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
-%  space:    space object that defines the discrete space (see sp_scalar)
+%  hmsh:     hierarchical mesh object at the last computed step (see hierarchical_mesh)
+%  hspace:   hierarchical space object at the last computed step (see hierarchical_space)
 %  results:  a struct with the saved results, containing the following fields:
 %    - time: (array of length Ntime) time at which the solution was saved
-%    - u:    (size ndof x Ntime) degrees of freedom for the solution
-%    - udot: (size ndof x Ntime) degrees of freedom for the time derivative
+%    Since the mesh and space are changed during the simulation, to reduce the memory usage
+%     they are saved in files corresponding to the time in results.time (see save_info)
 %
 % Only periodic and Neumann boundary conditions are implemented. Neumann
 %  conditions are considered by default.
@@ -185,7 +190,7 @@ while time < problem_data.Time_max
       save_id = save_id + 1;
     end
   end
-    
+
   %----------------------------------------------------------------------
   % update
   time = time + dt;
@@ -196,7 +201,7 @@ while time < problem_data.Time_max
   if (time + dt > problem_data.Time_max)
     dt = problem_data.Time_max-time;
   end
-    
+
 end % end loop over time steps
 
 disp('----------------------------------------------------------------')
