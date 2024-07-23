@@ -88,7 +88,8 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard_mp_C1 (problem_data, method_data, adaptivity_data, initial_conditions, save_info)
+function [geometry, hmsh, hspace, results] = ...
+             adaptivity_cahn_hilliard_mp_C1 (problem_data, method_data, adaptivity_data, save_info)
 
 %%-------------------------------------------------------------------------
 % Initialization of the coarsest level of the hierarchical mesh and space
@@ -104,41 +105,38 @@ if (exist ('nmnn_sides','var') && ~isempty (nmnn_sides))
 end
 nmnn_sides = 1:numel(hmsh.mesh_of_level(1).boundaries);
 
-if (initial_conditions.restart_flag == false)
-  % Refine the mesh up to a predefined level
-  n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
-  [hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data);
-end
+% Refine the mesh up to a predefined level
+n_refinements = adaptivity_data.max_level - 1; % number of uniform refinements
+[hmsh, hspace] = uniform_refinement(hmsh, hspace, n_refinements, adaptivity_data);
 
 %%-------------------------------------------------------------------------
 % Initial conditions, with a penalty term
-if (initial_conditions.restart_flag == true)
-  disp('restart analysis')
-  hspace = initial_conditions.space_reload;
-  hmsh = initial_conditions.mesh_reload;
-  u_n = initial_conditions.fun_u;
-  udot_n = initial_conditions.fun_udot;
-  time = initial_conditions.time;
-else
-  mass_mat = op_u_v_hier (hspace,hspace,hmsh);
-  [Pen, ~] = op_penalty_dudn (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
-  mass_proj = mass_mat + Pen;
+mass_mat = op_u_v_hier (hspace,hspace,hmsh);
+[Pen, ~] = op_penalty_dudn (hspace, hmsh, nmnn_sides, method_data.Cpen_projection);
+mass_proj = mass_mat + Pen;
 
-  if (isfield(initial_conditions,'fun_u') && ~isempty(initial_conditions.fun_u))
-    rhs = op_f_v_hier (hspace, hmsh, initial_conditions.fun_u);
+if (isfield(problem_data,'fun_u'))
+  if (isnumeric(problem_data.fun_u))
+    u_n = fun_u;
+  else
+    rhs = op_f_v_hier(hspace, hmsh, problem_data.fun_u);
     u_n = mass_proj \ rhs;
-  else
-    u_n = zeros(hspace.ndof, 1);
   end
-    
-  if (isfield(initial_conditions,'fun_udot') && ~isempty(initial_conditions.fun_udot))
-    rhs = op_f_v_hier (hspace, hmsh, initial_conditions.fun_udot);
-    udot_n = mass_proj \ rhs;
-  else
-    udot_n = zeros(hspace.ndof, 1);
-  end
-  clear mass_proj
+else
+  u_n = zeros(hspace.ndof,1);
 end
+    
+if (isfield(problem_data,'fun_udot'))
+  if (isnumeric(problem_data.fun_udot))
+    udot_n = fun_udot;
+  else
+    rhs = op_f_v_hier(hspace, hmsh, problem_data.fun_udot);
+    udot_n = mass_proj \ rhs;
+  end
+else
+  udot_n = zeros(hspace.ndof,1);
+end
+clear mass_proj
 
 %%-------------------------------------------------------------------------
 % Generalized alpha parameters
@@ -155,11 +153,20 @@ old_space = struct ('modified', true, 'mass_mat', [], ...
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
 time = problem_data.initial_time;
-save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, 1)
-save_id = 2;
-results.time = zeros(length(save_info.time_save)+1,1);
-flag_stop_save = false;
-results.time(1) = time;
+time_save = save_info.time_save;
+time_save = time_save(time_save>=problem_data.initial_time & time_save<=problem_data.Time_max);
+
+results.time = zeros(length(time_save), 1);
+time_save(end+1) = problem_data.Time_max + 1e5;
+
+% Save initial conditions
+save_id = 1;
+if (time >= time_save(1))
+  save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, save_id)
+  results.time(save_id) = time;
+  save_id = 2;
+  time_save = time_save(time_save > time);
+end
 
 %%-------------------------------------------------------------------------
 % Loop over time steps
@@ -184,17 +191,6 @@ while time < problem_data.Time_max
       (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space, nmnn_sides);
   end
     
-  % Store results
-  if (flag_stop_save == false)
-    if (time +dt >= save_info.time_save(save_id))  
-      save_results_step(u_n1, udot_n1,time+dt, hspace, hmsh, geometry, save_info, save_id)
-      if (save_id > length(save_info.time_save))
-        flag_stop_save = true;
-      end
-      save_id = save_id + 1;
-    end
-  end
-    
   %----------------------------------------------------------------------
   % update
   time = time + dt;
@@ -204,6 +200,14 @@ while time < problem_data.Time_max
   % check max time
   if (time + dt > problem_data.Time_max)
     dt = problem_data.Time_max - time;
+  end
+
+  % Store results
+  if (time >= time_save(1))
+    save_results_step(u_n1, udot_n1, time, hspace, hmsh, geometry, save_info, save_id)
+    results.time(save_id) = time;
+    save_id = save_id + 1;
+    time_save = time_save(time_save > time);
   end
 
 end % end loop over time steps

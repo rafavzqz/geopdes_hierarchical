@@ -148,14 +148,24 @@ gamma =  .5 + a_m - a_f;
 old_space = struct ('modified', true, 'mass_mat', [], ...
   'lapl_mat', [], 'bnd_mat', [], 'Pen', [], 'pen_rhs', []);
 
+
 %%-------------------------------------------------------------------------
 % Initialize structure to store the results
 time = problem_data.initial_time;
-save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, 1)
-save_id = 2;
-results.time = zeros(length(save_info.time_save)+1,1);
-flag_stop_save = false;
-results.time(1) = time;
+time_save = save_info.time_save;
+time_save = time_save(time_save>=problem_data.initial_time & time_save<=problem_data.Time_max);
+
+results.time = zeros(length(time_save), 1);
+time_save(end+1) = problem_data.Time_max + 1e5;
+
+% Save initial conditions
+save_id = 1;
+if (time >= time_save(1))
+  save_results_step(u_n, udot_n, time, hspace, hmsh, geometry, save_info, save_id)
+  results.time(save_id) = time;
+  save_id = 2;
+  time_save = time_save(time_save > time);
+end
 
 %%-------------------------------------------------------------------------
 % Loop over time steps
@@ -180,17 +190,6 @@ while time < problem_data.Time_max
       (est, hmsh, hspace, adaptivity_data, u_n1, udot_n1, method_data.Cpen_projection, old_space, nmnn_sides);
   end
 
-  % Store results
-  if (~flag_stop_save)
-    if (time + dt >= save_info.time_save(save_id))
-      save_results_step(u_n1, udot_n1, time+dt, hspace, hmsh, geometry, save_info, save_id)
-      if (save_id > length(save_info.time_save))
-        flag_stop_save = true;
-      end
-      save_id = save_id + 1;
-    end
-  end
-
   %----------------------------------------------------------------------
   % update
   time = time + dt;
@@ -202,6 +201,14 @@ while time < problem_data.Time_max
     dt = problem_data.Time_max-time;
   end
 
+  % Store results
+  if (time >= time_save(1))
+    save_results_step(u_n1, udot_n1, time, hspace, hmsh, geometry, save_info, save_id)
+    results.time(save_id) = time;
+    save_id = save_id + 1;
+    time_save = time_save(time_save > time);
+  end
+  
 end % end loop over time steps
 
 disp('----------------------------------------------------------------')
