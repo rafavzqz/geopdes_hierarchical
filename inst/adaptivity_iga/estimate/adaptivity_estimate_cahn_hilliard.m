@@ -36,15 +36,14 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function est = adaptivity_estimate_cahn_hilliard (u, hmsh, hspace, adaptivity_data)
+function [est, mark_param_coarsening] = adaptivity_estimate_cahn_hilliard (u, hmsh, hspace, adaptivity_data)
 
   % gradient-based estimator ------------------------------------------------
   if (strcmpi(adaptivity_data.estimator_type, 'gradient'))
-    normalization = 1;
 
-    % compute the average norm of the gradient
+    % compute the average value of the gradient
     integral = integrals_elem (hspace, hmsh, u, 'norm_grad');        
-    est = integral / normalization;
+    est = integral ;
 
   % field-based estimator ---------------------------------------------------
   elseif (strcmpi(adaptivity_data.estimator_type, 'field'))
@@ -53,6 +52,13 @@ function est = adaptivity_estimate_cahn_hilliard (u, hmsh, hspace, adaptivity_da
     integral = integrals_elem (hspace, hmsh, u, 'field');            
     est = 1 - (abs(integral));
   end
+
+tmp = find(est < adaptivity_data.mark_param);
+if numel(tmp)>0
+    est(tmp) = 0;
+end
+est = est * adaptivity_data.mark_param;
+mark_param_coarsening = numel(tmp)/numel(est);
 end
 
 
