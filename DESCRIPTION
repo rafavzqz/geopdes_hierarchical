@@ -1,9 +1,9 @@
 Name: geopdes_hierarchical
-Version: 3.2.2
-Date: 2021-04-06
-Author: Eduardo Garau, Rafael Vazquez
-Maintainer: Eduardo Garau, Rafael Vazquez
+Version: 3.4.0
+Date: 2024-07-24
+Author: Cesare Bracco, Eduardo Garau, Rafael Vazquez
+Maintainer: Rafael Vazquez
 Title: Isogeometric Analysis with hierarchical splines
 Description: A research tool for adaptive isogeometric methods based on hierarchical splines
-Depends: octave (>= 5.1), geopdes (>= 3.2.2), nurbs (>= 1.4.1)
+Depends: octave (>= 6.4), geopdes (>= 3.4.0), nurbs (>= 1.4.1)
 License: GPLv3
