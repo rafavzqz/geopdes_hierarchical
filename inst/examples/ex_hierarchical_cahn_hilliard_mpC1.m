@@ -106,7 +106,7 @@ save_info.folder_name = folder_name;
 save_info.time_save = linspace(-.000001,problem_data.Time_max,11);
 
 % 3) CALL TO THE SOLVER
-[geometry, hmsh, hspace, results] = hierarchical_cahn_hilliard_mp_C1(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
+[geometry, hmsh, hspace, results] = adaptivity_cahn_hilliard_mp_C1(problem_data, method_data, adaptivity_data, initial_conditions, save_info);
 
 
 %% 4) POST-PROCESSING

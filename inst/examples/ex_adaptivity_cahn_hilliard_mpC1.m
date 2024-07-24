@@ -13,7 +13,7 @@ problem_data.dmu = @(x) 6 * alpha * x;
 
 % Time and time step size
 problem_data.initial_time = 0;
-problem_data.Time_max = 1;
+problem_data.Time_max = 2;
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
@@ -43,8 +43,8 @@ clear adaptivity_data
 adaptivity_data.flag = 'elements';
 
 adaptivity_data.estimator_type = 'field';
-adaptivity_data.mark_param = .1;
-adaptivity_data.mark_param_coarsening = .1;
+adaptivity_data.mark_param = .2;
+%adaptivity_data.mark_param_coarsening = .1;
 adaptivity_data.time_delay = 0.;
 
 adaptivity_data.mark_strategy = 'MS';

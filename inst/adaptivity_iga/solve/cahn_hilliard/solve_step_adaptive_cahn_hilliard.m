@@ -42,7 +42,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cahn_hilliard...
+function [u_n1, udot_n1, hspace, hmsh, est, mark_param_coarsening, old_space] = solve_step_adaptive_cahn_hilliard...
   (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, Cpen, ...
    problem_data, adaptivity_data, old_space, nmnn_sides)
 
@@ -62,7 +62,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cah
 
     %------------------------------------------------------------------
     %estimate
-    est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, adaptivity_data);
+    [est, mark_param_coarsening] = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, adaptivity_data);   
 
     %------------------------------------------------------------------
     % stopping criteria
@@ -82,7 +82,7 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cah
     %------------------------------------------------------------------
     % mark
 % %%%%%%%%%%%%%%%%%%%%%%%%%% TODO: write the help of the function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    [marked, num_marked_ref] = adaptivity_mark_cahn_hilliard (est, hmsh, hspace, adaptivity_data);
+    [marked, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
     % limit the maximum refinement depth
     if (hmsh.nlevels == adaptivity_data.max_level)
       num_deleted = numel(marked{hmsh.nlevels});
