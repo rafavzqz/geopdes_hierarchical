@@ -51,7 +51,7 @@
 %    - estimator_type: either 'field' or 'gradient'
 %    - adm_class:     admissibility class, to control the interaction of functions of different levels;
 %    - adm_type:      either 'T-admissible' or 'H-admissible'
-%    - time_delay:    decide how frequently try to do coarsening
+%    - time_delay:    time delay to activate coarsening
 %
 %  save_info: a structure with information about when and where to save the results
 %    - folder_name: folder in which to save the results.
