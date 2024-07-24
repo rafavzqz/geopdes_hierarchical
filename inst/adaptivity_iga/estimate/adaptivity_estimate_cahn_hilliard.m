@@ -2,7 +2,7 @@
 %
 % USAGE:
 %
-%   est = adaptivity_estimate_cahn_hilliard (u, hmsh, hspace, adaptivity_data)
+%   [est, mark_param_coarsening] = adaptivity_estimate_cahn_hilliard (u, hmsh, hspace, adaptivity_data)
 %
 % INPUT:
 %
@@ -16,6 +16,9 @@
 % OUTPUT:
 %
 %   est: computed a posteriori error indicator
+%   mark_param_coarsening: parameter to decide how strong will be the coarsening.
+%        It is computed from the percentage of elements with an indicator below
+%        the parameter for refinement.
 %
 %  For the details, see the reference paper
 %   C. Bracco, C. Giannelli, A. Reali, M. Torre, R. Vazquez, CMAME 417 (2023), 116355. 
@@ -53,12 +56,12 @@ function [est, mark_param_coarsening] = adaptivity_estimate_cahn_hilliard (u, hm
     est = 1 - (abs(integral));
   end
 
-tmp = find(est < adaptivity_data.mark_param);
-if numel(tmp)>0
+  tmp = find(est < adaptivity_data.mark_param);
+  if (numel(tmp)>0)
     est(tmp) = 0;
-end
-est = est * adaptivity_data.mark_param;
-mark_param_coarsening = numel(tmp)/numel(est);
+  end
+  est = est * adaptivity_data.mark_param;
+  mark_param_coarsening = numel(tmp)/numel(est);
 end
 
 

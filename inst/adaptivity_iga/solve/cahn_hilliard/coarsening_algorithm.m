@@ -42,7 +42,6 @@ function [u_n1, udot_n1, hspace, hmsh, old_space] = ...
 
   %------------------------------------------------------------------  
   % mark
-% %%%%%%%%%%%%%%%%%%%%%%%%%% TODO: write the help of the function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
   [marked, num_marked_coa] = adaptivity_mark_coarsening (est, hmsh, hspace, adaptivity_data);
 
   if (num_marked_coa == 0)

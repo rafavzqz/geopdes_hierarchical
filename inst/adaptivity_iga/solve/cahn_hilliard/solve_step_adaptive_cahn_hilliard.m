@@ -81,7 +81,6 @@ function [u_n1, udot_n1, hspace, hmsh, est, mark_param_coarsening, old_space] = 
 
     %------------------------------------------------------------------
     % mark
-% %%%%%%%%%%%%%%%%%%%%%%%%%% TODO: write the help of the function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     [marked, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
     % limit the maximum refinement depth
     if (hmsh.nlevels == adaptivity_data.max_level)

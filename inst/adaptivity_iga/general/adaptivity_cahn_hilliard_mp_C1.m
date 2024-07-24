@@ -179,7 +179,7 @@ while time < problem_data.Time_max
 
   %----------------------------------------------------------------------
   % one time step with adaptivity (refinement) in space
-  [u_n1, udot_n1, hspace, hmsh, est,  mark_param_coarsening, old_space] = solve_step_adaptive_cahn_hilliard ...
+  [u_n1, udot_n1, hspace, hmsh, est, mark_param_coarsening, old_space] = solve_step_adaptive_cahn_hilliard ...
                               (u_n, udot_n, hspace, hmsh, dt, a_m, a_f, gamma, ...
                                method_data.Cpen_nitsche, problem_data, ...
                                adaptivity_data, old_space, nmnn_sides);
@@ -226,7 +226,6 @@ end
 % FUNCTIONS
 %--------------------------------------------------------------------------
 % save and plot results
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function save_results_step (field, field_dot,time, hspace, hmsh, geometry, save_info, counter)
 
   if (~isfield(save_info, 'vtk_pts') || isempty (save_info.vtk_pts))
