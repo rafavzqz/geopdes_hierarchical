@@ -60,7 +60,7 @@ end
 
 ndof = hmsh.rdim * hspace.ndof;
 u = zeros (ndof, 1);
-u(drchlt_dofs) = 0; % TODO: use u_drchlt;
+u(drchlt_dofs) = 0;
 
 int_dofs = setdiff (1:ndof, drchlt_dofs);
 add_dofs = kernel_dofs.quasi_interior_dofs; %this will contain the "boundary" vertex dofs which have been removed from drchlt_dofs

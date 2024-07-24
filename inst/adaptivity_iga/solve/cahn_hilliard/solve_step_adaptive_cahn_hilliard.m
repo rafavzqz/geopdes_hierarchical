@@ -62,7 +62,6 @@ function [u_n1, udot_n1, hspace, hmsh, est, old_space] = solve_step_adaptive_cah
 
     %------------------------------------------------------------------
     %estimate
-% %%%%%%%%%%%%%%%%%%%%%%%%%% TODO: write the help of the function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     est = adaptivity_estimate_cahn_hilliard (u_n1, hmsh, hspace, adaptivity_data);
 
     %------------------------------------------------------------------
