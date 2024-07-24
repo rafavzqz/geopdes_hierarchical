@@ -52,7 +52,6 @@ adaptivity_data.flag = 'elements';
 
 adaptivity_data.estimator_type = 'field'; % Either 'field' or 'gradient'
 adaptivity_data.mark_param = .2;
-adaptivity_data.mark_param_coarsening = .2;
 adaptivity_data.time_delay = 0.;
 
 adaptivity_data.mark_strategy = 'MS';
