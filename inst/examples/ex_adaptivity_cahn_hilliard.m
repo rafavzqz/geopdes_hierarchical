@@ -4,8 +4,7 @@ clear problem_data
 problem_data.geo_name = 'geo_square.txt';
 
 % Physical parameters (see solve_cahn_hilliard)
-lambda = 6.15e-4;
-% lambda = (1/(4*sqrt(2)*pi))^2;
+lambda = (1/(4*sqrt(2)*pi))^2;
 problem_data.lambda = @(x, y) lambda* ones(size(x));
 alpha = 1;
 beta  = 1;
@@ -14,16 +13,14 @@ problem_data.dmu = @(x) 6 * alpha * x;
 
 % Time  
 problem_data.initial_time = 0;
-problem_data.Time_max = 0.1;    
+problem_data.Time_max = 0.08;
 
 % Initial conditions
-mean = 0.4;
-var = 0.005;
-ic_fun = @(x, y) mean + (rand(size(x))*2-1)*var;
+% mean = 0.4;
+% var = 0.005;
+% ic_fun = @(x, y) mean + (rand(size(x))*2-1)*var;
 ic_fun = @(x, y) 0.1 * cos(2*pi*x) .* cos(2*pi*y);
 
-%ic_fun = load("initial_conditions_nel_64_64_p_2_2.mat");
-%ic_fun = ic_fun.u_0;
 problem_data.fun_u = ic_fun;
 % problem_data.fun_udot = [];
 
@@ -68,14 +65,14 @@ adaptivity_data.adm_type = 'T-admissible';
 adaptivity_data.adm_class = 2;
 
 % Output data
-folder_name = strcat('cahn_hilliard_results_p',num2str(deg),'_nel',num2str(nel),'_lambda',num2str(lambda),'_adaptive_',adaptivity_data.estimator_type);
+folder_name = strcat('cahn_hilliard_results_p',num2str(deg),'_levels',num2str(adaptivity_data.max_level),'_lambda',num2str(lambda),'_adaptive_',adaptivity_data.estimator_type);
 file_name = 'Square_Cahn_Hilliard_adaptive';
 status = mkdir (folder_name);
 
 save_info.folder_name = folder_name;
 save_info.file_name = file_name;
-save_info.time_save = linspace(-.000001,problem_data.Time_max,3);
-save_info.vtk_pts = {linspace(0,1,150), linspace(0,1,150)};
+save_info.time_save = linspace(0, problem_data.Time_max, 11);
+save_info.vtk_pts = {linspace(0,1,100), linspace(0,1,100)};
 
 % 3) CALL TO THE SOLVER
 [geometry, hmsh, hspace, results] = ...
