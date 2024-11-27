@@ -1,3 +1,8 @@
+Summary of important changes for geopdes_hierarchical-3.4.2:
+-----------------------------------------------------------------------------
+* hierarchical_space_mp_C1/hspace_eval_hmsh: fixed bug
+* ex_kirchoof_rectangular_plate*: removed non-working examples
+
 Summary of important changes for geopdes_hierarchical-3.4.0:
 -----------------------------------------------------------------------------
 * Added new class HIERARCHICAL_SPACE_MP_C1
