@@ -45,6 +45,7 @@ function [eu, F] = hspace_eval_hmsh (u, hspace, hmsh, options)
 % For vector-valued spaces, the value of catdir is then corrected by adding one
   value = false; gradient = false; laplacian = false;
   hessian = false;% curl = false; divergence = false;
+  flag = 0;
   for iopt = 1:nopts
     switch (lower (options{iopt}))
       case 'value'
