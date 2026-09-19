@@ -56,6 +56,12 @@ if (nargin == 4)
     [~,local_indices_fine, ind_f] = intersect (sp_fine.gnum{iptc}, ind_fine);
     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices_coarse, local_indices_fine);
  
+    if (~isempty (sp_coarse.dofs_ornt))
+        ornt_fine = sp_fine.dofs_ornt{iptc}(local_indices_fine);
+        ornt_coarse = sp_coarse.dofs_ornt{iptc}(local_indices_coarse);
+        Cpatch = spdiags(ornt_fine(:),0,numel(ind_f),numel(ind_f)) * ...
+            Cpatch * spdiags(ornt_coarse(:),0,numel(ind_c),numel(ind_c));
+    end
     C(ind_f, ind_c) = Cpatch;
   end
 elseif (nargin == 3)
@@ -63,9 +69,17 @@ elseif (nargin == 3)
   for iptc = 1:npatch
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
-    [~,local_indices,~] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
+    [~,local_indices,ind_c] = intersect (sp_coarse.gnum{iptc}, ind_coarse);
     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc}, local_indices);
-    C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
+
+    if (~isempty (sp_coarse.dofs_ornt))
+        ornt_fine = sp_fine.dofs_ornt{iptc}(:);
+        ornt_coarse = sp_coarse.dofs_ornt{iptc}(local_indices);
+        ndoff = spf_patch.ndof;
+        Cpatch = spdiags(ornt_fine(:),0,ndoff,ndoff) * ...
+            Cpatch * spdiags(ornt_coarse(:),0,numel(ind_c),numel(ind_c));
+    end
+    C(sp_fine.gnum{iptc},ind_c) = Cpatch;
   end
 
 else
@@ -74,6 +88,11 @@ else
     spc_patch = sp_coarse.sp_patch{iptc};
     spf_patch = sp_fine.sp_patch{iptc};
     Cpatch = subdivision_matrix_two_levels__ (spc_patch, spf_patch, Proj{iptc});
+    ndofc = spc_patch.ndof;
+    ndoff = spf_patch.ndof;
+    if (~isempty (sp_coarse.dofs_ornt))
+        Cpatch = spdiags(sp_fine.dofs_ornt{iptc}(:),0,ndoff,ndoff) * Cpatch * spdiags(sp_coarse.dofs_ornt{iptc}(:),0,ndofc,ndofc);
+    end
     C(sp_fine.gnum{iptc},sp_coarse.gnum{iptc}) = Cpatch;
   end
 end
